@@ -80,15 +80,20 @@ stimuli:
           command: "tsp compile ."
           sub_path: "Microsoft.Widget/Widget"
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "v2025_05_04_preview"
           path: "Microsoft.Widget/Widget/main.tsp"
-      - type: "file-matches"
+      - &file_matches_removed_property
+        type: "file-matches"
+        name: "file-matches-removed-property"
         config:
           pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)'
           path: "Microsoft.Widget/Widget/employee.tsp"
-      - type: "file-matches"
+      - &file_matches_property
+        type: "file-matches"
+        name: "file-matches-property"
         config:
           pattern: 'department\?: string;'
           path: "Microsoft.Widget/Widget/employee.tsp"
@@ -106,18 +111,9 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/main.tsp"
-          pattern: "v2025_05_04_preview"
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)'
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: 'department\?: string;'
+      - *file_matches
+      - *file_matches_removed_property
+      - *file_matches_property
     constraints:
       max_turns: 6
       max_tokens: 100000

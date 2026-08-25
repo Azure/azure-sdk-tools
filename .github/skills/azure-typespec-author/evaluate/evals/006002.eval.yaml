@@ -62,6 +62,7 @@ stimuli:
       pattern: ResourceRead<WidgetSuite>
   - &id004
     type: file-matches
+    name: file-matches-documentation
     config:
       path: main.tsp
       pattern: '@doc\('

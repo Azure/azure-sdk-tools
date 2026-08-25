@@ -83,12 +83,14 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           # Accept only ARM top/skip params as inline spreads, intersection, or wrapper model.
           pattern: '(?:model\s+(\w+)\s*\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.ResourceManager\.)?ArmTopParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmSkipParameter|(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmTopParameter))\s*>)'
           path: "*.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches
+        type: "file-not-matches"
         config:
           pattern: '@query\("\$top"\)|@query\("\$skip"\)'
           path: "*.tsp"
@@ -106,15 +108,8 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          # Accept only ARM top/skip params as inline spreads, intersection, or wrapper model.
-          pattern: '(?:model\s+(\w+)\s*\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.ResourceManager\.)?ArmTopParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmSkipParameter|(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmTopParameter))\s*>)'
-      - type: "file-not-matches"
-        config:
-          path: "*.tsp"
-          pattern: '@query\("\$top"\)|@query\("\$skip"\)'
+      - *file_matches
+      - *file_not_matches
     constraints:
       max_turns: 6
       max_tokens: 100000

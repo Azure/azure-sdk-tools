@@ -80,15 +80,20 @@ stimuli:
           command: "tsp compile ."
           sub_path: "Microsoft.Widget/Widget"
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "v2025_05_04_preview"
           path: "Microsoft.Widget/Widget/main.tsp"
-      - type: "file-matches"
+      - &file_matches_renamed_property
+        type: "file-matches"
+        name: "file-matches-renamed-property"
         config:
           pattern: '@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview, "age"\)'
           path: "Microsoft.Widget/Widget/employee.tsp"
-      - type: "file-matches"
+      - &file_matches_property
+        type: "file-matches"
+        name: "file-matches-property"
         config:
           pattern: 'employeeAge\?: int32;'
           path: "Microsoft.Widget/Widget/employee.tsp"
@@ -106,18 +111,9 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/main.tsp"
-          pattern: "v2025_05_04_preview"
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: '@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview, "age"\)'
-      - type: "file-matches"
-        config:
-          path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: 'employeeAge\?: int32;'
+      - *file_matches
+      - *file_matches_renamed_property
+      - *file_matches_property
     constraints:
       max_turns: 6
       max_tokens: 100000

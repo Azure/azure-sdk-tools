@@ -29,6 +29,24 @@
 | high | Downstream | Generated SDK method moves between clients | The REST contracts are unchanged, but extending four client-location customizations to Go can move bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint between generated clients. Existing Go code that constructs the former clients or invokes these methods through them can stop compiling. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) | n/a |
 | medium | Compliance | Client customizations are not located in client.tsp | The added client-location customizations are in back-compatible.tsp instead of the documented client.tsp file alongside main.tsp. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) | [The stable 2026-02-01 promotion follows the retained stable-after-preview guidance by replacing the preview version enum member, but the three added @@clientLocation customizations do not follow the retained client customization location guidance because they are in back-compatible.tsp rather than client.tsp alongside main.tsp.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+<a id="finding-source-go-client-location-changed"></a>
+### Generated SDK method moves between clients
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The REST contracts are unchanged, but extending four client-location customizations to Go can move bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint between generated clients. Existing Go code that constructs the former clients or invokes these methods through them can stop compiling.
+- **Evidence:** All four @@clientLocation rules add Go to the language exclusion.; The four HTTP operation contracts remain unchanged.
+- **TypeSpec source:** [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112)
+
+
 ## ☁️ Azure Compliance
 
 **Status:** `failed`
@@ -167,24 +185,6 @@ Expected: client customizations should always be in client.tsp alongside main.ts
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #42853, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-<a id="finding-source-go-client-location-changed"></a>
-### Generated SDK method moves between clients
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The REST contracts are unchanged, but extending four client-location customizations to Go can move bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint between generated clients. Existing Go code that constructs the former clients or invokes these methods through them can stop compiling.
-- **Evidence:** All four @@clientLocation rules add Go to the language exclusion.; The four HTTP operation contracts remain unchanged.
-- **TypeSpec source:** [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112)
-
 
 ## 📎 Appendix
 

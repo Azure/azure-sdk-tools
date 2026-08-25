@@ -28,6 +28,24 @@
 | --- | --- | --- | --- | --- | --- |
 | high | Downstream | Generated SDK enum shape changes | CloudHsmClusterSkuName changes from an enum to a named string-literal union. Although its two wire values are unchanged and the union has no open string arm, the declaration-kind change can alter the generated SDK public type shape and enum-member identities, breaking source code that references the prior enum surface without requiring any REST operation change. | [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293), [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293) | n/a |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+<a id="finding-source-enum-replaced-by-open-union"></a>
+### Generated SDK enum shape changes
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** CloudHsmClusterSkuName changes from an enum to a named string-literal union. Although its two wire values are unchanged and the union has no open string arm, the declaration-kind change can alter the generated SDK public type shape and enum-member identities, breaking source code that references the prior enum surface without requiring any REST operation change.
+- **Evidence:** Replacing an enum with a string-backed union can change generated enum shape and member identities while preserving wire values.; Changed TypeSpec source: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp.
+- **TypeSpec source:** [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293), [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293)
+
+
 ## ☁️ Azure Compliance
 
 **Status:** `passed`
@@ -72,24 +90,6 @@ No compliance mismatches found.
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #43745, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-<a id="finding-source-enum-replaced-by-open-union"></a>
-### Generated SDK enum shape changes
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** CloudHsmClusterSkuName changes from an enum to a named string-literal union. Although its two wire values are unchanged and the union has no open string arm, the declaration-kind change can alter the generated SDK public type shape and enum-member identities, breaking source code that references the prior enum surface without requiring any REST operation change.
-- **Evidence:** Replacing an enum with a string-backed union can change generated enum shape and member identities while preserving wire values.; Changed TypeSpec source: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp.
-- **TypeSpec source:** [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293), [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293)
-
 
 ## 📎 Appendix
 

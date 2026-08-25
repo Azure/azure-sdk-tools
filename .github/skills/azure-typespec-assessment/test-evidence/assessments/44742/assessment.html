@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PR #44742 — Removed NFSv2 from STG103/104 TypeSpec &amp; Swagger | TypeSpec Assessment</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--accent-soft:#eff6ff;--good:#047857;--warn:#b45309;--danger:#b91c1c;--code:#111827;--code-text:#e5e7eb;--add-bg:#163d2b;--add:#9ae6b4;--remove-bg:#4a2028;--remove:#feb2b2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.container{width:min(1180px,calc(100% - 32px));margin:auto}.hero{background:linear-gradient(125deg,#172554,#1d4ed8);color:#fff;padding:44px 0 34px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;opacity:.8}.hero h1{font-size:clamp(26px,4vw,42px);line-height:1.15;margin:8px 0 12px}.hero-meta{opacity:.82}.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:28px}.metric{display:block;background:#ffffff16;border:1px solid #ffffff2b;border-radius:12px;padding:14px;color:inherit;text-decoration:none}.metric:hover{background:#ffffff24;text-decoration:none}.metric strong{display:block;font-size:24px}.metric span{font-size:12px;opacity:.8}nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}nav .container{display:flex;gap:22px;padding:12px 0;overflow:auto}main{padding:30px 0 60px}section{scroll-margin-top:64px;margin-bottom:34px}h2{font-size:25px;margin:0 0 16px}h3{line-height:1.3}.panel,.change-card,.finding{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 18px #0f172a0a}.panel{padding:20px}.intent-details{margin-bottom:12px}.intent-details>summary{display:flex;align-items:center;gap:14px;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 18px 0 0;font-size:18px;font-weight:750;box-shadow:0 4px 18px #0f172a0a}.intent-details>summary .change-number{align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:48px;padding:14px 10px}.intent-kind-icon,.intent-impact-icon{font-size:15px}.intent-details[open]>summary{border-radius:14px 14px 0 0}.intent-details[open]>.change-card{border-top:0;border-radius:0 0 14px 14px}.more-intents{margin-top:12px}.more-intents>summary{cursor:pointer;width:max-content;color:var(--accent);font-weight:700;padding:8px 2px}.more-intents-body{margin-top:8px}.change-card{display:grid;grid-template-columns:1fr;margin-bottom:18px;overflow:visible}.change-number{background:var(--accent-soft);color:var(--accent);font-size:18px;font-weight:800;text-align:center;padding-top:22px}.change-content{min-width:0;padding:20px 22px}.change-content>h3{margin:0 0 18px;font-size:18px}.change-table,.impact-table{width:100%;border-collapse:collapse}.change-table th,.change-table td,.impact-table th,.impact-table td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.change-badge,.severity,.impact{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}.added{background:#dcfce7;color:#166534}.modified{background:#fef3c7;color:#92400e}.removed{background:#fee2e2;color:#991b1b}.typespec-summary{margin:20px 0 6px}.versioning-summary{margin:6px 0 12px;color:var(--muted)}.diff{border:1px solid #334155;border-radius:10px;overflow:hidden;margin:12px 0;background:var(--code)}.diff-file{padding:8px 12px;color:#cbd5e1;background:#1e293b;font:12px ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.diff pre{margin:0;padding:12px;overflow:auto;color:var(--code-text);font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.diff span{display:block;min-height:1.5em}.diff .add{background:var(--add-bg);color:var(--add)}.diff .remove{background:var(--remove-bg);color:var(--remove)}.diff .meta{color:#93c5fd}.diff .omitted{color:#94a3b8;font-style:italic}.diff .version-decorator{background:#713f12;color:#fef08a;font-weight:800;border-left:3px solid #facc15;padding-left:8px}.table-impacts{display:flex;flex-wrap:wrap;gap:6px;min-width:180px}.impact{border:1px solid currentColor}.severity-high{color:var(--danger);background:#fee2e2}.severity-medium{color:var(--warn);background:#fef3c7}.severity-low{color:#475569;background:#e2e8f0}.sources,.omitted-note,.empty{color:var(--muted);font-size:13px}.operation-changes{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}.operation-changes h4{margin:0 0 10px}.operation-details{border:1px solid var(--line);border-radius:9px;margin:8px 0;background:var(--bg)}.operation-details>summary{display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;font-weight:650}.operation-details>summary span{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.operation-details>summary .operation-version{margin-left:auto;background:var(--line);border-radius:999px;padding:2px 8px}.tooltip{position:relative}.tooltip::before,.tooltip::after{position:absolute;z-index:20;pointer-events:none;visibility:hidden;opacity:0;transition:opacity .12s ease,transform .12s ease}.tooltip::before{content:"";left:18px;top:calc(100% + 3px);border:5px solid transparent;border-bottom-color:var(--line);transform:translateY(-3px)}.tooltip::after{content:attr(data-tooltip);left:0;top:calc(100% + 13px);width:max-content;max-width:min(620px,72vw);padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 6px 18px #0f172a1f;white-space:normal;overflow-wrap:anywhere;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transform:translateY(-3px)}.tooltip:hover{overflow:visible}.tooltip:hover::before,.tooltip:hover::after{visibility:visible;opacity:1;transform:translateY(0)}.operation-version.tooltip::before{left:auto;right:18px}.operation-version.tooltip::after{left:auto;right:0}.operation-body{padding:0 12px 12px}.rest-signature{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}.rest-signature strong{white-space:nowrap}.rest-signature code{overflow-wrap:anywhere}.rest-signature-change{display:block;min-width:0;max-width:100%;overflow:hidden}.rest-signature-change pre{max-width:100%;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}.rest-signature-change span{display:block;max-width:100%;padding:2px 7px;overflow-wrap:anywhere;word-break:break-word}.rest-signature-change .add{background:#dcfce7;color:#166534}.rest-signature-change .remove{background:#fee2e2;color:#991b1b}.lro-service-behavior{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.lro-service-behavior>strong{margin-right:8px}.behavior-status{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700}.behavior-status.unchanged{background:#dcfce7;color:#166534}.behavior-status.changed{background:#fef3c7;color:#92400e}.lro-service-behavior dl{display:grid;grid-template-columns:max-content 1fr;gap:5px 12px;margin:10px 0 0}.lro-service-behavior dt{font-weight:700}.lro-service-behavior dd{margin:0;color:var(--muted)}.operation-body .diff{margin-top:4px}.finding-group>h3{margin:20px 0 10px}.count{display:inline-block;background:var(--line);border-radius:999px;padding:1px 8px;font-size:12px}.finding{padding:16px 18px;margin:10px 0}.compliance-status{display:inline-block;margin-left:8px;border-radius:999px;padding:3px 9px;font-size:12px;text-transform:uppercase}.compliance-status.passed{background:#dcfce7;color:#166534}.compliance-status.failed{background:#fee2e2;color:#991b1b}.compliance-status.not-assessed{background:#fef3c7;color:#92400e}.finding-heading{display:flex;gap:10px;align-items:center}.finding-heading h3{margin:0}.severity-border-high{border-left:4px solid var(--danger)}.severity-border-medium{border-left:4px solid var(--warn)}.severity-border-low{border-left:4px solid #64748b}.empty-state{color:var(--muted)}.empty-state.good{color:var(--good);font-weight:600}.appendix-details{background:var(--panel);border:1px solid var(--line);border-radius:14px}.appendix-details>summary{cursor:pointer;padding:16px 20px;font-size:22px;font-weight:750}.appendix-body{padding:0 20px 20px}.appendix-body h3{margin:24px 0 10px}.appendix-table-scroll{overflow:auto}.appendix-table{width:100%;border-collapse:collapse}.appendix-table th,.appendix-table td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid var(--line)}.appendix-body dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px}.appendix-body dt{font-weight:700}.appendix-body dd{margin:0}.status-high{color:#86efac}.status-medium{color:#fde68a}.status-low{color:#fecaca}.metric-icon{display:inline-flex;align-items:center;justify-content:center;width:1.25em;margin-right:.3em;font-size:.85em}.metric-good{color:#86efac}.metric-info{color:#bfdbfe}.metric-warn{color:#fde68a}.metric-danger{color:#fecaca}@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.change-card{grid-template-columns:1fr}.change-number{text-align:left;padding:10px 20px}.change-table{display:block;overflow:auto}.hero{padding-top:28px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--accent:#93c5fd;--accent-soft:#1e3a5f}.added{background:#163d2b;color:#9ae6b4}.modified{background:#473b16;color:#fde68a}.removed{background:#4a2028;color:#fecaca}.severity-high{background:#4a2028}.severity-medium{background:#473b16}.severity-low{background:#334155;color:#cbd5e1}}
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--accent-soft:#eff6ff;--good:#047857;--warn:#b45309;--danger:#b91c1c;--code:#111827;--code-text:#e5e7eb;--add-bg:#163d2b;--add:#9ae6b4;--remove-bg:#4a2028;--remove:#feb2b2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.container{width:min(1180px,calc(100% - 32px));margin:auto}.hero{background:linear-gradient(125deg,#172554,#1d4ed8);color:#fff;padding:44px 0 34px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;opacity:.8}.hero h1{font-size:clamp(26px,4vw,42px);line-height:1.15;margin:8px 0 12px}.hero-meta{opacity:.82}.preview-notice{padding:18px 0;background:#fffbeb;border-bottom:1px solid #fde68a;color:#713f12}.preview-notice h2{margin:0 0 6px;font-size:18px}.preview-notice p{margin:5px 0} .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:28px}.metric{display:block;background:#ffffff16;border:1px solid #ffffff2b;border-radius:12px;padding:14px;color:inherit;text-decoration:none}.metric:hover{background:#ffffff24;text-decoration:none}.metric strong{display:block;font-size:24px}.metric span{font-size:12px;opacity:.8}nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}nav .container{display:flex;gap:22px;padding:12px 0;overflow:auto}main{padding:30px 0 60px}section{scroll-margin-top:64px;margin-bottom:34px}h2{font-size:25px;margin:0 0 16px}h3{line-height:1.3}.panel,.change-card,.finding{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 18px #0f172a0a}.panel{padding:20px}.intent-details{margin-bottom:12px}.intent-details>summary{display:flex;align-items:center;gap:14px;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 18px 0 0;font-size:18px;font-weight:750;box-shadow:0 4px 18px #0f172a0a}.intent-details>summary .change-number{align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:48px;padding:14px 10px}.intent-kind-icon,.intent-impact-icon{font-size:15px}.intent-details[open]>summary{border-radius:14px 14px 0 0}.intent-details[open]>.change-card{border-top:0;border-radius:0 0 14px 14px}.more-intents{margin-top:12px}.more-intents>summary{cursor:pointer;width:max-content;color:var(--accent);font-weight:700;padding:8px 2px}.more-intents-body{margin-top:8px}.change-card{display:grid;grid-template-columns:1fr;margin-bottom:18px;overflow:visible}.change-number{background:var(--accent-soft);color:var(--accent);font-size:18px;font-weight:800;text-align:center;padding-top:22px}.change-content{min-width:0;padding:20px 22px}.change-content>h3{margin:0 0 18px;font-size:18px}.change-table,.impact-table{width:100%;border-collapse:collapse}.change-table th,.change-table td,.impact-table th,.impact-table td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.change-badge,.severity,.impact{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}.added{background:#dcfce7;color:#166534}.modified{background:#fef3c7;color:#92400e}.removed{background:#fee2e2;color:#991b1b}.typespec-summary{margin:20px 0 6px}.versioning-summary{margin:6px 0 12px;color:var(--muted)}.diff{border:1px solid #334155;border-radius:10px;overflow:hidden;margin:12px 0;background:var(--code)}.diff-file{padding:8px 12px;color:#cbd5e1;background:#1e293b;font:12px ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.diff pre{margin:0;padding:12px;overflow:auto;color:var(--code-text);font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.diff span{display:block;min-height:1.5em}.diff .add{background:var(--add-bg);color:var(--add)}.diff .remove{background:var(--remove-bg);color:var(--remove)}.diff .meta{color:#93c5fd}.diff .omitted{color:#94a3b8;font-style:italic}.diff .version-decorator{background:#713f12;color:#fef08a;font-weight:800;border-left:3px solid #facc15;padding-left:8px}.table-impacts{display:flex;flex-wrap:wrap;gap:6px;min-width:180px}.impact{border:1px solid currentColor}.severity-high{color:var(--danger);background:#fee2e2}.severity-medium{color:var(--warn);background:#fef3c7}.severity-low{color:#475569;background:#e2e8f0}.sources,.omitted-note,.empty{color:var(--muted);font-size:13px}.operation-changes{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}.operation-changes h4{margin:0 0 10px}.operation-details{border:1px solid var(--line);border-radius:9px;margin:8px 0;background:var(--bg)}.operation-details>summary{display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;font-weight:650}.operation-details>summary span{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.operation-details>summary .operation-version{margin-left:auto;background:var(--line);border-radius:999px;padding:2px 8px}.tooltip{position:relative}.tooltip::before,.tooltip::after{position:absolute;z-index:20;pointer-events:none;visibility:hidden;opacity:0;transition:opacity .12s ease,transform .12s ease}.tooltip::before{content:"";left:18px;top:calc(100% + 3px);border:5px solid transparent;border-bottom-color:var(--line);transform:translateY(-3px)}.tooltip::after{content:attr(data-tooltip);left:0;top:calc(100% + 13px);width:max-content;max-width:min(620px,72vw);padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 6px 18px #0f172a1f;white-space:normal;overflow-wrap:anywhere;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transform:translateY(-3px)}.tooltip:hover{overflow:visible}.tooltip:hover::before,.tooltip:hover::after{visibility:visible;opacity:1;transform:translateY(0)}.operation-version.tooltip::before{left:auto;right:18px}.operation-version.tooltip::after{left:auto;right:0}.operation-body{padding:0 12px 12px}.rest-signature{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}.rest-signature strong{white-space:nowrap}.rest-signature code{overflow-wrap:anywhere}.rest-signature-change{display:block;min-width:0;max-width:100%;overflow:hidden}.rest-signature-change pre{max-width:100%;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}.rest-signature-change span{display:block;max-width:100%;padding:2px 7px;overflow-wrap:anywhere;word-break:break-word}.rest-signature-change .add{background:#dcfce7;color:#166534}.rest-signature-change .remove{background:#fee2e2;color:#991b1b}.lro-service-behavior{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.lro-service-behavior>strong{margin-right:8px}.behavior-status{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700}.behavior-status.unchanged{background:#dcfce7;color:#166534}.behavior-status.changed{background:#fef3c7;color:#92400e}.lro-service-behavior dl{display:grid;grid-template-columns:max-content 1fr;gap:5px 12px;margin:10px 0 0}.lro-service-behavior dt{font-weight:700}.lro-service-behavior dd{margin:0;color:var(--muted)}.operation-body .diff{margin-top:4px}.finding-group>h3{margin:20px 0 10px}.count{display:inline-block;background:var(--line);border-radius:999px;padding:1px 8px;font-size:12px}.finding{padding:16px 18px;margin:10px 0}.compliance-status{display:inline-block;margin-left:8px;border-radius:999px;padding:3px 9px;font-size:12px;text-transform:uppercase}.compliance-status.passed{background:#dcfce7;color:#166534}.compliance-status.failed{background:#fee2e2;color:#991b1b}.compliance-status.not-assessed{background:#fef3c7;color:#92400e}.finding-heading{display:flex;gap:10px;align-items:center}.finding-heading h3{margin:0}.severity-border-high{border-left:4px solid var(--danger)}.severity-border-medium{border-left:4px solid var(--warn)}.severity-border-low{border-left:4px solid #64748b}.empty-state{color:var(--muted)}.empty-state.good{color:var(--good);font-weight:600}.appendix-details{background:var(--panel);border:1px solid var(--line);border-radius:14px}.appendix-details>summary{cursor:pointer;padding:16px 20px;font-size:22px;font-weight:750}.appendix-body{padding:0 20px 20px}.appendix-body h3{margin:24px 0 10px}.appendix-table-scroll{overflow:auto}.appendix-table{width:100%;border-collapse:collapse}.appendix-table th,.appendix-table td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid var(--line)}.appendix-body dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px}.appendix-body dt{font-weight:700}.appendix-body dd{margin:0}.status-high{color:#86efac}.status-medium{color:#fde68a}.status-low{color:#fecaca}.metric-icon{display:inline-flex;align-items:center;justify-content:center;width:1.25em;margin-right:.3em;font-size:.85em}.metric-good{color:#86efac}.metric-info{color:#bfdbfe}.metric-warn{color:#fde68a}.metric-danger{color:#fecaca}@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.change-card{grid-template-columns:1fr}.change-number{text-align:left;padding:10px 20px}.hero{padding-top:28px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--accent:#93c5fd;--accent-soft:#1e3a5f}.preview-notice{background:#422006;border-bottom-color:#854d0e;color:#fde68a}.added{background:#163d2b;color:#9ae6b4}.modified{background:#473b16;color:#fde68a}.removed{background:#4a2028;color:#fecaca}.severity-high{background:#4a2028}.severity-medium{background:#473b16}.severity-low{background:#334155;color:#cbd5e1}}
 .behavior-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.behavior-section:first-of-type{border-top:0}.behavior-title{margin-right:8px;font-weight:700}.compliance-finding>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.compliance-finding>summary::-webkit-details-marker{display:none}.compliance-finding>summary::after{content:"▸";margin-left:auto;color:var(--muted);font-size:18px}.compliance-finding[open]>summary::after{content:"▾"}.compliance-finding>summary h3{margin:0}.finding-body{padding-top:12px}.comparison-details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.comparison-details>summary{cursor:pointer;padding:11px 13px;font-weight:750}.comparison-body{padding:0 13px 13px}.compliance-code{margin-top:12px}.compliance-code h4{margin:14px 0 6px}.source-code .line-number{display:inline-block;min-width:3.5em;margin-right:12px;color:#64748b;text-align:right;user-select:none}.source-code pre>.context{white-space:pre}
 .metric strong{display:flex;align-items:center}.metric strong .metric-icon{width:1.15em;margin-right:.4em;font-size:1.05em;opacity:1}.metric>span.metric-title{display:block;font-size:15px;font-weight:650;opacity:.9}.metric>span.metric-detail{display:block;margin-top:4px;font-size:12px;opacity:.75}
 .finding-source-diff{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow:hidden}.finding-source-diff>summary{cursor:pointer;padding:11px 13px;font-weight:750}.finding-source-diff>summary span{margin-left:6px;color:var(--muted);font-size:12px;font-weight:400}.finding-source-diff>.diff{margin:0;border-width:1px 0 0;border-radius:0}.finding-source-diff .diff pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
@@ -18,13 +18,127 @@
 <div class="hero-meta">Overall confidence: <strong class="status-high">High</strong> · Baseline <code>af067c9fc987b837f27a34b86e3ac591507711c9</code> → Head <code>656ca8b0741973760f8a60ee0fd293ba9c31e708</code></div>
 <div class="metrics">
 <div class="metric safety-metric"><strong class="status-low"><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>Low</strong><span class="metric-title">Overall code safety</span></div>
-<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">0 findings</span></a>
-<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">4 operations<br>0 Added, 2 Modified, 0 Removed</span></a>
 <a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>3</strong><span class="metric-title">REST breaking changes</span></a>
 <a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Downstream breaking changes</span></a>
+<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">0 findings</span></a>
+<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">4 operations<br>0 Added, 2 Modified, 0 Removed</span></a>
 </div></div></header>
-<nav><div class="container"><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#appendix">Appendix</a></div></nav>
+<aside class="preview-notice"><div class="container">
+<h2>Preview Notice</h2>
+<p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
+<p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p>
+</div></aside>
+<nav><div class="container"><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#appendix">Appendix</a></div></nav>
 <main class="container">
+<section id="rest-breaking"><h2>REST breaking changes <span class="count">3</span></h2><article class="finding severity-border-high" id="finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">
+<div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation parameter contract changes</h3></div>
+<p>The parameter remains an optional array of strings, but the exact source removes accepted include enum values for the 2026-12-06 special-file entries. Requests using those values are no longer described as valid, so the existing query contract narrows.</p>
+<p><strong>Evidence:</strong> Directory_ListFilesAndDirectoriesSegment changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:GET:?restype=directory&amp;comp=list.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
+0
+
+</article><article class="finding severity-border-high" id="finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">
+<div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation response contract changes</h3></div>
+<p>The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking.</p>
+<p><strong>Evidence:</strong> Directory_ListFilesAndDirectoriesSegment changed an existing response contract.; Compared REST operation: 2026-12-06:GET:?restype=directory&amp;comp=list.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
+1
+
+</article><article class="finding severity-border-high" id="finding-rest-3-parameter-contract-changed-2026-12-06-put">
+<div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation parameter contract changes</h3></div>
+<p>The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows.</p>
+<p><strong>Evidence:</strong> File_Create changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:PUT:/.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
+2
+
+</article></section>
+<section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-high" id="finding-derived-rest-contract-sdk-impact">
+<div class="finding-heading"><span class="severity severity-high">high</span><h3>REST contract changes require generated-client updates</h3></div>
+<p>The approved REST contract changes also alter generated client request or response handling and can break callers compiled against the previous contract.</p>
+<p><strong>Evidence:</strong> Approved REST finding: rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-3-parameter-contract-changed-2026-12-06-put.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
+<details class="finding-source-diff">
+<summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
+<div class="diff">
+<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
+<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">@@ -405,22 +389,6 @@ enum ListFilesIncludeType {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="context">   /** PermissionKey */</span>
+<span class="context">   PermissionKey,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Permissions */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Permissions,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** LinkCount */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  LinkCount,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NfsAttributes */</span>
+<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
+<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">@@ -557,36 +525,6 @@ model FilesAndDirectoriesListSegment {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="context">   @Xml.name(&quot;File&quot;)</span>
+<span class="context">   fileItems: FileItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The symbolic link items. */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
+<span class="remove">-  symLinkItems?: SymLinkItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The block device items. */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="omitted"> ... 23 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
+<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">@@ -691,116 +609,6 @@ model FileItem {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="context">   /** The permission key. */</span>
+<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the file. */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
+<span class="remove">-  linkCount?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The type of the file. */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;FileType&quot;)</span>
+<span class="remove">-  fileType?: NfsFileType;</span>
+<span class="omitted"> ... 103 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
+<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">@@ -284,22 +284,6 @@ union NfsFileType {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="context">   /** SymLink */</span>
+<span class="context">   SymLink: &quot;SymLink&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** BlockDevice */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** CharacterDevice */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Socket */</span>
+<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+</div>
+</details>
+
+</article></section>
 <section id="azure-compliance"><h2>Azure compliance <span class="compliance-status passed">passed</span></h2><div class="panel"><p class="empty-state good">Azure compliance passed with no mismatches.</p></div></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">2</span></h2><details class="intent-details" id="change-1">
 <summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Remove 2026-12-06 special-file listing options and response shapes <span class="count">1 operation</span></span></summary>
@@ -153,115 +267,6 @@
 </div>
 </article>
 </details></section>
-<section id="rest-breaking"><h2>REST breaking changes <span class="count">3</span></h2><article class="finding severity-border-high" id="finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">
-<div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation parameter contract changes</h3></div>
-<p>The parameter remains an optional array of strings, but the exact source removes accepted include enum values for the 2026-12-06 special-file entries. Requests using those values are no longer described as valid, so the existing query contract narrows.</p>
-<p><strong>Evidence:</strong> Directory_ListFilesAndDirectoriesSegment changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:GET:?restype=directory&amp;comp=list.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
-0
-
-</article><article class="finding severity-border-high" id="finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">
-<div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation response contract changes</h3></div>
-<p>The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking.</p>
-<p><strong>Evidence:</strong> Directory_ListFilesAndDirectoriesSegment changed an existing response contract.; Compared REST operation: 2026-12-06:GET:?restype=directory&amp;comp=list.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
-1
-
-</article><article class="finding severity-border-high" id="finding-rest-3-parameter-contract-changed-2026-12-06-put">
-<div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation parameter contract changes</h3></div>
-<p>The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows.</p>
-<p><strong>Evidence:</strong> File_Create changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:PUT:/.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
-2
-
-</article></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-high" id="finding-derived-rest-contract-sdk-impact">
-<div class="finding-heading"><span class="severity severity-high">high</span><h3>REST contract changes require generated-client updates</h3></div>
-<p>The approved REST contract changes also alter generated client request or response handling and can break callers compiled against the previous contract.</p>
-<p><strong>Evidence:</strong> Approved REST finding: rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-3-parameter-contract-changed-2026-12-06-put.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
-<details class="finding-source-diff">
-<summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
-<div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -405,22 +389,6 @@ enum ListFilesIncludeType {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
-<span class="context">   /** PermissionKey */</span>
-<span class="context">   PermissionKey,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Permissions */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Permissions,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** LinkCount */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  LinkCount,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NfsAttributes */</span>
-<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -557,36 +525,6 @@ model FilesAndDirectoriesListSegment {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
-<span class="context">   @Xml.name(&quot;File&quot;)</span>
-<span class="context">   fileItems: FileItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The symbolic link items. */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
-<span class="remove">-  symLinkItems?: SymLinkItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The block device items. */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="omitted"> ... 23 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -691,116 +609,6 @@ model FileItem {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
-<span class="context">   /** The permission key. */</span>
-<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the file. */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
-<span class="remove">-  linkCount?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The type of the file. */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;FileType&quot;)</span>
-<span class="remove">-  fileType?: NfsFileType;</span>
-<span class="omitted"> ... 103 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -284,22 +284,6 @@ union NfsFileType {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
-<span class="context">   /** SymLink */</span>
-<span class="context">   SymLink: &quot;SymLink&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** BlockDevice */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** CharacterDevice */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Socket */</span>
-<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
-</div>
-</details>
-
-</article></section>
 <section id="appendix"><details class="appendix-details">
 <summary>Appendix</summary>
 <div class="appendix-body">

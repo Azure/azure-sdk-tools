@@ -28,6 +28,24 @@
 | --- | --- | --- | --- | --- | --- |
 | high | Downstream | Generated SDK long-running operation behavior changes | The wire contract is unchanged, but replacing raw long-running-operation metadata and explicit ScenarioRuns.get polling links with TypeSpec Location-based final-state metadata can change whether existing asynchronous methods are exposed as long-running operations. Generated clients can consequently change from an immediate-response method to a poller or operation-handle method, breaking existing call sites, return-type expectations, and completion handling. | [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [scenarioConfiguration.tsp:L48-L84](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84), +2 more | n/a |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+<a id="finding-source-lro-metadata-representation-changed"></a>
+### Generated SDK long-running operation behavior changes
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The wire contract is unchanged, but replacing raw long-running-operation metadata and explicit ScenarioRuns.get polling links with TypeSpec Location-based final-state metadata can change whether existing asynchronous methods are exposed as long-running operations. Generated clients can consequently change from an immediate-response method to a poller or operation-handle method, breaking existing call sites, return-type expectations, and completion handling.
+- **Evidence:** Replacing raw OpenAPI or polling metadata with TypeSpec LRO metadata can change whether generated SDK methods are recognized as long-running.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp.
+- **TypeSpec source:** [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [scenarioConfiguration.tsp:L48-L84](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84), [scenarioRun.tsp:L44-L52](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52), [workspace.tsp:L69-L80](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80)
+
+
 ## ☁️ Azure Compliance
 
 **Status:** `passed`
@@ -89,24 +107,6 @@ No compliance mismatches found.
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #43308, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-<a id="finding-source-lro-metadata-representation-changed"></a>
-### Generated SDK long-running operation behavior changes
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The wire contract is unchanged, but replacing raw long-running-operation metadata and explicit ScenarioRuns.get polling links with TypeSpec Location-based final-state metadata can change whether existing asynchronous methods are exposed as long-running operations. Generated clients can consequently change from an immediate-response method to a poller or operation-handle method, breaking existing call sites, return-type expectations, and completion handling.
-- **Evidence:** Replacing raw OpenAPI or polling metadata with TypeSpec LRO metadata can change whether generated SDK methods are recognized as long-running.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp.
-- **TypeSpec source:** [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [scenarioConfiguration.tsp:L48-L84](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84), [scenarioRun.tsp:L44-L52](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52), [workspace.tsp:L69-L80](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80)
-
 
 ## 📎 Appendix
 

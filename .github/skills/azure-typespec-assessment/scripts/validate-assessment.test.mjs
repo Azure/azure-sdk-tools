@@ -398,10 +398,21 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
     ["html-impact"];
   const html = renderAssessmentHtml(document);
   assert.ok(
-    html.indexOf('<section id="azure-compliance">') <
-      html.indexOf('<section id="semantic-intents">'),
+    html.indexOf('<section id="rest-breaking">') <
+      html.indexOf('<section id="downstream-breaking">') &&
+      html.indexOf('<section id="downstream-breaking">') <
+        html.indexOf('<section id="azure-compliance">') &&
+      html.indexOf('<section id="azure-compliance">') <
+        html.indexOf('<section id="semantic-intents">'),
   );
   assert.match(html, /<!doctype html>/);
+  assert.match(html, /<aside class="preview-notice">/);
+  assert.match(html, /The TypeSpec Assessment Assistant is currently in preview/);
+  assert.match(html, /does not replace official ARM API/);
+  assert.ok(
+    html.indexOf('<aside class="preview-notice">') <
+      html.indexOf("<nav>"),
+  );
   assert.match(html, /<section id="semantic-intents">/);
   assert.match(html, /<section id="rest-breaking">/);
   assert.match(html, /<section id="downstream-breaking">/);
@@ -708,8 +719,10 @@ test("HTML collapses compliance findings with linked TypeSpec code", () => {
 
   const markdown = renderAssessment(document);
   assert.ok(
-    markdown.indexOf("## ☁️ Azure Compliance") <
-      markdown.indexOf("## 🧠 Semantic Understanding"),
+    markdown.indexOf("## 🛡️ Compatibility Assessment") <
+      markdown.indexOf("## ☁️ Azure Compliance") &&
+      markdown.indexOf("## ☁️ Azure Compliance") <
+        markdown.indexOf("## 🧠 Semantic Understanding"),
   );
   assert.match(
     markdown,

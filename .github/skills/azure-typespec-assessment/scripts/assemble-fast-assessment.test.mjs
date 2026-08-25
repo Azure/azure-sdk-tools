@@ -112,6 +112,9 @@ test("fast assessment renders full-style REST finding cards", () => {
   assert.match(html, /The response uses NewWidget/);
   assert.match(html, /TypeSpec source/);
   assert.match(html, /class="hero"/);
+  assert.match(html, /<aside class="preview-notice">/);
+  assert.match(html, /The TypeSpec Assessment Assistant is currently in preview/);
+  assert.match(html, /does not replace official ARM API/);
   assert.match(html, /<nav>/);
   assert.match(html, /Overall code safety/);
   assert.doesNotMatch(html, /Semantic intents/);
@@ -239,8 +242,10 @@ test("fast compliance uses the full report comparison structure", () => {
   assert.match(html, /diff-line remove/);
   assert.match(html, /diff-line add/);
   assert.ok(
-    html.indexOf('<section id="compliance">') <
-      html.indexOf('<section id="rest">'),
+    html.indexOf('<section id="rest">') <
+      html.indexOf('<section id="downstream">') &&
+      html.indexOf('<section id="downstream">') <
+        html.indexOf('<section id="compliance">'),
   );
 });
 

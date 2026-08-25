@@ -199,34 +199,54 @@ stages:
                   pathtoPublish: '$(Build.ArtifactStagingDirectory)/result'
                   artifactName: '${{ parameters.resultArtifactName }}'
 
-              - pwsh: eng/scripts/Mask-ApiReviewHubCallbackProofToken.ps1
-                displayName: 'Mask callback proof token'
-                condition: always()
-                env:
-                  ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
+- stage: Notify
+  displayName: 'Notify API Review Hub'
+  dependsOn: Generate
+  condition: always()
+  jobs:
+    - job: NotifyApiReviewHub
+      displayName: 'Notify API Review Hub of artifact completion'
+      pool:
+        name: azsdk-pool
+        demands: ImageOverride -equals ubuntu-24.04
+      steps:
+        - checkout: self
 
-              # API Review Hub treats this as a signal, then verifies the operation/run
-              # identity and downloads artifacts from ADO itself.
-              - task: AzurePowerShell@5
-                displayName: 'Notify API Review Hub of artifact completion'
-                condition: always()
-                inputs:
-                  azureSubscription: 'ADO to ARH Service Connection'
-                  azurePowerShellVersion: latestVersion
-                  pwsh: true
-                  ScriptType: FilePath
-                  ScriptPath: eng/scripts/Notify-ApiReviewHub.ps1
-                env:
-                  ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
-                  ARH_BASE_REF: ${{ parameters.baseRef }}
-                  ARH_BUILD_ID: $(Build.BuildId)
-                  ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
-                  ARH_CALLBACK_TOKEN_AUDIENCE: $(callbackTokenAudience)
-                  ARH_COMPLETION_CALLBACK_URL: $(completionCallbackUrl)
-                  ARH_GENERATION_RESULT: $(Agent.JobStatus)
-                  ARH_LANGUAGE: ${{ parameters.language }}
-                  ARH_OPERATION_ID: ${{ parameters.operationId }}
-                  ARH_PROJECT: $(System.TeamProject)
-                  ARH_REQUEST_MODE: ${{ parameters.requestMode }}
-                  ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
-                  ARH_TARGET_ARTIFACT_NAME: ${{ parameters.targetArtifactName }}
+        - task: DownloadBuildArtifacts@0
+          displayName: 'Download API review result summary'
+          continueOnError: true
+          inputs:
+            buildType: current
+            downloadType: single
+            artifactName: '${{ parameters.resultArtifactName }}'
+            downloadPath: '$(Pipeline.Workspace)'
+
+        - pwsh: eng/scripts/Mask-ApiReviewHubCallbackProofToken.ps1
+          displayName: 'Mask callback proof token'
+          env:
+            ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
+
+        # API Review Hub treats this as a signal, then verifies the operation/run
+        # identity and downloads artifacts from ADO itself.
+        - task: AzurePowerShell@5
+          displayName: 'Notify API Review Hub of artifact completion'
+          inputs:
+            azureSubscription: 'ADO to ARH Service Connection'
+            azurePowerShellVersion: latestVersion
+            pwsh: true
+            ScriptType: FilePath
+            ScriptPath: eng/scripts/Notify-ApiReviewHub.ps1
+          env:
+            ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
+            ARH_BASE_REF: ${{ parameters.baseRef }}
+            ARH_BUILD_ID: $(Build.BuildId)
+            ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
+            ARH_CALLBACK_TOKEN_AUDIENCE: $(callbackTokenAudience)
+            ARH_COMPLETION_CALLBACK_URL: $(completionCallbackUrl)
+            ARH_LANGUAGE: ${{ parameters.language }}
+            ARH_OPERATION_ID: ${{ parameters.operationId }}
+            ARH_PROJECT: $(System.TeamProject)
+            ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+            ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+            ARH_RESULT_SUMMARY_PATH: $(Pipeline.Workspace)/${{ parameters.resultArtifactName }}/result-summary.json
+            ARH_TARGET_ARTIFACT_NAME: ${{ parameters.targetArtifactName }}

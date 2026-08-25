@@ -21,7 +21,17 @@ $completionCallbackUrl = Get-RequiredEnvironmentVariable 'ARH_COMPLETION_CALLBAC
 $callbackTokenAudience = Get-RequiredEnvironmentVariable 'ARH_CALLBACK_TOKEN_AUDIENCE'
 $callbackProofToken = Get-RequiredEnvironmentVariable 'ARH_CALLBACK_PROOF_TOKEN'
 $operationId = Get-RequiredEnvironmentVariable 'ARH_OPERATION_ID'
-$generationResult = Get-RequiredEnvironmentVariable 'ARH_GENERATION_RESULT'
+$resultSummaryPath = Get-RequiredEnvironmentVariable 'ARH_RESULT_SUMMARY_PATH'
+$generationResult = 'Failed'
+if (Test-Path -Path $resultSummaryPath -PathType Leaf) {
+  $resultSummary = Get-Content -Raw -Path $resultSummaryPath | ConvertFrom-Json
+  if ($resultSummary.status -eq 'succeeded') {
+    $generationResult = 'Succeeded'
+  }
+  elseif ($resultSummary.status -ne 'failed') {
+    throw "Unsupported result summary status '$($resultSummary.status)'."
+  }
+}
 
 try {
   $tokenResponse = Get-AzAccessToken -ResourceUrl $callbackTokenAudience -AsSecureString -ErrorAction Stop

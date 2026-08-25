@@ -31,6 +31,52 @@
 | high | REST | Operation parameter contract changes | The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows. | [models.tsp:L284-L305](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305) | n/a |
 | high | REST | Operation response contract changes | The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking. | [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), +1 more | n/a |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+<a id="finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list"></a>
+### Operation parameter contract changes
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The parameter remains an optional array of strings, but the exact source removes accepted include enum values for the 2026-12-06 special-file entries. Requests using those values are no longer described as valid, so the existing query contract narrows.
+- **Evidence:** Directory_ListFilesAndDirectoriesSegment changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:GET:?restype=directory&comp=list.
+- **TypeSpec source:** [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), [models.tsp:L691-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806)
+
+
+<a id="finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list"></a>
+### Operation response contract changes
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking.
+- **Evidence:** Directory_ListFilesAndDirectoriesSegment changed an existing response contract.; Compared REST operation: 2026-12-06:GET:?restype=directory&comp=list.
+- **TypeSpec source:** [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), [models.tsp:L691-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806)
+
+
+<a id="finding-rest-3-parameter-contract-changed-2026-12-06-put"></a>
+### Operation parameter contract changes
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows.
+- **Evidence:** File_Create changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:PUT:/.
+- **TypeSpec source:** [models.tsp:L284-L305](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305)
+
+
+### Downstream Breaking Changes
+
+<a id="finding-derived-rest-contract-sdk-impact"></a>
+### REST contract changes require generated-client updates
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The approved REST contract changes also alter generated client request or response handling and can break callers compiled against the previous contract.
+- **Evidence:** Approved REST finding: rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-3-parameter-contract-changed-2026-12-06-put.
+- **TypeSpec source:** [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), [models.tsp:L691-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806), [models.tsp:L284-L305](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305)
+
+
 ## ☁️ Azure Compliance
 
 **Status:** `passed`
@@ -129,52 +175,6 @@ No compliance mismatches found.
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #44742, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-<a id="finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list"></a>
-### Operation parameter contract changes
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The parameter remains an optional array of strings, but the exact source removes accepted include enum values for the 2026-12-06 special-file entries. Requests using those values are no longer described as valid, so the existing query contract narrows.
-- **Evidence:** Directory_ListFilesAndDirectoriesSegment changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:GET:?restype=directory&comp=list.
-- **TypeSpec source:** [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), [models.tsp:L691-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806)
-
-
-<a id="finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list"></a>
-### Operation response contract changes
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking.
-- **Evidence:** Directory_ListFilesAndDirectoriesSegment changed an existing response contract.; Compared REST operation: 2026-12-06:GET:?restype=directory&comp=list.
-- **TypeSpec source:** [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), [models.tsp:L691-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806)
-
-
-<a id="finding-rest-3-parameter-contract-changed-2026-12-06-put"></a>
-### Operation parameter contract changes
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows.
-- **Evidence:** File_Create changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:PUT:/.
-- **TypeSpec source:** [models.tsp:L284-L305](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305)
-
-
-### Downstream Breaking Changes
-
-<a id="finding-derived-rest-contract-sdk-impact"></a>
-### REST contract changes require generated-client updates
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The approved REST contract changes also alter generated client request or response handling and can break callers compiled against the previous contract.
-- **Evidence:** Approved REST finding: rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-3-parameter-contract-changed-2026-12-06-put.
-- **TypeSpec source:** [models.tsp:L405-L426](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426), [models.tsp:L557-L592](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592), [models.tsp:L691-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806), [models.tsp:L284-L305](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305)
-
 
 ## 📎 Appendix
 

@@ -32,6 +32,24 @@
 | medium | Compliance | ConnectionAnalyzer lifecycle operations do not use the documented ARM templates | The documented CRUDL pattern declares resource operations with the ArmResource templates and reserves custom actions for behavior outside CRUDL. The changed ConnectionAnalyzer lifecycle uses a Legacy.RoutedOperations alias plus explicit HTTP verbs and routes for create, delete, update, get, and list. | [NetworkWatcher.tsp:L41-L487](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L487), [NetworkWatcher.tsp:L470-L552](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552) | [The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/) |
 | medium | Compliance | FirewallPolicyKubeSelectorGroup does not use the documented child-resource model template | The documented child-resource pattern uses ProxyResource<TProperties> and spreads ResourceNameParameter<T>. FirewallPolicyKubeSelectorGroup instead extends SubResourceModel, declares properties separately, and manually declares its path/key/segment name. | [FirewallPolicyKubeSelectorGroup.tsp:L1-L97](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97) | [The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/) |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+<a id="finding-source-service-gateway-actions-change-from-lro-to-synchronous"></a>
+### Generated service gateway update methods can change from pollers to synchronous calls
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** The older REST API versions remain compatible, but generated SDKs that move to 2025-09-01 can expose ServiceGateways_UpdateAddressLocations and ServiceGateways_UpdateServices as synchronous methods instead of long-running poller or operation-handle methods. Existing call sites can stop compiling because the return type and completion-handling pattern change, and runtime code that waits for polling completion must instead consume the immediate 200 response.
+- **Evidence:** Both existing operations change from 202/204 responses with Location polling to a synchronous 200 response in 2025-09-01.; The TypeSpec replaces ArmResourceActionAsync with version-gated ArmResourceActionSync operations.
+- **TypeSpec source:** [ServiceGateway.tsp:L49-L77](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L49-L77), [ServiceGateway.tsp:L126-L135](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L126-L135), [ServiceGateway.tsp:L138-L165](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L138-L165), [ServiceGateway.tsp:L167-L176](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L167-L176), [ServiceGateway.tsp:L179-L200](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L179-L200)
+
+
 ## ☁️ Azure Compliance
 
 **Status:** `failed`
@@ -722,24 +740,6 @@ alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations<
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #44988, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-<a id="finding-source-service-gateway-actions-change-from-lro-to-synchronous"></a>
-### Generated service gateway update methods can change from pollers to synchronous calls
-
-- **Severity:** high
-- **Confidence:** high
-- **Summary:** The older REST API versions remain compatible, but generated SDKs that move to 2025-09-01 can expose ServiceGateways_UpdateAddressLocations and ServiceGateways_UpdateServices as synchronous methods instead of long-running poller or operation-handle methods. Existing call sites can stop compiling because the return type and completion-handling pattern change, and runtime code that waits for polling completion must instead consume the immediate 200 response.
-- **Evidence:** Both existing operations change from 202/204 responses with Location polling to a synchronous 200 response in 2025-09-01.; The TypeSpec replaces ArmResourceActionAsync with version-gated ArmResourceActionSync operations.
-- **TypeSpec source:** [ServiceGateway.tsp:L49-L77](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L49-L77), [ServiceGateway.tsp:L126-L135](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L126-L135), [ServiceGateway.tsp:L138-L165](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L138-L165), [ServiceGateway.tsp:L167-L176](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L167-L176), [ServiceGateway.tsp:L179-L200](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L179-L200)
-
 
 ## 📎 Appendix
 

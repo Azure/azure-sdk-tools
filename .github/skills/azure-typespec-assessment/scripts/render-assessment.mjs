@@ -745,12 +745,12 @@ export function renderAssessment(assessment) {
     renderHeader(assessment),
     renderExecutiveSummary(assessment),
     renderActionRequired(assessment),
+    renderCompatibility(assessment),
     renderCompliance(assessment),
     "## 🧠 Semantic Understanding\n",
     renderKeyChanges(assessment),
     "",
     renderRestRepresentationPrompt(assessment),
-    renderCompatibility(assessment),
     renderAppendix(assessment),
   ].join("\n");
 }

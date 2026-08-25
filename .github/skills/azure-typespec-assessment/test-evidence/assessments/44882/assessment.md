@@ -28,6 +28,16 @@
 | --- | --- | --- | --- | --- | --- |
 | medium | Compliance | Replaced preview version remains in the version enum | The stable 2026-06-01 version is added without removing the replaced 2025-05-01-preview enum member, contrary to the documented stable-after-preview procedure. | [main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48) | [The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the "go" scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance.](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+None detected.
+
 ## ☁️ Azure Compliance
 
 **Status:** `failed`
@@ -140,16 +150,6 @@ enum Versions {
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #44882, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-None detected.
 
 ## 📎 Appendix
 

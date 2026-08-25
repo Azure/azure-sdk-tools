@@ -26,6 +26,16 @@
 
 No action required from the assessed dimensions.
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+None detected.
+
 ## ☁️ Azure Compliance
 
 **Status:** `not-assessed`
@@ -69,16 +79,6 @@ No compliance mismatches found.
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #45536, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-None detected.
 
 ## 📎 Appendix
 

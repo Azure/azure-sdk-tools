@@ -28,6 +28,16 @@
 | --- | --- | --- | --- | --- | --- |
 | medium | Compliance | @@clientLocation customizations are outside client.tsp | Expected: the Clients documentation says customizations should always be made in client.tsp alongside main.tsp. Actual: five @@clientLocation decorators, which the decorator reference defines as changing operation location in the client, are added in back-compatible.tsp. Gap: these client customizations use a nonstandard customization file instead of client.tsp. | [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), +1 more | [The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+None detected.
+
 ## ☁️ Azure Compliance
 
 **Status:** `failed`
@@ -135,16 +145,6 @@ Clients, Customizations: "Customizations SHOULD always be made in a file named `
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #44454, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-None detected.
 
 ## 📎 Appendix
 

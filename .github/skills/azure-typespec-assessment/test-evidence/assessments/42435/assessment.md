@@ -28,6 +28,24 @@
 | --- | --- | --- | --- | --- | --- |
 | medium | Downstream | Generated SDK result becomes pageable | Marking the existing operation with @list preserves its wire route and payload but can change generated SDK methods from returning one response object to exposing pageable iteration, breaking callers that depend on the previous return shape. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) | n/a |
 
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+<a id="finding-source-paging-metadata-added"></a>
+### Generated SDK result becomes pageable
+
+- **Severity:** medium
+- **Confidence:** high
+- **Summary:** Marking the existing operation with @list preserves its wire route and payload but can change generated SDK methods from returning one response object to exposing pageable iteration, breaking callers that depend on the previous return shape.
+- **Evidence:** Added paging metadata can change generated SDK return and iteration shapes while preserving the REST wire contract.; Changed TypeSpec source: specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp.
+- **TypeSpec source:** [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84)
+
+
 ## ☁️ Azure Compliance
 
 **Status:** `passed`
@@ -66,24 +84,6 @@ No compliance mismatches found.
 Need the complete REST representation for every affected operation? Use this prompt:
 
 `Using assessment.json for PR #42435, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
-
-## 🛡️ Compatibility Assessment
-
-### REST Breaking Changes
-
-None detected.
-
-### Downstream Breaking Changes
-
-<a id="finding-source-paging-metadata-added"></a>
-### Generated SDK result becomes pageable
-
-- **Severity:** medium
-- **Confidence:** high
-- **Summary:** Marking the existing operation with @list preserves its wire route and payload but can change generated SDK methods from returning one response object to exposing pageable iteration, breaking callers that depend on the previous return shape.
-- **Evidence:** Added paging metadata can change generated SDK return and iteration shapes while preserving the REST wire contract.; Changed TypeSpec source: specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp.
-- **TypeSpec source:** [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84)
-
 
 ## 📎 Appendix
 

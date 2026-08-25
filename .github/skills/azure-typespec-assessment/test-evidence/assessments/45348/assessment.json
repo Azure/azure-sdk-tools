@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "overallConfidence": "medium",
+  "schemaVersion": 2,
+  "overallConfidence": "high",
   "pr": 45348,
   "title": "Fix cross-version breaking changes for 2026-11 previews",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/45348",
@@ -12,13 +12,16 @@
   },
   "head": {
     "commit": "b209254310b3e569b16210d3c59fc8b8ac3b84b4",
-    "hasWorkingTreeChanges": false
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
   },
-  "result": "rest-compatibility-mitigation",
-  "artifactEvidence": {
-    "autorest": "base/head succeeded; both preview OpenAPI files switch common-type references from v6 to v5",
-    "tcgc": "base/head succeeded; client model reflects aligned ARM envelope types"
-  },
+  "projects": [
+    "specification/deviceregistry/DeviceRegistry.Management"
+  ],
   "assessmentEvidence": {
     "changedTypeSpec": [
       {
@@ -73,34 +76,88 @@
         "status": "succeeded",
         "evidence": "artifacts/specification__deviceregistry__DeviceRegistry.Management/head/tcgc"
       }
-    ],
-    "repositoryValidation": [
-      {
-        "project": "specification/deviceregistry/DeviceRegistry.Management",
-        "tool": "TypeSpecValidation",
-        "status": "skipped",
-        "durationMs": 0,
-        "reason": "Skipped by explicit --skip-validation request."
-      }
     ]
+  },
+  "artifactEvidence": {
+    "autorest": "base/head succeeded; both preview OpenAPI files switch common-type references from v6 to v5",
+    "tcgc": "base/head succeeded; client model reflects aligned ARM envelope types"
   },
   "dimensions": {
     "semanticUnderstanding": {
       "items": [
         {
-          "id": "pr-45348-intent",
-          "intent": "Align the two new Device Registry previews with ARM common-types v5 used by prior versions.",
+          "id": "intent-arm-common-types-v5",
+          "intent": "Align the new Device Registry previews with ARM common-types v5",
           "transformationChain": [
-            "Change armCommonTypesVersion from v6 to v5 for both preview versions."
+            "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI."
+          ],
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Use ARM common types version 5 for Device Registry",
+              "operationIds": [
+                "SchemaRegistries_CreateOrReplace",
+                "Namespaces_CreateOrReplace"
+              ],
+              "apiVersions": [
+                "2026-11-01-preview",
+                "2026-11-02-preview"
+              ],
+              "aspects": [
+                {
+                  "field": "ARM common-types dependency",
+                  "before": "The two preview versions reference common-types v6.",
+                  "after": "Both preview versions reference common-types v5."
+                }
+              ],
+              "effect": "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.",
+              "typeSpecCause": "Change @armCommonTypesVersion from v6 to v5 on the 2026-11-01-preview and 2026-11-02-preview version members.",
+              "sourceReferences": [
+                {
+                  "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+                  "revision": "head",
+                  "startLine": 75,
+                  "endLine": 84,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+                  "oldStart": 75,
+                  "oldCount": 12,
+                  "newStart": 75,
+                  "newCount": 12,
+                  "context": "enum Versions {",
+                  "lines": [
+                    "   v2026_04_01: \"2026-04-01\",",
+                    " ",
+                    "   @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.\")",
+                    "-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)",
+                    "+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)",
+                    "   v2026_11_01_preview: \"2026-11-01-preview\",",
+                    " ",
+                    "   @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.\")",
+                    "   @Azure.Core.previewVersion",
+                    "-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)",
+                    "+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)",
+                    "   v2026_11_02_preview: \"2026-11-02-preview\",",
+                    " }",
+                    " "
+                  ]
+                }
+              ],
+              "linkedFindingIds": []
+            }
           ],
           "restRepresentation": {
-            "summary": "Generated OpenAPI references v5 ARM envelopes instead of v6, removing cross-version identity, SKU, plan, and requiredness drift.",
+            "summary": "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.",
             "operations": [
               {
                 "operationId": "SchemaRegistries_CreateOrReplace",
                 "apiVersions": [
                   "2026-11-01-preview",
-                  "2026-11-15-preview"
+                  "2026-11-02-preview"
                 ],
                 "method": "PUT",
                 "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
@@ -139,7 +196,7 @@
                 "operationId": "Namespaces_CreateOrReplace",
                 "apiVersions": [
                   "2026-11-01-preview",
-                  "2026-11-15-preview"
+                  "2026-11-02-preview"
                 ],
                 "method": "PUT",
                 "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
@@ -198,48 +255,17 @@
     "azureCompliance": {
       "status": "passed",
       "summary": {
-        "patternsAssessed": 2,
+        "patternsAssessed": 1,
         "findingCount": 0
       },
       "documents": [
         {
-          "title": "Azure.ResourceManager decorators",
-          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/",
-          "section": "@armCommonTypesVersion",
-          "guidanceExcerpt": "This decorator is used either on a namespace or a version enum value to indicate the version of the Azure Resource Manager common-types to use for refs in emitted Swagger files.",
-          "applicableGuidance": "A version enum member may select the ARM common-types version it emits.",
-          "evidence": "Both changed preview members select Azure.ResourceManager.CommonTypes.Versions.v5.",
-          "sourceReferences": [
-            {
-              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
-              "revision": "head",
-              "startLine": 75,
-              "endLine": 84,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
-            },
-            {
-              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
-              "revision": "head",
-              "startLine": 78,
-              "endLine": 78,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78"
-            },
-            {
-              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
-              "revision": "head",
-              "startLine": 83,
-              "endLine": 83,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
-            }
-          ]
-        },
-        {
-          "title": "arm-common-types-version rule",
+          "title": "ARM common types version rule",
           "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/",
-          "section": "Correct per-version placement",
-          "guidanceExcerpt": "If the common types version is updated in later versions, the decorator should appear on each version enum member.",
-          "applicableGuidance": "Services with varying historical common-types versions use per-version decorators.",
-          "evidence": "The project already uses per-version declarations and the PR preserves that pattern.",
+          "section": "Models and Enums",
+          "guidanceExcerpt": ". Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining child resources 7. Defining custom resource actions 8. Customizing operations with traits 9. Versioning 10. Complete Example 11. Advanced Topics ARM Service 1. Installing Tools 2. Defining the Service 3. Defining ",
+          "applicableGuidance": "The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern.",
+          "evidence": "The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern.",
           "sourceReferences": [
             {
               "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
@@ -247,20 +273,6 @@
               "startLine": 75,
               "endLine": 84,
               "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
-            },
-            {
-              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
-              "revision": "head",
-              "startLine": 78,
-              "endLine": 78,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78"
-            },
-            {
-              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
-              "revision": "head",
-              "startLine": 83,
-              "endLine": 83,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
             }
           ]
         }
@@ -269,11 +281,29 @@
     }
   },
   "errors": [],
-  "projects": [
-    "specification/deviceregistry/DeviceRegistry.Management"
-  ],
   "assessmentDuration": {
-    "totalMs": 688675,
-    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
+    "totalMs": 134150,
+    "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
+    "phases": {
+      "deterministicPreparationMs": 7595,
+      "deterministicAssemblyMs": 993,
+      "judgmentMs": 125554,
+      "renderMs": 8
+    },
+    "breakdown": {
+      "semanticUnderstandingMs": 13452,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 36,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 36,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 112506,
+      "complianceQuality": "estimated/measured",
+      "overheadMs": 8120,
+      "overheadQuality": "measured",
+      "totalMs": 134150,
+      "totalQuality": "measured",
+      "searchRoute": "bounded official document evidence"
+    }
   }
 }

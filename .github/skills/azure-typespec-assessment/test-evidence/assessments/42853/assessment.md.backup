@@ -1,0 +1,219 @@
+# 📋 TypeSpec Assessment
+
+**PR:** [#42853 - Add 2026-02-01 API version for RecoveryServices and RecoveryServicesBackup](https://github.com/Azure/azure-rest-api-specs/pull/42853)
+
+**Overall confidence:** 🟢 high<br>
+**Overall code safety:** 🔴 Low
+
+**Baseline:** `519e87e016492a37ce9ea6ac0fdf80d26767f47d`<br>
+**Head:** `efe76fb07ac03d9c54e2c64de15ef3ff90fc4030`; working-tree changes: false<br>
+**Total assessment time:** 13m 33s
+
+## 📌 Executive Summary
+
+| Dimension | Result | Findings |
+| --- | --- | ---: |
+| Semantic understanding | ✅ Assessed — 1 intent(s), 4 operation(s) | n/a |
+| REST compatibility | ✅ No breaks detected | 0 |
+| Downstream compatibility | ❌ Issues found | 1 |
+| Azure compliance | ❌ failed | 2 |
+
+**Scope:** 1 intent(s), 4 affected operation(s), 2 project(s).<br>
+**Changes:** 0 added, 4 modified, 0 removed.<br>
+**Highest severity:** high.
+
+## 🎯 Action Required
+
+| Severity | Area | Finding | Why it matters | Code | Guidance |
+| --- | --- | --- | --- | --- | --- |
+| high | Downstream | Existing Go methods move between generated clients | Existing Go construction and method calls can stop compiling although the REST contract is unchanged. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) | n/a |
+| medium | Compliance | The replaced preview version remains in the stable-version history | RecoveryServicesBackup keeps v2026_01_31_preview and its preview-only declarations while appending v2026_02_01, contrary to the documented stable-after-preview workflow. | [RecoveryPointResource.tsp:L80-L80](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp#L80-L80), [main.tsp:L62-L71](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71), +29 more | [A stable version replacing a preview removes the preview member and reverses preview-only additions.](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) |
+| low | Compliance | Edited client customizations remain outside client.tsp | The client guide says customizations should always be authored in client.tsp, but the edited @@clientLocation declarations are in back-compatible.tsp. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112), [back-compatible.tsp:L70-L70](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L70-L70), +3 more | [Client hierarchy customizations belong in client.tsp.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
+
+## 🧠 Semantic Understanding
+
+<a id="intent-1-add-a-stable-api-version-while-changing-go-clien"></a>
+### 1. Add a stable API version while changing Go client placement for four existing operations.
+
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ✏️ Modified | client location | Baseline metadata and generated client shape. | Go is added to the client-location exclusions, moving the four methods to a different generated Go client. |
+
+**TypeSpec change:** Extend the existing `@@clientLocation` customizations to exclude Go.
+
+```diff
+--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp
++++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp
+@@ -67,15 +67,15 @@ using Microsoft.RecoveryServices;
+
+ @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,
+   Microsoft.RecoveryServices,
+-  "!csharp"
++  "!csharp,!go"
+ );
+ @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,
+   Microsoft.RecoveryServices,
+-  "!csharp"
++  "!csharp,!go"
+ );
+ @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,
+ ... 6 later diff lines omitted; full hunk is in assessment.json ...
+```
+
+```diff
+--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp
++++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp
+@@ -107,7 +107,7 @@ using Microsoft.RecoveryServices;
+
+ @@clientLocation(RecoveryPoints.moveRecoveryPoint,
+   Microsoft.RecoveryServices,
+-  "!csharp"
++  "!csharp,!go"
+ );
+
+ @@clientLocation(ProtectionContainersOperationGroup.refresh,
+```
+
+**Impact:** [Existing Go methods move between generated clients](#finding-pr-42853-go-client-move), [The replaced preview version remains in the stable-version history](#finding-compliance-42853-stable-after-preview), [Edited client customizations remain outside client.tsp](#finding-compliance-42853-client-file)<br>
+**Source:** [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112)
+
+Need the complete REST representation for every affected operation? Use this prompt:
+
+`Using assessment.json for PR #42853, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
+
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+<a id="finding-pr-42853-go-client-move"></a>
+### Existing Go methods move between generated clients
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** Existing Go construction and method calls can stop compiling although the REST contract is unchanged.
+- **Evidence:** The clientLocation scope changes from !csharp to !csharp,!go.
+- **TypeSpec source:** [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112)
+
+
+## ☁️ Azure Compliance
+
+**Status:** `failed`
+
+### Compliance Findings
+
+<a id="finding-compliance-42853-stable-after-preview"></a>
+### The replaced preview version remains in the stable-version history
+
+**Severity:** medium
+
+**Gap:** RecoveryServicesBackup keeps v2026_01_31_preview and its preview-only declarations while appending v2026_02_01, contrary to the documented stable-after-preview workflow.
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+A stable version replacing a preview removes the preview member and reverses preview-only additions.
+
+**Guidance:** [Adding a Stable Version when the Last Version was Preview — Making changes to your TypeSpec spec](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/)
+
+_The guidance requires deleting the replaced preview declarations; it does not provide replacement TypeSpec for this case._
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+RecoveryServicesBackup retains v2026_01_31_preview beside v2026_02_01 and retains preview-only declarations with @removed(v2026_02_01).
+
+**[main.tsp:L62-L71](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71)**
+
+```tsp
+  /**
+   * The 2026-01-31-preview API version.
+   */
+  v2026_01_31_preview: "2026-01-31-preview",
+
+  /**
+   * The 2026-02-01 API version.
+   */
+  v2026_02_01: "2026-02-01",
+}
+```
+
+</details>
+
+<a id="finding-compliance-42853-client-file"></a>
+### Edited client customizations remain outside client.tsp
+
+**Severity:** low
+
+**Gap:** The client guide says customizations should always be authored in client.tsp, but the edited @@clientLocation declarations are in back-compatible.tsp.
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+Client hierarchy customizations belong in client.tsp.
+
+**Guidance:** [Clients — Customizations](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/)
+
+**Documented client.tsp customization example**
+
+```tsp
+import "@azure-tools/typespec-client-generator-core";
+using Azure.ClientGenerator.Core;
+
+@@clientLocation(Feeds.feed, PetStore);
+@@clientLocation(Pets.pet, PetStore);
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+The edited @@clientLocation declarations remain in back-compatible.tsp.
+
+**[back-compatible.tsp:L68-L79](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L68-L79)**
+
+```tsp
+@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,
+  Microsoft.RecoveryServices,
+  "!csharp,!go"
+);
+@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,
+  Microsoft.RecoveryServices,
+  "!csharp,!go"
+);
+@@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,
+  Microsoft.RecoveryServices,
+  "!csharp,!go"
+);
+```
+
+</details>
+
+## 📎 Appendix
+
+### Assessment Errors
+
+None.
+
+### Code-to-Guidance Evidence
+
+| Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
+| --- | --- | --- | --- | --- |
+| Mismatch | [Adding a Stable Version when the Last Version was Preview - Making changes to your TypeSpec spec](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) | For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum. | RecoveryServicesBackup retains v2026_01_31_preview beside v2026_02_01 and retains preview-only declarations with @removed(v2026_02_01). | [RecoveryPointResource.tsp:L80-L80](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp#L80-L80), [main.tsp:L62-L71](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71), [models.tsp:L271-L271](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L271-L271), +28 more |
+| Mismatch | [Clients - Customizations](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | The edited @@clientLocation declarations remain in back-compatible.tsp. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112), [back-compatible.tsp:L70-L70](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L70-L70), [back-compatible.tsp:L74-L74](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L74-L74), +2 more |
+
+### Tooling Used
+
+- `@azure-tools/typespec-autorest`
+- `@azure-tools/typespec-client-generator-core`
+
+### Artifact Evidence
+
+- **autorest:** Preserved base/head emitter runs succeeded for both projects; head adds stable 2026-02-01 OpenAPI artifacts without changing any previously emitted API version.
+- **tcgc:** Preserved base/head generic TCGC output adds 2026-02-01 and changes the default API version; independent base/head source comparison confirms four @@clientLocation scopes changed from !csharp to !csharp,!go.

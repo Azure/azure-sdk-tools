@@ -1,0 +1,144 @@
+# 📋 TypeSpec Assessment
+
+**PR:** [#44742 - Removed NFSv2 from STG103/104 TypeSpec & Swagger](https://github.com/Azure/azure-rest-api-specs/pull/44742)
+
+**Overall confidence:** 🟢 high<br>
+**Overall code safety:** 🔴 Low
+
+**Baseline:** `af067c9fc987b837f27a34b86e3ac591507711c9 (e75a07cd7ea1b2207190a362305db02b639715ec)`<br>
+**Head:** `656ca8b0741973760f8a60ee0fd293ba9c31e708`; working-tree changes: false<br>
+**Total assessment time:** 12m 46s
+
+## 📌 Executive Summary
+
+| Dimension | Result | Findings |
+| --- | --- | ---: |
+| Semantic understanding | ✅ Assessed — 1 intent(s), 1 operation(s) | n/a |
+| REST compatibility | ❌ Issues found | 1 |
+| Downstream compatibility | ❌ Issues found | 1 |
+| Azure compliance | ✅ passed | 0 |
+
+**Scope:** 1 intent(s), 1 affected operation(s), 1 project(s).<br>
+**Changes:** 0 added, 0 modified, 1 removed.<br>
+**Highest severity:** high.
+
+## 🎯 Action Required
+
+| Severity | Area | Finding | Why it matters | Code | Guidance |
+| --- | --- | --- | --- | --- | --- |
+| high | Downstream | Generated SDK models, properties, and enum values are removed | Regenerated SDKs remove the public NFSv2 models, response properties, and enum values, so existing source code that references them no longer compiles and response handling loses those shapes. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806) | n/a |
+| high | REST | Stable API response and enum surface is removed | Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806) | n/a |
+
+## 🧠 Semantic Understanding
+
+<a id="intent-1-remove-nfsv2-file-types-include-values-response-"></a>
+### 1. Remove NFSv2 file types, include values, response fields, and item models from the 2026-12-06 File Storage API.
+
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ➖ Removed | 2026-12-06 File Storage contracts | NFSv2 file types, include values, response fields, and item models are present. | — |
+
+**TypeSpec change:** Delete versioned enum values.
+
+```diff
+--- a/specification/storage/data-plane/FileStorage/models.tsp
++++ b/specification/storage/data-plane/FileStorage/models.tsp
+@@ -284,22 +284,6 @@ union NfsFileType {
+
+   /** SymLink */
+   SymLink: "SymLink",
+-
+-  /** BlockDevice */
+-  @added(Versions.v2026_12_06)
+-  BlockDevice: "BlockDevice",
+-
+-  /** CharacterDevice */
+-  @added(Versions.v2026_12_06)
+-  CharacterDevice: "CharacterDevice",
+-
+ ... 10 later diff lines omitted; full hunk is in assessment.json ...
+```
+
+```diff
+--- a/specification/storage/data-plane/FileStorage/models.tsp
++++ b/specification/storage/data-plane/FileStorage/models.tsp
+@@ -405,22 +389,6 @@ enum ListFilesIncludeType {
+
+   /** PermissionKey */
+   PermissionKey,
+-
+-  /** Permissions */
+-  @added(Versions.v2026_12_06)
+-  Permissions,
+-
+-  /** LinkCount */
+-  @added(Versions.v2026_12_06)
+-  LinkCount,
+-
+ ... 10 later diff lines omitted; full hunk is in assessment.json ...
+```
+
+4 additional TypeSpec hunks omitted; complete diffs are in `assessment.json`.
+
+**Impact:** [Stable API response and enum surface is removed](#finding-pr-44742-rest-removal), [Generated SDK models, properties, and enum values are removed](#finding-pr-44742-sdk-removal)<br>
+**Source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
+
+Need the complete REST representation for every affected operation? Use this prompt:
+
+`Using assessment.json for PR #44742, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
+
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+<a id="finding-pr-44742-rest-removal"></a>
+### Stable API response and enum surface is removed
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes.
+- **Evidence:** AutoRest removes enum values and response schemas from a stable API version.
+- **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
+
+
+### Downstream Breaking Changes
+
+<a id="finding-pr-44742-sdk-removal"></a>
+### Generated SDK models, properties, and enum values are removed
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** Regenerated SDKs remove the public NFSv2 models, response properties, and enum values, so existing source code that references them no longer compiles and response handling loses those shapes.
+- **Evidence:** The generated client surface removes the NFSv2 models, response properties, and enum values together with the stable REST contract.
+- **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
+
+
+## ☁️ Azure Compliance
+
+**Status:** `passed`
+
+### Compliance Findings
+
+No compliance mismatches found.
+
+## 📎 Appendix
+
+### Assessment Errors
+
+None.
+
+### Code-to-Guidance Evidence
+
+| Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
+| --- | --- | --- | --- | --- |
+| Matched | [TypeSpec.Versioning guide - Current-state modeling](https://typespec.io/docs/libraries/versioning/guide/) | The TypeSpec should represent the current state of the API. | The removed NFSv2 declarations existed only in the latest unreleased version and should no longer exist in any version. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806), [models.tsp:L287-L302](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423), +4 more |
+
+### Tooling Used
+
+- `@azure-tools/typespec-autorest`
+- `@azure-tools/typespec-client-generator-core`
+
+### Artifact Evidence
+
+- **autorest:** base/head succeeded; OpenAPI removes enum values, properties, and schemas
+- **tcgc:** base/head succeeded; client models and properties are removed

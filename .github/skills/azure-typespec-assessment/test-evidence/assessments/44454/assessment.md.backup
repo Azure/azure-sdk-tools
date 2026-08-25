@@ -1,0 +1,172 @@
+# 📋 TypeSpec Assessment
+
+**PR:** [#44454 - Mitigate operation group casing breaking changes for azure-mgmt-elastic](https://github.com/Azure/azure-rest-api-specs/pull/44454)
+
+**Overall confidence:** 🟢 high<br>
+**Overall code safety:** 🟡 Medium
+
+**Baseline:** `e8420e45fdaf12e2c72417d379c454f1fc8ce1e6`<br>
+**Head:** `b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2`; working-tree changes: false<br>
+**Total assessment time:** 10m 29s
+
+## 📌 Executive Summary
+
+| Dimension | Result | Findings |
+| --- | --- | ---: |
+| Semantic understanding | ✅ Assessed — 1 intent(s), 3 operation(s) | n/a |
+| REST compatibility | ✅ No breaks detected | 0 |
+| Downstream compatibility | ✅ No breaks detected | 0 |
+| Azure compliance | ❌ failed | 1 |
+
+**Scope:** 1 intent(s), 3 affected operation(s), 1 project(s).<br>
+**Changes:** 0 added, 3 modified, 0 removed.<br>
+**Highest severity:** low.
+
+## 🎯 Action Required
+
+| Severity | Area | Finding | Why it matters | Code | Guidance |
+| --- | --- | --- | --- | --- | --- |
+| low | Compliance | New client hierarchy customizations are outside client.tsp | The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention. | [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), +2 more | [Client hierarchy customizations belong in client.tsp.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
+
+## 🧠 Semantic Understanding
+
+<a id="intent-1-restore-released-python-pascalcase-operation-gro"></a>
+### 1. Restore released Python PascalCase operation-group names without changing other languages.
+
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ✏️ Modified | client shape | Baseline metadata and generated client shape. | Restore released Python PascalCase operation-group names without changing other languages. |
+
+**TypeSpec change:** Exclude Python from shared camelCase locations.
+
+```diff
+--- a/specification/elastic/Elastic.Management/back-compatible.tsp
++++ b/specification/elastic/Elastic.Management/back-compatible.tsp
+@@ -94,13 +94,23 @@ using Microsoft.Elastic;
+ @@clientLocation(
+   ElasticMonitorResources.listAssociatedTrafficFiltersList,
+   "listAssociatedTrafficFilters",
+-  "!csharp"
++  "!csharp,!python"
++);
++@@clientLocation(
++  ElasticMonitorResources.listAssociatedTrafficFiltersList,
++  "ListAssociatedTrafficFilters",
++  "python"
+ );
+ @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, "list");
+ ... 13 later diff lines omitted; full hunk is in assessment.json ...
+```
+
+```diff
+--- a/specification/elastic/Elastic.Management/back-compatible.tsp
++++ b/specification/elastic/Elastic.Management/back-compatible.tsp
+@@ -109,7 +119,12 @@ using Microsoft.Elastic;
+ @@clientLocation(
+   ElasticMonitorResources.createAndAssociatePLFilterCreate,
+   "createAndAssociatePLFilter",
+-  "!csharp"
++  "!csharp,!python"
++);
++@@clientLocation(
++  ElasticMonitorResources.createAndAssociatePLFilterCreate,
++  "CreateAndAssociatePLFilter",
++  "python"
+ );
+ @@clientName(
+ ... 1 later diff lines omitted; full hunk is in assessment.json ...
+```
+
+**Impact:** [New client hierarchy customizations are outside client.tsp](#finding-compliance-44454-client-file)<br>
+**Source:** [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131)
+
+Need the complete REST representation for every affected operation? Use this prompt:
+
+`Using assessment.json for PR #44454, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
+
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### Downstream Breaking Changes
+
+None detected.
+
+## ☁️ Azure Compliance
+
+**Status:** `failed`
+
+### Compliance Findings
+
+<a id="finding-compliance-44454-client-file"></a>
+### New client hierarchy customizations are outside client.tsp
+
+**Severity:** low
+
+**Gap:** The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention.
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+Client hierarchy customizations belong in client.tsp.
+
+**Guidance:** [Clients — Customizations](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/)
+
+**Documented client.tsp customization example**
+
+```tsp
+import "@azure-tools/typespec-client-generator-core";
+using Azure.ClientGenerator.Core;
+
+@@clientLocation(Feeds.feed, PetStore);
+@@clientLocation(Pets.pet, PetStore);
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+The new customizations are in back-compatible.tsp despite an existing imported client.tsp.
+
+**[back-compatible.tsp:L94-L103](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L103)**
+
+```tsp
+@@clientLocation(
+  ElasticMonitorResources.listAssociatedTrafficFiltersList,
+  "listAssociatedTrafficFilters",
+  "!csharp,!python"
+);
+@@clientLocation(
+  ElasticMonitorResources.listAssociatedTrafficFiltersList,
+  "ListAssociatedTrafficFilters",
+  "python"
+);
+```
+
+</details>
+
+## 📎 Appendix
+
+### Assessment Errors
+
+None.
+
+### Code-to-Guidance Evidence
+
+| Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
+| --- | --- | --- | --- | --- |
+| Matched | [TypeSpec Client Generator Core decorators - @Azure.ClientGenerator.Core.clientLocation](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name. | The Python-specific @@clientLocation calls use documented string targets and scopes. | [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), +1 more |
+| Mismatch | [Clients - Customizations](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | The new customizations are in back-compatible.tsp despite an existing imported client.tsp. | [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), +1 more |
+
+### Tooling Used
+
+- `@azure-tools/typespec-autorest`
+- `@azure-tools/typespec-client-generator-core`
+
+### Artifact Evidence
+
+- **autorest:** base/head succeeded with no wire artifact diff
+- **tcgc:** base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence

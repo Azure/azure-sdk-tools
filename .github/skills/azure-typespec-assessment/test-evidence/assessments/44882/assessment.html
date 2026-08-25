@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR #44882 — Add new stable version 2026-06-01 for New Relic | TypeSpec Assessment</title>
+<style>
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--accent-soft:#eff6ff;--good:#047857;--warn:#b45309;--danger:#b91c1c;--code:#111827;--code-text:#e5e7eb;--add-bg:#163d2b;--add:#9ae6b4;--remove-bg:#4a2028;--remove:#feb2b2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.container{width:min(1180px,calc(100% - 32px));margin:auto}.hero{background:linear-gradient(125deg,#172554,#1d4ed8);color:#fff;padding:44px 0 34px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;opacity:.8}.hero h1{font-size:clamp(26px,4vw,42px);line-height:1.15;margin:8px 0 12px}.hero-meta{opacity:.82}.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:28px}.metric{display:block;background:#ffffff16;border:1px solid #ffffff2b;border-radius:12px;padding:14px;color:inherit;text-decoration:none}.metric:hover{background:#ffffff24;text-decoration:none}.metric strong{display:block;font-size:24px}.metric span{font-size:12px;opacity:.8}nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}nav .container{display:flex;gap:22px;padding:12px 0;overflow:auto}main{padding:30px 0 60px}section{scroll-margin-top:64px;margin-bottom:34px}h2{font-size:25px;margin:0 0 16px}h3{line-height:1.3}.panel,.change-card,.finding{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 18px #0f172a0a}.panel{padding:20px}.intent-details{margin-bottom:12px}.intent-details>summary{display:flex;align-items:center;gap:14px;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 18px 0 0;font-size:18px;font-weight:750;box-shadow:0 4px 18px #0f172a0a}.intent-details>summary .change-number{align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:48px;padding:14px 10px}.intent-kind-icon,.intent-impact-icon{font-size:15px}.intent-details[open]>summary{border-radius:14px 14px 0 0}.intent-details[open]>.change-card{border-top:0;border-radius:0 0 14px 14px}.more-intents{margin-top:12px}.more-intents>summary{cursor:pointer;width:max-content;color:var(--accent);font-weight:700;padding:8px 2px}.more-intents-body{margin-top:8px}.change-card{display:grid;grid-template-columns:1fr;margin-bottom:18px;overflow:visible}.change-number{background:var(--accent-soft);color:var(--accent);font-size:18px;font-weight:800;text-align:center;padding-top:22px}.change-content{min-width:0;padding:20px 22px}.change-content>h3{margin:0 0 18px;font-size:18px}.change-table,.impact-table{width:100%;border-collapse:collapse}.change-table th,.change-table td,.impact-table th,.impact-table td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.change-badge,.severity,.impact{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}.added{background:#dcfce7;color:#166534}.modified{background:#fef3c7;color:#92400e}.removed{background:#fee2e2;color:#991b1b}.typespec-summary{margin:20px 0 6px}.versioning-summary{margin:6px 0 12px;color:var(--muted)}.diff{border:1px solid #334155;border-radius:10px;overflow:hidden;margin:12px 0;background:var(--code)}.diff-file{padding:8px 12px;color:#cbd5e1;background:#1e293b;font:12px ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.diff pre{margin:0;padding:12px;overflow:auto;color:var(--code-text);font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.diff span{display:block;min-height:1.5em}.diff .add{background:var(--add-bg);color:var(--add)}.diff .remove{background:var(--remove-bg);color:var(--remove)}.diff .meta{color:#93c5fd}.diff .omitted{color:#94a3b8;font-style:italic}.diff .version-decorator{background:#713f12;color:#fef08a;font-weight:800;border-left:3px solid #facc15;padding-left:8px}.table-impacts{display:flex;flex-wrap:wrap;gap:6px;min-width:180px}.impact{border:1px solid currentColor}.severity-high{color:var(--danger);background:#fee2e2}.severity-medium{color:var(--warn);background:#fef3c7}.severity-low{color:#475569;background:#e2e8f0}.sources,.omitted-note,.empty{color:var(--muted);font-size:13px}.operation-changes{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}.operation-changes h4{margin:0 0 10px}.operation-details{border:1px solid var(--line);border-radius:9px;margin:8px 0;background:var(--bg)}.operation-details>summary{display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;font-weight:650}.operation-details>summary span{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.operation-details>summary .operation-version{margin-left:auto;background:var(--line);border-radius:999px;padding:2px 8px}.tooltip{position:relative}.tooltip::before,.tooltip::after{position:absolute;z-index:20;pointer-events:none;visibility:hidden;opacity:0;transition:opacity .12s ease,transform .12s ease}.tooltip::before{content:"";left:18px;top:calc(100% + 3px);border:5px solid transparent;border-bottom-color:var(--line);transform:translateY(-3px)}.tooltip::after{content:attr(data-tooltip);left:0;top:calc(100% + 13px);width:max-content;max-width:min(620px,72vw);padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 6px 18px #0f172a1f;white-space:normal;overflow-wrap:anywhere;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transform:translateY(-3px)}.tooltip:hover{overflow:visible}.tooltip:hover::before,.tooltip:hover::after{visibility:visible;opacity:1;transform:translateY(0)}.operation-version.tooltip::before{left:auto;right:18px}.operation-version.tooltip::after{left:auto;right:0}.operation-body{padding:0 12px 12px}.rest-signature{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}.rest-signature strong{white-space:nowrap}.rest-signature code{overflow-wrap:anywhere}.rest-signature-change{display:block;min-width:0;max-width:100%;overflow:hidden}.rest-signature-change pre{max-width:100%;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}.rest-signature-change span{display:block;max-width:100%;padding:2px 7px;overflow-wrap:anywhere;word-break:break-word}.rest-signature-change .add{background:#dcfce7;color:#166534}.rest-signature-change .remove{background:#fee2e2;color:#991b1b}.lro-service-behavior{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.lro-service-behavior>strong{margin-right:8px}.behavior-status{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700}.behavior-status.unchanged{background:#dcfce7;color:#166534}.behavior-status.changed{background:#fef3c7;color:#92400e}.lro-service-behavior dl{display:grid;grid-template-columns:max-content 1fr;gap:5px 12px;margin:10px 0 0}.lro-service-behavior dt{font-weight:700}.lro-service-behavior dd{margin:0;color:var(--muted)}.operation-body .diff{margin-top:4px}.finding-group>h3{margin:20px 0 10px}.count{display:inline-block;background:var(--line);border-radius:999px;padding:1px 8px;font-size:12px}.finding{padding:16px 18px;margin:10px 0}.compliance-status{display:inline-block;margin-left:8px;border-radius:999px;padding:3px 9px;font-size:12px;text-transform:uppercase}.compliance-status.passed{background:#dcfce7;color:#166534}.compliance-status.failed{background:#fee2e2;color:#991b1b}.compliance-status.not-assessed{background:#fef3c7;color:#92400e}.finding-heading{display:flex;gap:10px;align-items:center}.finding-heading h3{margin:0}.severity-border-high{border-left:4px solid var(--danger)}.severity-border-medium{border-left:4px solid var(--warn)}.severity-border-low{border-left:4px solid #64748b}.empty-state{color:var(--muted)}.empty-state.good{color:var(--good);font-weight:600}.appendix-details{background:var(--panel);border:1px solid var(--line);border-radius:14px}.appendix-details>summary{cursor:pointer;padding:16px 20px;font-size:22px;font-weight:750}.appendix-body{padding:0 20px 20px}.appendix-body h3{margin:24px 0 10px}.appendix-table-scroll{overflow:auto}.appendix-table{width:100%;border-collapse:collapse}.appendix-table th,.appendix-table td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid var(--line)}.appendix-body dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px}.appendix-body dt{font-weight:700}.appendix-body dd{margin:0}.status-high{color:#86efac}.status-medium{color:#fde68a}.status-low{color:#fecaca}.metric-icon{display:inline-flex;align-items:center;justify-content:center;width:1.25em;margin-right:.3em;font-size:.85em}.metric-good{color:#86efac}.metric-info{color:#bfdbfe}.metric-warn{color:#fde68a}.metric-danger{color:#fecaca}@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.change-card{grid-template-columns:1fr}.change-number{text-align:left;padding:10px 20px}.change-table{display:block;overflow:auto}.hero{padding-top:28px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--accent:#93c5fd;--accent-soft:#1e3a5f}.added{background:#163d2b;color:#9ae6b4}.modified{background:#473b16;color:#fde68a}.removed{background:#4a2028;color:#fecaca}.severity-high{background:#4a2028}.severity-medium{background:#473b16}.severity-low{background:#334155;color:#cbd5e1}}
+.behavior-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.behavior-section:first-of-type{border-top:0}.behavior-title{margin-right:8px;font-weight:700}.compliance-finding>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.compliance-finding>summary::-webkit-details-marker{display:none}.compliance-finding>summary::after{content:"▸";margin-left:auto;color:var(--muted);font-size:18px}.compliance-finding[open]>summary::after{content:"▾"}.compliance-finding>summary h3{margin:0}.finding-body{padding-top:12px}.comparison-details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.comparison-details>summary{cursor:pointer;padding:11px 13px;font-weight:750}.comparison-body{padding:0 13px 13px}.compliance-code{margin-top:12px}.compliance-code h4{margin:14px 0 6px}.source-code .line-number{display:inline-block;min-width:3.5em;margin-right:12px;color:#64748b;text-align:right;user-select:none}.source-code pre>.context{white-space:pre}
+.metric strong{display:flex;align-items:center}.metric strong .metric-icon{width:1.15em;margin-right:.4em;font-size:1.05em;opacity:1}.metric>span.metric-title{display:block;font-size:15px;font-weight:650;opacity:.9}.metric>span.metric-detail{display:block;margin-top:4px;font-size:12px;opacity:.75}
+</style>
+</head>
+<body>
+<header class="hero"><div class="container">
+<div class="eyebrow">TypeSpec Assessment</div>
+<h1><a href="https://github.com/Azure/azure-rest-api-specs/pull/44882" style="color:inherit">PR #44882 — Add new stable version 2026-06-01 for New Relic</a></h1>
+<div class="hero-meta">Overall confidence: <strong class="status-high">High</strong> · Baseline <code>9eb0993333857ef0ffb2863ccc76f8b123cae90b</code> → Head <code>22bc88578fb1f253688e8a5bf127ef3a4502745a</code></div>
+<div class="metrics">
+<div class="metric safety-metric"><strong class="status-medium"><span class="metric-icon metric-warn" role="img" aria-label="Review" title="Review">⚠</span>Medium</strong><span class="metric-title">Overall code safety</span></div>
+<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">36 operations<br>35 Added, 1 Modified, 0 Removed</span></a>
+<a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">REST breaking changes</span></a>
+<a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Downstream breaking changes</span></a>
+<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">1 finding</span></a>
+</div></div></header>
+<nav><div class="container"><a href="#semantic-intents">Semantic intents</a><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#appendix">Appendix</a></div></nav>
+<main class="container">
+<section id="semantic-intents"><h2>Semantic intents <span class="count">2</span></h2><details class="intent-details" id="change-1">
+<summary><span class="change-number">1</span><span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Publish the inherited New Relic management surface in stable 2026-06-01 <span class="count">1 model properties</span></span></summary>
+<article class="change-card">
+<div class="change-content">
+<p class="intent-summary">The existing New Relic management operation surface is published under stable API version 2026-06-01 without changing its REST behavior.</p>
+<p class="intent-api-surface"><strong>API surface:</strong> Three model properties are added. Operations using those models expose the new fields, but the 35-operation version-lineage inventory is not a direct-impact count.</p>
+<table class="change-table">
+<thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
+<tbody><tr>
+<td><span class="change-badge added">➕ Added</span></td>
+<td>2026-06-01 API-version availability</td>
+<td><span class="empty">—</span></td>
+<td>35 existing operations are exposed in the new stable API version without a wire-behavior change.</td>
+<td><div class="table-impacts"><a class="impact severity-medium" href="#finding-compliance-remove-replaced-preview-version">Replaced preview version remains in the version enum</a></div></td>
+</tr></tbody>
+</table>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> Add the stable Versions.v2026_06_01 member.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">main.tsp:L38-L48</a></p>
+<div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader 35-operation API-version lineage is retained in assessment.json, but it is not a list of 35 direct behavioral changes.</p></div>
+</div>
+</article>
+</details><details class="intent-details" id="change-2">
+<summary><span class="change-number">2</span><span><span class="intent-kind-icon" title="Modified">✏️</span>Preserve the released Go delete parameter order <span class="count">1 operation</span></span></summary>
+<article class="change-card">
+<div class="change-content">
+<p class="intent-summary">Monitors_Delete keeps its REST contract, while a Go-only override preserves the released userEmail-before-monitorName method parameter order.</p>
+<p class="intent-api-surface"><strong>API surface:</strong> 1 existing operation affected</p>
+<table class="change-table">
+<thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
+<tbody><tr>
+<td><span class="change-badge modified">✏️ Modified</span></td>
+<td>Go method parameter order</td>
+<td>The default generated order places monitorName before userEmail.</td>
+<td>The Go-only override preserves userEmail before monitorName.</td>
+<td><div class="table-impacts"><span class="empty">—</span></div></td>
+</tr></tbody>
+</table>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> Add a Go-only @@override with the released delete parameter order.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354">client.tsp:L321-L354</a></p>
+<div class="operation-changes">
+<h4>All affected operations <span class="count">1</span></h4>
+<details class="operation-details">
+<summary><code>Monitors_Delete</code><span class="operation-path tooltip" data-tooltip="DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}">DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}</span><span class="operation-version tooltip" data-tooltip="2026-06-01">2026-06-01</span></summary>
+<div class="operation-body">
+<div class="rest-signature rest-signature-change"><strong>REST contract changes</strong><pre><span class="remove">- Go method parameter order | The default generated order places monitorName before userEmail.</span>
+<span class="add">+ Go method parameter order | The Go-only override preserves userEmail before monitorName.</span></pre><p>HTTP method and path remain unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Monitors_Delete keeps its REST contract, while a Go-only override preserves the released userEmail-before-monitorName method parameter order.</p></div>
+<div class="diff">
+<div class="diff-file">specification/newrelic/NewRelicObservability.Management/client.tsp</div>
+<pre><span class="meta">--- a/specification/newrelic/NewRelicObservability.Management/client.tsp</span>
+<span class="meta">+++ b/specification/newrelic/NewRelicObservability.Management/client.tsp</span>
+<span class="meta">@@ -319,3 +321,34 @@ namespace Azure.ResourceManager.Models {</span>
+<span class="context"> @@usage(AccountProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<span class="context"> @@usage(OrganizationProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<span class="context"> @@usage(PlanDataProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<span class="add">+</span>
+<span class="add">+// ===== Go delete parameter reorder =====</span>
+<span class="add">+// Reorder the delete method parameters for the Go SDK to keep backward compatibility.</span>
+<span class="add">+/**</span>
+<span class="add">+ * Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;Override to reorder parameters for the Go SDK&quot;</span>
+<span class="add">+op newRelicMonitorResourceDelete(</span>
+<span class="add">+  ...ApiVersionParameter,</span>
+<span class="omitted"> ... 22 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+</div>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354">client.tsp:L321-L354</a></p>
+</div>
+</details>
+</div>
+</div>
+</article>
+</details></section>
+<section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
+<section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No downstream breaking changes detected.</p></div></section>
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-compliance-remove-replaced-preview-version">
+<summary><span class="severity severity-medium">medium</span><h3>Replaced preview version remains in the version enum</h3></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The stable 2026-06-01 version is added without removing the replaced 2025-05-01-preview enum member, contrary to the documented stable-after-preview procedure.</p>
+<details class="comparison-details expected-details">
+<summary>Expected</summary>
+<div class="comparison-body">
+<p>Remove the replaced preview version from the version enum.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</a></p>
+<p class="empty-state">The bounded official document evidence did not contain an example block.</p>
+</div>
+</details>
+<details class="comparison-details actual-details">
+<summary>Actual</summary>
+<div class="comparison-body">
+<p>Expected: &quot;Remove the replaced preview version from the version enum.&quot;; Actual: Versions contains both v2025_05_01_preview: &quot;2025-05-01-preview&quot; and v2026_06_01: &quot;2026-06-01&quot;.</p>
+<div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
+<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">specification/newrelic/NewRelicObservability.Management/main.tsp:L38-L48</a></div>
+<pre><span class="context"><span class="line-number">38</span>enum Versions {</span>
+<span class="context"><span class="line-number">39</span>  /**</span>
+<span class="context"><span class="line-number">40</span>   * The 2025-05-01-preview API version.</span>
+<span class="context"><span class="line-number">41</span>   */</span>
+<span class="context"><span class="line-number">42</span>  v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
+<span class="context"><span class="line-number">43</span></span>
+<span class="context"><span class="line-number">44</span>  /**</span>
+<span class="context"><span class="line-number">45</span>   * The 2026-06-01 API version.</span>
+<span class="context"><span class="line-number">46</span>   */</span>
+<span class="context"><span class="line-number">47</span>  v2026_06_01: &quot;2026-06-01&quot;,</span>
+<span class="context"><span class="line-number">48</span>}</span></pre>
+</div></div>
+</div>
+</details>
+</div>
+</details></section>
+<section id="appendix"><details class="appendix-details">
+<summary>Appendix</summary>
+<div class="appendix-body">
+<h3>Assessment Errors</h3>
+<p class="empty-state">None.</p>
+<h3>Code-to-Guidance Evidence</h3>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody><tr><td>Mismatch</td><td><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</a></td><td>Remove the replaced preview version from the version enum.</td><td>Expected: &quot;Remove the replaced preview version from the version enum.&quot; Actual: Versions contains both v2025_05_01_preview: &quot;2025-05-01-preview&quot; and v2026_06_01: &quot;2026-06-01&quot;.</td><td><a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">main.tsp:L38-L48</a></td></tr><tr><td>Matched</td><td><a href="https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/">TypeSpec Client Generator Core decorators — Retained authoritative evidence</a></td><td>Customize a method&#39;s signature in the generated client SDK. Currently, only parameter signature customization is supported.</td><td>The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the &quot;go&quot; scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance.</td><td><a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">main.tsp:L38-L48</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354">client.tsp:L321-L354</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47">main.tsp:L43-L47</a></td></tr></tbody></table></div>
+<h3>Tooling Used</h3>
+<ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
+<h3>Artifact Evidence</h3>
+<dl><dt>autorest</dt><dd>Cached base/head compilation succeeded. Head adds the complete stable 2026-06-01 OpenAPI surface; comparison with the prior preview shows no incompatible wire-contract changes.</dd><dt>tcgc</dt><dd>Cached base/head compilation succeeded. The generic client surface adds 2026-06-01 and changes every client API-version default from 2025-05-01-preview to 2026-06-01; the Go-only override is verified from changed TypeSpec source.</dd></dl>
+<h3>Execution time breakdown</h3>
+<div class="panel timing-panel">
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>53s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>3m 28s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>4m 22s</td><td>measured</td></tr></tbody></table></div>
+<p><strong>Documentation search:</strong> bounded official document evidence</p>
+<p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
+</div>
+</div>
+</details></section>
+</main>
+</body>
+</html>

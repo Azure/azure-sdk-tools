@@ -4,6 +4,14 @@
 
 Infer the user's intended API change, not a list of decorators. Correlate edits such as remove + rename + re-add + default into one statement: “add a default value to the existing property while preserving its wire name and version history.”
 
+Write for TypeSpec authors. Use TypeSpec concepts such as models, unions,
+decorators, LROs, and paging, but explain each intent through the affected
+operations and their REST behavior. Do not expose emitter implementation terms
+such as TCGC or cross-language definition IDs in semantic understanding.
+Generated-client consequences belong in downstream findings, phrased as
+user-visible SDK changes. Report them separately even when the same change also
+breaks the REST contract.
+
 For each intent, provide:
 
 - intent and confidence;
@@ -19,6 +27,21 @@ For each intent, provide:
 summary alone. Do not summarize several operations into a generic statement.
 Follow the [operation semantics rules](operation-semantics.md).
 
+Also classify every affected operation exactly once as `added`, `modified`, or
+`removed`. Use `added` when the operation becomes available, `modified` for a
+change to an existing operation including metadata changes, and `removed` when
+an operation or contract surface is deleted. Compare baseline and head
+artifacts field by field and record only changed aspects as explicit
+before/after values. Merge multiple observations of the same REST behavior into
+one aspect; do not add a second semantic row for the corresponding generated
+SDK shape. Additions have no before value and removals have no after value.
+Connect each change to the exact TypeSpec declaration that caused it. Do not
+derive these behavior differences from intent prose, and do not include
+unchanged REST fields. Attach the real TypeSpec Git hunks that caused each
+change separately; fenced diff blocks are reserved for source code. Link a
+change to REST or downstream findings it causes, and omit a generic effect when
+no such finding exists.
+
 ## REST breaking changes
 
 Use AutoRest base/head diffs to detect incompatible wire changes, including:
@@ -30,9 +53,11 @@ Use AutoRest base/head diffs to detect incompatible wire changes, including:
 
 State the affected request/response contract and source lines.
 
-## REST-compatible downstream breaking changes
+## Downstream breaking changes
 
-Use this category only when REST remains compatible but generated SDKs or other clients can break. Common patterns:
+Use this category whenever generated SDKs or other clients can break. A REST
+breaking change normally also requires a downstream finding describing the
+public client surface or runtime behavior that breaks. Common patterns:
 
 | Pattern                                     | Downstream risk                                            |
 | ------------------------------------------- | ---------------------------------------------------------- |
@@ -43,7 +68,14 @@ Use this category only when REST remains compatible but generated SDKs or other 
 | usage/access/reachability change            | Public model appears, disappears, or changes visibility    |
 | naming/alternate type change                | Public names or language types change                      |
 
-Explain why the wire contract is unchanged, which client surface changes, and how existing code can fail. If REST also breaks, classify under REST breaking changes instead.
+Explain which client surface changes and how existing code can fail. When the
+wire contract is unchanged, state that explicitly. When REST also breaks, keep
+the REST finding and add a separate downstream finding rather than treating the
+categories as mutually exclusive.
+Phrase the finding in generated-client behavior that a TypeSpec author can
+act on. Do not require the reader to understand TCGC or its internal metadata
+field names; those artifacts may support the conclusion without appearing in
+the user-facing explanation.
 
 ## Azure compliance
 

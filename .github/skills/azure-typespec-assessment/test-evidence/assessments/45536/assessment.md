@@ -2,23 +2,24 @@
 
 **PR:** [#45536 - Preserve Java Consumption enum names](https://github.com/Azure/azure-rest-api-specs/pull/45536)
 
-**Overall confidence:** 🟡 medium<br>
-**Overall code safety:** 🟢 High
+**Overall confidence:** 🟢 high<br>
+**Overall code safety:** 🟡 Medium
 
 **Baseline:** `b7170cade07f615426eb153b7035ecf8a1cab4e4`<br>
 **Head:** `1395797d6112cb083837b3772083bafe0a91460c`; working-tree changes: false<br>
-**Total assessment time:** 11m 52s
+**Total assessment time:** 12m 48s
 
 ## 📌 Executive Summary
 
 | Dimension | Result | Findings |
 | --- | --- | ---: |
-| Semantic understanding | ✅ Assessed — 1 intent(s), 3 operation(s) | n/a |
+| Semantic understanding | ✅ Assessed — 1 intent(s), 5 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ✅ No breaks detected | 0 |
-| Azure compliance | ✅ passed | 0 |
+| Azure compliance | ⚠️ not-assessed | 0 |
 
-**Scope:** 1 intent(s), 3 affected operation(s), 1 project(s).<br>
+**Scope:** 1 intent(s), 5 affected operation(s), 1 project(s).<br>
+**Changes:** 0 added, 5 modified, 0 removed.<br>
 **Highest severity:** none.
 
 ## 🎯 Action Required
@@ -27,55 +28,38 @@ No action required from the assessed dimensions.
 
 ## 🧠 Semantic Understanding
 
-### Change Overview
+<a id="intent-1-preserve-released-java-names-for-six-enum-member"></a>
+### 1. Preserve released Java names for six enum members
 
-| # | Intent | Operations | API versions | Details |
-| ---: | --- | ---: | --- | --- |
-| 1 | Preserve released Java enum constants while retaining existing serialized values. | 3 | 2024-08-01, 2026-06-01 | [details](#intent-1-preserve-released-java-enum-constants-while-reta) |
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ✏️ Modified | Generated Java enum members | The affected members rely on newly derived Java names. | Explicit Java-only names preserve the six released enum constants. |
 
-### Operation Details
+**TypeSpec change:** Add six Java-scoped @@clientName directives to existing members of Metrictype, Datagrain, and LookBackPeriod.
 
-<a id="intent-1-preserve-released-java-enum-constants-while-reta"></a>
-### 1. Preserve released Java enum constants while retaining existing serialized values.
+```diff
+--- a/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp
++++ b/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp
+@@ -532,3 +532,11 @@ model ConsumptionModernReservationRecommendation
+   ModernChargeSummary.properties,
+   "csharp"
+ );
++
++// Preserve Java enum value names from the released SDK.
++@@clientName(Metrictype.ActualCostMetricType, "ACTUALCOST", "java");
++@@clientName(Metrictype.AmortizedCostMetricType, "AMORTIZEDCOST", "java");
++@@clientName(Metrictype.UsageMetricType, "USAGE", "java");
++@@clientName(Datagrain.DailyGrain, "DAILY", "java");
++@@clientName(Datagrain.MonthlyGrain, "MONTHLY", "java");
++@@clientName(LookBackPeriod.Last07Days, "LAST7DAYS", "java");
+```
 
-**Confidence:** high<br>
-**REST summary:** Serialized enum values and OpenAPI schemas remain unchanged.
+**Source:** [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542)
 
-#### `ReservationRecommendationDetails_Get`
+Need the complete REST representation for every affected operation? Use this prompt:
 
-- **HTTP path:** `GET /{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails`
-- **API versions:** `2024-08-01`, `2026-06-01`
-- **Parameters:** path resourceScope: string, required; query scope, region, term, lookBackPeriod, product, api-version: required
-- **Request payload:** none
-- **Response payloads:** 200: ReservationRecommendationDetails; default: ErrorResponse
-- **Service behavior:** Returns reservation recommendation details using the selected look-back period.
-- **LRO:** No.
-- **Paging:** No.
-- **TypeSpec source:** [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543)
+`Using assessment.json for PR #45536, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
 
-#### `ReservationsSummaries_List`
-
-- **HTTP path:** `GET /{resourceScope}/providers/Microsoft.Consumption/reservationSummaries`
-- **API versions:** `2024-08-01`, `2026-06-01`
-- **Parameters:** path resourceScope: string, required; query grain: Datagrain, required; query filter and api-version
-- **Request payload:** none
-- **Response payloads:** 200: ReservationSummariesListResult; default: ErrorResponse
-- **Service behavior:** Lists daily or monthly reservation summaries.
-- **LRO:** No.
-- **Paging:** ReservationSummary; nextLink; GET the opaque nextLink until it is absent.
-- **TypeSpec source:** [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543)
-
-#### `UsageDetails_List`
-
-- **HTTP path:** `GET /{scope}/providers/Microsoft.Consumption/usageDetails`
-- **API versions:** `2024-08-01`, `2026-06-01`
-- **Parameters:** path scope: string, required; query metric: Metrictype, optional; query $expand, $filter, $skiptoken, $top, api-version: optional/required as emitted
-- **Request payload:** none
-- **Response payloads:** 200: UsageDetailsListResult; default: ErrorResponse
-- **Service behavior:** Lists cost or usage records using the selected metric.
-- **LRO:** No.
-- **Paging:** UsageDetail; nextLink; GET the opaque nextLink, which carries $skiptoken, until absent.
-- **TypeSpec source:** [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543)
 ## 🛡️ Compatibility Assessment
 
 ### REST Breaking Changes
@@ -88,7 +72,9 @@ None detected.
 
 ## ☁️ Azure Compliance
 
-**Status:** `passed`
+**Status:** `not-assessed`
+
+The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.
 
 ### Compliance Findings
 
@@ -104,25 +90,19 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [TypeSpec Client Generator Core decorators - @Azure.ClientGenerator.Core.clientName](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Overrides the generated name for client SDK elements including clients, methods, parameters, unions, models, enums, and model properties. | Six augment decorators target union members, provide released Java identifiers, and use the supported java scope. | [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
-| Matched | [Clients - Customizations and Renaming the Client Name](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. This can be achieved with the augment decorator: `@clientName`. | The changed @@clientName declarations are in client.tsp and leave serialized union values unchanged. | [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
+| Matched | [Enums - Models and Enums](https://typespec.io/docs/language-basics/enums/) | Enums \| TypeSpec Skip to content TypeSpec Use cases OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Version 1.15.0 is now available! Search... OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Getting started Installation Editor VS Code Extension Visual Studio Extension Guides TypeSpec for REST Getting Started with TypeSpec For REST APIs Operations and Respons | The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment. | [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
+| Matched | [Azure.Core no-enum rule - Models and Enums](https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/) | no-enum \| TypeSpec Azure Skip to content TypeSpec Azure Docs Playground TypeSpec Core Docs Can I Use (Azure Client) Benchmarks Search... Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining c | The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment. | [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
+| Matched | [Models - Models and Enums](https://typespec.io/docs/language-basics/models/) | figuration Tracing FAQ 📐 Language Basics Overview Built-in types Identifiers Imports Namespaces Decorators Directives Documentation Scalars Models Operations Interfaces Templates Enums Functions Unions Intersections Type Literals Aliases Values Type Relations Access Modifiers Visibility 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E | The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment. | [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
+| Matched | [Scalars - Models and Enums](https://typespec.io/docs/language-basics/scalars/) | figuration Tracing FAQ 📐 Language Basics Overview Built-in types Identifiers Imports Namespaces Decorators Directives Documentation Scalars Models Operations Interfaces Templates Enums Functions Unions Intersections Type Literals Aliases Values Type Relations Access Modifiers Visibility 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E | The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment. | [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
 
 ### Tooling Used
 
 - `@azure-tools/typespec-autorest`
 - `@azure-tools/typespec-client-generator-core`
 
-### Repository Validation
-
-| Project | Tool | Status | Duration | Log |
-| --- | --- | --- | ---: | --- |
-| `specification/consumption/resource-manager/Microsoft.Consumption/Consumption` | `TypeSpecValidation` | skipped | 0s | `unknown` |
-
 ### Artifact Evidence
 
-- **autorest:** base/head succeeded with no wire artifact diff
-- **tcgc:** base/head succeeded; generic output does not apply Java-only names, so source decorators are primary evidence
-
-### Changed TypeSpec
-
-- `specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp`: [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542)
+- **autorest:** Preserved base/head AutoRest outputs have no diff for either 2024-08-01 or 2026-06-01.
+- **tcgc:** The preserved generic TCGC diff changes only crossLanguageVersion; Java-scoped names are not represented by this generic output.
+- **compilation:** No compilation was run during this reassessment; preserved successful base/head artifacts were used.
+- **canonicalComparison:** Materially consistent across semantic intent, REST findings, downstream findings, compliance, and overall conclusion. The fresh report corrects the canonical affected-operation inventory from three to five and records validation as skipped per the preserved no-validation evidence.

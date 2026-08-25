@@ -3,6 +3,11 @@ import { basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
+const CHANGE_KIND_LABELS = {
+  added: "➕ Added",
+  modified: "✏️ Modified",
+  removed: "➖ Removed",
+};
 
 function text(value, fallback = "None.") {
   if (value === undefined || value === null || value === "") return fallback;
@@ -101,6 +106,20 @@ function operationCount(assessment) {
   );
 }
 
+function changeCounts(assessment) {
+  const counts = {
+    added: 0,
+    modified: 0,
+    removed: 0,
+  };
+  for (const change of assessment.dimensions.semanticUnderstanding.items.flatMap(
+    (item) => item.changes,
+  )) {
+    counts[change.kind] += change.operationIds.length;
+  }
+  return counts;
+}
+
 function projectCount(assessment) {
   if (Array.isArray(assessment.projects)) return assessment.projects.length;
   return new Set(
@@ -141,13 +160,21 @@ function renderHeader(assessment) {
     assessment.head?.hasWorkingTreeChanges === undefined
       ? ""
       : `; working-tree changes: ${assessment.head.hasWorkingTreeChanges}`;
+  const scope = assessment.head?.changeScope;
+  const includedScope =
+    assessment.head?.hasWorkingTreeChanges && scope
+      ? ` (${Object.entries(scope)
+          .filter(([, included]) => included)
+          .map(([name]) => name)
+          .join(", ")})`
+      : "";
   return `# 📋 TypeSpec Assessment
 
 ${pr}**Overall confidence:** ${formatConfidence(assessment.overallConfidence)}<br>
 **Overall code safety:** ${formatCodeSafety(deriveCodeSafety(assessment))}
 
 **Baseline:** ${code(baseline)}<br>
-**Head:** ${code(assessment.head?.commit)}${workingTree}<br>
+**Head:** ${code(assessment.head?.commit)}${workingTree}${includedScope}<br>
 **Total assessment time:** ${formatTotalAssessmentTime(assessment.assessmentDuration)}
 `;
 }
@@ -155,6 +182,7 @@ ${pr}**Overall confidence:** ${formatConfidence(assessment.overallConfidence)}<b
 function renderExecutiveSummary(assessment) {
   const dimensions = assessment.dimensions;
   const findings = allFindings(assessment);
+  const changes = changeCounts(assessment);
   return `## 📌 Executive Summary
 
 | Dimension | Result | Findings |
@@ -165,6 +193,7 @@ function renderExecutiveSummary(assessment) {
 | Azure compliance | ${dimensions.azureCompliance.status === "passed" ? "✅ passed" : dimensions.azureCompliance.status === "failed" ? "❌ failed" : "⚠️ not-assessed"} | ${dimensions.azureCompliance.findings.length} |
 
 **Scope:** ${dimensions.semanticUnderstanding.items.length} intent(s), ${operationCount(assessment)} affected operation(s), ${projectCount(assessment)} project(s).<br>
+**Changes:** ${changes.added} added, ${changes.modified} modified, ${changes.removed} removed.<br>
 **Highest severity:** ${findings[0]?.severity ?? "none"}.
 `;
 }
@@ -210,30 +239,12 @@ ${rows}
 `;
 }
 
-function renderChangeOverview(assessment) {
-  const rows = assessment.dimensions.semanticUnderstanding.items
-    .map((item, index) => {
-      const operations = item.restRepresentation.operations;
-      const versions = [
-        ...new Set(operations.flatMap((operation) => operation.apiVersions)),
-      ];
-      const anchor = `intent-${index + 1}-${slug(item.intent).slice(0, 48)}`;
-      return `| ${index + 1} | ${tableText(item.intent)} | ${operations.length} | ${tableText(versions.join(", "))} | [details](#${anchor}) |`;
-    })
-    .join("\n");
-  return `### Change Overview
-
-| # | Intent | Operations | API versions | Details |
-| ---: | --- | ---: | --- | --- |
-${rows}
-`;
-}
-
 function renderFindingDetails(findings, emptyMessage) {
   if (findings.length === 0) return emptyMessage;
   return findings
     .map(
-      (finding) => `### ${finding.title}
+      (finding) => `<a id="finding-${slug(finding.id)}"></a>
+### ${finding.title}
 
 - **Severity:** ${finding.severity}
 ${finding.confidence ? `- **Confidence:** ${finding.confidence}\n` : ""}- **Summary:** ${finding.summary}
@@ -242,6 +253,75 @@ ${finding.confidence ? `- **Confidence:** ${finding.confidence}\n` : ""}- **Summ
 ${finding.documentationUrl ? `- **Guidance:** ${finding.documentationUrl}` : ""}`,
     )
     .join("\n\n");
+}
+
+function renderComplianceFinding(finding, documents) {
+  const document = documents.find(
+    (candidate) => candidate.url === finding.documentationUrl,
+  ) ?? {
+    title: "Referenced guidance",
+    section: "Unavailable",
+    url: finding.documentationUrl,
+    applicableGuidance: "Matching fetched guidance is unavailable.",
+    evidence: joinValues(finding.evidence),
+  };
+  const actualSnippets = (finding.codeSnippets ?? [])
+    .map((snippet) => {
+      const source = finding.sourceReferences.find(
+        (reference) =>
+          reference.path === snippet.path &&
+          reference.startLine <= snippet.startLine &&
+          reference.endLine >= snippet.endLine,
+      );
+      const link = source?.link.replace(
+        /#L\d+-L\d+$/,
+        `#L${snippet.startLine}-L${snippet.endLine}`,
+      );
+      return `**[${sourceLabel(snippet)}](${link})**
+
+\`\`\`tsp
+${snippet.lines.join("\n")}
+\`\`\``;
+    })
+    .join("\n\n");
+  const expectedSnippets =
+    document.expectedCodeStatus === "available"
+      ? document.expectedCodeSnippets
+          .map(
+            (snippet) => `**${snippet.caption}**
+
+\`\`\`${snippet.language}
+${snippet.lines.join("\n")}
+\`\`\``,
+          )
+          .join("\n\n")
+      : `_${document.expectedCodeReason ?? "The fetched guidance does not contain an applicable code example."}_`;
+  return `<a id="finding-${slug(finding.id)}"></a>
+### ${finding.title}
+
+**Severity:** ${finding.severity}
+
+**Gap:** ${finding.summary}
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+${document.applicableGuidance}
+
+**Guidance:** [${document.title} — ${document.section}](${document.url})
+
+${expectedSnippets}
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+${document.evidence}
+
+${actualSnippets}
+
+</details>`;
 }
 
 function renderCompatibility(assessment) {
@@ -274,10 +354,14 @@ function documentResult(document, findings) {
 function renderCompliance(assessment) {
   const compliance = assessment.dimensions.azureCompliance;
   const reason = compliance.reason ? `\n${compliance.reason}\n` : "";
-  const findings = renderFindingDetails(
-    compliance.findings,
-    "No compliance mismatches found.",
-  );
+  const findings =
+    compliance.findings.length > 0
+      ? compliance.findings
+          .map((finding) =>
+            renderComplianceFinding(finding, compliance.documents),
+          )
+          .join("\n\n")
+      : "No compliance mismatches found.";
   return `## ☁️ Azure Compliance
 
 **Status:** \`${compliance.status}\`
@@ -304,46 +388,309 @@ ${compliance.documents
   return documents;
 }
 
-function describeLro(lro) {
-  if (!lro.isLongRunning) return "No";
-  return [lro.pattern, lro.finalStateVia ? `via ${lro.finalStateVia}` : null]
-    .filter(Boolean)
-    .join("; ");
+function renderChangeSummary(changes) {
+  return `| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+${changes
+  .flatMap((change) =>
+    change.aspects.map(
+      (aspect) =>
+        `| ${CHANGE_KIND_LABELS[change.kind]} | ${tableText(aspect.field)} | ${aspect.before === null ? "—" : tableText(aspect.before)} | ${aspect.after === null ? "—" : tableText(aspect.after)} |`,
+    ),
+  )
+  .join("\n")}`;
 }
 
-function describePaging(paging) {
-  if (!paging.isPaged) return "No";
-  return [paging.itemType, paging.nextLinkName].filter(Boolean).join("; ");
+function diffRange(start, count) {
+  return count === 1 ? `${start}` : `${start},${count}`;
 }
 
-function renderSemanticUnderstanding(assessment) {
+function lineIndexForReference(hunk, sourceReferences) {
+  const reference = sourceReferences.find(
+    (candidate) => candidate.path === hunk.path,
+  );
+  if (!reference) return 0;
+  let oldLine = hunk.oldStart;
+  let newLine = hunk.newStart;
+  for (const [index, line] of hunk.lines.entries()) {
+    const appliesToReference =
+      reference.revision === "base"
+        ? !line.startsWith("+") && oldLine >= reference.startLine
+        : !line.startsWith("-") && newLine >= reference.startLine;
+    if (appliesToReference) return index;
+    if (!line.startsWith("+")) oldLine += 1;
+    if (!line.startsWith("-")) newLine += 1;
+  }
+  return 0;
+}
+
+function relevantDecoratorMarkers(change) {
+  const cause = change.typeSpecCause.toLowerCase();
+  const markers = explicitDecoratorMarkers(change);
+  if (change.kind === "added" || /\badd(?:ed)?\b/.test(cause)) {
+    markers.push("@added");
+  }
+  if (change.kind === "removed" || /\bremove[ds]?\b/.test(cause)) {
+    markers.push("@removed");
+  }
+  return [...new Set(markers)];
+}
+
+function explicitDecoratorMarkers(change) {
+  return [...change.typeSpecCause.matchAll(/`(@[a-zA-Z][\w.]*)/g)].map(
+    (match) => match[1].toLowerCase(),
+  );
+}
+
+function relevantTypeSpecSymbols(change) {
+  const ignored = new Set([
+    "Add",
+    "After",
+    "Before",
+    "Mark",
+    "Remove",
+    "Removed",
+    "TypeSpec",
+    "Versions",
+  ]);
+  return [
+    ...new Set(
+      [
+        ...change.typeSpecCause.matchAll(
+          /\b[A-Z][A-Za-z0-9]*(?:[A-Z][A-Za-z0-9]*)+\b/g,
+        ),
+        ...change.typeSpecCause.matchAll(/`([A-Za-z_][A-Za-z0-9_]*)`/g),
+      ]
+        .map((match) => match[1] ?? match[0])
+        .filter((value) => !ignored.has(value)),
+    ),
+  ];
+}
+
+function relevantLineIndex(hunk, change) {
+  const symbols = relevantTypeSpecSymbols(change);
+  const declarationIndex = hunk.lines.findIndex(
+    (line) =>
+      /^\+?\s*(?:model|interface|enum|union|scalar|alias|op)\s/.test(line) &&
+      symbols.some((symbol) => line.includes(symbol)),
+  );
+  if (declarationIndex >= 0) return declarationIndex;
+  const markers = relevantDecoratorMarkers(change);
+  const markerIndex = hunk.lines.findIndex((line) =>
+    markers.some((marker) => line.toLowerCase().includes(marker)),
+  );
+  if (markerIndex >= 0) return markerIndex;
+  return hunk.lines.findIndex((line) =>
+    symbols.some((symbol) => line.includes(symbol)),
+  );
+}
+
+export function displayedHunkLines(
+  hunk,
+  sourceReferences,
+  change,
+  focusIndex = undefined,
+) {
+  const maximumLines = 12;
+  if (hunk.lines.length <= maximumLines) return hunk.lines;
+  const relevantIndex = relevantLineIndex(hunk, change);
+  const targetIndex = Number.isInteger(focusIndex)
+    ? focusIndex
+    : relevantIndex >= 0
+      ? relevantIndex
+      : lineIndexForReference(hunk, sourceReferences);
+  const start = Math.max(
+    0,
+    Math.min(targetIndex - 2, hunk.lines.length - maximumLines),
+  );
+  const end = start + maximumLines;
+  const result = hunk.lines.slice(start, end);
+  if (start > 0) {
+    result.unshift(
+      ` ... ${start} earlier diff lines omitted; full hunk is in assessment.json ...`,
+    );
+  }
+  if (end < hunk.lines.length) {
+    result.push(
+      ` ... ${hunk.lines.length - end} later diff lines omitted; full hunk is in assessment.json ...`,
+    );
+  }
+  return result;
+}
+
+export function displayedTypeSpecHunks(hunks, change) {
+  if (hunks.length <= 2) return { hunks, omittedCount: 0 };
+  const markers = relevantDecoratorMarkers(change);
+  const selected = markers
+    .map((marker) =>
+      hunks.find((hunk) =>
+        hunk.lines.some((line) => line.toLowerCase().includes(marker)),
+      ),
+    )
+    .filter((hunk, index, matches) => hunk && matches.indexOf(hunk) === index)
+    .slice(0, 2);
+  for (const hunk of hunks) {
+    if (selected.length === 2) break;
+    if (!selected.includes(hunk)) selected.push(hunk);
+  }
+  return {
+    hunks: selected,
+    omittedCount: hunks.length - 2,
+  };
+}
+
+function candidateFocuses(hunks, change) {
+  const candidates = [];
+  const addCandidate = (hunk, focusIndex, priority) => {
+    if (focusIndex < 0) return;
+    if (
+      candidates.some(
+        (candidate) =>
+          candidate.hunk === hunk &&
+          Math.abs(candidate.focusIndex - focusIndex) <= 6,
+      )
+    ) {
+      return;
+    }
+    candidates.push({ hunk, focusIndex, priority });
+  };
+  for (const marker of explicitDecoratorMarkers(change)) {
+    for (const hunk of hunks) {
+      addCandidate(
+        hunk,
+        hunk.lines.findIndex((line) => line.toLowerCase().includes(marker)),
+        0,
+      );
+    }
+  }
+  for (const symbol of relevantTypeSpecSymbols(change)) {
+    for (const hunk of hunks) {
+      for (const [index, line] of hunk.lines.entries()) {
+        if (!line.includes(symbol)) continue;
+        const declaration = line.match(
+          /^\+?\s*(?:(model|interface|enum|union|scalar|alias|op)\s+[A-Za-z_][A-Za-z0-9_]*|([A-Za-z_][A-Za-z0-9_]*)\s+is\b)/,
+        );
+        if (!declaration) continue;
+        const kind = declaration[1] ?? "operation";
+        const priority = ["model", "interface", "op", "operation"].includes(
+          kind,
+        )
+          ? 1
+          : 2;
+        addCandidate(hunk, index, priority);
+      }
+    }
+  }
+  for (const marker of relevantDecoratorMarkers(change)) {
+    for (const hunk of hunks) {
+      addCandidate(
+        hunk,
+        hunk.lines.findIndex((line) => line.toLowerCase().includes(marker)),
+        2,
+      );
+    }
+  }
+  return candidates.sort((left, right) => left.priority - right.priority);
+}
+
+export function displayedTypeSpecExcerpts(hunks, change) {
+  const excerpts = candidateFocuses(hunks, change).slice(0, 2);
+  for (const hunk of hunks) {
+    if (excerpts.length === 2) break;
+    if (!excerpts.some((excerpt) => excerpt.hunk === hunk)) {
+      excerpts.push({
+        hunk,
+        focusIndex: relevantLineIndex(hunk, change),
+        priority: 3,
+      });
+    }
+  }
+  const displayedHunkCount = new Set(excerpts.map((excerpt) => excerpt.hunk))
+    .size;
+  return {
+    excerpts,
+    omittedCount: Math.max(0, hunks.length - displayedHunkCount),
+  };
+}
+
+function renderTypeSpecHunk(hunk, sourceReferences, change, focusIndex) {
+  const oldPath = hunk.oldCount === 0 ? "/dev/null" : `a/${hunk.path}`;
+  const newPath = hunk.newCount === 0 ? "/dev/null" : `b/${hunk.path}`;
+  const context = hunk.context ? ` ${hunk.context}` : "";
+  return `\`\`\`diff
+--- ${oldPath}
++++ ${newPath}
+@@ -${diffRange(hunk.oldStart, hunk.oldCount)} +${diffRange(hunk.newStart, hunk.newCount)} @@${context}
+${displayedHunkLines(hunk, sourceReferences, change, focusIndex)
+  .map((line) => (line === " " ? "" : line))
+  .join("\n")}
+\`\`\``;
+}
+
+function impactFindingsById(assessment) {
+  return new Map(
+    [
+      ...assessment.dimensions.restBreakingChanges.findings,
+      ...assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings,
+      ...assessment.dimensions.azureCompliance.findings,
+    ].map((finding) => [finding.id, finding]),
+  );
+}
+
+function renderKeyChanges(assessment) {
+  const findings = impactFindingsById(assessment);
   return assessment.dimensions.semanticUnderstanding.items
     .map((item, index) => {
       const anchor = `intent-${index + 1}-${slug(item.intent).slice(0, 48)}`;
-      const operations = item.restRepresentation.operations
-        .map(
-          (operation) => `#### ${code(operation.operationId)}
+      const changeDetails = item.changes
+        .map((change) => {
+          const displayedDiffs = displayedTypeSpecExcerpts(
+            change.typeSpecDiffs,
+            change,
+          );
+          const impacts = change.linkedFindingIds
+            .map((id) => findings.get(id))
+            .filter(Boolean)
+            .map(
+              (finding) => `[${finding.title}](#finding-${slug(finding.id)})`,
+            );
+          return `**TypeSpec change:** ${change.typeSpecCause}
 
-- **HTTP path:** ${code(operation.signature)}
-- **API versions:** ${operation.apiVersions.map(code).join(", ")}
-- **Parameters:** ${operation.parameters.join("; ") || "None."}
-- **Request payload:** ${operation.requestPayload}
-- **Response payloads:** ${operation.responsePayloads.join("; ")}
-- **Service behavior:** ${operation.serviceBehavior}
-- **LRO:** ${describeLro(operation.lro)}${operation.lro.isLongRunning ? `; ${text(operation.lro.polling)}; final result: ${text(operation.lro.finalResult)}` : "."}
-- **Paging:** ${describePaging(operation.paging)}${operation.paging.isPaged ? `; ${text(operation.paging.continuation)}` : "."}
-- **TypeSpec source:** ${sourceLinks(operation.sourceReferences)}`,
-        )
+${displayedDiffs.excerpts
+  .map(({ hunk, focusIndex }) =>
+    renderTypeSpecHunk(hunk, change.sourceReferences, change, focusIndex),
+  )
+  .join("\n\n")}
+
+${displayedDiffs.omittedCount > 0 ? `${displayedDiffs.omittedCount} additional TypeSpec hunk${displayedDiffs.omittedCount === 1 ? "" : "s"} omitted; complete diffs are in \`assessment.json\`.\n\n` : ""}${impacts.length > 0 ? `**Impact:** ${impacts.join(", ")}<br>\n` : ""}**Source:** ${sourceLinks(change.sourceReferences)}`;
+        })
         .join("\n\n");
       return `<a id="${anchor}"></a>
 ### ${index + 1}. ${item.intent}
 
-**Confidence:** ${item.confidence}<br>
-**REST summary:** ${item.restRepresentation.summary}
+${renderChangeSummary(item.changes)}
 
-${operations}`;
+${changeDetails}`;
     })
     .join("\n\n");
+}
+
+function comparisonPromptContext(assessment) {
+  if (assessment.pr) return `PR #${assessment.pr}`;
+  const baseline =
+    assessment.baseline?.ref ?? assessment.baseline?.commit ?? "<baseline>";
+  if (assessment.head?.hasWorkingTreeChanges) {
+    return `changes from ${baseline} to the current working tree`;
+  }
+  return `changes from ${baseline} to ${assessment.head?.commit ?? "<head>"}`;
+}
+
+function renderRestRepresentationPrompt(assessment) {
+  const context = comparisonPromptContext(assessment);
+  return `Need the complete REST representation for every affected operation? Use this prompt:
+
+\`Using assessment.json for ${context}, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.\`
+`;
 }
 
 function renderToolingUsed(assessment) {
@@ -351,37 +698,6 @@ function renderToolingUsed(assessment) {
   const tooling = [...new Set(runs.map((run) => run.emitter).filter(Boolean))];
   if (tooling.length === 0) return "No emitter or library usage recorded.";
   return tooling.map((name) => `- ${code(name)}`).join("\n");
-}
-
-function renderRepositoryValidation(assessment) {
-  const validations = assessment.assessmentEvidence?.repositoryValidation ?? [];
-  if (validations.length === 0) {
-    return "No repository-validation evidence recorded.";
-  }
-  return `| Project | Tool | Status | Duration | Log |
-| --- | --- | --- | ---: | --- |
-${validations
-  .map(
-    (validation) =>
-      `| ${code(validation.project)} | ${code(validation.tool)} | ${validation.status} | ${formatDuration(validation.durationMs)} | ${code(validation.log)} |`,
-  )
-  .join("\n")}`;
-}
-
-function renderChangedSources(assessment) {
-  const references = assessment.assessmentEvidence?.changedTypeSpec ?? [];
-  const byPath = new Map();
-  for (const reference of references) {
-    const group = byPath.get(reference.path) ?? [];
-    group.push(reference);
-    byPath.set(reference.path, group);
-  }
-  return [...byPath.entries()]
-    .map(
-      ([path, pathReferences]) =>
-        `- ${code(path)}: ${sourceLinks(pathReferences)}`,
-    )
-    .join("\n");
 }
 
 function renderAppendix(assessment) {
@@ -408,17 +724,9 @@ ${renderGuidanceEvidence(assessment)}
 
 ${renderToolingUsed(assessment)}
 
-### Repository Validation
-
-${renderRepositoryValidation(assessment)}
-
 ### Artifact Evidence
 
 ${artifactEvidence}
-
-### Changed TypeSpec
-
-${renderChangedSources(assessment)}
 `;
 }
 
@@ -428,9 +736,9 @@ export function renderAssessment(assessment) {
     renderExecutiveSummary(assessment),
     renderActionRequired(assessment),
     "## 🧠 Semantic Understanding\n",
-    renderChangeOverview(assessment),
-    "### Operation Details\n",
-    renderSemanticUnderstanding(assessment),
+    renderKeyChanges(assessment),
+    "",
+    renderRestRepresentationPrompt(assessment),
     renderCompatibility(assessment),
     renderCompliance(assessment),
     renderAppendix(assessment),

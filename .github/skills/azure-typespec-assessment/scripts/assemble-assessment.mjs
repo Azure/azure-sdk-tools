@@ -1,1429 +1,2036 @@
-import fs from "node:fs";
-import path from "node:path";
-import { deriveSafety, dimensionStatus } from "./assessment-display.mjs";
-import { sameAutorestContract } from "./autorest-contract.mjs";
-import { isMain, parseArgs, readJsonObject, runMain, writeJson } from "./cli.mjs";
-import { assembleCompliance } from "./compliance-assessment.mjs";
-import {
-  assembleDocumentQuality,
-  DOCUMENT_QUALITY_ARTIFACT,
-} from "./document-quality-assessment.mjs";
-import {
-  diffPublicParameters,
-  publicParameterContract,
-  semanticLroContract,
-  typeIdentity,
-} from "./sdk-method-delta.mjs";
-import {
-  informationalIntentText,
-  partitionSemanticIntents,
-  semanticIntentType,
-} from "./semantic-assessment-scope.mjs";
-import { canonicalJson, stableId } from "./stable-id.mjs";
+#!/usr/bin/env node
 
-/** @typedef {import("./runtime-types.js").AssessmentFact} AssessmentFact */
-/** @typedef {import("./runtime-types.js").AssessmentInference} AssessmentInference */
-/** @typedef {import("./runtime-types.js").AssessmentJudgment} AssessmentJudgment */
-/** @typedef {import("./runtime-types.js").AssessmentModelInput} AssessmentModelInput */
-/** @typedef {import("./runtime-types.js").BreakingAnalysis} BreakingAnalysis */
-/** @typedef {import("./runtime-types.js").BreakingCandidate} BreakingCandidate */
-/** @typedef {import("./runtime-types.js").CandidateDecision} CandidateDecision */
-/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
-/** @typedef {import("./runtime-types.js").DownstreamAnalysis} DownstreamAnalysis */
-/** @typedef {import("./runtime-types.js").DownstreamCandidate} DownstreamCandidate */
-/** @typedef {import("./runtime-types.js").DownstreamRootCause} DownstreamRootCause */
-/** @typedef {import("./runtime-types.js").InferenceCandidate} InferenceCandidate */
-/** @typedef {import("./runtime-types.js").InferenceRequest} InferenceRequest */
-/** @typedef {import("./runtime-types.js").InternalSemanticOperation} InternalSemanticOperation */
-/** @typedef {import("./runtime-types.js").InternalSemanticUnit} InternalSemanticUnit */
-/** @typedef {import("./runtime-types.js").PreparationManifest} PreparationManifest */
-/** @typedef {import("./runtime-types.js").PreparationProject} PreparationProject */
-/** @typedef {import("./runtime-types.js").SemanticAnalysis} SemanticAnalysis */
-/** @typedef {import("./runtime-types.js").SdkType} SdkType */
-/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
-/** @typedef {import("./runtime-types.js").SourceIndex} SourceIndex */
-/** @typedef {import("./runtime-types.js").DocumentQualityInput} DocumentQualityInput */
-/** @typedef {import("./compliance-search-evidence.schema.js").TypeSpecAzureGuidelinesSearchEvidence} ComplianceSearchEvidence */
-/**
- * @typedef {{
- *   severity: "high" | "medium" | "low",
- *   rationale: string,
- *   evidence: AssessmentFact[],
- *   sources: SourceChange[],
- *   relatedSemanticIntents?: string[],
- *   semanticMatchBasis?: string,
- *   symbol?: string
- * }} JoinedFindingFields
- * @typedef {(BreakingCandidate | InferenceCandidate) & JoinedFindingFields} RestFinding
- * @typedef {(DownstreamCandidate | InferenceCandidate) & JoinedFindingFields} DownstreamFinding
- * @typedef {InternalSemanticOperation & {
- *   apiVersion?: string,
- *   method?: string,
- *   path?: string,
- *   restChanged: boolean,
- *   changedAspects: string[],
- *   before?: AssessmentFact,
- *   after?: AssessmentFact,
- *   outcome: string,
- *   sources: SourceChange[]
- * }} PresentedOperation
- * @typedef {InternalSemanticUnit & {
- *   title: string,
- *   summary: string,
- *   informational: boolean,
- *   operations: PresentedOperation[],
- *   sources: SourceChange[],
- *   relatedFindings?: {rest: string[], downstream: string[], typeImpact: string[]}
- * }} SemanticItem
- * @typedef {{
- *   name: string,
- *   optional?: boolean,
- *   onClient?: boolean,
- *   isApiVersionParam?: boolean,
- *   type?: SdkType
- * }} SdkMethodParameter
- */
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { spawnSync } from "node:child_process";
+import { dirname, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
-/**
- * @template T
- * @param {T[]} values
- * @returns {T[]}
- */
-function duplicates(values) {
-  /** @type {Set<T>} */
+import { analyzeArtifacts } from "./analyze-artifacts.mjs";
+import { renderAssessment } from "./render-assessment.mjs";
+import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { parseTypeSpecDiffHunks } from "./typespec-diff-hunks.mjs";
+import { validateAssessment } from "./validate-assessment.mjs";
+
+const CONFIDENCE = new Set(["high", "medium", "low"]);
+const DECISIONS = new Set(["approve", "reject"]);
+const COMPLIANCE_STATUSES = new Set(["passed", "failed", "not-assessed"]);
+const INTERNAL_TERMS =
+  /\bTCGC\b|cross-language definition IDs?|\bisUnionAsEnum\b|\bisFixed\b/gi;
+const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
+const CANONICAL_REPORT_ROOT = resolve(
+  SCRIPT_DIRECTORY,
+  "..",
+  "test-evidence",
+  "assessments",
+);
+
+function elapsedMs(startedAt) {
+  return Math.round(Number(process.hrtime.bigint() - startedAt) / 1_000_000);
+}
+
+function readJson(path, label) {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw new Error(`Unable to read ${label} at ${path}: ${error.message}`, {
+      cause: error,
+    });
+  }
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function assertObject(value, label) {
+  assert(
+    value !== null && typeof value === "object" && !Array.isArray(value),
+    `${label} must be an object.`,
+  );
+}
+
+function assertExactKeys(value, required, optional, label) {
+  assertObject(value, label);
+  const allowed = new Set([...required, ...optional]);
+  const unknown = Object.keys(value).filter((key) => !allowed.has(key));
+  assert(
+    unknown.length === 0,
+    `${label} contains unknown field(s): ${unknown.join(", ")}.`,
+  );
+  const missing = required.filter((key) => !(key in value));
+  assert(
+    missing.length === 0,
+    `${label} is missing required field(s): ${missing.join(", ")}.`,
+  );
+}
+
+function assertNonEmptyString(value, label) {
+  assert(
+    typeof value === "string" && value.trim().length > 0,
+    `${label} must be a non-empty string.`,
+  );
+}
+
+function assertUniqueStrings(value, label) {
+  assert(Array.isArray(value), `${label} must be an array.`);
+  for (const [index, item] of value.entries()) {
+    assertNonEmptyString(item, `${label}[${index}]`);
+  }
+  assert(
+    new Set(value).size === value.length,
+    `${label} must not contain duplicate values.`,
+  );
+}
+
+function normalizePositiveInteger(value, label) {
+  const isNumericString =
+    typeof value === "string" && /^0*[1-9][0-9]*$/.test(value);
+  const normalized = isNumericString ? Number(value) : value;
+  assert(
+    Number.isSafeInteger(normalized) && normalized > 0,
+    `${label} must be a positive integer or a digit-only positive numeric string.`,
+  );
+  return normalized;
+}
+
+function mapByUniqueId(values, label) {
+  const result = new Map();
+  for (const value of values) {
+    assertNonEmptyString(value?.id, `${label} id`);
+    if (result.has(value.id)) {
+      assert(
+        JSON.stringify(result.get(value.id)) === JSON.stringify(value),
+        `Conflicting duplicate ${label} evidence ID: ${value.id}.`,
+      );
+      continue;
+    }
+    result.set(value.id, value);
+  }
+  return result;
+}
+
+function flattenedEvidence(modelInput) {
+  const projects = modelInput.projects ?? [];
+  const sources = (modelInput.sourceFiles ?? []).flatMap((file) =>
+    (file.changes ?? []).map((change) => ({ ...change, path: file.path })),
+  );
+  return {
+    sourceChanges: mapByUniqueId(sources, "source change"),
+    sourcePaths: new Set([
+      ...(modelInput.changedFiles ?? []),
+      ...(modelInput.sourceFiles ?? []).map((file) => file.path),
+    ]),
+    operationChanges: mapByUniqueId(
+      projects.flatMap((project) =>
+        (project.rest?.operationChanges ?? []).map((change) => ({
+          ...change,
+          project: project.path,
+        })),
+      ),
+      "operation change",
+    ),
+    operationGroups: mapByUniqueId(
+      projects.flatMap((project) =>
+        (project.rest?.operationGroups ?? []).map((group) => ({
+          ...group,
+          project: project.path,
+        })),
+      ),
+      "operation group",
+    ),
+    restCandidates: mapByUniqueId(
+      projects.flatMap((project) =>
+        (project.rest?.breakingCandidates ?? []).map((candidate) => ({
+          ...candidate,
+          project: project.path,
+        })),
+      ),
+      "REST candidate",
+    ),
+    downstreamCandidates: mapByUniqueId(
+      projects.flatMap((project) =>
+        (project.downstream?.candidates ?? []).map((candidate) => ({
+          ...candidate,
+          project: project.path,
+        })),
+      ),
+      "downstream candidate",
+    ),
+    documents: new Map(
+      (modelInput.complianceEvidence?.documents ?? []).map((document) => [
+        document.url,
+        document,
+      ]),
+    ),
+  };
+}
+
+function validateReferences(ids, known, label) {
+  for (const id of ids) {
+    assert(known.has(id), `${label} references unknown evidence ID: ${id}.`);
+  }
+}
+
+function validateDecisionArray(decisions, candidates, label) {
+  assert(Array.isArray(decisions), `${label} must be an array.`);
   const seen = new Set();
-  return values.filter((value) => (seen.has(value) ? true : (seen.add(value), false)));
-}
-
-/**
- * @param {string[]} expected
- * @param {string[]} actual
- * @param {string} label
- */
-function exactCoverage(expected, actual, label) {
-  const duplicate = duplicates(actual);
-  if (duplicate.length)
-    throw new Error(`Duplicate ${label} IDs: ${[...new Set(duplicate)].join(", ")}`);
-  const expectedSet = new Set(expected);
-  const unknown = actual.filter((item) => !expectedSet.has(item));
-  const missing = expected.filter((item) => !actual.includes(item));
-  if (unknown.length || missing.length) {
-    throw new Error(
-      `${label} coverage mismatch. Missing: ${missing.join(", ") || "none"}; unknown: ${unknown.join(", ") || "none"}.`,
+  for (const [index, decision] of decisions.entries()) {
+    const itemLabel = `${label}[${index}]`;
+    assertExactKeys(
+      decision,
+      ["id", "decision", "rationale"],
+      ["severity"],
+      itemLabel,
     );
+    assertNonEmptyString(decision.id, `${itemLabel}.id`);
+    assert(
+      !seen.has(decision.id),
+      `${label} contains duplicate evidence ID: ${decision.id}.`,
+    );
+    seen.add(decision.id);
+    assert(
+      candidates.has(decision.id),
+      `${itemLabel} references unknown evidence ID: ${decision.id}.`,
+    );
+    assert(
+      DECISIONS.has(decision.decision),
+      `${itemLabel}.decision must be exactly approve or reject.`,
+    );
+    assertNonEmptyString(decision.rationale, `${itemLabel}.rationale`);
+    if (decision.severity !== undefined) {
+      assert(
+        decision.decision === "approve",
+        `${itemLabel}.severity is only allowed for approve decisions.`,
+      );
+      assert(
+        CONFIDENCE.has(decision.severity),
+        `${itemLabel}.severity must be high, medium, or low.`,
+      );
+    }
   }
+  const unreferenced = [...candidates.keys()].filter((id) => !seen.has(id));
+  assert(
+    unreferenced.length === 0,
+    `${label} leaves evidence ID(s) unreferenced: ${unreferenced.join(", ")}.`,
+  );
 }
 
-/**
- * @param {CandidateDecision} decision
- * @param {{id: string}} candidate
- */
-function validateDecision(decision, candidate) {
-  if (!["approve", "reject"].includes(decision.decision)) {
-    throw new Error(`Invalid decision for ${candidate.id}.`);
-  }
-  if (!decision.rationale?.trim()) throw new Error(`Missing rationale for ${candidate.id}.`);
-  if (
-    decision.decision === "approve" &&
-    decision.severity !== "high" &&
-    decision.severity !== "medium" &&
-    decision.severity !== "low"
-  ) {
-    throw new Error(`An approve decision for candidate ${candidate.id} requires severity.`);
-  }
-  if (decision.decision === "reject" && decision.severity !== undefined) {
-    throw new Error(`Rejected candidate ${candidate.id} must omit severity.`);
-  }
-}
-
-/**
- * @param {object} value
- * @param {string[]} allowed
- * @param {string} label
- */
-function assertKeys(value, allowed, label) {
-  const unknown = Object.keys(value).filter((key) => !allowed.includes(key));
-  if (unknown.length) throw new Error(`${label} contains unknown fields: ${unknown.join(", ")}.`);
-}
-
-/** @param {AssessmentJudgment} answer */
-function validateJudgment(answer) {
-  if (!answer || typeof answer !== "object" || Array.isArray(answer)) {
-    throw new Error("Judgment must be an object.");
-  }
-  assertKeys(
-    answer,
+export function validateJudgment(judgment, modelInput) {
+  assert(modelInput?.schemaVersion === 1, "model-input.json schemaVersion must be 1.");
+  const evidence = flattenedEvidence(modelInput);
+  assertExactKeys(
+    judgment,
     [
       "schemaVersion",
+      "pr",
       "semanticIntents",
-      "restDecisions",
-      "downstreamDecisions",
-      "complianceDecisions",
+      "restCandidates",
+      "downstreamCandidates",
+      "compliance",
       "overallConfidence",
       "blockers",
     ],
-    "Judgment",
+    [],
+    "assessment judgment",
   );
-  if (answer.schemaVersion !== 1) throw new Error("Unsupported judgment schemaVersion.");
-  /** @type {[string, unknown][]} */
-  const arrayFields = [
-    ["semanticIntents", answer.semanticIntents],
-    ["restDecisions", answer.restDecisions],
-    ["downstreamDecisions", answer.downstreamDecisions],
-    ["complianceDecisions", answer.complianceDecisions],
-    ["blockers", answer.blockers],
-  ];
-  for (const [field, value] of arrayFields) {
-    if (!Array.isArray(value)) throw new Error(`Judgment.${field} must be an array.`);
-  }
-  if (!["high", "medium", "low"].includes(answer.overallConfidence)) {
-    throw new Error("Judgment.overallConfidence is invalid.");
-  }
-  if (answer.blockers.some((item) => typeof item !== "string")) {
-    throw new Error("Judgment.blockers must contain strings.");
-  }
-  for (const intent of answer.semanticIntents) {
-    assertKeys(
+  assert(
+    judgment.schemaVersion === 1,
+    "assessment judgment schemaVersion must be exactly 1.",
+  );
+  normalizePositiveInteger(judgment.pr, "assessment judgment pr");
+  assert(
+    Array.isArray(judgment.semanticIntents) &&
+      judgment.semanticIntents.length > 0,
+    "semanticIntents must be a non-empty array.",
+  );
+
+  const semanticIds = new Set();
+  const operationChangeUse = new Map();
+  const operationGroupUse = new Map();
+  for (const [index, intent] of judgment.semanticIntents.entries()) {
+    const label = `semanticIntents[${index}]`;
+    assertExactKeys(
       intent,
-      ["reviewUnitId", "title", "summary"],
-      `Semantic intent ${intent.reviewUnitId ?? "<unknown>"}`,
+      [
+        "id",
+        "title",
+        "rationale",
+        "operationChangeIds",
+        "operationGroupIds",
+        "sourceChangeIds",
+        "sourcePaths",
+      ],
+      ["aspects"],
+      label,
     );
-    if (!intent.title?.trim() || !intent.summary?.trim()) {
-      throw new Error(`Semantic intent ${intent.reviewUnitId ?? "<unknown>"} is incomplete.`);
+    for (const field of ["id", "title", "rationale"]) {
+      assertNonEmptyString(intent[field], `${label}.${field}`);
+    }
+    assert(!semanticIds.has(intent.id), `Duplicate semantic intent ID: ${intent.id}.`);
+    semanticIds.add(intent.id);
+    for (const field of [
+      "operationChangeIds",
+      "operationGroupIds",
+      "sourceChangeIds",
+      "sourcePaths",
+    ]) {
+      assertUniqueStrings(intent[field], `${label}.${field}`);
+    }
+    if (intent.aspects !== undefined) {
+      assert(
+        Array.isArray(intent.aspects) && intent.aspects.length > 0,
+        `${label}.aspects must be a non-empty array.`,
+      );
+      for (const [aspectIndex, aspect] of intent.aspects.entries()) {
+        const aspectLabel = `${label}.aspects[${aspectIndex}]`;
+        assertExactKeys(
+          aspect,
+          ["field", "before", "after"],
+          [],
+          aspectLabel,
+        );
+        for (const field of ["field", "before", "after"]) {
+          assertNonEmptyString(aspect[field], `${aspectLabel}.${field}`);
+        }
+      }
+    }
+    assert(
+      intent.operationChangeIds.length +
+          intent.operationGroupIds.length +
+          intent.sourceChangeIds.length +
+          intent.sourcePaths.length >
+        0,
+      `${label} must reference bounded evidence.`,
+    );
+    validateReferences(
+      intent.operationChangeIds,
+      evidence.operationChanges,
+      `${label}.operationChangeIds`,
+    );
+    validateReferences(
+      intent.operationGroupIds,
+      evidence.operationGroups,
+      `${label}.operationGroupIds`,
+    );
+    validateReferences(
+      intent.sourceChangeIds,
+      evidence.sourceChanges,
+      `${label}.sourceChangeIds`,
+    );
+    for (const sourcePath of intent.sourcePaths) {
+      assert(
+        evidence.sourcePaths.has(sourcePath),
+        `${label}.sourcePaths references unknown source path: ${sourcePath}.`,
+      );
+    }
+    for (const id of intent.operationChangeIds) {
+      operationChangeUse.set(id, (operationChangeUse.get(id) ?? 0) + 1);
+    }
+    for (const id of intent.operationGroupIds) {
+      operationGroupUse.set(id, (operationGroupUse.get(id) ?? 0) + 1);
     }
   }
-  for (const decision of [...answer.restDecisions, ...answer.downstreamDecisions]) {
-    assertKeys(
-      decision,
-      ["candidateId", "decision", "severity", "rationale"],
-      `Decision ${decision.candidateId ?? "<unknown>"}`,
+
+  const compliance = judgment.compliance;
+  assertExactKeys(
+    compliance,
+    ["status", "rationale", "documentUrls", "findings"],
+    [],
+    "compliance",
+  );
+  assert(
+    COMPLIANCE_STATUSES.has(compliance.status),
+    "compliance.status must be passed, failed, or not-assessed.",
+  );
+  assertNonEmptyString(compliance.rationale, "compliance.rationale");
+  assertUniqueStrings(compliance.documentUrls, "compliance.documentUrls");
+  for (const url of compliance.documentUrls) {
+    assert(
+      evidence.documents.has(url),
+      `compliance.documentUrls references unknown document URL: ${url}.`,
     );
   }
-  for (const decision of answer.complianceDecisions) {
-    assertKeys(
-      decision,
+  assert(Array.isArray(compliance.findings), "compliance.findings must be an array.");
+  const complianceIds = new Set();
+  for (const [index, finding] of compliance.findings.entries()) {
+    const label = `compliance.findings[${index}]`;
+    assertExactKeys(
+      finding,
       [
-        "reviewUnitId",
-        "applicableGuidance",
-        "sourceChangeIds",
-        "hunkIds",
-        "declarationIds",
-        "decision",
+        "id",
         "title",
         "severity",
-        "expected",
-        "actual",
-        "rationale",
+        "summary",
+        "documentationUrl",
+        "evidence",
+        "sourceChangeIds",
+        "sourcePaths",
       ],
-      `Azure Guidelines decision ${decision.reviewUnitId ?? "<unknown>"}`,
+      [],
+      label,
     );
+    for (const field of ["id", "title", "summary", "documentationUrl"]) {
+      assertNonEmptyString(finding[field], `${label}.${field}`);
+    }
+    assert(!complianceIds.has(finding.id), `Duplicate compliance finding ID: ${finding.id}.`);
+    assert(!semanticIds.has(finding.id), `Duplicate report item ID: ${finding.id}.`);
+    complianceIds.add(finding.id);
+    assert(
+      CONFIDENCE.has(finding.severity),
+      `${label}.severity must be high, medium, or low.`,
+    );
+    assert(
+      compliance.documentUrls.includes(finding.documentationUrl),
+      `${label}.documentationUrl must be listed in compliance.documentUrls.`,
+    );
+    if (Array.isArray(finding.evidence)) {
+      assertUniqueStrings(finding.evidence, `${label}.evidence`);
+      assert(finding.evidence.length > 0, `${label}.evidence must not be empty.`);
+    } else {
+      assertNonEmptyString(finding.evidence, `${label}.evidence`);
+    }
+    assertUniqueStrings(finding.sourceChangeIds, `${label}.sourceChangeIds`);
+    assertUniqueStrings(finding.sourcePaths, `${label}.sourcePaths`);
+    validateReferences(
+      finding.sourceChangeIds,
+      evidence.sourceChanges,
+      `${label}.sourceChangeIds`,
+    );
+    for (const sourcePath of finding.sourcePaths) {
+      assert(
+        evidence.sourcePaths.has(sourcePath),
+        `${label}.sourcePaths references unknown source path: ${sourcePath}.`,
+      );
+    }
   }
-}
-
-/**
- * @param {AssessmentInference} inference
- * @param {InferenceRequest[]} requests
- * @param {Partial<AssessmentModelInput>} modelInput
- */
-function validateInference(inference, requests, modelInput) {
-  if (!inference || typeof inference !== "object" || Array.isArray(inference)) {
-    throw new Error("Inference must be an object.");
-  }
-  assertKeys(inference, ["schemaVersion", "results"], "Inference");
-  if (inference.schemaVersion !== 1) throw new Error("Unsupported inference schemaVersion.");
-  if (!Array.isArray(inference.results)) throw new Error("Inference.results must be an array.");
-  exactCoverage(
-    requests.map((item) => item.requestId),
-    inference.results.map((item) => item.requestId),
-    "inference request",
+  assert(
+    compliance.status !== "failed" || compliance.findings.length > 0,
+    "failed compliance requires at least one finding.",
   );
-  const requestsById = new Map(requests.map((request) => [request.requestId, request]));
-  /** @type {Map<string, InferenceCandidate>} */
-  const candidatesById = new Map();
-  for (const result of inference.results) {
-    assertKeys(
-      result,
-      ["requestId", "reviewUnitId", "hunkId", "decision", "rationale", "candidates"],
-      `Inference result ${result.requestId ?? "<unknown>"}`,
+  assert(
+    compliance.status === "failed" || compliance.findings.length === 0,
+    `${compliance.status} compliance cannot contain findings.`,
+  );
+  assert(
+    compliance.status === "not-assessed" || compliance.documentUrls.length > 0,
+    `${compliance.status} compliance requires at least one document URL.`,
+  );
+
+  validateDecisionArray(
+    judgment.restCandidates,
+    evidence.restCandidates,
+    "restCandidates",
+  );
+  validateDecisionArray(
+    judgment.downstreamCandidates,
+    evidence.downstreamCandidates,
+    "downstreamCandidates",
+  );
+  assert(
+    CONFIDENCE.has(judgment.overallConfidence),
+    "overallConfidence must be high, medium, or low.",
+  );
+  assertUniqueStrings(judgment.blockers, "blockers");
+
+  for (const [label, use] of [
+    ["operation change", operationChangeUse],
+    ["operation group", operationGroupUse],
+  ]) {
+    const duplicates = [...use].filter(([, count]) => count !== 1).map(([id]) => id);
+    assert(
+      duplicates.length === 0,
+      `${label} evidence ID(s) must be referenced exactly once: ${duplicates.join(", ")}.`,
     );
-    const request = requestsById.get(result.requestId);
-    if (!request) {
-      throw new Error(`Inference result ${result.requestId} is unknown.`);
-    }
-    if (result.reviewUnitId !== request.reviewUnitId || result.hunkId !== request.hunkId) {
-      throw new Error(`Inference result ${result.requestId} does not match its request.`);
-    }
-    if (!["candidates", "no-impact", "blocked"].includes(result.decision)) {
-      throw new Error(`Inference result ${result.requestId} has an invalid decision.`);
-    }
-    if (!result.rationale?.trim()) {
-      throw new Error(`Inference result ${result.requestId} requires a rationale.`);
-    }
-    if (!Array.isArray(result.candidates)) {
-      throw new Error(`Inference result ${result.requestId}.candidates must be an array.`);
-    }
-    if (result.decision === "candidates" && !result.candidates.length) {
-      throw new Error(`Inference result ${result.requestId} requires candidates.`);
-    }
-    if (result.decision !== "candidates" && result.candidates.length) {
-      throw new Error(`Inference result ${result.requestId} must not contain candidates.`);
-    }
-    for (const candidate of result.candidates) {
-      assertKeys(
-        candidate,
-        [
-          "id",
-          "dimension",
-          "rule",
-          "defaultSeverity",
-          "actual",
-          "expected",
-          "crossLanguageDefinitionId",
-          "sourceChangeIds",
-          "hunkIds",
-          "operationIds",
-          "evidenceFactIds",
-          "reviewRequired",
-        ],
-        `Inferred candidate ${candidate.id ?? "<unknown>"}`,
-      );
-      if (!request.allowedDimensions.includes(candidate.dimension)) {
-        throw new Error(`Inferred candidate ${candidate.id} uses a disallowed dimension.`);
-      }
-      if (!candidate.id?.startsWith(`inferred-${candidate.dimension}-`)) {
-        throw new Error(`Inferred candidate ${candidate.id ?? "<unknown>"} has an invalid ID.`);
-      }
-      if (!candidate.rule?.trim() || !candidate.actual?.trim() || !candidate.expected?.trim()) {
-        throw new Error(`Inferred candidate ${candidate.id} is incomplete.`);
-      }
-      if (!["high", "medium", "low"].includes(candidate.defaultSeverity)) {
-        throw new Error(`Inferred candidate ${candidate.id} has an invalid default severity.`);
-      }
-      if (candidate.reviewRequired !== true) {
-        throw new Error(`Inferred candidate ${candidate.id} must require review.`);
-      }
-      const allowedHunkIds = new Set(
-        requests
-          .filter(
-            (item) =>
-              item.reviewUnitId === request.reviewUnitId &&
-              item.sourceChangeId === request.sourceChangeId,
-          )
-          .map((item) => item.hunkId),
-      );
-      if (
-        candidate.sourceChangeIds.length !== 1 ||
-        candidate.sourceChangeIds[0] !== request.sourceChangeId ||
-        !candidate.hunkIds.includes(request.hunkId) ||
-        candidate.hunkIds.some((id) => !allowedHunkIds.has(id))
-      ) {
-        throw new Error(`Inferred candidate ${candidate.id} is outside its source request.`);
-      }
-      if ((candidate.operationIds ?? []).some((id) => !request.relatedOperationIds.includes(id))) {
-        throw new Error(`Inferred candidate ${candidate.id} uses an unknown operation.`);
-      }
-      if ((candidate.evidenceFactIds ?? []).some((id) => modelInput.facts?.[id] === undefined)) {
-        throw new Error(`Inferred candidate ${candidate.id} uses an unknown fact.`);
-      }
-      if (candidate.dimension === "downstream" && !candidate.crossLanguageDefinitionId?.trim()) {
-        throw new Error(`Inferred downstream candidate ${candidate.id} requires an SDK symbol.`);
-      }
-      const existing = candidatesById.get(candidate.id);
-      if (existing && canonicalJson(existing) !== canonicalJson(candidate)) {
-        throw new Error(`Inferred candidate ${candidate.id} has conflicting definitions.`);
-      }
-      candidatesById.set(candidate.id, candidate);
-    }
   }
+  return evidence;
 }
 
-/** @param {Partial<AssessmentModelInput>} modelInput */
-function validateInferenceRequests(modelInput) {
-  const units = modelInput.semanticReviewUnits ?? [];
-  const requests = modelInput.inferenceRequests ?? [];
-  const expected = units.flatMap((unit) =>
-    (unit.deterministicCoverage?.uncoveredHunkIds ?? []).map(
-      (hunkId) => `${unit.reviewUnitId}\u0000${hunkId}`,
+function uniqueByJson(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const key = JSON.stringify(value);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function materializationData(
+  materialization,
+  artifactAnalysis,
+  retainedEvidence,
+) {
+  const items = materialization.dimensions?.semanticUnderstanding?.items ?? [];
+  return {
+    items,
+    operations: items.flatMap((item) => item.restRepresentation?.operations ?? []),
+    artifactProjects: artifactAnalysis?.projects ?? [],
+    changes: items.flatMap((item) => item.changes ?? []),
+    sourceReferences: uniqueByJson([
+      ...(retainedEvidence?.sourceReferences ?? []),
+      ...(materialization.assessmentEvidence?.changedTypeSpec ?? []),
+      ...items.flatMap((item) => item.sourceReferences ?? []),
+      ...items.flatMap((item) =>
+        (item.changes ?? []).flatMap((change) => change.sourceReferences ?? []),
+      ),
+      ...items.flatMap((item) =>
+        (item.restRepresentation?.operations ?? []).flatMap(
+          (operation) => operation.sourceReferences ?? [],
+        ),
+      ),
+    ]),
+    typeSpecDiffs: uniqueByJson(
+      [
+        ...(retainedEvidence?.typeSpecDiffs ?? []),
+        ...items.flatMap((item) =>
+          (item.changes ?? []).flatMap((change) => change.typeSpecDiffs ?? []),
+        ),
+      ],
+    ),
+  };
+}
+
+function intentEvidence(intent, evidence) {
+  return [
+    ...(intent.operationChangeIds ?? []).map((id) =>
+      evidence.operationChanges.get(id),
+    ),
+    ...(intent.operationGroupIds ?? []).map((id) =>
+      evidence.operationGroups.get(id),
+    ),
+  ];
+}
+
+function operationDescriptors(intent, evidence) {
+  return intentEvidence(intent, evidence).flatMap((item) => {
+    if (item.operationId) {
+      return [
+        {
+          kind: item.kind,
+          project: item.project,
+          operationId: item.operationId,
+          apiVersion: item.apiVersion,
+          operationKey: item.operationKey,
+        },
+      ];
+    }
+    return (item.operationIds ?? []).map((operationId) => ({
+      kind: item.kind,
+      project: item.project,
+      operationId,
+      apiVersion: item.apiVersion,
+    }));
+  });
+}
+
+function operationMatches(operation, descriptor) {
+  if (operation.operationId !== descriptor.operationId) return false;
+  if (
+    descriptor.apiVersion &&
+    operation.apiVersions?.includes(descriptor.apiVersion)
+  ) {
+    return true;
+  }
+  if (descriptor.operationKey) {
+    const [, method, ...pathParts] = descriptor.operationKey.split(":");
+    return (
+      operation.method === method &&
+      operation.path === pathParts.join(":")
+    );
+  }
+  return !descriptor.apiVersion;
+}
+
+function normalizedOperationMatches(operation, descriptor) {
+  if (operation.operationId !== descriptor.operationId) return false;
+  if (descriptor.operationKey && operation.key === descriptor.operationKey) {
+    return true;
+  }
+  return (
+    descriptor.apiVersion === undefined ||
+    operation.apiVersion === descriptor.apiVersion
+  );
+}
+
+function schemaList(content) {
+  return (content ?? [])
+    .map(({ mediaType, schema }) => `${mediaType} payload: ${schema}`)
+    .join(", ");
+}
+
+function parameterDescription(parameter) {
+  const details = [
+    `${parameter.in} ${parameter.name}: ${parameter.type}`,
+    parameter.required ? "required" : "optional",
+  ];
+  if (parameter.default !== undefined) {
+    details.push(`default ${JSON.stringify(parameter.default)}`);
+  }
+  return details.join(", ");
+}
+
+function requestDescription(request) {
+  const content = schemaList(request?.content);
+  if (!content) return "none";
+  return `${content}, ${request.required ? "required" : "optional"}`;
+}
+
+function responseDescription(response) {
+  const content = schemaList(response.content) || "no payload";
+  const headers = (response.headers ?? [])
+    .map(
+      (header) =>
+        `${header.name}: ${header.type}${header.required ? ", required" : ""}`,
+    )
+    .join(", ");
+  return `${response.status} ${content}${headers ? `; headers: ${headers}` : ""}`;
+}
+
+function pagingItemType(operation) {
+  const itemName = operation.paging?.itemName;
+  for (const response of operation.responses ?? []) {
+    for (const content of response.content ?? []) {
+      const item = content.contract?.value?.properties?.[itemName]?.items;
+      const reference = item?.reference;
+      if (reference) return reference.split("/").at(-1);
+      if (item?.type) return item.type;
+    }
+  }
+  const responseSchema = (operation.responses ?? [])
+    .flatMap((response) => response.content ?? [])
+    .map((content) => content.schema)
+    .find((schema) => schema && schema !== "ErrorResponse");
+  return responseSchema
+    ? `${responseSchema}.${itemName ?? "items"}`
+    : (itemName ?? "items");
+}
+
+function serviceBehavior(operation, richerOperation) {
+  if (richerOperation?.serviceBehavior) return richerOperation.serviceBehavior;
+  const behavior =
+    operation.method === "GET"
+      ? "Returns the requested service data."
+      : operation.method === "DELETE"
+        ? "Deletes the addressed resource."
+        : operation.method === "PATCH"
+          ? "Updates the addressed resource."
+          : operation.method === "PUT"
+            ? "Creates or replaces the addressed resource."
+            : "Invokes the addressed service operation.";
+  if (operation.lro.isLongRunning) {
+    return `${behavior} Completion follows the declared long-running operation contract.`;
+  }
+  if (operation.paging.isPaged) {
+    return `${behavior} Additional pages follow the declared continuation link.`;
+  }
+  return behavior;
+}
+
+function lroDescription(operation, richerOperation) {
+  if (!operation.lro.isLongRunning) return { isLongRunning: false };
+  const richer = richerOperation?.lro?.isLongRunning
+    ? richerOperation.lro
+    : undefined;
+  const finalStateVia = operation.lro.finalStateVia ?? "unknown";
+  return {
+    isLongRunning: true,
+    pattern: richer?.pattern ?? "OpenAPI long-running operation",
+    finalStateVia,
+    polling:
+      richer?.polling ??
+      `Poll according to the ${finalStateVia} long-running operation contract until it reaches a terminal state.`,
+    finalResult:
+      richer?.finalResult ??
+      operation.lro.finalResult ??
+      "Return the terminal operation response.",
+  };
+}
+
+function pagingDescription(operation, richerOperation) {
+  if (!operation.paging.isPaged) return { isPaged: false };
+  const richer = richerOperation?.paging?.isPaged
+    ? richerOperation.paging
+    : undefined;
+  return {
+    isPaged: true,
+    itemType: richer?.itemType ?? pagingItemType(operation),
+    itemsProperty:
+      richer?.itemsProperty ?? operation.paging.itemName ?? "value",
+    nextLinkName:
+      richer?.nextLinkName ?? operation.paging.nextLinkName ?? "nextLink",
+    continuation:
+      richer?.continuation ??
+      operation.paging.continuation ??
+      "Issue a GET request to the opaque continuation URL until it is absent.",
+  };
+}
+
+function richerOperationFor(operation, materialized) {
+  const operationIdentity = (operationId) =>
+    operationId?.replace(/Segment$/, "");
+  return (
+    materialized.operations.find(
+      (candidate) =>
+        candidate.operationId === operation.operationId &&
+        candidate.method === operation.method &&
+        candidate.path === operation.path &&
+        candidate.apiVersions?.includes(operation.apiVersion),
+    ) ??
+    materialized.operations.find(
+      (candidate) =>
+        candidate.operationId === operation.operationId &&
+        candidate.method === operation.method &&
+        candidate.path === operation.path,
+    ) ??
+    materialized.operations.find(
+      (candidate) =>
+        candidate.operationId === operation.operationId &&
+        candidate.apiVersions?.includes(operation.apiVersion),
+    ) ??
+    materialized.operations.find(
+      (candidate) =>
+        operationIdentity(candidate.operationId) ===
+        operationIdentity(operation.operationId),
+    )
+  );
+}
+
+function artifactSourceReferences(project, selection, richerOperation) {
+  const selected = (project.sourceReferences ?? []).filter((reference) =>
+    selection.paths.has(reference.path),
+  );
+  if (selected.length > 0) return selected;
+  const richer = richerOperation?.sourceReferences ?? [];
+  if (richer.length > 0) return richer;
+  return project.sourceReferences ?? [];
+}
+
+function reportOperation(
+  operation,
+  revision,
+  project,
+  selection,
+  materialized,
+) {
+  const richer = richerOperationFor(operation, materialized);
+  const path =
+    richer?.path &&
+    (!operation.path?.startsWith("/") || operation.path.startsWith("/?"))
+      ? richer.path
+      : operation.path;
+  return {
+    operationId: operation.operationId,
+    apiVersions: [operation.apiVersion],
+    method: operation.method,
+    path,
+    signature: `${operation.method} ${path}`,
+    parameters: operation.parameters.map(parameterDescription),
+    requestPayload: requestDescription(operation.request),
+    responsePayloads: operation.responses.map(responseDescription),
+    serviceBehavior: serviceBehavior(operation, richer),
+    lro: lroDescription(operation, richer),
+    paging: pagingDescription(operation, richer),
+    sourceReferences: artifactSourceReferences(
+      project,
+      selection,
+      richer,
+    ).map((reference) => structuredClone(reference)),
+    artifactEvidence: {
+      revision,
+      sourceArtifact: operation.sourceArtifact,
+    },
+  };
+}
+
+function artifactOperations(descriptor, materialized, selection) {
+  const projects = descriptor.project
+    ? materialized.artifactProjects.filter(
+        (project) => project.path === descriptor.project,
+      )
+    : materialized.artifactProjects;
+  const kind = reportKind(descriptor.kind);
+  const revisions =
+    kind === "added"
+      ? ["head"]
+      : kind === "removed"
+        ? ["baseline"]
+        : ["baseline", "head"];
+  return projects.flatMap((project) =>
+    revisions.flatMap((revision) =>
+      (project.rest?.[revision] ?? [])
+        .filter((operation) => normalizedOperationMatches(operation, descriptor))
+        .map((operation) =>
+          reportOperation(
+            operation,
+            revision,
+            project,
+            selection,
+            materialized,
+          ),
+        ),
     ),
   );
-  const actual = requests.map((request) => `${request.reviewUnitId}\u0000${request.hunkId}`);
-  exactCoverage(expected, actual, "inference request target");
-  const unitsById = new Map(units.map((unit) => [unit.reviewUnitId, unit]));
-  for (const request of requests) {
-    const unit = unitsById.get(request.reviewUnitId);
-    const evidenceRef = request.evidenceRef;
-    if (
-      !unit ||
-      evidenceRef?.artifact !== "source/source-index.json" ||
-      evidenceRef.sourceChangeId !== request.sourceChangeId ||
-      evidenceRef.hunkId !== request.hunkId
-    ) {
-      throw new Error(`Inference request ${request.requestId} has unknown source evidence.`);
-    }
-    if (!request.sourceExcerpt?.trim()) {
-      throw new Error(`Inference request ${request.requestId} has no source excerpt.`);
+}
+
+function selectOperations(intent, evidence, materialized, selection) {
+  const descriptors = operationDescriptors(intent, evidence);
+  let selected = descriptors.flatMap((descriptor) => {
+    const analyzed = artifactOperations(descriptor, materialized, selection);
+    if (analyzed.length > 0) return analyzed;
+    const exact = materialized.operations.filter((operation) =>
+      operationMatches(operation, descriptor),
+    );
+    if (exact.length > 0) return exact;
+    return materialized.operations.filter(
+      (operation) => operation.operationId === descriptor.operationId,
+    );
+  });
+  if (descriptors.length === 0) {
+    selected = materialized.items
+      .filter((item) =>
+        (item.sourceReferences ?? []).some((reference) =>
+          selection.paths.has(reference.path),
+        ),
+      )
+      .flatMap((item) => item.restRepresentation?.operations ?? []);
+  }
+  const missing = [...new Set(descriptors.map((item) => item.operationId))].filter(
+    (operationId) =>
+      !selected.some((operation) => operation.operationId === operationId),
+  );
+  assert(
+    missing.length === 0,
+    `Deterministic materialization is missing complete operation contract(s): ${missing.join(", ")}.`,
+  );
+  return uniqueByJson(selected.map((operation) => structuredClone(operation)));
+}
+
+function sourceSelections(item, evidence) {
+  const changes = item.sourceChangeIds.map((id) => evidence.sourceChanges.get(id));
+  return {
+    changes,
+    paths: new Set([...item.sourcePaths, ...changes.map((change) => change.path)]),
+    projectPaths: new Set(
+      intentEvidence(item, evidence)
+        .map((entry) => entry.project)
+        .filter(Boolean),
+    ),
+  };
+}
+
+function rangeContains(start, count, line) {
+  return count > 0 && line >= start && line < start + count;
+}
+
+function selectDiffs(selection, materialized) {
+  const direct = selection.changes.flatMap((change) => {
+    const matches = materialized.typeSpecDiffs
+      .filter(
+        (hunk) =>
+          hunk.path === change.path &&
+          (rangeContains(hunk.oldStart, hunk.oldCount, change.oldStart) ||
+            rangeContains(hunk.newStart, hunk.newCount, change.newStart)),
+      )
+      .sort(
+        (left, right) =>
+          left.oldCount +
+          left.newCount -
+          (right.oldCount + right.newCount),
+      );
+    return matches.slice(0, 1);
+  });
+  if (direct.length > 0) return uniqueByJson(direct);
+  const samePath = materialized.typeSpecDiffs.filter((hunk) =>
+    selection.paths.has(hunk.path),
+  );
+  if (samePath.length > 0) return samePath;
+  const projectParents = [...selection.projectPaths].map((projectPath) =>
+    dirname(projectPath).replaceAll("\\", "/"),
+  );
+  return materialized.typeSpecDiffs.filter((hunk) =>
+    projectParents.some((parent) => hunk.path.startsWith(`${parent}/`)),
+  );
+}
+
+function sourceReferenceForHunk(hunk, materialized) {
+  const revision = hunk.newCount > 0 ? "head" : "base";
+  const startLine = revision === "base" ? hunk.oldStart : hunk.newStart;
+  const count = revision === "base" ? hunk.oldCount : hunk.newCount;
+  const endLine = startLine + Math.max(count, 1) - 1;
+  const matchingReferences = materialized.sourceReferences.filter(
+    (reference) =>
+      reference.path === hunk.path && reference.revision === revision,
+  );
+  const template =
+    matchingReferences.find((reference) =>
+      reference.link?.startsWith("https://"),
+    ) ?? matchingReferences[0];
+  const linkBase = template?.link
+    ? template.link.replace(/#L\d+(?:-L\d+)?$/, "")
+    : hunk.path;
+  return {
+    path: hunk.path,
+    revision,
+    startLine,
+    endLine,
+    link: `${linkBase}#L${startLine}-L${endLine}`,
+  };
+}
+
+function selectReferences(
+  selection,
+  operations,
+  materialized,
+  typeSpecDiffs = [],
+) {
+  const pathReferences = materialized.sourceReferences.filter((reference) =>
+    selection.paths.has(reference.path),
+  );
+  const exactReferences = typeSpecDiffs
+    .map((hunk) => sourceReferenceForHunk(hunk, materialized))
+    .filter(Boolean);
+  const sourceReferences =
+    exactReferences.length > 0 ? exactReferences : pathReferences;
+  const operationReferences =
+    sourceReferences.length === 0
+      ? operations.flatMap((operation) => operation.sourceReferences ?? [])
+      : [];
+  const projectParents = [...selection.projectPaths].map((projectPath) =>
+    dirname(projectPath).replaceAll("\\", "/"),
+  );
+  const transitiveReferences =
+    sourceReferences.length + operationReferences.length === 0
+      ? materialized.sourceReferences.filter((reference) =>
+          projectParents.some((parent) =>
+            reference.path.startsWith(`${parent}/`),
+          ),
+        )
+      : [];
+  const references = new Map();
+  for (const reference of [
+    ...sourceReferences,
+    ...operationReferences,
+    ...transitiveReferences,
+  ]) {
+    const key = `${reference.path}:${reference.revision}:${reference.startLine}:${reference.endLine}`;
+    const existing = references.get(key);
+    if (!existing || reference.link?.startsWith("https://")) {
+      references.set(key, structuredClone(reference));
     }
   }
+  return [...references.values()];
 }
 
-/**
- * @param {SourceIndex} sourceIndex
- * @returns {Record<string, SourceChange>}
- */
-function sourceMap(sourceIndex) {
-  return Object.fromEntries(sourceIndex.sourceChanges.map((source) => [source.id, source]));
+function humanField(value) {
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]+/g, " ")
+    .replace(/^./, (character) => character.toUpperCase());
 }
 
-/**
- * @template {BreakingCandidate | DownstreamCandidate | InferenceCandidate} T
- * @param {T[]} candidates
- * @param {CandidateDecision[]} decisions
- * @param {Record<string, AssessmentFact>} facts
- * @param {Record<string, SourceChange>} sources
- * @returns {(T & JoinedFindingFields)[]}
- */
-function joinFindings(candidates, decisions, facts, sources) {
-  const decisionMap = new Map(decisions.map((decision) => [decision.candidateId, decision]));
-  return candidates.flatMap((candidate) => {
-    const decision = decisionMap.get(candidate.id);
-    if (!decision) {
-      throw new Error(`Missing decision for ${candidate.id}.`);
-    }
-    validateDecision(decision, candidate);
-    if (decision.decision === "reject") return [];
-    if (decision.severity === undefined) {
-      throw new Error(`Missing severity for ${candidate.id}.`);
-    }
+function displayValue(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") return value;
+  if (typeof value !== "object") return String(value);
+  if (Array.isArray(value)) return value.map(displayValue).join("; ");
+  return Object.entries(value)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, child]) => `${humanField(key)}: ${displayValue(child)}`)
+    .join("; ");
+}
+
+function reportKind(kind) {
+  if (kind === "added" || kind === "removed") return kind;
+  return "modified";
+}
+
+function valuesDiffer(change) {
+  return displayValue(change.before) !== displayValue(change.after);
+}
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) return value.map(canonicalJson);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, child]) => [key, canonicalJson(child)]),
+  );
+}
+
+function compactAspect(field, change) {
+  if (!valuesDiffer(change)) return [];
+  if (Array.isArray(change.before) && Array.isArray(change.after)) {
+    const beforeValues = new Map(
+      change.before.map((value) => [
+        JSON.stringify(canonicalJson(value)),
+        value,
+      ]),
+    );
+    const afterValues = new Map(
+      change.after.map((value) => [
+        JSON.stringify(canonicalJson(value)),
+        value,
+      ]),
+    );
+    const removed = [...beforeValues]
+      .filter(([key]) => !afterValues.has(key))
+      .map(([, value]) => value);
+    const added = [...afterValues]
+      .filter(([key]) => !beforeValues.has(key))
+      .map(([, value]) => value);
+    if (removed.length === 0 && added.length === 0) return [];
     return [
       {
-        ...candidate,
-        severity: decision.severity,
-        rationale: decision.rationale,
-        evidence: candidate.evidenceFactIds.map((id) => facts[id]).filter(Boolean),
-        sources: candidate.sourceChangeIds
-          .map((id) => {
-            const source = sources[id];
-            return source && candidate.hunkIds?.length
-              ? sourceForUnit(source, candidate.hunkIds)
-              : source;
-          })
-          .filter(Boolean),
+        field: humanField(field),
+        before: removed.length > 0 ? displayValue(removed) : null,
+        after: added.length > 0 ? displayValue(added) : null,
       },
     ];
-  });
-}
-
-/**
- * @param {AssessmentFact | undefined} before
- * @param {AssessmentFact | undefined} after
- * @param {string[]} fields
- */
-function changedFields(before, after, fields) {
-  return fields.filter((field) => !sameAutorestContract(before?.[field], after?.[field]));
-}
-
-/**
- * @param {InternalSemanticOperation} operation
- * @param {Record<string, AssessmentFact>} facts
- */
-function operationPresentation(operation, facts) {
-  const before = operation.beforeFactId ? facts[operation.beforeFactId] : undefined;
-  const after = operation.afterFactId ? facts[operation.afterFactId] : undefined;
-  const current = after ?? before;
-  const changed = changedFields(before, after, [
-    "method",
-    "path",
-    "parameters",
-    "request",
-    "responses",
-    "paging",
-    "lro",
-    "consumes",
-    "produces",
-  ]);
-  const wireChanges = changed.filter((field) => field !== "paging");
-  return {
-    ...operation,
-    apiVersion: current?.apiVersion,
-    method: current?.method,
-    path: current?.path,
-    restChanged: wireChanges.length > 0,
-    changedAspects: changed,
-    before,
-    after,
-    outcome: wireChanges.length
-      ? `REST contract changed: ${wireChanges.join(", ")}.`
-      : changed.includes("paging")
-        ? "HTTP signature and represented payload contract unchanged; SDK paging metadata changed."
-        : "HTTP signature and represented payload contract unchanged.",
-  };
-}
-
-/**
- * @param {InternalSemanticUnit} unit
- * @param {PresentedOperation[]} operations
- */
-function semanticAction(unit, operations) {
-  if (
-    operations.length &&
-    operations.every((operation) => !operation.beforeFactId && operation.afterFactId)
-  ) {
-    return "add";
   }
-  if (
-    operations.length &&
-    operations.every((operation) => operation.beforeFactId && !operation.afterFactId)
-  ) {
-    return "remove";
-  }
-  if (operations.length) return "modify";
-  return unit.action ?? unit.changeKind;
+  return [
+    {
+      field: humanField(field),
+      before: displayValue(change.before),
+      after: displayValue(change.after),
+    },
+  ];
 }
 
-/**
- * @param {SourceChange} source
- * @param {string[]} hunkIds
- * @returns {SourceChange}
- */
-function sourceForUnit(source, hunkIds) {
-  const allowed = new Set(hunkIds);
-  return {
-    ...source,
-    hunks: (source.hunks ?? []).filter((hunk) => allowed.has(hunk.id)),
-    declarations: (source.declarations ?? []).filter((declaration) =>
-      declaration.hunkIds?.some((id) => allowed.has(id)),
-    ),
-  };
-}
-
-/**
- * @param {InternalSemanticOperation} operation
- * @param {InternalSemanticUnit} unit
- * @param {Record<string, SourceChange>} sources
- * @param {Record<string, AssessmentFact>} facts
- * @param {Map<string, PreparationProject>} projectsById
- * @returns {SourceChange[]}
- */
-function sourcesForOperation(operation, unit, sources, facts, projectsById) {
-  let sourceChangeIds = operation.sourceChangeIds ?? [];
-  let hunkIds = operation.hunkIds ?? [];
-  const publication = (unit.groupingEvidence?.reasons ?? []).some(
-    (reason) => reason === "publication" || reason.includes("api-version-publication"),
+export function operationHasMaterialAspectChange(operation) {
+  return Object.entries(operation.aspects ?? {}).some(
+    ([field, change]) => compactAspect(field, change).length > 0,
   );
-  if (!sourceChangeIds.length && publication) {
-    const unitHunkIds = new Set(unit.hunkIds ?? []);
-    const operationFactId = operation.afterFactId ?? operation.beforeFactId;
-    const operationFact = operationFactId ? facts[operationFactId] : undefined;
-    const projectId = operationFact?.projectId;
-    const projectPath = projectId ? projectsById.get(projectId)?.path : undefined;
-    /** @param {SourceChange | undefined} source */
-    const inProject = (source) =>
-      !projectPath || source?.path === projectPath || source?.path?.startsWith(`${projectPath}/`);
-    const governance = (unit.sourceChangeIds ?? []).flatMap((sourceId) => {
-      const source = sources[sourceId];
-      if (!inProject(source)) return [];
-      const versionHunkIds = (source?.declarations ?? [])
-        .filter(
-          (declaration) =>
-            declaration.qualifiedName === "Versions" ||
-            declaration.qualifiedName?.endsWith(".Versions"),
-        )
-        .flatMap((declaration) => declaration.hunkIds ?? [])
-        .filter((hunkId) => unitHunkIds.has(hunkId));
-      return versionHunkIds.length ? [{ sourceId, hunkIds: versionHunkIds }] : [];
-    });
-    sourceChangeIds = governance.map((item) => item.sourceId);
-    hunkIds = [...new Set(governance.flatMap((item) => item.hunkIds))];
-  }
-  if (!sourceChangeIds.length && unit.sourceChangeIds?.length === 1) {
-    sourceChangeIds = unit.sourceChangeIds;
-    hunkIds = unit.hunkIds;
-  }
-  return sourceChangeIds
-    .map((id) => sources[id] && sourceForUnit(sources[id], hunkIds))
-    .filter((source) => source !== undefined);
 }
 
-/** @param {DownstreamFinding} finding */
-function methodFacts(finding) {
-  /** @param {AssessmentFact} fact */
-  const role = (fact) =>
-    fact.comparisonRole ??
-    (fact.revision === "base" ? "baseline" : fact.revision === "current" ? "target" : undefined);
-  return {
-    before: finding.evidence.find(
-      (fact) => fact.factKind === "method" && role(fact) === "baseline",
-    ),
-    after: finding.evidence.find((fact) => fact.factKind === "method" && role(fact) === "target"),
-  };
-}
-
-/**
- * @param {AssessmentFact | undefined} fact
- * @param {string} field
- */
-function methodDeltaValue(fact, field) {
-  if (field === "responseType") {
-    return typeIdentity(fact?.responseType) ?? "void";
-  }
-  if (field === "lro") {
-    const semantic = semanticLroContract(fact?.lro);
-    if (!semantic) return "none";
-    return {
-      finalStateVia: semantic.finalStateVia,
-      logicalResult: typeIdentity(semantic.logicalResult),
-      pollingStep: semantic.pollingStep?.kind ?? semantic.pollingStep?.responseBody?.kind,
-      finalStep: semantic.finalStep?.kind,
-      statusMonitorStep: semantic.statusMonitorStep?.kind,
-    };
-  }
-  if (field === "paging") {
-    return fact?.paging
-      ? {
-          nextLinkName: fact.paging.nextLinkName,
-          itemName: fact.paging.itemName,
-        }
-      : "none";
-  }
-  return fact?.[field] ?? "none";
-}
-
-/**
- * The SDK delta helpers require names produced by the SDK analyzer.
- * @param {AssessmentFact["parameters"]} parameters
- * @returns {SdkMethodParameter[] | undefined}
- */
-function sdkMethodParameters(parameters) {
-  return /** @type {SdkMethodParameter[] | undefined} */ (/** @type {unknown} */ (parameters));
-}
-
-/** @type {Record<string, string | undefined>} */
-const METHOD_RULE_FIELDS = {
-  "method-kind-changed": "kind",
-  "method-location-changed": "client",
-  "method-parameters-changed": "parameters",
-  "method-response-changed": "responseType",
-  "method-access-changed": "access",
-  "method-paging-changed": "paging",
-  "method-lro-changed": "lro",
-};
-
-/** @param {DownstreamFinding} finding */
-function meaningfulDownstreamFinding(finding) {
-  const field = METHOD_RULE_FIELDS[finding.rule];
-  if (!field) return true;
-  const { before, after } = methodFacts(finding);
-  if (!before && !after) return true;
-  if (field === "parameters") {
-    return (
-      canonicalJson(publicParameterContract(sdkMethodParameters(before?.parameters))) !==
-      canonicalJson(publicParameterContract(sdkMethodParameters(after?.parameters)))
-    );
-  }
-  const beforeValue =
-    field === "lro" ? semanticLroContract(before?.lro) : methodDeltaValue(before, field);
-  const afterValue =
-    field === "lro" ? semanticLroContract(after?.lro) : methodDeltaValue(after, field);
-  return canonicalJson(beforeValue ?? null) !== canonicalJson(afterValue ?? null);
-}
-
-/** @param {SemanticItem[]} semanticItems */
-function semanticOperationIndex(semanticItems) {
-  /** @type {{intent: SemanticItem, operation: PresentedOperation}[]} */
-  const operations = [];
-  for (const intent of semanticItems) {
-    for (const operation of intent.operations) {
-      operations.push({ intent, operation });
+function evidenceAspects(items, kind, operationCount) {
+  const values = new Map();
+  for (const item of items) {
+    for (const [field, change] of Object.entries(item.aspectChanges ?? {})) {
+      values.set(field, change);
+    }
+    for (const operation of item.changes ?? []) {
+      for (const [field, change] of Object.entries(operation.aspects ?? {})) {
+        values.set(field, change);
+      }
     }
   }
-  return operations;
+  if (values.size > 0) {
+    const aspects = [...values].flatMap(([field, change]) =>
+      compactAspect(field, change),
+    );
+    if (aspects.length > 0) return aspects;
+  }
+  if (kind === "added") {
+    return [
+      {
+        field: "Operation family",
+        before: null,
+        after: `${operationCount} REST operation${operationCount === 1 ? "" : "s"} added.`,
+      },
+    ];
+  }
+  if (kind === "removed") {
+    return [
+      {
+        field: "Operation or contract surface",
+        before: `${operationCount} REST operation${operationCount === 1 ? "" : "s"} exposed this surface.`,
+        after: null,
+      },
+    ];
+  }
+  return [
+    {
+      field: humanField(items.flatMap((item) => item.changedAspects ?? [])[0] ?? "API contract"),
+      before: "Baseline operation contract.",
+      after: "The operation contract reflects the judged TypeSpec change.",
+    },
+  ];
 }
 
-/**
- * @param {DownstreamFinding} finding
- * @param {SemanticItem[]} semanticItems
- */
-export function matchTypeFindingIntents(finding, semanticItems) {
-  const typeNames = new Set(
-    [
-      finding.crossLanguageDefinitionId?.split(".").at(-1),
-      finding.symbol?.split(".").at(-1),
-      ...(finding.evidence ?? []).map((fact) => fact.name),
-    ].filter(Boolean),
+function materializeSemanticIntent(intent, evidence, materialized, confidence) {
+  const selection = sourceSelections(intent, evidence);
+  let operations = selectOperations(intent, evidence, materialized, selection);
+  assert(
+    operations.length > 0,
+    `Semantic intent ${intent.id} has no matching complete operation contract.`,
   );
-  if (!typeNames.size) return [];
-  return semanticItems.filter((intent) => {
-    const declarationIds = new Set(intent.declarationIds ?? []);
-    return (intent.sources ?? []).some((source) =>
-      (source.declarations ?? []).some((declaration) => {
-        if (declarationIds.size && !declarationIds.has(declaration.id)) {
-          return false;
-        }
-        const declarationSegments = declaration.qualifiedName?.split(".") ?? [];
-        return declarationSegments.some((segment) => typeNames.has(segment));
+  if (selection.paths.size === 0) {
+    for (const operation of operations) {
+      for (const reference of operation.sourceReferences ?? []) {
+        selection.paths.add(reference.path);
+      }
+    }
+  }
+  const typeSpecDiffs = selectDiffs(selection, materialized);
+  assert(
+    typeSpecDiffs.length > 0,
+    `Semantic intent ${intent.id} has no matching deterministic TypeSpec diff.`,
+  );
+  const sourceReferences = selectReferences(
+    selection,
+    operations,
+    materialized,
+    typeSpecDiffs,
+  );
+  assert(
+    sourceReferences.length > 0,
+    `Semantic intent ${intent.id} has no matching deterministic source reference.`,
+  );
+  for (const operation of operations) {
+    operation.sourceReferences = sourceReferences.map((reference) =>
+      structuredClone(reference),
+    );
+  }
+  const selectedEvidence = intentEvidence(intent, evidence);
+  const retainVersionPropagation = /version-lineage/.test(intent.id);
+  const byKind = new Map();
+  for (const originalItem of selectedEvidence) {
+    let item = originalItem;
+    if (
+      !retainVersionPropagation &&
+      reportKind(item.kind) === "modified" &&
+      (item.changes ?? []).length > 0
+    ) {
+      const materialChanges = item.changes.filter(
+        operationHasMaterialAspectChange,
+      );
+      if (materialChanges.length === 0) continue;
+      item = {
+        ...item,
+        changes: materialChanges,
+        operationIds: materialChanges.map(
+          (operation) => operation.operationId,
+        ),
+      };
+    }
+    const kind = reportKind(item.kind);
+    if (!byKind.has(kind)) byKind.set(kind, []);
+    byKind.get(kind).push(item);
+  }
+  if (byKind.size === 0) {
+    if (selectedEvidence.length > 0) return null;
+    const addedDeclaration = typeSpecDiffs.some((hunk) =>
+      hunk.lines.some((line, index) => {
+        if (!/^\+\s*@added\(/.test(line)) return false;
+        return hunk.lines
+          .slice(index + 1, index + 10)
+          .some((candidate) =>
+            /^\+\s*(?:(?:model|interface|enum|union|scalar|alias|op)\s+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*\s+is\b)/.test(
+              candidate,
+            ),
+          );
       }),
     );
-  });
-}
-
-/**
- * @param {RestFinding[]} restFindings
- * @param {DownstreamFinding[]} downstreamFindings
- * @param {SemanticItem[]} semanticItems
- */
-function findingRelations(restFindings, downstreamFindings, semanticItems) {
-  const semanticOperations = semanticOperationIndex(semanticItems);
-  for (const finding of restFindings) {
-    const matches = semanticOperations.filter(({ operation }) =>
-      finding.operationIds.includes(operation.operationId),
+    const hasAddition = typeSpecDiffs.some((hunk) =>
+      hunk.lines.some((line) => line.startsWith("+")),
     );
-    finding.relatedSemanticIntents = [...new Set(matches.map(({ intent }) => intent.id))];
-    finding.semanticMatchBasis = finding.relatedSemanticIntents.length
-      ? "operation-identity"
-      : undefined;
-  }
-  for (const finding of downstreamFindings) {
-    const declarationMatches = matchTypeFindingIntents(finding, semanticItems);
-    if (declarationMatches.length) {
-      finding.relatedSemanticIntents = declarationMatches.map((intent) => intent.id);
-      finding.semanticMatchBasis = "declaration-identity";
-      continue;
-    }
-    const sourceIds = new Set(finding.sourceChangeIds);
-    const sourceMatches = semanticItems.filter((intent) =>
-      intent.sourceChangeIds.some((id) => sourceIds.has(id)),
+    const hasRemoval = typeSpecDiffs.some((hunk) =>
+      hunk.lines.some((line) => line.startsWith("-")),
     );
-    finding.relatedSemanticIntents = sourceMatches.length === 1 ? [sourceMatches[0].id] : [];
-    finding.semanticMatchBasis = sourceMatches.length === 1 ? "unique-source" : undefined;
+    const kind = /version-lineage/.test(intent.id)
+      ? "modified"
+      : addedDeclaration
+        ? "added"
+        : hasRemoval && !hasAddition
+          ? "removed"
+          : "modified";
+    byKind.set(kind, []);
   }
-}
-
-/**
- * @param {DownstreamFinding[]} downstreamFindings
- * @param {DownstreamRootCause[]} [rootCauses]
- * @param {Record<string, AssessmentFact>} [facts]
- */
-function downstreamGroups(downstreamFindings, rootCauses = [], facts = {}) {
-  /** @type {Map<string, {
-   *   id: string,
-   *   projectId?: string,
-   *   symbol: string,
-   *   before?: AssessmentFact,
-   *   after?: AssessmentFact,
-   *   findings: DownstreamFinding[]
-   * }>} */
-  const byMethod = new Map();
-  /** @type {DownstreamFinding[]} */
-  const typeFindings = [];
-  for (const finding of downstreamFindings) {
-    const facts = methodFacts(finding);
-    if (!facts.before && !facts.after) {
-      typeFindings.push(finding);
-      continue;
-    }
-    const symbol = finding.crossLanguageDefinitionId ?? finding.symbol;
-    if (!symbol) {
-      throw new Error(`Downstream finding ${finding.id} has no SDK symbol.`);
-    }
-    const projectId = (facts.after ?? facts.before)?.projectId;
-    const key = `${projectId ?? ""}:${symbol}`;
-    const group = byMethod.get(key) ?? {
-      id: stableId("downstream-group", { projectId, symbol }),
-      projectId,
-      symbol,
-      before: facts.before,
-      after: facts.after,
-      findings: [],
-    };
-    group.before ??= facts.before;
-    group.after ??= facts.after;
-    group.findings.push(finding);
-    byMethod.set(key, group);
-  }
-  const methodGroups = [...byMethod.values()]
-    .map((group) => {
-      const representative = group.findings[0];
-      return {
-        ...group,
-        apiVersion: (group.after ?? group.before)?.apiVersion,
-        parametersUnchanged:
-          canonicalJson(publicParameterContract(sdkMethodParameters(group.before?.parameters))) ===
-          canonicalJson(publicParameterContract(sdkMethodParameters(group.after?.parameters))),
-        deltas: group.findings.map((finding) => {
-          const field = METHOD_RULE_FIELDS[finding.rule];
-          /** @type {Record<string, unknown> & {
-           *   findingId: string,
-           *   rule: string,
-           *   field: string | undefined,
-           *   severity: string,
-           *   actual: string,
-           *   expected: string,
-           *   rationale: string
-           * }} */
-          const delta = {
-            findingId: finding.id,
-            rule: finding.rule,
-            field,
-            severity: finding.severity,
-            actual: finding.actual,
-            expected: finding.expected,
-            rationale: finding.rationale,
-          };
-          if (field === "parameters") {
-            delta.changes = diffPublicParameters(
-              sdkMethodParameters(group.before?.parameters),
-              sdkMethodParameters(group.after?.parameters),
-            );
-          } else if (field) {
-            delta.before = methodDeltaValue(group.before, field);
-            delta.after = methodDeltaValue(group.after, field);
-          }
-          return delta;
-        }),
-        rootCauseIds: [
-          ...new Set(group.findings.flatMap((finding) => finding.rootCauseIds ?? [])),
-        ].sort(),
-        relatedSemanticIntents: representative.relatedSemanticIntents ?? [],
-      };
-    })
-    .sort((left, right) => left.symbol.localeCompare(right.symbol));
-  const rootCauseById = new Map(rootCauses.map((item) => [item.id, item]));
-  /** @type {Map<string, {
-   *   projectId?: string,
-   *   type: string,
-   *   findings: DownstreamFinding[],
-   *   rootCauseIds: Set<string>
-   * }>} */
-  const typeGroups = new Map();
-  for (const finding of typeFindings) {
-    const type = finding.crossLanguageDefinitionId ?? finding.symbol;
-    if (!type) {
-      throw new Error(`Downstream finding ${finding.id} has no SDK type.`);
-    }
-    const projectId = finding.evidence.find((fact) => fact.projectId)?.projectId;
-    const key = `${projectId ?? ""}:${type}`;
-    const group = typeGroups.get(key) ?? {
-      projectId,
-      type,
-      findings: [],
-      rootCauseIds: new Set(),
-    };
-    group.findings.push(finding);
-    for (const id of finding.rootCauseIds ?? []) group.rootCauseIds.add(id);
-    typeGroups.set(key, group);
-  }
-  const typeImpacts = [...typeGroups.values()]
-    .map((group) => {
-      const findingIds = group.findings.map((finding) => finding.id).sort();
-      const roots = [...group.rootCauseIds]
-        .map((id) => rootCauseById.get(id))
-        .filter((root) => root !== undefined);
-      /** @type {Map<string, {
-       *   symbol: string,
-       *   locations: Set<string>,
-       *   referenceFactIds: Set<string>
-       * }>} */
-      const affectedMethods = new Map();
-      for (const root of roots) {
-        const locations = [
-          ...new Set(
-            (root.referenceEvidence ?? [])
-              .map((edge) => edge.location)
-              .filter((location) => location !== undefined),
-          ),
-        ].sort();
-        const referenceFactIds = [
-          ...new Set(
-            (root.referenceEvidence ?? [])
-              .flatMap((edge) => [edge.fromFactId, edge.toFactId])
-              .filter((id) => id !== undefined),
-          ),
-        ].sort();
-        for (const methodFactId of root.methodFactIds ?? []) {
-          const method = facts[methodFactId];
-          if (!method || method.factKind !== "method") continue;
-          const symbol = method.crossLanguageDefinitionId ?? method.identity ?? method.name;
-          if (!symbol) continue;
-          const current = affectedMethods.get(symbol) ?? {
-            symbol,
-            locations: new Set(),
-            referenceFactIds: new Set(),
-          };
-          locations.forEach((location) => current.locations.add(location));
-          referenceFactIds.forEach((id) => current.referenceFactIds.add(id));
-          affectedMethods.set(symbol, current);
-        }
-      }
-      const methods = [...affectedMethods.values()]
-        .map((method) => ({
-          symbol: method.symbol,
-          locations: [...method.locations].sort(),
-          referenceFactIds: [...method.referenceFactIds].sort(),
-        }))
-        .sort((left, right) => left.symbol.localeCompare(right.symbol));
-      const locations = [...new Set(methods.flatMap((method) => method.locations))].sort();
-      const relatedSemanticIntents = [
-        ...new Set(group.findings.flatMap((finding) => finding.relatedSemanticIntents ?? [])),
-      ].sort();
-      return {
-        id: stableId("sdk-type-impact", {
-          projectId: group.projectId,
-          type: group.type,
-          findingIds,
-        }),
-        projectId: group.projectId,
-        type: group.type,
-        locations,
-        rootCauseIds: [...group.rootCauseIds].sort(),
-        summary: "This generated SDK type has a confirmed public contract change.",
-        findingIds,
-        affectedMethodCount: methods.length,
-        affectedMethods: methods,
-        relatedSemanticIntents,
-        unresolvedRelationshipReason: methods.length
-          ? null
-          : "No public SDK method reference path was deterministically established.",
-      };
-    })
-    .sort((left, right) => left.id.localeCompare(right.id));
-  return { methodGroups, typeImpacts };
-}
-
-/**
- * @param {SemanticItem[]} semanticItems
- * @param {RestFinding[]} restFindings
- * @param {{
- *   methodGroups: {id: string, relatedSemanticIntents: string[]}[],
- *   typeImpacts: {id: string, relatedSemanticIntents: string[]}[]
- * }} downstream
- */
-function addReciprocalRelations(semanticItems, restFindings, downstream) {
-  for (const intent of semanticItems) {
-    intent.relatedFindings = {
-      rest: restFindings
-        .filter((finding) => finding.relatedSemanticIntents?.includes(intent.id))
-        .map((finding) => finding.id)
-        .sort(),
-      downstream: downstream.methodGroups
-        .filter((group) => group.relatedSemanticIntents.includes(intent.id))
-        .map((group) => group.id)
-        .sort(),
-      typeImpact: downstream.typeImpacts
-        .filter((group) => group.relatedSemanticIntents.includes(intent.id))
-        .map((group) => group.id)
-        .sort(),
-    };
-  }
-}
-
-/**
- * @param {{work: string, judgment: string | AssessmentJudgment}} options
- */
-export function assembleAssessment({ work, judgment }) {
-  const manifest = /** @type {PreparationManifest} */ (
-    /** @type {unknown} */ (readJsonObject(path.join(work, "preparation-manifest.json")))
-  );
-  const sourceIndex = /** @type {SourceIndex} */ (
-    /** @type {unknown} */ (readJsonObject(path.join(work, "source", "source-index.json")))
-  );
-  const semantic = /** @type {SemanticAnalysis} */ (
-    /** @type {unknown} */ (
-      readJsonObject(path.join(work, "dimensions", "semantic-intents-input.json"))
-    )
-  );
-  const rest = /** @type {BreakingAnalysis} */ (
-    /** @type {unknown} */ (
-      readJsonObject(path.join(work, "dimensions", "rest-breaking-input.json"))
-    )
-  );
-  const downstream = /** @type {DownstreamAnalysis} */ (
-    /** @type {unknown} */ (
-      readJsonObject(path.join(work, "dimensions", "downstream-breaking-input.json"))
-    )
-  );
-  const answer =
-    typeof judgment === "string"
-      ? /** @type {AssessmentJudgment} */ (/** @type {unknown} */ (readJsonObject(judgment)))
-      : judgment;
-  const modelInputPath = path.join(work, "model-input.json");
-  /** @type {Partial<AssessmentModelInput>} */
-  const modelInput = fs.existsSync(modelInputPath) ? readJsonObject(modelInputPath) : {};
-  /**
-   * @template {{id: string}} T
-   * @param {T[]} canonicalCandidates
-   * @param {{id: string}[] | undefined} inputCandidates
-   * @param {string} label
-   * @returns {T[]}
-   */
-  const scopedCandidates = (canonicalCandidates, inputCandidates, label) => {
-    if (!Array.isArray(inputCandidates)) return canonicalCandidates;
-    const canonicalById = new Map(
-      canonicalCandidates.map((candidate) => [candidate.id, candidate]),
+  if (!retainVersionPropagation) {
+    const materialOperationIds = new Set(
+      [...byKind.values()].flatMap((items) =>
+        items.flatMap((item) =>
+          item.operationId ? [item.operationId] : (item.operationIds ?? []),
+        ),
+      ),
     );
-    const unknownIds = inputCandidates
-      .map((candidate) => candidate.id)
-      .filter((id) => !canonicalById.has(id));
-    if (unknownIds.length) {
-      throw new Error(
-        `${label} model input references unknown candidates: ${unknownIds.join(", ")}.`,
+    if (materialOperationIds.size > 0) {
+      operations = operations.filter((operation) =>
+        materialOperationIds.has(operation.operationId),
       );
     }
-    return inputCandidates.map((candidate) => {
-      const canonical = canonicalById.get(candidate.id);
-      if (!canonical) {
-        throw new Error(`${label} model input candidate is unavailable.`);
-      }
-      return canonical;
-    });
-  };
-  const assessedRestCandidates = scopedCandidates(
-    rest.candidates,
-    modelInput.restCandidates,
-    "REST",
-  );
-  const assessedDownstreamCandidates = scopedCandidates(
-    downstream.candidates,
-    modelInput.downstreamCandidates,
-    "Downstream",
-  );
-  validateInferenceRequests(modelInput);
-  const inferenceRequests = modelInput.inferenceRequests ?? [];
-  const inferencePath = path.join(work, "inference.json");
-  if (inferenceRequests.length && !fs.existsSync(inferencePath)) {
-    throw new Error("Missing inference.json.");
   }
-  if (!inferenceRequests.length && fs.existsSync(inferencePath)) {
-    throw new Error("Unexpected inference.json without inference requests.");
-  }
-  const inference = inferenceRequests.length
-    ? /** @type {AssessmentInference} */ (/** @type {unknown} */ (readJsonObject(inferencePath)))
-    : undefined;
-  if (inference) validateInference(inference, inferenceRequests, modelInput);
-  const inferredCandidates = [
-    ...new Map(
-      (inference?.results ?? []).flatMap((result) =>
-        result.candidates.map((candidate) => [
-          candidate.id,
-          {
-            ...candidate,
-            inferred: true,
-            inferenceRequestIds: (inference?.results ?? [])
-              .filter((item) => item.candidates.some((value) => value.id === candidate.id))
-              .map((item) => item.requestId)
-              .sort(),
-          },
-        ]),
-      ),
-    ).values(),
-  ];
-  const restCandidates = [
-    ...assessedRestCandidates,
-    ...inferredCandidates.filter((candidate) => candidate.dimension === "rest"),
-  ];
-  const downstreamCandidates = [
-    ...assessedDownstreamCandidates,
-    ...inferredCandidates.filter((candidate) => candidate.dimension === "downstream"),
-  ];
-  const deterministicCandidateIds = new Set([
-    ...rest.candidates.map((candidate) => candidate.id),
-    ...downstream.candidates.map((candidate) => candidate.id),
-  ]);
-  const conflictingCandidateIds = inferredCandidates
-    .map((candidate) => candidate.id)
-    .filter((id) => deterministicCandidateIds.has(id));
-  if (conflictingCandidateIds.length) {
-    throw new Error(
-      `Inferred candidate IDs conflict with deterministic candidates: ${conflictingCandidateIds.join(", ")}.`,
-    );
-  }
-  const inferenceRequestsById = new Map(
-    inferenceRequests.map((request) => [request.requestId, request]),
-  );
-  const inferenceBlockers = (inference?.results ?? [])
-    .filter((result) => result.decision === "blocked")
-    .map((result) => {
-      const request = inferenceRequestsById.get(result.requestId);
-      if (!request) {
-        throw new Error(`Inference result ${result.requestId} is unknown.`);
-      }
-      return {
-        code: "inference-blocked",
-        reviewUnitId: result.reviewUnitId,
-        hunkId: result.hunkId,
-        allowedDimensions: request.allowedDimensions,
-        message: result.rationale,
-      };
-    });
-  const complianceEvidencePath = path.join(work, "compliance-search-evidence.json");
-  const modelComplianceRequests = modelInput.complianceSearchRequests;
-  const hasComplianceContract = Array.isArray(modelComplianceRequests);
-  const scopedComplianceRequests = hasComplianceContract ? modelComplianceRequests : [];
-  const hasComplianceInput = hasComplianceContract && scopedComplianceRequests.length > 0;
-  const complianceRequestArtifact = modelInput.artifactReferences?.complianceSearchRequests;
-  const complianceRequests =
-    hasComplianceInput && complianceRequestArtifact
-      ? /** @type {{requests: ComplianceSearchRequest[]}} */ (
-          readJsonObject(path.join(work, complianceRequestArtifact))
-        ).requests
-      : /** @type {ComplianceSearchRequest[]} */ (
-          /** @type {unknown} */ (scopedComplianceRequests)
-        );
-  if (hasComplianceInput && complianceRequestArtifact) {
-    exactCoverage(
-      scopedComplianceRequests.map((item) => item.requestId),
-      complianceRequests.map((item) => item.requestId),
-      "Azure Guidelines search request",
-    );
-  }
-  if (hasComplianceInput && !fs.existsSync(complianceEvidencePath)) {
-    throw new Error("Missing compliance-search-evidence.json.");
-  }
-  const complianceEvidence = hasComplianceInput
-    ? /** @type {ComplianceSearchEvidence} */ (
-        /** @type {unknown} */ (readJsonObject(complianceEvidencePath))
-      )
-    : undefined;
-  if (hasComplianceInput && !complianceEvidence) {
-    throw new Error("Missing compliance search evidence.");
-  }
-  validateJudgment(answer);
-  const scopedSemantic = partitionSemanticIntents(semantic.reviewUnits);
-  const modelSemanticReviewUnits = modelInput.semanticReviewUnits;
-  const hasScopedSemanticInput = Array.isArray(modelSemanticReviewUnits);
-  const scopedModelSemanticUnits = hasScopedSemanticInput ? modelSemanticReviewUnits : [];
-  const informationalSemanticIntentIds = new Set(modelInput.informationalSemanticIntentIds ?? []);
-  if (hasScopedSemanticInput) {
-    exactCoverage(
-      scopedSemantic.informational.map((item) => item.id),
-      [...informationalSemanticIntentIds],
-      "informational semantic review unit",
-    );
-    exactCoverage(
-      scopedSemantic.assessed.map((item) => item.id),
-      scopedModelSemanticUnits.map((item) => item.reviewUnitId),
-      "model-input semantic review unit",
-    );
-  }
-  const assessedSemanticIntentIds = hasScopedSemanticInput
-    ? scopedModelSemanticUnits.map((item) => item.reviewUnitId)
-    : semantic.reviewUnits.map((item) => item.id);
-  exactCoverage(
-    assessedSemanticIntentIds,
-    answer.semanticIntents.map((item) => item.reviewUnitId),
-    "assessed semantic review unit",
-  );
-  exactCoverage(
-    restCandidates.map((item) => item.id),
-    answer.restDecisions.map((item) => item.candidateId),
-    "REST candidate",
-  );
-  exactCoverage(
-    downstreamCandidates.map((item) => item.id),
-    answer.downstreamDecisions.map((item) => item.candidateId),
-    "downstream candidate",
-  );
-  const sources = sourceMap(sourceIndex);
-  const projectsById = new Map((manifest.projects ?? []).map((project) => [project.id, project]));
-  const semanticUnits = new Map(semantic.reviewUnits.map((unit) => [unit.id, unit]));
-  const modelSemanticUnits = new Map(
-    scopedModelSemanticUnits.map((unit) => [unit.reviewUnitId, unit]),
-  );
-  /** @type {Map<string, import("./runtime-types.js").InferenceResult[]>} */
-  const inferenceResultsByUnit = new Map();
-  for (const result of inference?.results ?? []) {
-    const values = inferenceResultsByUnit.get(result.reviewUnitId) ?? [];
-    values.push(result);
-    inferenceResultsByUnit.set(result.reviewUnitId, values);
-  }
-  const authoredSemanticIntents = new Map(
-    answer.semanticIntents.map((intent) => [intent.reviewUnitId, intent]),
-  );
-  const semanticIntentAnswers = semantic.reviewUnits.map((unit) => {
-    const intent = informationalSemanticIntentIds.has(unit.id)
-      ? informationalIntentText(unit)
-      : authoredSemanticIntents.get(unit.id);
-    if (!intent) {
-      throw new Error(`Missing authored Semantic intent ${unit.id}.`);
-    }
-    return intent;
-  });
-  /** @type {SemanticItem[]} */
-  const semanticItems = semanticIntentAnswers.map((intent) => {
-    const unit = semanticUnits.get(intent.reviewUnitId);
-    if (!unit) {
-      throw new Error(`Unknown Semantic intent ${intent.reviewUnitId}.`);
-    }
-    const modelUnit = modelSemanticUnits.get(intent.reviewUnitId);
-    const operations = (
-      unit.operations ??
-      unit.operationIds.map((id) => ({
-        operationId: semantic.facts[id]?.operationId,
-        beforeFactId: unit.beforeFactIds?.find(
-          (factId) => semantic.facts[factId]?.operationId === semantic.facts[id]?.operationId,
+  const changes = [...byKind].map(([kind, items]) => {
+    if (/version-lineage/.test(intent.id)) kind = "modified";
+    const evidencedOperationIds = [
+      ...new Set(
+        items.flatMap((item) =>
+          item.operationId ? [item.operationId] : (item.operationIds ?? []),
         ),
-        afterFactId:
-          unit.afterFactIds?.find(
-            (factId) => semantic.facts[factId]?.operationId === semantic.facts[id]?.operationId,
-          ) ??
-          ((semantic.facts[id]?.comparisonRole ?? semantic.facts[id]?.revision) === "baseline" ||
-          semantic.facts[id]?.revision === "base"
-            ? undefined
-            : id),
-      }))
-    ).map((operation) => ({
-      ...operationPresentation(operation, semantic.facts),
-      sources: sourcesForOperation(operation, unit, sources, semantic.facts, projectsById),
-    }));
-    const action = semanticAction(unit, operations);
+      ),
+    ];
+    const operationIds =
+      evidencedOperationIds.length > 0
+        ? evidencedOperationIds
+        : [...new Set(operations.map((operation) => operation.operationId))];
+    const changeOperations = operations.filter((operation) =>
+      operationIds.includes(operation.operationId),
+    );
     return {
-      ...unit,
-      action,
-      changeKind: action,
-      intentType: unit.intentType ?? semanticIntentType(unit),
-      title: intent.title,
-      summary: intent.summary,
-      informational: informationalSemanticIntentIds.has(intent.reviewUnitId),
-      ...(modelUnit?.deterministicCoverage
-        ? {
-            deterministicCoverage: modelUnit.deterministicCoverage,
-            inferenceRequired: modelUnit.inferenceRequired,
-          }
-        : {}),
-      ...(inferenceResultsByUnit.has(intent.reviewUnitId)
-        ? {
-            inferenceResults: (inferenceResultsByUnit.get(intent.reviewUnitId) ?? []).map(
-              (result) => ({
-                requestId: result.requestId,
-                hunkId: result.hunkId,
-                decision: result.decision,
-                rationale: result.rationale,
-                candidateIds: result.candidates.map((candidate) => candidate.id),
-              }),
-            ),
-          }
-        : {}),
-      operations,
-      sources: unit.sourceChangeIds
-        .map(
-          (id) =>
-            sources[id] &&
-            sourceForUnit(sources[id], unit.hunkIds ?? sources[id].hunks.map((hunk) => hunk.id)),
-        )
-        .filter(Boolean),
+      kind,
+      summary: intent.title,
+      operationIds,
+      apiVersions: [
+        ...new Set(changeOperations.flatMap((operation) => operation.apiVersions)),
+      ],
+      aspects:
+        intent.aspects ??
+        (retainVersionPropagation
+          ? [
+              {
+                field: "API version availability",
+                before: null,
+                after: `${operationIds.length} existing operation${operationIds.length === 1 ? "" : "s"} are exposed in the new API version; this does not imply a wire-behavior change.`,
+              },
+            ]
+          : evidenceAspects(items, kind, operationIds.length)),
+      effect: intent.rationale,
+      typeSpecCause: intent.rationale,
+      sourceReferences,
+      typeSpecDiffs,
+      linkedFindingIds: [],
     };
   });
-  const restFindings = joinFindings(
-    restCandidates,
-    answer.restDecisions,
-    { ...modelInput.facts, ...rest.facts },
-    sources,
-  );
-  const downstreamFindings = joinFindings(
-    downstreamCandidates,
-    answer.downstreamDecisions,
-    { ...modelInput.facts, ...downstream.facts },
-    sources,
-  ).filter(meaningfulDownstreamFinding);
-  findingRelations(
-    restFindings,
-    downstreamFindings,
-    semanticItems.filter((intent) => !intent.informational),
-  );
-  const downstreamAggregation = downstreamGroups(downstreamFindings, downstream.rootCauses, {
-    ...modelInput.facts,
-    ...downstream.facts,
-  });
-  addReciprocalRelations(semanticItems, restFindings, downstreamAggregation);
-  const restDimension = {
-    status: dimensionStatus(
-      rest.status === "blocked" ||
-        inferenceBlockers.some((blocker) => blocker.allowedDimensions.includes("rest")),
-      restFindings,
-    ),
-    findings: restFindings,
-    rejectedCandidateCount: answer.restDecisions.filter((item) => item.decision === "reject")
-      .length,
-    blockers: [
-      ...rest.blockers,
-      ...inferenceBlockers.filter((blocker) => blocker.allowedDimensions.includes("rest")),
-    ],
-  };
-  const downstreamDimension = {
-    status: dimensionStatus(
-      downstream.status === "blocked" ||
-        inferenceBlockers.some((blocker) => blocker.allowedDimensions.includes("downstream")),
-      downstreamFindings,
-    ),
-    findings: downstreamFindings,
-    methodGroups: downstreamAggregation.methodGroups,
-    typeImpacts: downstreamAggregation.typeImpacts,
-    rootCauses: downstream.rootCauses ?? [],
-    rejectedCandidateCount: answer.downstreamDecisions.filter((item) => item.decision === "reject")
-      .length,
-    blockers: [
-      ...downstream.blockers,
-      ...inferenceBlockers.filter((blocker) => blocker.allowedDimensions.includes("downstream")),
-    ],
-  };
-  const complianceDimension = hasComplianceInput
-    ? assembleCompliance({
-        requests: complianceRequests,
-        evidence: /** @type {ComplianceSearchEvidence} */ (complianceEvidence),
-        decisions: answer.complianceDecisions,
-        sourceChanges: sourceIndex.sourceChanges,
-        initialBlockers:
-          semantic.status === "blocked"
-            ? semantic.blockers.length
-              ? semantic.blockers
-              : ["semantic-analysis-blocked: Azure Guidelines requires Semantic intents."]
-            : [],
-      })
-    : hasComplianceContract
-      ? {
-          status: "passed",
-          summary: "No assessed Semantic intents require Azure Guidelines review.",
-          coverage: {
-            semanticIntentCount: 0,
-            assessedIntentCount: 0,
-            selectedDocumentCount: 0,
-            unassessedIntentIds: [],
-          },
-          intentAssessments: [],
-          findings: [],
-          retrievalFailures: [],
-          blockers: [],
-        }
-      : {
-          status: "not-assessed",
-          summary: "Azure Guidelines search input was not available.",
-          coverage: {
-            semanticIntentCount: 0,
-            assessedIntentCount: 0,
-            selectedDocumentCount: 0,
-            unassessedIntentIds: [],
-          },
-          intentAssessments: [],
-          findings: [],
-          retrievalFailures: [],
-          blockers: [
-            {
-              message: "compliance-search-input-missing: rerun deterministic analysis.",
-            },
-          ],
-        };
-  const documentQualityPath = path.join(work, DOCUMENT_QUALITY_ARTIFACT);
-  const documentQualityDimension = assembleDocumentQuality({
-    input: fs.existsSync(documentQualityPath)
-      ? /** @type {DocumentQualityInput} */ (
-          /** @type {unknown} */ (readJsonObject(documentQualityPath))
-        )
-      : undefined,
-    modelInput,
-    decisions: undefined,
-    semanticUnits: scopedSemantic.assessed,
-    semanticStatus: semantic.status,
-    sourceChanges: sourceIndex.sourceChanges,
-  });
   return {
-    schemaVersion: 1,
-    generatedAt: new Date().toISOString(),
-    title: `TypeSpec assessment: ${manifest.projects.map((project) => project.path).join(", ")}`,
-    repository: manifest.repository,
-    ...(manifest.pullRequest ? { pullRequest: manifest.pullRequest } : {}),
-    comparison: {
-      baseRef: manifest.comparison.baseRef,
-      baseCommit: manifest.comparison.mergeBaseCommit,
-      headCommit: manifest.comparison.headCommit,
-      workingTree: manifest.comparison.workingTree,
+    id: intent.id,
+    intent: intent.title,
+    transformationChain: [intent.rationale],
+    changes,
+    restRepresentation: {
+      summary: intent.rationale,
+      operations,
     },
-    artifactComparisons: manifest.projects.map((project) => ({
-      projectId: project.id,
-      ...(project.artifactComparison ?? {
-        mode: "legacy",
-        baseline: {
-          sourceRevision: "base",
-          commit: manifest.comparison.mergeBaseCommit,
-          apiVersion: project.apiVersions?.base,
-          reason: project.apiVersions?.baseReason ?? "legacy-selection",
-        },
-        target: {
-          sourceRevision: "current",
-          commit: manifest.comparison.headCommit,
-          apiVersion: project.apiVersions?.current,
-          reason: project.apiVersions?.currentReason ?? "legacy-selection",
-        },
-      }),
-    })),
-    confidence: answer.overallConfidence,
-    safety: deriveSafety(restDimension, downstreamDimension),
-    dimensions: {
-      semantic: {
-        status: semantic.status === "blocked" ? "not-assessed" : "assessed",
-        items: semanticItems,
-        sourceHunkIds: sourceIndex.sourceChanges
-          .flatMap((source) => (source.hunks ?? []).map((hunk) => hunk.id))
-          .sort(),
-        blockers: semantic.blockers,
-      },
-      rest: restDimension,
-      downstream: downstreamDimension,
-      compliance: complianceDimension,
-      documentQuality: documentQualityDimension,
-    },
-    changedFiles: manifest.changedFiles,
-    projects: manifest.projects,
-    blockers: [...manifest.blockers, ...answer.blockers, ...inferenceBlockers],
-    provenance: {
-      modelInput: "model-input.json",
-      ...(fs.existsSync(documentQualityPath) ? { documentQuality: DOCUMENT_QUALITY_ARTIFACT } : {}),
-      ...(inference ? { inference: "inference.json" } : {}),
-      ...(hasComplianceInput
-        ? { complianceSearchEvidence: "compliance-search-evidence.json" }
-        : {}),
-      judgment: "assessment-judgment.json",
-      preparationManifest: "preparation-manifest.json",
-    },
-    inputAccounting: {
-      ...modelInput.inputAccounting,
-      ...(inference
-        ? {
-            inference: {
-              requestCount: inferenceRequests.length,
-              inferredCandidateCount: inferredCandidates.length,
-              noImpactCount: inference.results.filter((result) => result.decision === "no-impact")
-                .length,
-              blockedCount: inference.results.filter((result) => result.decision === "blocked")
-                .length,
-            },
-          }
-        : {}),
-      ...(hasComplianceInput
-        ? {
-            compliance: /** @type {ComplianceSearchEvidence} */ (complianceEvidence)
-              .inputAccounting,
-          }
-        : {}),
-    },
-    timings: manifest.timings,
+    confidence,
+    sourceReferences,
   };
 }
 
-if (isMain(import.meta.url)) {
-  void runMain(() => {
-    const args = parseArgs(process.argv.slice(2), {
-      required: ["work", "judgment", "output"],
-    });
-    const work = args.work;
-    const judgment = args.judgment;
-    const output = args.output;
-    if (typeof work !== "string" || typeof judgment !== "string" || typeof output !== "string") {
-      throw new Error("--work, --judgment, and --output must be paths.");
+function sanitizeNarrative(value) {
+  return value
+    .replace(INTERNAL_TERMS, (term) => {
+      if (/TCGC/i.test(term)) return "generated SDK behavior";
+      if (/cross-language/i.test(term)) return "generated SDK type";
+      if (/isUnionAsEnum/i.test(term)) return "enum representation";
+      return "enum extensibility";
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const RULE_TITLES = {
+  "parameter-contract-changed": "Operation parameter contract changes",
+  "response-contract-changed": "Operation response contract changes",
+  "paging-metadata-added": "Generated SDK result becomes pageable",
+  "client-location-changed": "Generated SDK method moves between clients",
+  "sdk-lro-recognition-changed":
+    "Generated SDK long-running operation behavior changes",
+  "sdk-enum-shape-changed": "Generated SDK enum shape changes",
+  "client-property-flattening-changed":
+    "Generated SDK model property shape changes",
+};
+
+function findingTitle(candidate) {
+  return (
+    RULE_TITLES[candidate.rule] ??
+    sanitizeNarrative(candidate.summary ?? humanField(candidate.rule ?? "API impact"))
+      .replace(/\.$/, "")
+      .slice(0, 140)
+  );
+}
+
+function candidatePaths(candidate) {
+  const evidence = Array.isArray(candidate.evidence)
+    ? candidate.evidence
+    : [candidate.evidence];
+  return new Set(
+    evidence
+      .filter((item) => item && typeof item === "object")
+      .map((item) => item.path)
+      .filter(Boolean),
+  );
+}
+
+function candidateOperations(candidate, evidence) {
+  const keys = new Set();
+  if (candidate.evidence?.operation) keys.add(candidate.evidence.operation);
+  const operationIds = new Set();
+  for (const change of evidence.operationChanges.values()) {
+    if (keys.has(change.operationKey)) operationIds.add(change.operationId);
+  }
+  if (operationIds.size === 0 && typeof candidate.summary === "string") {
+    for (const change of evidence.operationChanges.values()) {
+      if (candidate.summary.includes(change.operationId)) {
+        operationIds.add(change.operationId);
+      }
     }
-    const assessment = assembleAssessment({
-      work: path.resolve(work),
-      judgment: path.resolve(judgment),
+  }
+  return operationIds;
+}
+
+function relatedSemanticItems(candidate, items, evidence) {
+  const paths = candidatePaths(candidate);
+  const operationIds = candidateOperations(candidate, evidence);
+  const related = items.filter(
+    (item) =>
+      item.sourceReferences.some((reference) => paths.has(reference.path)) ||
+      item.restRepresentation.operations.some((operation) =>
+        operationIds.has(operation.operationId),
+      ),
+  );
+  if (related.length > 0) return related;
+  return items.length === 1 ? items : [];
+}
+
+function findingEvidence(candidate) {
+  const result = [];
+  if (candidate.summary) result.push(sanitizeNarrative(candidate.summary));
+  const paths = candidatePaths(candidate);
+  for (const path of paths) result.push(`Changed TypeSpec source: ${path}.`);
+  if (candidate.evidence?.operation) {
+    result.push(`Compared REST operation: ${candidate.evidence.operation}.`);
+  }
+  return result.length > 0 ? result : ["Bounded deterministic change evidence."];
+}
+
+function materializeCandidateFindings(decisions, candidates, items, evidence) {
+  return decisions
+    .filter((decision) => decision.decision === "approve")
+    .map((decision) => {
+      const candidate = candidates.get(decision.id);
+      const related = relatedSemanticItems(candidate, items, evidence);
+      assert(
+        related.length > 0,
+        `Approved candidate ${decision.id} cannot be linked to a semantic intent.`,
+      );
+      const sourceReferences = uniqueByJson(
+        related.flatMap((item) => item.sourceReferences),
+      );
+      return {
+        finding: {
+          id: decision.id,
+          title: findingTitle(candidate),
+          severity: decision.severity ?? candidate.severity ?? "medium",
+          confidence: items[0]?.confidence ?? "medium",
+          summary: sanitizeNarrative(decision.rationale),
+          evidence: findingEvidence(candidate),
+          sourceReferences,
+        },
+        related,
+      };
     });
-    writeJson(path.resolve(output), assessment);
-    console.log(path.resolve(output));
+}
+
+function derivedRestDownstreamFinding(restEntries, confidence) {
+  if (restEntries.length === 0) return undefined;
+  const severityOrder = { high: 0, medium: 1, low: 2 };
+  const severity = restEntries
+    .map((entry) => entry.finding.severity)
+    .sort(
+      (left, right) =>
+        (severityOrder[left] ?? 99) - (severityOrder[right] ?? 99),
+    )[0];
+  return {
+    finding: {
+      id: "derived-rest-contract-sdk-impact",
+      title: "REST contract changes require generated-client updates",
+      severity,
+      confidence,
+      summary:
+        "The approved REST contract changes also alter generated client request or response handling and can break callers compiled against the previous contract.",
+      evidence: restEntries.map(
+        (entry) => `Approved REST finding: ${entry.finding.id}.`,
+      ),
+      sourceReferences: uniqueByJson(
+        restEntries.flatMap((entry) => entry.finding.sourceReferences),
+      ),
+    },
+    related: uniqueByJson(restEntries.flatMap((entry) => entry.related)),
+  };
+}
+
+function decodeHtml(value) {
+  return value
+    .replace(/&#x3C;/gi, "<")
+    .replace(/&#x3E;/gi, ">")
+    .replace(/&#x26;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, "&");
+}
+
+function findingCodeAnchors(finding) {
+  const evidence = Array.isArray(finding.evidence)
+    ? finding.evidence.join(" ")
+    : finding.evidence;
+  const text = `${finding.title} ${evidence}`;
+  const declarationPhrases = [
+    ...text.matchAll(/\b(model|interface|alias|enum|union)\s+([A-Za-z_][A-Za-z0-9_]*)/g),
+  ].map((match) => `${match[1]} ${match[2]}`);
+  for (const match of text.matchAll(
+    /\b([A-Za-z_][A-Za-z0-9_]*)\s+aliases\b/g,
+  )) {
+    declarationPhrases.push(`alias ${match[1]}`);
+  }
+  return {
+    declarationPhrases: [...new Set(declarationPhrases)],
+    tokens: [
+      ...new Set(
+      `${finding.title} ${evidence}`
+        .match(/[A-Z][A-Za-z0-9_]{3,}/g) ?? [],
+      ),
+    ].sort((left, right) => right.length - left.length),
+  };
+}
+
+function snippetFromDiff(
+  hunks,
+  references,
+  anchors = { declarationPhrases: [], tokens: [] },
+) {
+  const candidates = [];
+  for (const reference of references) {
+    for (const hunk of hunks.filter(
+      (candidate) => candidate.path === reference.path,
+    )) {
+      let oldLine = hunk.oldStart;
+      let newLine = hunk.newStart;
+      const rows = [];
+      for (const rawLine of hunk.lines) {
+        if (rawLine === "\\ No newline at end of file") continue;
+        const prefix = rawLine[0];
+        if (reference.revision === "base" && prefix !== "+") {
+          rows.push({
+            number: oldLine,
+            line: rawLine.slice(1),
+            changed: prefix === "-",
+          });
+        }
+        if (reference.revision !== "base" && prefix !== "-") {
+          rows.push({
+            number: newLine,
+            line: rawLine.slice(1),
+            changed: prefix === "+",
+          });
+        }
+        if (prefix !== "+") oldLine += 1;
+        if (prefix !== "-") newLine += 1;
+      }
+      const eligible = rows.filter(
+        (row) =>
+          row.number >= reference.startLine && row.number <= reference.endLine,
+      );
+      if (eligible.length === 0) continue;
+      const scoredRows = eligible.map((row, index) => ({
+        index,
+        score:
+          anchors.declarationPhrases.reduce(
+            (score, phrase) =>
+              score +
+              (new RegExp(
+                `\\b${phrase.replace(" ", "\\s+")}\\b`,
+              ).test(row.line)
+                ? 100
+                : 0),
+            0,
+          ) +
+          anchors.tokens.reduce(
+          (score, anchor) => score + (row.line.includes(anchor) ? 1 : 0),
+          0,
+        ),
+      }));
+      const anchored = scoredRows.sort(
+        (left, right) => right.score - left.score,
+      )[0];
+      const changedIndex = Math.max(
+        0,
+        eligible.findIndex((row) => row.changed),
+      );
+      candidates.push({
+        eligible,
+        focusIndex: anchored?.score > 0 ? anchored.index : changedIndex,
+        score: anchored?.score ?? 0,
+        reference,
+      });
+    }
+  }
+  const best = candidates.sort((left, right) => right.score - left.score)[0];
+  if (best) {
+    const startIndex = Math.max(
+      0,
+      Math.min(best.focusIndex - 3, best.eligible.length - 12),
+    );
+    const selected = best.eligible.slice(startIndex, startIndex + 12);
+    return {
+      path: best.reference.path,
+      startLine: selected[0].number,
+      endLine: selected.at(-1).number,
+      lines: selected.map((row) => row.line),
+    };
+  }
+  return undefined;
+}
+
+function complianceSources(finding, evidence, materialized) {
+  const selection = sourceSelections(finding, evidence);
+  const references = selectReferences(selection, [], materialized);
+  const diffs = selectDiffs(selection, materialized);
+  const snippet = snippetFromDiff(
+    diffs,
+    references,
+    findingCodeAnchors(finding),
+  );
+  assert(
+    references.length > 0 && snippet,
+    `Compliance finding ${finding.id} has no exact deterministic source evidence.`,
+  );
+  return { references, snippet };
+}
+
+function materializeCompliance(judgment, evidence, materialized, semanticItems) {
+  const findingData = judgment.findings.map((finding) => {
+    const sources = complianceSources(finding, evidence, materialized);
+    return {
+      ...finding,
+      sources,
+      output: {
+        id: finding.id,
+        title: finding.title,
+        severity: finding.severity,
+        summary: finding.summary,
+        documentationUrl: finding.documentationUrl,
+        evidence: Array.isArray(finding.evidence)
+          ? finding.evidence
+          : [finding.evidence],
+        sourceReferences: sources.references,
+        codeSnippets: [sources.snippet],
+      },
+    };
   });
+  const fallbackReferences = uniqueByJson(
+    semanticItems.flatMap((item) => item.sourceReferences),
+  );
+  const documents = judgment.documentUrls.map((url) => {
+    const document = evidence.documents.get(url);
+    const relatedFindings = findingData.filter(
+      (finding) => finding.documentationUrl === url,
+    );
+    const sourceReferences = uniqueByJson(
+      relatedFindings.length > 0
+        ? relatedFindings.flatMap((finding) => finding.sources.references)
+        : fallbackReferences,
+    );
+    const output = {
+      title: document.title,
+      url,
+      section: document.category ?? "Matched documentation evidence",
+      guidanceExcerpt: (document.matchingExcerpt ?? "").slice(0, 500),
+      applicableGuidance: judgment.rationale,
+      evidence:
+        relatedFindings.flatMap((finding) => finding.evidence).join(" ") ||
+        judgment.rationale,
+      sourceReferences,
+    };
+    if (relatedFindings.length > 0) {
+      const codeBlock = document.candidateCodeBlocks?.[0];
+      if (codeBlock) {
+        output.expectedCodeStatus = "available";
+        output.expectedCodeSnippets = [
+          {
+            language: "tsp",
+            caption: "Documented TypeSpec example",
+            url,
+            section: output.section,
+            lines: decodeHtml(codeBlock).split(/\r?\n/).slice(0, 12),
+          },
+        ];
+      } else {
+        output.expectedCodeStatus = "not-present";
+        output.expectedCodeReason =
+          "The bounded official document evidence did not contain an example block.";
+      }
+    }
+    return output;
+  });
+  const result = {
+    status: judgment.status,
+    summary: {
+      patternsAssessed: documents.length,
+      findingCount: findingData.length,
+    },
+    documents,
+    findings: findingData.map((finding) => finding.output),
+  };
+  if (judgment.status === "not-assessed") result.reason = judgment.rationale;
+  return { result, findingData };
+}
+
+function linkFinding(
+  items,
+  findingId,
+  relatedItems,
+  { preferAdded = false } = {},
+) {
+  for (const item of relatedItems) {
+    const added = item.changes.filter((change) => change.kind === "added");
+    const changes = preferAdded && added.length > 0 ? added : item.changes;
+    for (const change of changes) {
+      if (!change.linkedFindingIds.includes(findingId)) {
+        change.linkedFindingIds.push(findingId);
+      }
+    }
+  }
+}
+
+function deterministicPreparationMs(modelInput) {
+  const duration = modelInput.assessmentDuration ?? {};
+  const value = duration.totalMs ?? duration.preparationMs ?? 0;
+  assert(
+    Number.isInteger(value) && value >= 0,
+    "model-input assessmentDuration must contain a non-negative integer timing.",
+  );
+  return value;
+}
+
+function allocateJudgmentMs(modelInput, judgmentMs) {
+  const semanticProjects = (modelInput.projects ?? []).map((project) => ({
+    path: project.path,
+    operationChanges: project.rest?.operationChanges ?? [],
+    operationGroups: project.rest?.operationGroups ?? [],
+  }));
+  const values = {
+    semanticUnderstandingMs: [
+      modelInput.sourceFiles ?? [],
+      semanticProjects,
+    ],
+    restBreakingMs: (modelInput.projects ?? []).flatMap(
+      (project) => project.rest?.breakingCandidates ?? [],
+    ),
+    downstreamBreakingMs: (modelInput.projects ?? []).flatMap(
+      (project) => project.downstream?.candidates ?? [],
+    ),
+    complianceMs: modelInput.complianceEvidence ?? {},
+  };
+  const weighted = Object.entries(values).map(([name, value]) => ({
+    name,
+    weight: Math.max(1, Buffer.byteLength(JSON.stringify(value), "utf8")),
+  }));
+  const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
+  let assigned = 0;
+  return Object.fromEntries(
+    weighted.map((item, index) => {
+      const allocation =
+        index === weighted.length - 1
+          ? judgmentMs - assigned
+          : Math.floor((judgmentMs * item.weight) / totalWeight);
+      assigned += allocation;
+      return [item.name, allocation];
+    }),
+  );
+}
+
+function timing(modelInput, judgmentElapsedMs, assemblyMs, renderMs) {
+  const preparationMs = deterministicPreparationMs(modelInput);
+  const judgmentMs = judgmentElapsedMs ?? 0;
+  const judgmentAllocation = allocateJudgmentMs(modelInput, judgmentMs);
+  const documentationEvidenceMs = Math.min(
+    preparationMs,
+    modelInput.assessmentDuration?.documentationEvidenceMs ?? 0,
+  );
+  const totalMs = preparationMs + judgmentMs + assemblyMs + renderMs;
+  return {
+    totalMs,
+    note:
+      judgmentElapsedMs === undefined
+        ? "Deterministic preparation, assembly, and renderer timings are measured. Judgment time was not supplied and is excluded from the total. Exact phases are in assessmentDuration.phases."
+        : "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
+    phases: {
+      deterministicPreparationMs: preparationMs,
+      deterministicAssemblyMs: assemblyMs,
+      judgmentMs: judgmentElapsedMs ?? null,
+      renderMs,
+    },
+    breakdown: {
+      semanticUnderstandingMs: judgmentAllocation.semanticUnderstandingMs,
+      semanticUnderstandingQuality: "estimated",
+      restBreakingMs: judgmentAllocation.restBreakingMs,
+      restBreakingQuality: "estimated",
+      downstreamBreakingMs: judgmentAllocation.downstreamBreakingMs,
+      downstreamBreakingQuality: "estimated",
+      complianceMs:
+        judgmentAllocation.complianceMs + documentationEvidenceMs,
+      complianceQuality: "estimated/measured",
+      overheadMs:
+        preparationMs - documentationEvidenceMs + assemblyMs + renderMs,
+      overheadQuality: "measured",
+      totalMs,
+      totalQuality:
+        judgmentElapsedMs === undefined ? "estimated/measured" : "measured",
+      searchRoute:
+        (modelInput.complianceEvidence?.documents ?? []).length > 0
+          ? "bounded official document evidence"
+          : "no applicable document evidence",
+    },
+  };
+}
+
+export function assembleAssessment({
+  modelInput,
+  judgment,
+  materialization,
+  artifactAnalysis,
+  retainedEvidence,
+  judgmentElapsedMs,
+  deterministicAssemblyMs = 0,
+  renderMs = 0,
+}) {
+  const evidence = validateJudgment(judgment, modelInput);
+  const pr = normalizePositiveInteger(judgment.pr, "assessment judgment pr");
+  assert(
+    materialization?.schemaVersion === 2,
+    "Deterministic materialization assessment schemaVersion must be 2.",
+  );
+  if (materialization.pr !== undefined) {
+    const materializationPr = normalizePositiveInteger(
+      materialization.pr,
+      "materialization pr",
+    );
+    assert(
+      materializationPr === pr,
+      `Judgment PR ${judgment.pr} does not match materialization PR ${materialization.pr}.`,
+    );
+  }
+  const materialized = materializationData(
+    materialization,
+    artifactAnalysis,
+    retainedEvidence,
+  );
+  const semanticItems = judgment.semanticIntents
+    .map((intent) =>
+      materializeSemanticIntent(
+        intent,
+        evidence,
+        materialized,
+        judgment.overallConfidence,
+      ),
+    )
+    .filter(Boolean);
+  const operationOwners = new Map();
+  for (const item of semanticItems) {
+    for (const operation of item.restRepresentation.operations) {
+      const owner = operationOwners.get(operation.operationId);
+      assert(
+        owner === undefined || owner === item.id,
+        `Operation ${operation.operationId} is assigned to multiple semantic intents: ${owner}, ${item.id}.`,
+      );
+      operationOwners.set(operation.operationId, item.id);
+    }
+  }
+  const rest = materializeCandidateFindings(
+    judgment.restCandidates,
+    evidence.restCandidates,
+    semanticItems,
+    evidence,
+  );
+  const downstream = materializeCandidateFindings(
+    judgment.downstreamCandidates,
+    evidence.downstreamCandidates,
+    semanticItems,
+    evidence,
+  );
+  if (rest.length > 0 && downstream.length === 0) {
+    downstream.push(
+      derivedRestDownstreamFinding(rest, judgment.overallConfidence),
+    );
+  }
+  for (const entry of [...rest, ...downstream]) {
+    linkFinding(semanticItems, entry.finding.id, entry.related);
+  }
+  const compliance = materializeCompliance(
+    judgment.compliance,
+    evidence,
+    materialized,
+    semanticItems,
+  );
+  for (const finding of compliance.findingData) {
+    const findingSourceChangeIds = new Set(finding.sourceChangeIds);
+    let related = semanticItems.filter((_, index) =>
+      judgment.semanticIntents[index].sourceChangeIds.some((id) =>
+        findingSourceChangeIds.has(id),
+      ),
+    );
+    if (related.length === 0) {
+      const findingPaths = new Set(finding.sourcePaths);
+      related = semanticItems.filter((_, index) =>
+        judgment.semanticIntents[index].sourcePaths.some((path) =>
+          findingPaths.has(path),
+        ),
+      );
+    }
+    assert(
+      related.length > 0,
+      `Compliance finding ${finding.id} cannot be linked to a semantic intent.`,
+    );
+    linkFinding(semanticItems, finding.id, related, { preferAdded: true });
+  }
+
+  const metadataFields = ["title", "url", "state", "createdAt"];
+  const assessment = {
+    schemaVersion: 2,
+    overallConfidence: judgment.overallConfidence,
+    pr,
+  };
+  for (const field of metadataFields) {
+    if (materialization[field] !== undefined) {
+      assessment[field] = structuredClone(materialization[field]);
+    }
+  }
+  assessment.baseline = structuredClone(
+    materialization.baseline ?? modelInput.baseline ?? modelInput.comparison?.baseline,
+  );
+  assessment.head = structuredClone(
+    materialization.head ?? modelInput.head ?? modelInput.comparison?.head,
+  );
+  assessment.projects = (modelInput.projects ?? []).map((project) => project.path);
+  if (materialization.assessmentEvidence) {
+    assessment.assessmentEvidence = structuredClone(
+      materialization.assessmentEvidence,
+    );
+  }
+  if (materialization.artifactEvidence) {
+    assessment.artifactEvidence = structuredClone(materialization.artifactEvidence);
+  }
+  assessment.dimensions = {
+    semanticUnderstanding: { items: semanticItems },
+    restBreakingChanges: {
+      findings: rest.map((entry) => entry.finding),
+    },
+    restCompatibleDownstreamBreakingChanges: {
+      findings: downstream.map((entry) => entry.finding),
+    },
+    azureCompliance: compliance.result,
+  };
+  assessment.errors = [
+    ...new Set([...(modelInput.errors ?? []), ...judgment.blockers]),
+  ];
+  assessment.assessmentDuration = timing(
+    modelInput,
+    judgmentElapsedMs,
+    deterministicAssemblyMs,
+    renderMs,
+  );
+  return assessment;
+}
+
+function isInside(parent, child) {
+  const normalizedParent =
+    process.platform === "win32" ? parent.toLowerCase() : parent;
+  const normalizedChild = process.platform === "win32" ? child.toLowerCase() : child;
+  const value = relative(normalizedParent, normalizedChild);
+  return value === "" || (!value.startsWith(`..${sep}`) && value !== "..");
+}
+
+function assertSafeOutputDirectory(outputDirectory, materializationPath) {
+  assert(
+    !isInside(CANONICAL_REPORT_ROOT, outputDirectory),
+    `Refusing to overwrite canonical report directory: ${outputDirectory}.`,
+  );
+  assert(
+    outputDirectory !== dirname(materializationPath),
+    "Output directory must differ from the deterministic materialization directory.",
+  );
+  for (const name of ["assessment.json", "assessment.md", "assessment.html"]) {
+    assert(
+      !existsSync(join(outputDirectory, name)),
+      `Refusing to overwrite existing report file: ${join(outputDirectory, name)}.`,
+    );
+  }
+}
+
+function retainedTypeSpecDiffs(evidence, sourcePaths) {
+  if (Array.isArray(evidence.typeSpecDiffs)) return evidence.typeSpecDiffs;
+  const repositoryRoot = evidence.repositoryRoot;
+  if (
+    typeof repositoryRoot !== "string" ||
+    !existsSync(repositoryRoot) ||
+    sourcePaths.length === 0
+  ) {
+    return [];
+  }
+  const result = spawnSync(
+    "git",
+    [
+      "-C",
+      repositoryRoot,
+      "--no-pager",
+      "diff",
+      "--unified=20",
+      evidence.baseline.commit,
+      evidence.head.commit,
+      "--",
+      ...sourcePaths,
+    ],
+    {
+      encoding: "utf8",
+      windowsHide: true,
+    },
+  );
+  assert(
+    result.status === 0,
+    `Unable to recover retained TypeSpec source diffs: ${result.stderr.trim() || `git exited with ${result.status}`}.`,
+  );
+  return parseTypeSpecDiffHunks(result.stdout);
+}
+
+export function assembleAssessmentFiles({
+  modelInputPath,
+  judgmentPath,
+  materializationPath,
+  outputDirectory,
+  evidenceDirectory,
+  judgmentElapsedMs,
+}) {
+  const resolvedModelInput = resolve(modelInputPath);
+  const resolvedJudgment = resolve(judgmentPath);
+  const resolvedMaterialization = resolve(materializationPath);
+  const resolvedOutput = resolve(outputDirectory);
+  assertSafeOutputDirectory(resolvedOutput, resolvedMaterialization);
+
+  const assemblyStartedAt = process.hrtime.bigint();
+  const modelInput = readJson(resolvedModelInput, "model input");
+  const judgment = readJson(resolvedJudgment, "assessment judgment");
+  const materialization = readJson(
+    resolvedMaterialization,
+    "deterministic materialization",
+  );
+  let artifactAnalysis;
+  let retainedMaterialization;
+  if (evidenceDirectory !== undefined) {
+    const resolvedEvidenceDirectory = resolve(evidenceDirectory);
+    const retainedEvidence = readJson(
+      join(resolvedEvidenceDirectory, "evidence.json"),
+      "retained deterministic evidence",
+    );
+    assert(
+      retainedEvidence?.schemaVersion === 1,
+      "Retained evidence schemaVersion must be 1.",
+    );
+    assert(
+      retainedEvidence.baseline?.commit === modelInput.baseline?.commit &&
+        retainedEvidence.head?.commit === modelInput.head?.commit,
+      "Retained evidence comparison does not match model-input.json.",
+    );
+    artifactAnalysis = analyzeArtifacts(
+      retainedEvidence,
+      resolvedEvidenceDirectory,
+    );
+    retainedMaterialization = {
+      sourceReferences: retainedEvidence.sourceReferences ?? [],
+      typeSpecDiffs: retainedTypeSpecDiffs(
+        retainedEvidence,
+        (modelInput.sourceFiles ?? []).map((source) => source.path),
+      ),
+    };
+  }
+  let assessment = assembleAssessment({
+    modelInput,
+    judgment,
+    materialization,
+    artifactAnalysis,
+    retainedEvidence: retainedMaterialization,
+    judgmentElapsedMs,
+  });
+  const deterministicAssemblyMs = elapsedMs(assemblyStartedAt);
+
+  const renderStartedAt = process.hrtime.bigint();
+  renderAssessment(assessment);
+  renderAssessmentHtml(assessment);
+  const renderMs = elapsedMs(renderStartedAt);
+  assessment = assembleAssessment({
+    modelInput,
+    judgment,
+    materialization,
+    artifactAnalysis,
+    retainedEvidence: retainedMaterialization,
+    judgmentElapsedMs,
+    deterministicAssemblyMs,
+    renderMs,
+  });
+  const markdown = renderAssessment(assessment);
+  const html = renderAssessmentHtml(assessment);
+  const validationErrors = validateAssessment(assessment, markdown);
+  assert(
+    validationErrors.length === 0,
+    `Assembled assessment is invalid:\n${validationErrors.join("\n")}`,
+  );
+
+  mkdirSync(resolvedOutput, { recursive: true });
+  writeFileSync(
+    join(resolvedOutput, "assessment.json"),
+    `${JSON.stringify(assessment, null, 2)}\n`,
+  );
+  writeFileSync(join(resolvedOutput, "assessment.md"), markdown);
+  writeFileSync(join(resolvedOutput, "assessment.html"), html);
+  return assessment;
+}
+
+function parseArguments(values) {
+  const positional = [];
+  let judgmentElapsedMs;
+  let evidenceDirectory;
+  for (let index = 0; index < values.length; index += 1) {
+    if (values[index] === "--judgment-elapsed-ms") {
+      const raw = values[index + 1];
+      assert(raw !== undefined, "--judgment-elapsed-ms requires a value.");
+      judgmentElapsedMs = Number(raw);
+      assert(
+        Number.isInteger(judgmentElapsedMs) && judgmentElapsedMs >= 0,
+        "--judgment-elapsed-ms must be a non-negative integer.",
+      );
+      index += 1;
+    } else if (values[index] === "--evidence-directory") {
+      const raw = values[index + 1];
+      assert(raw !== undefined, "--evidence-directory requires a value.");
+      evidenceDirectory = raw;
+      index += 1;
+    } else {
+      positional.push(values[index]);
+    }
+  }
+  assert(
+    positional.length === 4,
+    "Usage: assemble-assessment.mjs <model-input.json> <assessment-judgment.json> <materialization-assessment.json> <output-directory> [--evidence-directory <rerun-pr-folder>] [--judgment-elapsed-ms <ms>]",
+  );
+  return {
+    modelInputPath: positional[0],
+    judgmentPath: positional[1],
+    materializationPath: positional[2],
+    outputDirectory: positional[3],
+    evidenceDirectory,
+    judgmentElapsedMs,
+  };
+}
+
+function main() {
+  try {
+    const assessment = assembleAssessmentFiles(parseArguments(process.argv.slice(2)));
+    process.stdout.write(
+      `Assembled and validated assessment for PR ${assessment.pr}.\n`,
+    );
+  } catch (error) {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  }
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  main();
 }

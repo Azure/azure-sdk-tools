@@ -28,7 +28,7 @@
         "confidence": "high",
         "summary": "The wire contract is unchanged, but SDKs now expose poller/LRO return types and asynchronous completion semantics.",
         "evidence": [
-          "@useFinalStateVia is visible to both AutoRest and TCGC while @extension was OpenAPI-only."
+          "@useFinalStateVia makes the existing LRO behavior available to generated clients, while the prior raw OpenAPI extension did not provide equivalent TypeSpec LRO metadata."
         ]
       }
     ],
@@ -96,7 +96,18 @@
         ]
       }
     ],
-    "downstreamFindings": [],
+    "downstreamFindings": [
+      {
+        "id": "pr-44742-sdk-removal",
+        "title": "Generated SDK models, properties, and enum values are removed",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "Regenerated SDKs remove the public NFSv2 models, response properties, and enum values, so existing source code that references them no longer compiles and response handling loses those shapes.",
+        "evidence": [
+          "The generated client surface removes the NFSv2 models, response properties, and enum values together with the stable REST contract."
+        ]
+      }
+    ],
     "sourceReferences": [
       {
         "path": "specification/storage/data-plane/FileStorage/models.tsp",
@@ -138,7 +149,7 @@
         "summary": "REST becomes more permissive, but generated enum typing, construction, comparison, and exhaustive handling can change.",
         "evidence": [
           "AutoRest sets modelAsString to true.",
-          "TCGC changes enum member metadata."
+          "Generated clients change from a fixed enum to an extensible string-backed shape."
         ]
       }
     ],
@@ -168,7 +179,7 @@
       "Add the 2026-02-01 stable version.",
       "Exclude Go from four existing client-location rules."
     ],
-    "restRepresentation": "Operation paths, parameters, requests, and responses remain unchanged; only generated client ownership changes.",
+    "restRepresentation": "For Go, four existing methods move to a different generated client; their REST paths, parameters, requests, and responses remain unchanged.",
     "artifactEvidence": {
       "autorest": "base/head succeeded for both projects; a new stable OpenAPI version is emitted",
       "tcgc": "base/head succeeded; generic model generated, while Go-scoped movement is confirmed from source decorators"
@@ -209,10 +220,58 @@
     "result": "downstream-break-with-rest-assessment-blocker",
     "intent": "Add private frontend support and stop flattening AssociationUpdate.properties for JavaScript.",
     "transformationChain": [
-      "Add new private frontend versions and models.",
+      "Add new private frontend versions, models, and operations.",
       "Change flattenProperty to exclude JavaScript."
     ],
-    "restRepresentation": "The flattening edit intends to retain the same JSON properties object while changing JavaScript model access.",
+    "restRepresentation": "Adds private endpoint connection and private-link discovery operations while preserving the AssociationUpdate wire shape.",
+    "semanticItems": [
+      {
+        "id": "pr-44200-private-frontend",
+        "intent": "Add private endpoint connection and private-link discovery operations.",
+        "transformationChain": [
+          "Add private endpoint connection and private-link resource models.",
+          "Expose the resources through two new ARM operation interfaces."
+        ],
+        "restRepresentation": "Adds four private endpoint connection operations and two private-link discovery operations in the preview and stable API versions.",
+        "operationIds": [
+          "PrivateEndpointConnectionsInterface_ListByTrafficController",
+          "PrivateEndpointConnectionsInterface_Get",
+          "PrivateEndpointConnectionsInterface_Update",
+          "PrivateEndpointConnectionsInterface_Delete",
+          "PrivateLinkResourcesInterface_ListByTrafficController",
+          "PrivateLinkResourcesInterface_Get"
+        ],
+        "linkedFindingIds": [],
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 543,
+            "endLine": 558,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+          }
+        ]
+      },
+      {
+        "id": "pr-44200-js-flattening",
+        "intent": "Stop flattening AssociationUpdate.properties for JavaScript.",
+        "transformationChain": [
+          "Scope the legacy flattenProperty customization away from JavaScript."
+        ],
+        "restRepresentation": "The JSON properties object is unchanged while JavaScript model access becomes nested.",
+        "operationIds": ["Associations_Update"],
+        "linkedFindingIds": ["pr-44200-js-nesting"],
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 122,
+            "endLine": 127,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+          }
+        ]
+      }
+    ],
     "artifactEvidence": {
       "autorest": "base succeeded; head failed with duplicate FrontendAssociationUpdate type name",
       "tcgc": "base/head succeeded and shows AssociationUpdate model-shape changes"
@@ -231,6 +290,13 @@
       }
     ],
     "sourceReferences": [
+      {
+        "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+        "revision": "head",
+        "startLine": 543,
+        "endLine": 558,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+      },
       {
         "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
         "revision": "head",

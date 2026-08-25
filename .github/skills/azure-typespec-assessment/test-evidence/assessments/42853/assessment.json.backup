@@ -1,0 +1,1315 @@
+{
+  "schemaVersion": 2,
+  "overallConfidence": "high",
+  "pr": 42853,
+  "title": "Add 2026-02-01 API version for RecoveryServices and RecoveryServicesBackup",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/42853",
+  "state": "merged",
+  "createdAt": "2026-05-04T11:21:59Z",
+  "baseline": {
+    "ref": "519e87e016492a37ce9ea6ac0fdf80d26767f47d",
+    "commit": "519e87e016492a37ce9ea6ac0fdf80d26767f47d"
+  },
+  "head": {
+    "commit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "result": "rest-compatible-downstream-breaking-change",
+  "artifactEvidence": {
+    "autorest": "Preserved base/head emitter runs succeeded for both projects; head adds stable 2026-02-01 OpenAPI artifacts without changing any previously emitted API version.",
+    "tcgc": "Preserved base/head generic TCGC output adds 2026-02-01 and changes the default API version; independent base/head source comparison confirms four @@clientLocation scopes changed from !csharp to !csharp,!go."
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp",
+        "revision": "head",
+        "startLine": 55,
+        "endLine": 59,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp#L55-L59"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp",
+        "revision": "head",
+        "startLine": 80,
+        "endLine": 80,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp#L80-L80"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 70,
+        "endLine": 70,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L70-L70"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 74,
+        "endLine": 74,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L74-L74"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 78,
+        "endLine": 78,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L78-L78"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 110,
+        "endLine": 110,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L110-L110"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+        "revision": "head",
+        "startLine": 62,
+        "endLine": 71,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 271,
+        "endLine": 271,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L271-L271"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 289,
+        "endLine": 289,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L289-L289"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 310,
+        "endLine": 310,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L310-L310"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 327,
+        "endLine": 327,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L327-L327"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 351,
+        "endLine": 351,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L351-L351"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 372,
+        "endLine": 372,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L372-L372"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 393,
+        "endLine": 393,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L393-L393"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 741,
+        "endLine": 741,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L741-L741"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 851,
+        "endLine": 851,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L851-L851"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 866,
+        "endLine": 866,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L866-L866"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 1010,
+        "endLine": 1010,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1010-L1010"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 1015,
+        "endLine": 1015,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1015-L1015"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 1302,
+        "endLine": 1302,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1302-L1302"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 2388,
+        "endLine": 2388,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2388-L2388"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 2420,
+        "endLine": 2420,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2420-L2420"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 2427,
+        "endLine": 2427,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2427-L2427"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 3227,
+        "endLine": 3227,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3227-L3227"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 3239,
+        "endLine": 3239,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3239-L3239"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 3251,
+        "endLine": 3251,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3251-L3251"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 3591,
+        "endLine": 3591,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3591-L3591"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 4636,
+        "endLine": 4636,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4636-L4636"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 4643,
+        "endLine": 4643,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4643-L4643"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 4652,
+        "endLine": 4652,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4652-L4652"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 5176,
+        "endLine": 5176,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5176-L5176"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 5344,
+        "endLine": 5344,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5344-L5344"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 5352,
+        "endLine": 5352,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5352-L5352"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 5360,
+        "endLine": 5360,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5360-L5360"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 5777,
+        "endLine": 5777,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5777-L5777"
+      },
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+        "revision": "head",
+        "startLine": 7720,
+        "endLine": 7720,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L7720-L7720"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservices__resource-manager__Microsoft.RecoveryServices__RecoveryServices/base/autorest"
+      },
+      {
+        "project": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservices__resource-manager__Microsoft.RecoveryServices__RecoveryServices/base/tcgc"
+      },
+      {
+        "project": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservices__resource-manager__Microsoft.RecoveryServices__RecoveryServices/head/autorest"
+      },
+      {
+        "project": "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservices__resource-manager__Microsoft.RecoveryServices__RecoveryServices/head/tcgc"
+      },
+      {
+        "project": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservicesbackup__resource-manager__Microsoft.RecoveryServices__RecoveryServicesBackup/base/autorest"
+      },
+      {
+        "project": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservicesbackup__resource-manager__Microsoft.RecoveryServices__RecoveryServicesBackup/base/tcgc"
+      },
+      {
+        "project": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservicesbackup__resource-manager__Microsoft.RecoveryServices__RecoveryServicesBackup/head/autorest"
+      },
+      {
+        "project": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__recoveryservicesbackup__resource-manager__Microsoft.RecoveryServices__RecoveryServicesBackup/head/tcgc"
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-42853-intent",
+          "intent": "Add a stable API version while changing Go client placement for four existing operations.",
+          "transformationChain": [
+            "Add the 2026-02-01 stable version.",
+            "Exclude Go from four existing client-location rules."
+          ],
+          "restRepresentation": {
+            "summary": "For Go, four existing methods move to a different generated client; their REST paths, parameters, requests, and responses remain unchanged.",
+            "operations": [
+              {
+                "operationId": "BackupResourceStorageConfigsNonCRR_BMSPrepareDataMove",
+                "apiVersions": [
+                  "2026-02-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/prepareDataMove",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, vaultName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Validates and prepares backup data movement.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "application/json body: PrepareDataMoveRequest",
+                "responsePayloads": [
+                  "200: no body",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/prepareDataMove",
+                "sourceReferences": [
+                  {
+                    "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 67,
+                    "endLine": 112,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+                  }
+                ]
+              },
+              {
+                "operationId": "BackupResourceStorageConfigsNonCRR_BMSTriggerDataMove",
+                "apiVersions": [
+                  "2026-02-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/triggerDataMove",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, vaultName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Starts asynchronous movement of backup data.",
+                "lro": {
+                  "polling": "Poll the emitted async endpoint after Retry-After until a terminal state.",
+                  "finalResult": "Use the final response contract described for this operation.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "application/json body: TriggerDataMoveRequest",
+                "responsePayloads": [
+                  "202: Azure-AsyncOperation and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/triggerDataMove",
+                "sourceReferences": [
+                  {
+                    "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 67,
+                    "endLine": 112,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+                  }
+                ]
+              },
+              {
+                "operationId": "BackupResourceConfigOperationStatuses_GetOperationStatus",
+                "apiVersions": [
+                  "2026-02-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/operationStatus/{operationId}",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, vaultName, operationId: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Returns the current status of a backup storage configuration operation.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200: OperationStatus",
+                  "default: ErrorResponse"
+                ],
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/operationStatus/{operationId}",
+                "sourceReferences": [
+                  {
+                    "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 67,
+                    "endLine": 112,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+                  }
+                ]
+              },
+              {
+                "operationId": "RecoveryPoints_MoveRecoveryPoint",
+                "apiVersions": [
+                  "2026-02-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/move",
+                "parameters": [
+                  "all ARM resource path identifiers: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Starts asynchronous movement of a recovery point.",
+                "lro": {
+                  "polling": "Poll the emitted async endpoint after Retry-After until a terminal state.",
+                  "finalResult": "Use the final response contract described for this operation.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "application/json body: MoveRecoveryPointRequest",
+                "responsePayloads": [
+                  "202: Azure-AsyncOperation and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/move",
+                "sourceReferences": [
+                  {
+                    "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 67,
+                    "endLine": 112,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 67,
+              "endLine": 112,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+            }
+          ],
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Add a stable API version while changing Go client placement for four existing operations.",
+              "operationIds": [
+                "BackupResourceStorageConfigsNonCRR_BMSPrepareDataMove",
+                "BackupResourceStorageConfigsNonCRR_BMSTriggerDataMove",
+                "BackupResourceConfigOperationStatuses_GetOperationStatus",
+                "RecoveryPoints_MoveRecoveryPoint"
+              ],
+              "apiVersions": [
+                "2026-02-01"
+              ],
+              "aspects": [
+                {
+                  "field": "client location",
+                  "before": "Baseline metadata and generated client shape.",
+                  "after": "Go is added to the client-location exclusions, moving the four methods to a different generated Go client."
+                }
+              ],
+              "effect": "For Go, four existing methods move to a different generated client; their REST paths, parameters, requests, and responses remain unchanged.",
+              "typeSpecCause": "Extend the existing `@@clientLocation` customizations to exclude Go.",
+              "sourceReferences": [
+                {
+                  "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                  "revision": "head",
+                  "startLine": 67,
+                  "endLine": 112,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                  "oldStart": 67,
+                  "oldCount": 15,
+                  "newStart": 67,
+                  "newCount": 15,
+                  "context": "using Microsoft.RecoveryServices;",
+                  "lines": [
+                    " ",
+                    " @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,",
+                    "   Microsoft.RecoveryServices,",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!go\"",
+                    " );",
+                    " @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,",
+                    "   Microsoft.RecoveryServices,",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!go\"",
+                    " );",
+                    " @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,",
+                    "   Microsoft.RecoveryServices,",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!go\"",
+                    " );",
+                    " ",
+                    " @@clientLocation(PrivateEndpointConnectionResources.get,"
+                  ]
+                },
+                {
+                  "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+                  "oldStart": 107,
+                  "oldCount": 7,
+                  "newStart": 107,
+                  "newCount": 7,
+                  "context": "using Microsoft.RecoveryServices;",
+                  "lines": [
+                    " ",
+                    " @@clientLocation(RecoveryPoints.moveRecoveryPoint,",
+                    "   Microsoft.RecoveryServices,",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!go\"",
+                    " );",
+                    " ",
+                    " @@clientLocation(ProtectionContainersOperationGroup.refresh,"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "pr-42853-go-client-move",
+                "compliance-42853-stable-after-preview",
+                "compliance-42853-client-file"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": [
+        {
+          "id": "pr-42853-go-client-move",
+          "title": "Existing Go methods move between generated clients",
+          "severity": "high",
+          "confidence": "high",
+          "summary": "Existing Go construction and method calls can stop compiling although the REST contract is unchanged.",
+          "evidence": [
+            "The clientLocation scope changes from !csharp to !csharp,!go."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 67,
+              "endLine": 112,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+            }
+          ]
+        }
+      ]
+    },
+    "azureCompliance": {
+      "status": "failed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 2
+      },
+      "documents": [
+        {
+          "title": "Adding a Stable Version when the Last Version was Preview",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "section": "Making changes to your TypeSpec spec",
+          "guidanceExcerpt": "For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum.",
+          "applicableGuidance": "A stable version replacing a preview removes the preview member and reverses preview-only additions.",
+          "evidence": "RecoveryServicesBackup retains v2026_01_31_preview beside v2026_02_01 and retains preview-only declarations with @removed(v2026_02_01).",
+          "expectedCodeStatus": "not-present",
+          "expectedCodeReason": "The guidance requires deleting the replaced preview declarations; it does not provide replacement TypeSpec for this case.",
+          "codeSnippets": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "startLine": 63,
+              "endLine": 70,
+              "lines": [
+                "   * The 2026-01-31-preview API version.",
+                "   */",
+                "  v2026_01_31_preview: \"2026-01-31-preview\",",
+                "",
+                "  /**",
+                "   * The 2026-02-01 API version.",
+                "   */",
+                "  v2026_02_01: \"2026-02-01\","
+              ]
+            }
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp",
+              "revision": "head",
+              "startLine": 80,
+              "endLine": 80,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp#L80-L80"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "revision": "head",
+              "startLine": 62,
+              "endLine": 71,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 271,
+              "endLine": 271,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L271-L271"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 289,
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L289-L289"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 310,
+              "endLine": 310,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L310-L310"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 327,
+              "endLine": 327,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L327-L327"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 351,
+              "endLine": 351,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L351-L351"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 372,
+              "endLine": 372,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L372-L372"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 393,
+              "endLine": 393,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L393-L393"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 741,
+              "endLine": 741,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L741-L741"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 851,
+              "endLine": 851,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L851-L851"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 866,
+              "endLine": 866,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L866-L866"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 1010,
+              "endLine": 1010,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1010-L1010"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 1015,
+              "endLine": 1015,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1015-L1015"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 1302,
+              "endLine": 1302,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1302-L1302"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 2388,
+              "endLine": 2388,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2388-L2388"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 2420,
+              "endLine": 2420,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2420-L2420"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 2427,
+              "endLine": 2427,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2427-L2427"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3227,
+              "endLine": 3227,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3227-L3227"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3239,
+              "endLine": 3239,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3239-L3239"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3251,
+              "endLine": 3251,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3251-L3251"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3591,
+              "endLine": 3591,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3591-L3591"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 4636,
+              "endLine": 4636,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4636-L4636"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 4643,
+              "endLine": 4643,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4643-L4643"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 4652,
+              "endLine": 4652,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4652-L4652"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5176,
+              "endLine": 5176,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5176-L5176"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5344,
+              "endLine": 5344,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5344-L5344"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5352,
+              "endLine": 5352,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5352-L5352"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5360,
+              "endLine": 5360,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5360-L5360"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5777,
+              "endLine": 5777,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5777-L5777"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 7720,
+              "endLine": 7720,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L7720-L7720"
+            }
+          ]
+        },
+        {
+          "title": "Clients",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+          "section": "Customizations",
+          "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
+          "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
+          "evidence": "The edited @@clientLocation declarations remain in back-compatible.tsp.",
+          "expectedCodeStatus": "available",
+          "expectedCodeSnippets": [
+            {
+              "language": "tsp",
+              "caption": "Documented client.tsp customization example",
+              "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+              "section": "Customizations",
+              "lines": [
+                "import \"@azure-tools/typespec-client-generator-core\";",
+                "using Azure.ClientGenerator.Core;",
+                "",
+                "@@clientLocation(Feeds.feed, PetStore);",
+                "@@clientLocation(Pets.pet, PetStore);"
+              ]
+            }
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "startLine": 68,
+              "endLine": 71,
+              "lines": [
+                "@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,",
+                "  Microsoft.RecoveryServices,",
+                "  \"!csharp,!go\"",
+                ");"
+              ]
+            }
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 67,
+              "endLine": 112,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 70,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L70-L70"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 74,
+              "endLine": 74,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L74-L74"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 78,
+              "endLine": 78,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L78-L78"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 110,
+              "endLine": 110,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L110-L110"
+            }
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "compliance-42853-stable-after-preview",
+          "title": "The replaced preview version remains in the stable-version history",
+          "severity": "medium",
+          "summary": "RecoveryServicesBackup keeps v2026_01_31_preview and its preview-only declarations while appending v2026_02_01, contrary to the documented stable-after-preview workflow.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "evidence": [
+            "The guide says to remove the replaced preview member and delete preview-only additions.",
+            "The PR instead retains the preview member and scopes preview-only declarations out with @removed(v2026_02_01)."
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "startLine": 62,
+              "endLine": 71,
+              "lines": [
+                "  /**",
+                "   * The 2026-01-31-preview API version.",
+                "   */",
+                "  v2026_01_31_preview: \"2026-01-31-preview\",",
+                "",
+                "  /**",
+                "   * The 2026-02-01 API version.",
+                "   */",
+                "  v2026_02_01: \"2026-02-01\",",
+                "}"
+              ]
+            }
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp",
+              "revision": "head",
+              "startLine": 80,
+              "endLine": 80,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp#L80-L80"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+              "revision": "head",
+              "startLine": 62,
+              "endLine": 71,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 271,
+              "endLine": 271,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L271-L271"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 289,
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L289-L289"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 310,
+              "endLine": 310,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L310-L310"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 327,
+              "endLine": 327,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L327-L327"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 351,
+              "endLine": 351,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L351-L351"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 372,
+              "endLine": 372,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L372-L372"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 393,
+              "endLine": 393,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L393-L393"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 741,
+              "endLine": 741,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L741-L741"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 851,
+              "endLine": 851,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L851-L851"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 866,
+              "endLine": 866,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L866-L866"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 1010,
+              "endLine": 1010,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1010-L1010"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 1015,
+              "endLine": 1015,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1015-L1015"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 1302,
+              "endLine": 1302,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L1302-L1302"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 2388,
+              "endLine": 2388,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2388-L2388"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 2420,
+              "endLine": 2420,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2420-L2420"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 2427,
+              "endLine": 2427,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L2427-L2427"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3227,
+              "endLine": 3227,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3227-L3227"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3239,
+              "endLine": 3239,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3239-L3239"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3251,
+              "endLine": 3251,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3251-L3251"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 3591,
+              "endLine": 3591,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L3591-L3591"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 4636,
+              "endLine": 4636,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4636-L4636"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 4643,
+              "endLine": 4643,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4643-L4643"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 4652,
+              "endLine": 4652,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L4652-L4652"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5176,
+              "endLine": 5176,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5176-L5176"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5344,
+              "endLine": 5344,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5344-L5344"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5352,
+              "endLine": 5352,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5352-L5352"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5360,
+              "endLine": 5360,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5360-L5360"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 5777,
+              "endLine": 5777,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L5777-L5777"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
+              "revision": "head",
+              "startLine": 7720,
+              "endLine": 7720,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp#L7720-L7720"
+            }
+          ]
+        },
+        {
+          "id": "compliance-42853-client-file",
+          "title": "Edited client customizations remain outside client.tsp",
+          "severity": "low",
+          "summary": "The client guide says customizations should always be authored in client.tsp, but the edited @@clientLocation declarations are in back-compatible.tsp.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+          "evidence": [
+            "The decorators correctly customize client hierarchy and language scope.",
+            "Their placement does not follow the documented client.tsp convention."
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "startLine": 68,
+              "endLine": 79,
+              "lines": [
+                "@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,",
+                "  Microsoft.RecoveryServices,",
+                "  \"!csharp,!go\"",
+                ");",
+                "@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,",
+                "  Microsoft.RecoveryServices,",
+                "  \"!csharp,!go\"",
+                ");",
+                "@@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,",
+                "  Microsoft.RecoveryServices,",
+                "  \"!csharp,!go\"",
+                ");"
+              ]
+            }
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 67,
+              "endLine": 112,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 70,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L70-L70"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 74,
+              "endLine": 74,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L74-L74"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 78,
+              "endLine": 78,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L78-L78"
+            },
+            {
+              "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 110,
+              "endLine": 110,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L110-L110"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices",
+    "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup"
+  ],
+  "assessmentDuration": {
+    "totalMs": 812941,
+    "note": "Assessment-only timings retained from execution-time-analysis.md. Worktree creation, dependency installation, and other environment setup are excluded. Quality labels distinguish measured, estimated, and derived values.",
+    "breakdown": {
+      "semanticUnderstandingMs": 300000,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 100000,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 179000,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 206000,
+      "complianceQuality": "measured",
+      "overheadMs": 28000,
+      "overheadQuality": "derived",
+      "totalMs": 812941,
+      "totalQuality": "measured",
+      "searchRoute": "catalog only"
+    }
+  }
+}

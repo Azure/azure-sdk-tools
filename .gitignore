@@ -581,3 +581,4 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/auth.json
 # sdk-sample-generator artifacts
 .artifacts/
 tools/tsp-client/test/examples/sdk/alternate-entrypoint/test-results.browser.xml
+.rpi/

@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   applyModelInputBudget,
   buildAssessmentDraft,
+  buildFastAssessmentDraft,
   compactAnalysisProject,
   mergeHistoricalComplianceDocuments,
 } from "./run-assessment-analysis.mjs";
@@ -52,6 +53,45 @@ test("assessment drafts isolate deterministic evidence from model tasks", () => 
   assert.equal(draft.assessmentDuration.deterministicAnalysisMs, 25);
   assert.equal(draft.assessmentDuration.documentationEvidenceMs, 300);
   assert.ok(draft.modelTasks.every((task) => typeof task === "string"));
+});
+
+test("fast assessment drafts retain only impact evidence", () => {
+  const full = buildAssessmentDraft({
+    evidence: {
+      baseline: { commit: "base" },
+      head: { commit: "head" },
+      changedFiles: ["spec/main.tsp"],
+      typeSpecDiffs: [],
+      errors: [],
+      durationMs: 10,
+      phaseDurations: { deterministicAnalysisMs: 2 },
+    },
+    analysis: {
+      durationMs: 2,
+      sourceIndex: [],
+      projects: [
+        {
+          path: "spec",
+          rest: {
+            baseline: [],
+            head: [],
+            changes: [],
+            restBreakingCandidates: [],
+          },
+          downstream: { candidates: [], changes: [] },
+        },
+      ],
+    },
+    complianceEvidence: { durationMs: 1, documents: [] },
+    totalMs: 12,
+  });
+  const fast = buildFastAssessmentDraft(full);
+  assert.equal(fast.mode, "impact-only");
+  assert.deepEqual(
+    fast.projects[0].rest.operationGroups,
+    full.projects[0].rest.operationGroups,
+  );
+  assert.match(fast.modelTasks.join(" "), /Do not generate semantic intents/);
 });
 
 test("assessment drafts identify local pre-PR working-tree scope", () => {
@@ -259,6 +299,22 @@ test("compact drafts summarize modified contracts without copying schemas", () =
     },
     reviewRequired: true,
   });
+  assert.deepEqual(project.downstream.candidates, [
+    {
+      id: "derived-rest-contract-sdk-impact",
+      rule: "rest-contract-sdk-impact",
+      severity: "high",
+      summary:
+        "Confirmed REST contract changes can require generated SDK signature, serialization, or response-shape changes.",
+      evidence: [
+        {
+          candidateId: "rest-1-request-contract-changed-v1-post-widgets",
+          operation: "v1:POST:/widgets",
+        },
+      ],
+      reviewRequired: true,
+    },
+  ]);
 });
 
 test("compact drafts ignore artifact paths while retaining schema changes", () => {
@@ -566,6 +622,64 @@ test("added paging decorators become downstream review candidates", () => {
       reviewRequired: true,
     },
   ]);
+});
+
+test("assessment drafts identify ARM actions changed from async to sync", () => {
+  const path = "specification/network/resource-manager/Microsoft.Network/Network";
+  const sourcePath = `${path}/ServiceGateway.tsp`;
+  const draft = buildAssessmentDraft({
+    evidence: {
+      baseline: { commit: "base" },
+      head: { commit: "head", hasWorkingTreeChanges: false, changeScope: [] },
+      changedFiles: [sourcePath],
+      typeSpecDiffs: [
+        {
+          path: sourcePath,
+          oldStart: 1,
+          newStart: 1,
+          lines: [
+            "-  updateServices is ArmResourceActionAsync<ServiceGateway, void, void>;",
+            "+  updateServices is ArmResourceActionSync<ServiceGateway, void, void>;",
+          ],
+        },
+      ],
+      errors: [],
+      durationMs: 1,
+      phaseDurations: {},
+    },
+    analysis: {
+      durationMs: 1,
+      sourceIndex: [],
+      projects: [
+        {
+          path,
+          rest: {
+            baseline: [],
+            head: [],
+            changes: [],
+            restBreakingCandidates: [],
+          },
+          downstream: { candidates: [], changes: [] },
+        },
+      ],
+    },
+    complianceEvidence: { durationMs: 1, documents: [] },
+    totalMs: 2,
+  });
+  const candidate = draft.projects[0].downstream.candidates.find(
+    ({ id }) => id === "source-arm-action-changed-from-async-to-sync",
+  );
+  assert.equal(candidate.rule, "sdk-lro-to-synchronous");
+  assert.deepEqual(candidate.evidence, [
+    {
+      path: sourcePath,
+      symbols: ["updateServices"],
+    },
+  ]);
+  assert.match(
+    draft.sourceFiles[0].changes[0].lines.join("\n"),
+    /ArmResourceActionSync/,
+  );
 });
 
 test("assessment drafts collapse repeated decorators and bound source lines", () => {

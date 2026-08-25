@@ -11,10 +11,10 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildCompliance } from "./generate-document-compliance-evidence.mjs";
-import { sourceLink } from "./prepare-assessment.mjs";
-import { renderAssessment } from "./render-assessment.mjs";
-import { renderAssessmentHtml } from "./render-assessment-html.mjs";
-import { validateAssessment } from "./validate-assessment.mjs";
+import { sourceLink } from "../../scripts/prepare-assessment.mjs";
+import { renderAssessment } from "../../scripts/render-assessment.mjs";
+import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
+import { validateAssessment } from "../../scripts/validate-assessment.mjs";
 
 const emitterNames = {
   autorest: "@azure-tools/typespec-autorest",
@@ -794,13 +794,13 @@ function refineSemanticChanges(
 function writeExistingAssessmentReports(reportRootValue, prValues) {
   const reportRoot = resolve(reportRootValue);
   const typeSpecDiffFixture = readJson(
-    new URL("./fixtures/recent-pr-typespec-diffs.json", import.meta.url),
+    new URL("../fixtures/recent-pr-typespec-diffs.json", import.meta.url),
   );
   const complianceFixture = readJson(
-    new URL("./fixtures/recent-pr-compliance.json", import.meta.url),
+    new URL("../fixtures/recent-pr-compliance.json", import.meta.url),
   );
   const operationsByPr = readJson(
-    new URL("./fixtures/recent-pr-operations.json", import.meta.url),
+    new URL("../fixtures/recent-pr-operations.json", import.meta.url),
   );
   for (const pr of prValues) {
     const outputDirectory = join(reportRoot, "assessments", pr);
@@ -852,16 +852,16 @@ function main() {
   const reportRoot = resolve(reportRootValue);
   const rerunRoot = resolve(rerunRootValue);
   const complianceFixture = readJson(
-    new URL("./fixtures/recent-pr-compliance.json", import.meta.url),
+    new URL("../fixtures/recent-pr-compliance.json", import.meta.url),
   );
   const typeSpecDiffFixture = readJson(
-    new URL("./fixtures/recent-pr-typespec-diffs.json", import.meta.url),
+    new URL("../fixtures/recent-pr-typespec-diffs.json", import.meta.url),
   );
   const executionTimeBreakdowns = readJson(
-    new URL("./fixtures/execution-time-breakdowns.json", import.meta.url),
+    new URL("../fixtures/execution-time-breakdowns.json", import.meta.url),
   );
   const operationsByPr = readJson(
-    new URL("./fixtures/recent-pr-operations.json", import.meta.url),
+    new URL("../fixtures/recent-pr-operations.json", import.meta.url),
   );
   const assessments = [];
 

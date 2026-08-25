@@ -88,6 +88,38 @@ The script writes:
 
 The final report records measured preparation and total assessment time per PR.
 
+## Fast impact-only assessment
+
+Use fast mode when the user needs only actionable REST, SDK/downstream, and
+compliance impacts:
+
+```bash
+node .github/skills/azure-typespec-assessment/scripts/run-assessment-analysis.mjs \
+  --fast --output .typespec-fast-assessment
+```
+
+This writes `fast-model-input.json` and
+`fast-assessment-draft.json`. Review every REST and downstream candidate,
+compare compliance evidence with changed source, and write
+`fast-assessment-judgment.json` following
+`scripts/fast-assessment-judgment.schema.json`. Approved findings must include
+actual and expected behavior, severity, confidence, evidence, affected
+operations, and source-change IDs or paths. Rejected candidates require a
+rationale.
+
+Render the standalone report with:
+
+```bash
+node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.mjs \
+  .typespec-fast-assessment/fast-model-input.json \
+  fast-assessment-judgment.json \
+  fast-assessment.html
+```
+
+Fast mode omits semantic intents and non-actionable change explanations. It
+still performs deterministic compilation, artifact comparison, and
+documentation retrieval so an empty impact report remains evidence-based.
+
 ## Assess
 
 1. Read `model-input.json`. Consult raw `evidence.json` or artifacts by stable
@@ -126,6 +158,7 @@ artifacts as “no break.”
 Temporary worktrees are removed automatically. Generated assessment output is not committed unless the user requests it.
 
 For a curated HTML-only evidence set, run
-`scripts/finalize-rerun-assessments.mjs` with `--html-only`. The finalizer
-validates each transient JSON/Markdown pair before retaining only
-`assessment.html`; it also removes the aggregate JSON/Markdown report files.
+`test-evidence/scripts/finalize-rerun-assessments.mjs` with `--html-only`.
+The finalizer validates each transient JSON/Markdown pair before retaining
+only `assessment.html`; it also removes the aggregate JSON/Markdown report
+files.

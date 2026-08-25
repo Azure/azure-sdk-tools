@@ -14,15 +14,31 @@ Assess changed TypeSpec without editing it.
 
 ## Workflow
 
-1. Read the [assessment workflow](references/workflow.md).
-2. Run `node .github/skills/azure-typespec-assessment/scripts/run-assessment-analysis.mjs`.
-3. Review the bounded `model-input.json` using the
+1. Resolve assessment options. Unless already specified by the user, call
+   `ask_user` once to select:
+   - **Mode:** `complete` (default) or `fast` impact-only.
+   - **Baseline branch:** free text, default `main`.
+   Normalize `main` to the tracked remote ref (normally `origin/main`).
+2. Read the [assessment workflow](references/workflow.md).
+3. For complete mode, run
+   `node .github/skills/azure-typespec-assessment/scripts/run-assessment-analysis.mjs --base <baseline>`.
+   For fast mode, add `--fast`.
+4. Review the bounded `model-input.json` using the
    [classification rules](references/classification.md). Use its operation
    groups, compact before/after summaries, source-impact links, and candidates
    instead of reconstructing operation details from raw artifact diffs.
-4. Write `assessment.json` following the [output contract](references/output-contract.md).
-5. Render `assessment.md` with `node .github/skills/azure-typespec-assessment/scripts/render-assessment.mjs assessment.json assessment.md`.
-6. Run `node .github/skills/azure-typespec-assessment/scripts/validate-assessment.mjs assessment.json assessment.md`.
+5. Write `assessment.json` following the [output contract](references/output-contract.md).
+6. Render and validate the report as described in the workflow.
+
+For an impact-only fast assessment, run analysis with `--fast`, review every
+candidate in `fast-model-input.json`, write
+`fast-assessment-judgment.json` following
+`scripts/fast-assessment-judgment.schema.json`, then run:
+
+```bash
+node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.mjs \
+  fast-model-input.json fast-assessment-judgment.json fast-assessment.html
+```
 
 ## Rules
 
@@ -34,6 +50,9 @@ Assess changed TypeSpec without editing it.
   TCGC out of that section.
 - Treat generated artifacts as evidence, not the sole classifier.
 - Every result must link to TypeSpec source lines.
+- Fast assessments cover only REST, SDK/downstream, and compliance impacts.
+  Every approved impact must include actual and expected behavior, evidence,
+  affected operations, and changed TypeSpec source.
 - Assess compliance from fetched authoritative TypeSpec Azure documentation,
   following [the compliance procedure](references/compliance.md) and its local
   agentic search workflow. Compare guidance directly with changed TypeSpec

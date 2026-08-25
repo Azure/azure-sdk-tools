@@ -22,6 +22,7 @@ function analysisArgs(argv) {
   let documentCache;
   let evidenceDirectory;
   let sourceAssessment;
+  let fastMode = false;
   let modelInputBudgetBytes = 250 * 1024;
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--document-cache") {
@@ -48,6 +49,8 @@ function analysisArgs(argv) {
         throw new Error("--source-assessment requires a value");
       }
       index += 1;
+    } else if (argv[index] === "--fast") {
+      fastMode = true;
     } else {
       prepareValues.push(argv[index]);
     }
@@ -60,6 +63,7 @@ function analysisArgs(argv) {
     modelInputBudgetBytes,
     evidenceDirectory,
     sourceAssessment,
+    fastMode,
   };
 }
 
@@ -609,6 +613,64 @@ function sourceDownstreamCandidates(sourceFiles, projectPath, typeSpecDiffs) {
       reviewRequired: true,
     });
   }
+  const removedAsyncActions = new Set(
+    typeSpecDiffs
+      .filter(
+        (hunk) =>
+          projectPath === "." ||
+          hunk.path === projectPath ||
+          hunk.path.startsWith(`${projectPath.replaceAll("\\", "/")}/`),
+      )
+      .flatMap((hunk) => hunk.lines)
+      .flatMap((line) => {
+        const match = line.match(
+          /^-\s*([A-Za-z_]\w*)\s+is\s+ArmResourceActionAsync(?:Base)?</,
+        );
+        return match ? [match[1]] : [];
+      }),
+  );
+  const synchronousReplacements = [
+    ...new Set(
+      typeSpecDiffs
+        .filter(
+          (hunk) =>
+            projectPath === "." ||
+            hunk.path === projectPath ||
+            hunk.path.startsWith(`${projectPath.replaceAll("\\", "/")}/`),
+        )
+        .flatMap((hunk) => hunk.lines)
+        .flatMap((line) => {
+          const match = line.match(
+            /^\+\s*([A-Za-z_]\w*)\s+is\s+ArmResourceActionSync</,
+          );
+          return match && removedAsyncActions.has(match[1]) ? [match[1]] : [];
+        }),
+    ),
+  ];
+  if (synchronousReplacements.length > 0) {
+    candidates.push({
+      id: "source-arm-action-changed-from-async-to-sync",
+      rule: "sdk-lro-to-synchronous",
+      severity: "high",
+      summary:
+        "Replacing existing asynchronous ARM actions with synchronous actions can change generated SDK methods from pollers to immediate-return calls.",
+      evidence: projectFiles
+        .filter((file) =>
+          file.changes.some((change) =>
+            change.lines.some((line) =>
+              synchronousReplacements.includes(
+                line.match(/^([A-Za-z_]\w*)\s+is\s+ArmResourceActionSync</)?.[1],
+              ),
+            ),
+          ),
+        )
+        .map((file) => ({
+          path: file.path,
+          symbols: synchronousReplacements,
+        })),
+      reviewRequired: true,
+    });
+  }
   return candidates;
 }
 
@@ -626,7 +688,7 @@ function compactSourceHunk(hunk, limit) {
       line.startsWith("import ") ||
       line.startsWith("using ") ||
       ["{", "}", "};"].includes(line) ||
-      !/^(?:#suppress\b|@|model\b|interface\b|union\b|enum\b|alias\b|op\b|namespace\b|scalar\b|[A-Za-z_]\w*\??\s*:)/.test(
+      !/^(?:#suppress\b|@|model\b|interface\b|union\b|enum\b|alias\b|op\b|namespace\b|scalar\b|[A-Za-z_]\w*\??\s*(?::|is\s+ArmResourceAction))/.test(
         line,
       )
     ) {
@@ -652,10 +714,22 @@ function compactSourceHunk(hunk, limit) {
           : /@added\b/.test(line)
             ? 2
             : 1;
-    return [{ index, line, priority }];
+    return [
+      {
+        index,
+        line,
+        kind: rawLine.startsWith("+") ? "add" : "remove",
+        priority,
+      },
+    ];
   });
   const uniqueSignificantLines = [
-    ...new Map(significantLines.map((entry) => [entry.line, entry])).values(),
+    ...new Map(
+      significantLines.map((entry) => [
+        `${entry.kind}:${entry.line}`,
+        entry,
+      ]),
+    ).values(),
   ];
   const selectedLines = [...uniqueSignificantLines]
     .sort(
@@ -663,14 +737,17 @@ function compactSourceHunk(hunk, limit) {
         right.priority - left.priority || left.index - right.index,
     )
     .slice(0, limit)
-    .sort((left, right) => left.index - right.index)
-    .map((entry) => entry.line);
+    .sort((left, right) => left.index - right.index);
   return {
     id: `${hunk.path}:${hunk.newStart}:${hunk.oldStart}`,
     path: hunk.path,
     oldStart: hunk.oldStart,
     newStart: hunk.newStart,
-    lines: selectedLines,
+    lines: selectedLines.map((entry) => entry.line),
+    diffLines: selectedLines.map(({ kind, line }) => ({
+      kind,
+      text: line,
+    })),
     omittedLineCount: Math.max(0, uniqueSignificantLines.length - limit),
   };
 }
@@ -785,19 +862,40 @@ export function compactAnalysisProject(project) {
       change.after?.key,
     ]),
   );
+  const breakingCandidates = project.rest.restBreakingCandidates
+    .filter(
+      (candidate) =>
+        candidate.rule === "operation-removed" ||
+        !candidate.evidence?.operation ||
+        detailedOperationKeys.has(candidate.evidence.operation),
+    )
+    .map(compactRestCandidate);
+  const downstreamCandidates = [...project.downstream.candidates];
+  if (
+    breakingCandidates.length > 0 &&
+    !downstreamCandidates.some(
+      (candidate) => candidate.id === "derived-rest-contract-sdk-impact",
+    )
+  ) {
+    downstreamCandidates.push({
+      id: "derived-rest-contract-sdk-impact",
+      rule: "rest-contract-sdk-impact",
+      severity: "high",
+      summary:
+        "Confirmed REST contract changes can require generated SDK signature, serialization, or response-shape changes.",
+      evidence: breakingCandidates.map((candidate) => ({
+        candidateId: candidate.id,
+        operation: candidate.evidence?.operation,
+      })),
+      reviewRequired: true,
+    });
+  }
   return {
     path: project.path,
     rest: {
       operationChanges: detailedChanges.map(operationChangeRecord),
       operationGroups,
-      breakingCandidates: project.rest.restBreakingCandidates
-        .filter(
-          (candidate) =>
-            candidate.rule === "operation-removed" ||
-            !candidate.evidence?.operation ||
-            detailedOperationKeys.has(candidate.evidence.operation),
-        )
-        .map(compactRestCandidate),
+      breakingCandidates,
       counts: {
         baselineOperations: project.rest.baseline.length,
         headOperations: project.rest.head.length,
@@ -811,8 +909,8 @@ export function compactAnalysisProject(project) {
       },
     },
     downstream: {
-      candidates: project.downstream.candidates,
-      candidateCount: project.downstream.candidates.length,
+      candidates: downstreamCandidates,
+      candidateCount: downstreamCandidates.length,
     },
   };
 }
@@ -882,6 +980,40 @@ export function buildAssessmentDraft({
       "Review REST and downstream candidates and author only supported final findings.",
       "Compare compliance excerpts with exact TypeSpec declarations and decide applicability.",
       "Set final confidence and concise service-behavior explanations.",
+    ],
+  };
+}
+
+export function buildFastAssessmentDraft(draft) {
+  return {
+    schemaVersion: 1,
+    mode: "impact-only",
+    comparison: draft.comparison,
+    baseline: draft.baseline,
+    head: draft.head,
+    changedFiles: draft.changedFiles,
+    sourceFiles: draft.sourceFiles,
+    projects: draft.projects.map((project) => ({
+      path: project.path,
+      rest: {
+        operationChanges: project.rest.operationChanges,
+        operationGroups: project.rest.operationGroups,
+        breakingCandidates: project.rest.breakingCandidates,
+        counts: project.rest.counts,
+      },
+      downstream: {
+        candidates: project.downstream.candidates,
+        candidateCount: project.downstream.candidateCount,
+      },
+    })),
+    complianceEvidence: draft.complianceEvidence,
+    errors: draft.errors,
+    assessmentDuration: draft.assessmentDuration,
+    modelTasks: [
+      "Review every REST and downstream candidate and approve or reject it.",
+      "For each approved impact, explain actual and expected behavior, affected operations, evidence, and exact changed source.",
+      "Assess documentation-grounded compliance and include actual, expected, guidance, evidence, and exact changed source for each finding.",
+      "Do not generate semantic intents or explain changes without an actionable impact.",
     ],
   };
 }
@@ -994,20 +1126,27 @@ export async function runAssessmentAnalysis(options) {
     join(outputRoot, "compliance-evidence.json"),
     `${JSON.stringify(complianceEvidence, null, 2)}\n`,
   );
-  const draft = applyModelInputBudget(
-    buildAssessmentDraft({
+  const fullDraft = buildAssessmentDraft({
       evidence,
       analysis,
       complianceEvidence,
       totalMs: elapsedMs(startedAt),
-    }),
+    });
+  const draft = applyModelInputBudget(
+    options.fastMode ? buildFastAssessmentDraft(fullDraft) : fullDraft,
     options.modelInputBudgetBytes ?? 250 * 1024,
   );
+  const draftName = options.fastMode
+    ? "fast-assessment-draft.json"
+    : "assessment-draft.json";
+  const inputName = options.fastMode
+    ? "fast-model-input.json"
+    : "model-input.json";
   writeFileSync(
-    join(outputRoot, "assessment-draft.json"),
+    join(outputRoot, draftName),
     `${JSON.stringify(draft, null, 2)}\n`,
   );
-  writeFileSync(join(outputRoot, "model-input.json"), JSON.stringify(draft));
+  writeFileSync(join(outputRoot, inputName), JSON.stringify(draft));
   return draft;
 }
 

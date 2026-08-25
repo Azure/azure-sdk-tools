@@ -22,6 +22,7 @@ from openai import (
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
+from openai.types.responses import ResponseOutputMessage, ResponseOutputText
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 
 from utils.azure_ai_foundry import set_stateless_session_id
@@ -43,9 +44,54 @@ STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
 STREAM_EVENT_RESPONSE_FAILED = "response.failed"
 STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
+# -- Content safety --------------------------------------------------------
+CONTENT_SAFETY_MESSAGE = (
+    "I can't help with this request because it was flagged by "
+    "our content safety policy. Please rephrase your message and try again."
+)
+
 
 class EmptyAgentResponseError(Exception):
     """Raised when the agent completes with empty ``output_text`` (retryable)."""
+
+
+def _is_content_filter_error(ex: BadRequestError) -> bool:
+    """Return True when a ``BadRequestError`` was caused by a content-safety block."""
+    if getattr(ex, "code", None) == "content_filter":
+        return True
+    body = getattr(ex, "body", None)
+    if isinstance(body, dict):
+        error = body.get("error") or {}
+        if isinstance(error, dict):
+            return (
+                error.get("code") == "content_filter"
+                or error.get("type") == "content_safety_error"
+            )
+    return False
+
+
+def _build_content_safety_response() -> OpenAIResponse:
+    """Build a synthetic completed response carrying the content-safety message."""
+    text = ResponseOutputText.model_construct(
+        type="output_text",
+        text=CONTENT_SAFETY_MESSAGE,
+        annotations=[],
+    )
+    message = ResponseOutputMessage.model_construct(
+        id="content-filter",
+        type="message",
+        role="assistant",
+        status="completed",
+        content=[text],
+    )
+    return OpenAIResponse.model_construct(
+        id="content-filter",
+        status="completed",
+        output=[message],
+        error=None,
+        incomplete_details=None,
+        usage=None,
+    )
 
 
 class HostedAgentClient:
@@ -120,6 +166,17 @@ class HostedAgentClient:
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
+                # Content-safety blocks are deterministic; retrying will not
+                # help, so return a synthetic response with a safe message.
+                if isinstance(ex, BadRequestError) and _is_content_filter_error(ex):
+                    logger.error(
+                        "Agent request blocked by content safety policy: "
+                        "conversation=%s, error=%s",
+                        agent_conversation_id,
+                        ex,
+                        exc_info=True,
+                    )
+                    return None, _build_content_safety_response()
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
                     set_stateless_session_id(None)

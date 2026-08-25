@@ -687,6 +687,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 throw new NotImplementedException();
             }
 
+            public Azure.Core.AccessToken GetToken(CancellationToken ct)
+            {
+                throw new NotImplementedException();
+            }
+
+            public BuildHttpClient GetAnonymousBuildClient()
+            {
+                throw new NotImplementedException();
+            }
+
             public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct = default)
             {
                 return _workItemClient;

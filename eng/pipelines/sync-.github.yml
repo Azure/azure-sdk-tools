@@ -18,17 +18,27 @@ parameters:
 - name: Repos
   type: object
   default:
-    - azure-sdk
-    - azure-sdk-for-cpp
-    - azure-sdk-for-go
-    - azure-sdk-for-ios
-    - azure-sdk-for-java
-    - azure-sdk-for-js
-    - azure-sdk-for-net
-    - azure-sdk-for-python
-    - azure-sdk-for-rust
+    - RepoOwner: Azure
+      RepoName: azure-sdk
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-cpp
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-go
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-ios
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-java
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-js
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-net
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-python
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-rust
     # TODO: Re-enable syncing to specs repo after we standardize on workflow linting/naming
-    # - azure-rest-api-specs
+    # - RepoOwner: Azure
+    #   RepoName: azure-rest-api-specs
 
 trigger: none
 

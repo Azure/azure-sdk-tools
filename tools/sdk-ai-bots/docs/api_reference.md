@@ -183,10 +183,10 @@ The API is defined using TypeSpec, enabling automatic client SDK generation for 
 The TypeSpec definitions are located at:
 
 ```text
-tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp/
+tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp/
 ├── main.tsp        # Service definition
-├── model.tsp       # Data models
-├── route.tsp       # API routes
+├── models.tsp      # Data models
+├── routes.tsp      # API routes
 ├── package.json    # Dependencies
 └── tspconfig.yaml  # Emitter configuration
 ```
@@ -206,7 +206,7 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp/
 1. **Clone the repository and navigate to the TypeSpec folder:**
 
    ```bash
-   cd tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp
+   cd tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp
    ```
 
 2. **Add desired emitter to `package.json`:**

@@ -1,4 +1,5 @@
 using Octokit;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
@@ -367,6 +368,61 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<WorkflowRun>>([]);
+        }
+
+        public Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<(string Name, string Content)>>([]);
+        }
+
+        public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<WorkflowJob>>([]);
+        }
+
+        public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct)
+        {
+            return Task.FromResult(new List<PrCheckRun>());
+        }
+
+        public Task<IReadOnlyList<PullRequest>> GetMergedPullRequestsByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequest>>(new List<PullRequest>().AsReadOnly());
+        }
+
+        public Task<IReadOnlyList<PullRequest>> GetPullRequestsByHeadPrefixAsync(string repoOwner, string repoName, string headBranchPrefix, DateTimeOffset since, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequest>>(new List<PullRequest>().AsReadOnly());
+        }
+
+        public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequestCommit>>([]);
+        }
+
+        public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<IssueComment>>([]);
+        }
+
+        public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequestFile>>([]);
+        }
+
+        public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<GitHubCommitFile>>([]);
+        }
+
+        public Task<IReadOnlyList<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PrCheckRun>>([]);
         }
     }
 }

@@ -1463,6 +1463,18 @@ namespace APIViewWeb.Managers
             return revision;
         }
 
+        public async Task<APIRevisionListItemModel> MarkAPIRevisionReleasedAsync(string apiRevisionId)
+        {
+            APIRevisionListItemModel revision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            if (revision == null || revision.IsReleased)
+                return revision;
+
+            revision.IsReleased = true;
+            revision.ReleasedOn = DateTime.UtcNow;
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+            return revision;
+        }
+
         /// <summary>
         /// Get ReviewIds of Language corresponding Review linked by CrossLanguagePackageId
         /// </summary>

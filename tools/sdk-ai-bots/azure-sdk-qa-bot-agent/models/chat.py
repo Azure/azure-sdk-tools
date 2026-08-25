@@ -1,7 +1,7 @@
 """Data models for the chat (QA) scenario.
 
-Aligned with Azure SDK QA Bot backend TypeSpec definitions.
-See: tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp/model.tsp
+Aligned with the Azure SDK QA Bot Agent TypeSpec definitions.
+See: tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp/models.tsp
 """
 
 from __future__ import annotations

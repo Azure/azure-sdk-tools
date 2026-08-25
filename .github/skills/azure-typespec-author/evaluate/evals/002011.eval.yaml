@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "armtemplate"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: gpt-5.6-sol # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.
+      In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -45,7 +45,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -59,13 +59,13 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.
+      @azure-typespec-author In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -79,16 +79,18 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           path: "employee.tsp"
           pattern: 'checkExistence\s+is\s+ArmResourceCheckExistence\s*<\s*Employee\s*>'
-      - type: "prompt"
+      - &prompt
+        type: "prompt"
         config:
           scoring: "scale_1_10"
           threshold: 0.88
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
-          model: "claude-opus-4.6"
+          model: "gpt-5.6-sol"
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -96,31 +98,24 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource."
+    prompt: "In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines."
     environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'checkExistence\s+is\s+ArmResourceCheckExistence\s*<\s*Employee\s*>'
-      - type: "prompt"
-        config:
-          prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
-          model: "claude-opus-4.6"
-          scoring: "scale_1_10"
-          threshold: 0.88
+            - "^(edit|apply_patch|bash|powershell)$"
+      - *file_matches
+      - *prompt
     constraints:
       max_turns: 6
       max_tokens: 100000
 
 scoring:
   weights:
-    run-command: 1
-    skill-invocation: 1
-    prompt: 1
-    file-matches: 1
-  threshold: 0.91
+    tool-calls: 0.2
+    run-command: 0.2
+    skill-invocation: 0.2
+    prompt: 0.2
+    file-matches: 0.2
+  threshold: 0.96

@@ -39,15 +39,13 @@ public class Main {
     // [--renderer=json|markdown] [inputFiles] <outputDirectory>
     public static void main(String[] args) {
         if (args.length != 2 && args.length != 3) {
-            System.out.println("Expected argument order: [--renderer=json|markdown] "
-                + "[comma-separated sources jarFiles] <outputDirectory>, e.g. /path/to/jarfile.jar ./temp/");
+            printUsage();
             System.exit(-1);
         }
 
         final boolean hasRendererOption = args.length == 3 && args[0].startsWith(RENDERER_OPTION_PREFIX);
         if (args.length == 3 && !hasRendererOption) {
-            System.out.println("Expected argument order: [--renderer=json|markdown] [comma-separated sources jarFiles] "
-                + "<outputDirectory>, e.g. /path/to/jarfile.jar ./temp/");
+            printUsage();
             System.exit(-1);
         }
 
@@ -74,6 +72,11 @@ public class Main {
 
         Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir, renderer));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
+    }
+
+    private static void printUsage() {
+        System.out.println("Expected argument order: [--renderer=json|markdown] "
+            + "[comma-separated sources jarFiles] <outputDirectory>, e.g. /path/to/jarfile.jar ./temp/");
     }
 
     /**

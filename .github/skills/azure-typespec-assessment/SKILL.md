@@ -58,6 +58,5 @@ node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.m
   agentic search workflow. Compare guidance directly with changed TypeSpec
   source; do not substitute validation tools, generated artifacts, or hard-coded
   compliance rules.
-- Do not modify TypeSpec; use `azure-typespec-author` for fixes.
 
 See [REST-compatible downstream breaking cases](references/rest-compatible-downstream-breaking-cases.md) for representative classifications.

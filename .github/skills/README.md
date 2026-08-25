@@ -36,13 +36,13 @@ These skills help with skill development itself:
 
 The three eval-authoring skills share the repository-local [eval authoring guide](eval-authoring/README.md).
 
-| Skill                                                         | Triggers                                            | Description                                                           |
-| ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
-| [skill-authoring](skill-authoring/SKILL.md)                   | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
-| [eval-authoring-skill](eval-authoring-skill/SKILL.md)         | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
-| [eval-authoring-tool](eval-authoring-tool/SKILL.md)           | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
-| [eval-authoring-workflow](eval-authoring-workflow/SKILL.md)   | "write a workflow eval", "create multi-turn eval"   | Author repository-local multi-tool, multi-turn, mock, and live evals  |
-| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
+| Skill                                                                                 | Triggers                                            | Description                                                           |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| [skill-authoring](skill-authoring/SKILL.md)                                           | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
+| [eval-authoring-skill](eval-authoring-skill/SKILL.md)                                 | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
+| [eval-authoring-tool](eval-authoring-tool/SKILL.md)                                   | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
+| [eval-authoring-workflow](eval-authoring-workflow/SKILL.md)                           | "write a workflow eval", "create multi-turn eval"   | Author repository-local multi-tool, multi-turn, mock, and live evals  |
+| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md)                         | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
 ### Skill Anatomy
 

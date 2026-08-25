@@ -83,26 +83,6 @@ jobs:
 
       - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
 
-      - task: NodeTool@0
-        displayName: 'Install Node.js'
-        inputs:
-          versionSpec: '24.x'
-
-      # 1ES images block registry.npmjs.org; restore via the azure-sdk npm mirror. Written to
-      # the agent user's .npmrc so the global install below inherits the registry and its auth.
-      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
-        parameters:
-          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
-
-      # Not bundled into the released CLI (its build sets CopilotSkipCliDownload under TF_BUILD),
-      # and the judge reports a missing CLI as Undetermined rather than failing, so without this
-      # the whole night would look green with no verdicts.
-      - script: |
-          npm install --global @github/copilot
-          copilot --version
-        displayName: 'Install Copilot CLI'
-        retryCountOnTaskFailure: 2
-
       # Mint a short-lived GitHub App installation token just before evaluation instead of
       # relying on a manually rotated PAT from a variable group.
       - template: /eng/common/pipelines/templates/steps/login-to-github.yml
@@ -130,9 +110,6 @@ jobs:
         env:
           REPOSITORIES_JSON: ${{ convertToJson(parameters.repos) }}
           GITHUB_TOKEN: $(GH_TOKEN)
-          # Installation tokens must reach the Copilot runtime through its server-to-server
-          # environment variable, not CopilotClientOptions.GitHubToken.
-          COPILOT_GITHUB_TOKEN: $(GH_TOKEN)
 
       - task: AzureCLI@2
         displayName: 'Publish results to Azure Blob Storage'

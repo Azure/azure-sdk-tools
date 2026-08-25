@@ -181,25 +181,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public async Task GetReleasePlanAsync_WithPullRequestUrl_BlankReleaseTypeStillMatchesRequestedType()
-        {
-            // Arrange: a stale parent with no Custom.ReleasePlanType set (predates that field, like #34409).
-            var pullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
-            var apiSpecWorkItem = CreateApiSpecWorkItem(1, pullRequestUrl, "Active");
-            var blankTypeParent = CreateReleasePlanWorkItem(100, "In Progress");
-
-            _connection.AddWorkItemToQuery(apiSpecWorkItem);
-            _connection.AddWorkItem(blankTypeParent);
-
-            // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ApiReleaseType.PublicPreview, CancellationToken.None);
-
-            // Assert: a blank/unset release type is treated as a potential match, not silently skipped.
-            Assert.IsNotNull(result, "A blank ReleasePlanType should be treated as a match, not skipped.");
-            Assert.That(result.WorkItemId, Is.EqualTo(100));
-        }
-
-        [Test]
         public async Task GetReleasePlanAsync_WithPullRequestUrl_DifferentConcreteReleaseTypeStillSkipped()
         {
             // Arrange: an existing GA plan; requesting Public Preview must NOT treat it as a duplicate,

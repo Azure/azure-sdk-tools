@@ -1,0 +1,107 @@
+name: "Onboard Your Product"
+description: "Onboard a new product"
+title: "Product Onboarding: <product name>"
+labels: ["product-onboarding"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Product Onboarding Request
+
+        Thank you for submitting this product onboarding request.
+
+        **Before submitting, ensure you adjust the title of the issue appropriately.**
+
+  - type: input
+    id: product-id
+    attributes:
+      label: Product ID in [Service Tree](https://microsoftservicetree.com/)
+      placeholder: "A GUID."
+    validations:
+      required: true
+
+  - type: input
+    id: product-name
+    attributes:
+      label: Product Name
+    validations:
+      required: true
+
+  - type: dropdown
+    id: product-type 
+    attributes:
+      label: Product Type
+      options:
+        - label: "Offering"
+        - label: "Feature"
+        - label: "SKU"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: product-lifecycle 
+    attributes:
+      label: Product Lifecycle
+      options:
+        - label: "Private Preview"
+        - label: "Public Preview"
+        - label: "GA"
+        - label: "In Dev"
+    validations:
+      required: true
+
+  - type: input
+    id: service-id
+    attributes:
+      label: Service ID in Service Tree
+      placeholder: "A GUID."
+    validations:
+      required: true
+
+  - type: input
+    id: service-name
+    attributes:
+      label: Service Name
+    validations:
+      required: true
+
+  - type: dropdown
+    id: generate-and-release-sdk
+    attributes:
+      label: Do you need to generate and release Azure SDK for your product? The next two questions after this one are required if "Yes".
+      options:
+        - label: "Yes"
+        - label: "No"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data-plane 
+    attributes:
+      label: Is data plane applicable for the product (Do you need to release data plane SDK)?
+      options:
+        - label: "Yes"
+        - label: "No"
+        - label: "N/A"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: management-plane 
+    attributes:
+      label: Is Management plane applicable for the product?
+      options:
+        - label: "Yes"
+        - label: "No"
+        - label: "N/A"
+    validations:
+      required: false
+
+  - type: input
+    id: submitter-handle
+    attributes:
+      label: Submitter Handle
+      description: "GitHub handle of the submitter."
+      placeholder: "@user"
+    validations:
+      required: true

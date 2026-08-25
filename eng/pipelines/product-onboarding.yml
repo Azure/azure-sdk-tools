@@ -1,0 +1,32 @@
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 * * * *" # every hour
+  displayName: 'Scheduled Product Onboarding Issue Processing'
+  branches:
+    include:
+    - main
+  always: true
+
+pool:
+  name: azsdk-pool
+  demands: ImageOverride -equals windows-2022
+
+steps:
+- template: /eng/common/pipelines/templates/steps/login-to-github.yml
+  parameters:
+    TokenOwners: 
+      - Azure
+
+- template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+
+- task: AzureCLI@2
+  displayName: 'Process Product Onboarding Issues'
+  env:
+    GH_TOKEN: $(GH_TOKEN)
+    AZSDK: $(AZSDK)
+  inputs:
+    azureSubscription: opensource-api-connection
+    scriptType: pscore
+    scriptPath: ./eng/scripts/Process-ProductOnboardingIssues.ps1

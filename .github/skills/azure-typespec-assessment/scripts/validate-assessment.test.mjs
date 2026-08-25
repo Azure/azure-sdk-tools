@@ -10,7 +10,7 @@ import {
   correctHistoricalSemanticChains,
   normalizeAssessmentSourceLinks,
 } from "../test-evidence/scripts/finalize-rerun-assessments.mjs";
-import { buildCompliance } from "../test-evidence/scripts/generate-document-compliance-evidence.mjs";
+import { buildCompliance } from "../test-evidence/scripts/document-compliance.mjs";
 import { deriveOperationChanges } from "../test-evidence/scripts/operation-changes.mjs";
 import { deriveCodeSafety } from "./assessment-display.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
@@ -339,11 +339,13 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
   );
   assert.match(html, /<!doctype html>/);
   assert.match(html, /<aside class="preview-notice">/);
-  assert.match(html, /The TypeSpec Assessment Assistant is currently in preview/);
+  assert.match(
+    html,
+    /The TypeSpec Assessment Assistant is currently in preview/,
+  );
   assert.match(html, /does not replace official ARM API/);
   assert.ok(
-    html.indexOf('<aside class="preview-notice">') <
-      html.indexOf("<nav>"),
+    html.indexOf('<aside class="preview-notice">') < html.indexOf("<nav>"),
   );
   assert.match(html, /<section id="semantic-intents">/);
   assert.match(html, /<section id="rest-breaking">/);
@@ -533,6 +535,24 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
   );
 });
 
+test("HTML renders local source locations without stale links", () => {
+  const document = validDocument();
+  const localReference = {
+    ...sourceReference,
+    link: "spec/main.tsp#L2-L4",
+  };
+  const item = document.dimensions.semanticUnderstanding.items[0];
+  item.sourceReferences = [localReference];
+  item.restRepresentation.operations[0].sourceReferences = [localReference];
+  item.changes[0].sourceReferences = [localReference];
+  document.dimensions.azureCompliance.documents[0].sourceReferences = [
+    localReference,
+  ];
+  const html = renderAssessmentHtml(document);
+  assert.match(html, /<code>main\.tsp:L2-L4<\/code>/);
+  assert.doesNotMatch(html, /href="spec\/main\.tsp#L2-L4"/);
+});
+
 test("HTML downstream findings include their linked TypeSpec source diff", () => {
   const document = validDocument();
   document.dimensions.restCompatibleDownstreamBreakingChanges.findings.push({
@@ -676,10 +696,7 @@ test("HTML prioritizes decorators named by the TypeSpec change summary", () => {
   ];
   const html = renderAssessmentHtml(document);
   assert.match(html, /\+@removed\(Versions\.v2\)/);
-  assert.match(
-    html,
-    /class="add version-decorator">\+@added\(Versions\.v2\)/,
-  );
+  assert.match(html, /class="add version-decorator">\+@added\(Versions\.v2\)/);
   assert.doesNotMatch(html, /placeholder/);
   assert.deepEqual(validateAssessment(document), []);
 });
@@ -704,9 +721,7 @@ test("added, modified, and removed changes have distinct icons", () => {
     const [icon, label] = marker.split(" ");
     assert.match(
       renderAssessmentHtml(document),
-      new RegExp(
-        `<span class="change-badge ${kind}">${icon} ${label}</span>`,
-      ),
+      new RegExp(`<span class="change-badge ${kind}">${icon} ${label}</span>`),
     );
     assert.deepEqual(validateAssessment(document), []);
   }
@@ -1153,42 +1168,32 @@ test("generated fixture reports are reproducible in a clean checkout", () => {
       { encoding: "utf8" },
     );
     assert.equal(result.status, 0, result.stderr);
-    const evidence = JSON.parse(
-      readFileSync(join(output, "assessments.json"), "utf8"),
-    );
-    const summary = readFileSync(join(output, "assessment-summary.md"), "utf8");
-    assert.equal(evidence.assessments.length, 10);
-    const privateFrontendAssessment = evidence.assessments.find(
-      (assessment) => assessment.pr === 44200,
-    );
-    assert.equal(
-      privateFrontendAssessment.dimensions.semanticUnderstanding.items.length,
-      2,
-    );
-    assert.equal(
-      privateFrontendAssessment.dimensions.semanticUnderstanding.items.reduce(
-        (total, item) => total + item.restRepresentation.operations.length,
-        0,
+    const cases = JSON.parse(
+      readFileSync(
+        new URL(
+          "../test-evidence/fixtures/recent-pr-cases.json",
+          import.meta.url,
+        ),
+        "utf8",
       ),
-      7,
     );
-    for (const assessment of evidence.assessments) {
-      const directory = join(output, "assessments", String(assessment.pr));
-      const jsonPath = join(directory, "assessment.json");
+    assert.equal(cases.length, 10);
+    for (const assessmentCase of cases) {
+      const directory = join(output, "assessments", String(assessmentCase.pr));
       const htmlPath = join(directory, "assessment.html");
-      assert.ok(existsSync(jsonPath));
+      const jsonPath = join(directory, "assessment.json");
       assert.ok(existsSync(htmlPath));
+      assert.ok(existsSync(jsonPath));
       assert.equal(existsSync(join(directory, "assessment.md")), false);
-      const standalone = JSON.parse(readFileSync(jsonPath, "utf8"));
+      const assessment = JSON.parse(readFileSync(jsonPath, "utf8"));
       const rendered = readFileSync(htmlPath, "utf8");
-      assert.deepEqual(standalone, assessment);
-      assert.deepEqual(validateAssessment(standalone), []);
-      assert.equal(rendered, renderAssessmentHtml(standalone));
-      assert.match(
-        summary,
-        new RegExp(`assessments/${assessment.pr}/assessment\\.html`),
-      );
+      assert.deepEqual(validateAssessment(assessment), []);
+      assert.equal(rendered, renderAssessmentHtml(assessment));
+      assert.match(rendered, /<!doctype html>/);
+      assert.match(rendered, /TypeSpec Assessment/);
     }
+    assert.equal(existsSync(join(output, "assessments.json")), false);
+    assert.equal(existsSync(join(output, "assessment-summary.md")), false);
   } finally {
     rmSync(output, { recursive: true, force: true });
   }
@@ -1227,7 +1232,7 @@ test("PR 44988 classifies versioned service gateway LRO changes as downstream br
   const assessment = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/assessments/44988/assessment.json",
+        "../test-evidence/fixtures/assessments/44988.json",
         import.meta.url,
       ),
       "utf8",
@@ -1240,10 +1245,7 @@ test("PR 44988 classifies versioned service gateway LRO changes as downstream br
     "source-service-gateway-actions-change-from-lro-to-synchronous";
   const findings =
     assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings;
-  assert.equal(
-    findings.filter(({ id }) => id === findingId).length,
-    1,
-  );
+  assert.equal(findings.filter(({ id }) => id === findingId).length, 1);
   assert.equal(assessment.dimensions.restBreakingChanges.findings.length, 0);
 
   const intention = assessment.dimensions.semanticUnderstanding.items.find(

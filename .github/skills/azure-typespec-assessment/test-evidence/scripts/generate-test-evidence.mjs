@@ -19,22 +19,12 @@ const cases = JSON.parse(
 );
 const operationsByPr = JSON.parse(
   readFileSync(
-    resolve(
-      scriptDirectory,
-      "..",
-      "fixtures",
-      "recent-pr-operations.json",
-    ),
+    resolve(scriptDirectory, "..", "fixtures", "recent-pr-operations.json"),
   ),
 );
 const typeSpecDiffsByPr = JSON.parse(
   readFileSync(
-    resolve(
-      scriptDirectory,
-      "..",
-      "fixtures",
-      "recent-pr-typespec-diffs.json",
-    ),
+    resolve(scriptDirectory, "..", "fixtures", "recent-pr-typespec-diffs.json"),
   ),
 );
 const historicalChangeOverrides = {
@@ -309,35 +299,3 @@ for (const assessment of assessments) {
     renderAssessmentHtml(assessment),
   );
 }
-
-writeFileSync(
-  resolve(evidenceRoot, "assessments.json"),
-  `${JSON.stringify(
-    {
-      schemaVersion: 2,
-      generatedAt: new Date().toISOString(),
-      repository: "Azure/azure-rest-api-specs",
-      assessments,
-    },
-    null,
-    2,
-  )}\n`,
-);
-
-writeFileSync(
-  resolve(evidenceRoot, "assessment-summary.md"),
-  `# TypeSpec Assessment Test Evidence
-
-Ten representative TypeSpec PRs created within the previous year. Each result
-uses the skill's current HTML and JSON output contracts.
-
-| PR | Case | State | Result | Assessment |
-| --- | --- | --- | --- | --- |
-${cases
-  .map(
-    (item) =>
-      `| [#${item.pr}](${item.url}) | ${item.case} | ${item.state} | ${item.result} | [HTML](assessments/${item.pr}/assessment.html) · [JSON](assessments/${item.pr}/assessment.json) |`,
-  )
-  .join("\n")}
-`,
-);

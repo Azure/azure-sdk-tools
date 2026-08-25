@@ -1,0 +1,661 @@
+{
+  "schemaVersion": 2,
+  "overallConfidence": "high",
+  "pr": 42435,
+  "title": "Add x-ms-pageable to batchOutboundRules POST for CognitiveServices",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/42435",
+  "state": "merged",
+  "createdAt": "2026-04-16T18:56:30Z",
+  "baseline": {
+    "ref": "4664d78a647b029c314177addf80ebecd8b2a3ff",
+    "commit": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904"
+  },
+  "head": {
+    "commit": "96eae0e7d5c7ede040ee0cc646d397e5d8375912",
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "projects": [
+    "specification/cognitiveservices/CognitiveServices.Management"
+  ],
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+        "revision": "head",
+        "startLine": 84,
+        "endLine": 84,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/autorest"
+      },
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/tcgc"
+      },
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/autorest"
+      },
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/tcgc"
+      }
+    ]
+  },
+  "artifactEvidence": {
+    "autorest": "All four emitted API versions add only x-ms-pageable.nextLinkName = nextLink to OutboundRules_Post; method, path, parameters, request, responses, schemas, and LRO metadata are unchanged.",
+    "tcgc": "The head adds pagingMetadata with GET next-link traversal and page-item segments to the existing LRO method."
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "mark-batch-outbound-rules-as-paged",
+          "intent": "Mark batch outbound-rule results as paged",
+          "transformationChain": [
+            "Adding @list identifies OutboundRules_Post as a paged operation in all four exposed API versions. The POST route remains the same, while clients can follow the response nextLink with GET requests until no continuation URL remains."
+          ],
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Mark batch outbound-rule results as paged",
+              "operationIds": [
+                "OutboundRules_Post"
+              ],
+              "apiVersions": [
+                "2025-10-01-preview",
+                "2025-12-01",
+                "2026-01-15-preview",
+                "2026-03-01"
+              ],
+              "aspects": [
+                {
+                  "field": "Paging",
+                  "before": "Is Paged: false",
+                  "after": "Is Paged: true; Item Name: value; Next Link Name: nextLink; Continuation: Issue a GET request to the opaque continuation URL until it is absent."
+                }
+              ],
+              "effect": "Adding @list identifies OutboundRules_Post as a paged operation in all four exposed API versions. The POST route remains the same, while clients can follow the response nextLink with GET requests until no continuation URL remains.",
+              "typeSpecCause": "Adding @list identifies OutboundRules_Post as a paged operation in all four exposed API versions. The POST route remains the same, while clients can follow the response nextLink with GET requests until no continuation URL remains.",
+              "sourceReferences": [
+                {
+                  "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                  "revision": "head",
+                  "startLine": 79,
+                  "endLine": 89,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+                },
+                {
+                  "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                  "revision": "head",
+                  "startLine": 84,
+                  "endLine": 84,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                  "oldStart": 81,
+                  "oldCount": 6,
+                  "newStart": 81,
+                  "newCount": 7,
+                  "context": "interface ManagedNetworkSettingsPropertiesBasicResources {",
+                  "lines": [
+                    "    */",
+                    "   @tag(\"ManagedNetwork\")",
+                    "   @action(\"batchOutboundRules\")",
+                    "+  @list",
+                    "   post is ArmResourceActionAsync<",
+                    "     ManagedNetworkSettingsPropertiesBasicResource,",
+                    "     Request = ManagedNetworkSettingsBasicResource,"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "source-paging-metadata-added"
+              ]
+            }
+          ],
+          "restRepresentation": {
+            "summary": "Adding @list identifies OutboundRules_Post as a paged operation in all four exposed API versions. The POST route remains the same, while clients can follow the response nextLink with GET requests until no continuation URL remains.",
+            "operations": [
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2025-10-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "baseline",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/autorest/preview/2025-10-01-preview/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2025-10-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "OutboundRuleBasicResource",
+                  "itemsProperty": "value",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Issue GET to the server-provided nextLink and stop when nextLink is absent; no client-controlled page-size parameter is emitted."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "head",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/autorest/preview/2025-10-01-preview/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2025-12-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "baseline",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/autorest/stable/2025-12-01/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2025-12-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "OutboundRuleBasicResource",
+                  "itemsProperty": "value",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Issue GET to the server-provided nextLink and stop when nextLink is absent; no client-controlled page-size parameter is emitted."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "head",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/autorest/stable/2025-12-01/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2026-01-15-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "baseline",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/autorest/preview/2026-01-15-preview/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2026-01-15-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "OutboundRuleBasicResource",
+                  "itemsProperty": "value",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Issue GET to the server-provided nextLink and stop when nextLink is absent; no client-controlled page-size parameter is emitted."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "head",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/autorest/preview/2026-01-15-preview/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2026-03-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "baseline",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/autorest/stable/2026-03-01/json"
+                }
+              },
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2026-03-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "body body: ManagedNetworkSettingsBasicResource, required",
+                  "path accountName: string, required",
+                  "path managedNetworkName: string, required",
+                  "unknown unknown: ApiVersionParameter, optional",
+                  "unknown unknown: SubscriptionIdParameter, optional",
+                  "unknown unknown: ResourceGroupNameParameter, optional"
+                ],
+                "requestPayload": "application/json payload: ManagedNetworkSettingsBasicResource, required",
+                "responsePayloads": [
+                  "200 application/json payload: OutboundRuleListResult",
+                  "202 no payload; headers: location: string, Retry-After: integer(int32)",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules for the account managed network. The final result contains outbound rules in value and may provide nextLink for another page.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "After a 202 response, wait according to Retry-After and poll the Location URL until the operation returns its terminal final response.",
+                  "finalResult": "A successful terminal 200 response contains OutboundRuleListResult; the final-state schema and Location polling behavior are unchanged."
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "OutboundRuleBasicResource",
+                  "itemsProperty": "value",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Issue GET to the server-provided nextLink and stop when nextLink is absent; no client-controlled page-size parameter is emitted."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 84,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "head",
+                  "sourceArtifact": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/autorest/stable/2026-03-01/json"
+                }
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 84,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": [
+        {
+          "id": "source-paging-metadata-added",
+          "title": "Generated SDK result becomes pageable",
+          "severity": "medium",
+          "confidence": "high",
+          "summary": "Marking the existing operation with @list preserves its wire route and payload but can change generated SDK methods from returning one response object to exposing pageable iteration, breaking callers that depend on the previous return shape.",
+          "evidence": [
+            "Added paging metadata can change generated SDK return and iteration shapes while preserving the REST wire contract.",
+            "Changed TypeSpec source: specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 84,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+            }
+          ]
+        }
+      ]
+    },
+    "azureCompliance": {
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 1,
+        "findingCount": 0
+      },
+      "documents": [
+        {
+          "title": "TypeSpec pagination",
+          "url": "https://typespec.io/docs/standard-library/pagination/",
+          "section": "Paging",
+          "guidanceExcerpt": "y 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E] SemanticTokenKind [E] UsageFlags Functions [F] $encodedName [F] Numeric [F] addService [F] addVisibilityModifiers [F] applyCodeFix [F] applyCodeFixes [F] assertType [F] checkFormatTypeSpec [F] clearVisibilityModifiersForClass [F] compile [F] compilerAssert [F] createAddDecoratorCodeFi",
+          "applicableGuidance": "The official TypeSpec pagination guidance applies @list to operations whose response represents a page. The changed source does exactly that, and the bounded operation evidence identifies value as the item collection and nextLink as the continuation URL.",
+          "evidence": "The official TypeSpec pagination guidance applies @list to operations whose response represents a page. The changed source does exactly that, and the bounded operation evidence identifies value as the item collection and nextLink as the continuation URL.",
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 84,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "assessmentDuration": {
+    "totalMs": 101087,
+    "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
+    "phases": {
+      "deterministicPreparationMs": 4369,
+      "deterministicAssemblyMs": 712,
+      "judgmentMs": 96000,
+      "renderMs": 6
+    },
+    "breakdown": {
+      "semanticUnderstandingMs": 25191,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 26586,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 2671,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 42474,
+      "complianceQuality": "estimated/measured",
+      "overheadMs": 4165,
+      "overheadQuality": "measured",
+      "totalMs": 101087,
+      "totalQuality": "measured",
+      "searchRoute": "bounded official document evidence"
+    }
+  }
+}

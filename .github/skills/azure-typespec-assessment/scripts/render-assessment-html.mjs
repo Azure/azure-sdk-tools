@@ -60,10 +60,12 @@ function slug(value) {
 
 function sourceLinks(references) {
   return (references ?? [])
-    .map(
-      (reference) =>
-        `<a href="${escapeHtml(reference.link)}">${escapeHtml(basename(reference.path))}:L${reference.startLine}-L${reference.endLine}</a>`,
-    )
+    .map((reference) => {
+      const label = `${escapeHtml(basename(reference.path))}:L${reference.startLine}-L${reference.endLine}`;
+      return /^https:\/\//.test(reference.link)
+        ? `<a href="${escapeHtml(reference.link)}">${label}</a>`
+        : `<code>${label}</code>`;
+    })
     .join(", ");
 }
 
@@ -374,10 +376,12 @@ function renderOperationDetails(change, operations) {
                           `<span class="add">+ ${escapeHtml(aspect.field)} | ${escapeHtml(aspect.after)}</span>`,
                         ]),
                   ])
-                  .join("\n")}</pre><p>HTTP method and path remain unchanged.</p></div>`
-            : hasRepresentedContractChange
-              ? `<div class="rest-signature rest-signature-change"><strong>HTTP method and path unchanged; represented contract changes are summarized above</strong><code>${escapeHtml(operationSignature)}</code></div>`
-              : `<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>${escapeHtml(operationSignature)}</code></div>`
+                  .join(
+                    "\n",
+                  )}</pre><p>HTTP method and path remain unchanged.</p></div>`
+              : hasRepresentedContractChange
+                ? `<div class="rest-signature rest-signature-change"><strong>HTTP method and path unchanged; represented contract changes are summarized above</strong><code>${escapeHtml(operationSignature)}</code></div>`
+                : `<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>${escapeHtml(operationSignature)}</code></div>`
           : `<div class="rest-signature"><strong>REST API signature</strong><code>${escapeHtml(operationSignature)}</code></div>`;
       const serviceBehavior = renderServiceBehavior(change, operation);
       return `<details class="operation-details">
@@ -396,7 +400,10 @@ ${focuses.map(({ hunk, focusIndex }) => renderDiff(hunk, change, focusIndex)).jo
 function renderServiceBehavior(change, operation) {
   if (change.kind !== "modified") return "";
 
-  const clause = (value) => String(value).trim().replace(/[.;:,]+$/, "");
+  const clause = (value) =>
+    String(value)
+      .trim()
+      .replace(/[.;:,]+$/, "");
   const outcomes = [];
   const aspectFields = change.aspects.map((aspect) =>
     aspect.field.toLowerCase(),
@@ -498,10 +505,14 @@ function renderChange(
 </table>
 ${hasMergedOutcome ? "" : `<p class="typespec-summary"><strong>TypeSpec change:</strong> ${escapeHtml(change.typeSpecCause)}</p>`}
 <p class="sources"><strong>Source:</strong> ${sourceLinks(change.sourceReferences)}</p>
-${suppressOperationDetails ? `<div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader ${change.operationIds.length}-operation API-version lineage is retained in assessment.json, but it is not a list of ${change.operationIds.length} direct behavioral changes.</p></div>` : `<div class="operation-changes">
+${
+  suppressOperationDetails
+    ? `<div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader ${change.operationIds.length}-operation API-version lineage is summarized here rather than presented as ${change.operationIds.length} direct behavioral changes.</p></div>`
+    : `<div class="operation-changes">
 <h4>All affected operations <span class="count">${change.operationIds.length}</span></h4>
 ${renderOperationDetails(change, operations)}
-</div>`}`;
+</div>`
+}`;
 }
 
 function renderSemanticUnderstanding(assessment) {
@@ -569,14 +580,13 @@ function renderSemanticUnderstanding(assessment) {
 <div class="change-content">
 <p class="intent-summary">${escapeHtml(item.restRepresentation.summary)}</p>
 <p class="intent-api-surface"><strong>API surface:</strong> ${escapeHtml(operationSummary)}${item.changes.length > 1 ? " The groups below are disjoint parts of the same user intent." : ""}</p>
-${item.changes.map((change) =>
-  renderChange(
-    change,
-    impactMap,
-    item.restRepresentation.operations,
-    { suppressOperationDetails: isVersionLineage && uniqueOperationCount > 25 },
-  ),
-).join("")}
+${item.changes
+  .map((change) =>
+    renderChange(change, impactMap, item.restRepresentation.operations, {
+      suppressOperationDetails: isVersionLineage,
+    }),
+  )
+  .join("")}
 </div>
 </article>
 </details>`;

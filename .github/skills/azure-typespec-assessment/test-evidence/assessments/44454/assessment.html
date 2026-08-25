@@ -111,7 +111,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
-<span class="omitted"> ... 13 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 13 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
@@ -129,7 +129,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
-<span class="omitted"> ... 1 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
 </div>
@@ -155,7 +155,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
-<span class="omitted"> ... 13 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 13 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
@@ -173,7 +173,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
-<span class="omitted"> ... 1 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
 </div>
@@ -199,7 +199,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
-<span class="omitted"> ... 13 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 13 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
@@ -217,7 +217,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
-<span class="omitted"> ... 1 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
 </div>
@@ -231,8 +231,6 @@
 <div class="appendix-body">
 <h3>Assessment Errors</h3>
 <p class="empty-state">None.</p>
-<h3>Code-to-Guidance Evidence</h3>
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody><tr><td>Matched</td><td>TypeSpec Client Generator Core decorators — Decorators</td><td>Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.</td><td>The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation&#39;s client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.</td><td>back-compatible.tsp:L108-L113, back-compatible.tsp:L108-L113, back-compatible.tsp:L94-L131</td></tr><tr><td>Mismatch</td><td>Clients — Retained authoritative evidence</td><td>Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.</td><td>Clients, Customizations: &quot;Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.&quot; @Azure.ClientGenerator.Core.clientLocation: &quot;Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.&quot; The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp.</td><td>back-compatible.tsp:L108-L113, back-compatible.tsp:L108-L113, back-compatible.tsp:L94-L131</td></tr></tbody></table></div>
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
 <h3>Artifact Evidence</h3>

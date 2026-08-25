@@ -43,7 +43,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">@@ -48,11 +49,29 @@ model ServiceGateway extends SecurityPerimeterTrackedResource {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">    *</span>
 <span class="context">    * - The zone values must be provided as strings representing numeric identifiers like &quot;1&quot;, &quot;2&quot;, &quot;3&quot; etc. */</span>
 <span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-invalid-envelope-property&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
@@ -56,7 +56,7 @@
 <span class="add">+model ServiceGatewayActionOkResponseBody {</span>
 <span class="add">+  /** The status of the operation. */</span>
 <span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="omitted"> ... 18 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 18 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div>
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
@@ -78,7 +78,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">@@ -116,6 +138,28 @@ interface ServiceGateways {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">   &gt;;</span>
 <span class="context"></span>
 <span class="add">+  /**</span>
@@ -91,7 +91,7 @@
 <span class="add">+   * Partial update modifies only the specified entries:</span>
 <span class="add">+   *</span>
 <span class="add">+   * For location-level partial updates, if no address is provided, the existing address will be deleted.</span>
-<span class="omitted"> ... 15 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 15 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div>
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
@@ -316,7 +316,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 55 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 55 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Uses legacy ARM resource patterns consistent with other Network RP operation interfaces&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -329,13 +329,13 @@
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  get is ArmResourceRead&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 33 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 33 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 69 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 69 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
@@ -348,7 +348,7 @@
 <span class="add">+   */</span>
 <span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-delete-operation-response-codes&quot; &quot;Network RP delete operations use 202+204 pattern without 200, matching existing ASG and other resource delete conventions&quot;</span>
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
-<span class="omitted"> ... 19 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 19 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L1-L100">AddressPrefixSet.tsp:L1-L100</a></p>
 </div>
@@ -362,7 +362,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 55 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 55 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Uses legacy ARM resource patterns consistent with other Network RP operation interfaces&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -375,13 +375,13 @@
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  get is ArmResourceRead&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 33 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 33 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 79 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 79 earlier diff lines omitted ...</span>
 <span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-delete-operation-response-codes&quot; &quot;Network RP delete operations use 202+204 pattern without 200, matching existing ASG and other resource delete conventions&quot;</span>
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
@@ -394,7 +394,7 @@
 <span class="add">+   * Gets all address prefix sets in an application security group.</span>
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
-<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 9 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L1-L100">AddressPrefixSet.tsp:L1-L100</a></p>
 </div>
@@ -408,7 +408,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 55 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 55 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Uses legacy ARM resource patterns consistent with other Network RP operation interfaces&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -421,13 +421,13 @@
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  get is ArmResourceRead&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 33 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 33 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 63 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 63 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  get is ArmResourceRead&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
@@ -440,7 +440,7 @@
 <span class="add">+    AddressPrefixSet,</span>
 <span class="add">+    Error = CloudError</span>
 <span class="add">+  &gt;;</span>
-<span class="omitted"> ... 25 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 25 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L1-L100">AddressPrefixSet.tsp:L1-L100</a></p>
 </div>
@@ -454,7 +454,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 55 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 55 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Uses legacy ARM resource patterns consistent with other Network RP operation interfaces&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -467,13 +467,13 @@
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
 <span class="add">+  get is ArmResourceRead&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 33 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 33 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</span>
 <span class="meta">@@ -0,0 +1,100 @@</span>
-<span class="omitted"> ... 88 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 88 earlier diff lines omitted ...</span>
 <span class="add">+   * Gets all address prefix sets in an application security group.</span>
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
@@ -523,7 +523,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 46 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 46 earlier diff lines omitted ...</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;These operations target the KubeSelectorGroup child of firewallPolicy, which uses the ARM Legacy resource pattern; @Azure.ResourceManager.Legacy.feature(Features.firewallPolicy) is required for consistency with the parent firewall policy resource tree.&quot;</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firewallPolicy)</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -536,13 +536,13 @@
 <span class="add">+</span>
 <span class="add">+  /**</span>
 <span class="add">+   * Creates or updates the specified FirewallPolicyKubeSelectorGroup.</span>
-<span class="omitted"> ... 39 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 39 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 57 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 57 earlier diff lines omitted ...</span>
 <span class="add">+   * Creates or updates the specified FirewallPolicyKubeSelectorGroup.</span>
 <span class="add">+   */</span>
 <span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
@@ -555,7 +555,7 @@
 <span class="add">+   */</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
 <span class="add">+    FirewallPolicyKubeSelectorGroup,</span>
-<span class="omitted"> ... 28 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 28 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97">FirewallPolicyKubeSelectorGroup.tsp:L1-L97</a></p>
 </div>
@@ -569,7 +569,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 46 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 46 earlier diff lines omitted ...</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;These operations target the KubeSelectorGroup child of firewallPolicy, which uses the ARM Legacy resource pattern; @Azure.ResourceManager.Legacy.feature(Features.firewallPolicy) is required for consistency with the parent firewall policy resource tree.&quot;</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firewallPolicy)</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -582,13 +582,13 @@
 <span class="add">+</span>
 <span class="add">+  /**</span>
 <span class="add">+   * Creates or updates the specified FirewallPolicyKubeSelectorGroup.</span>
-<span class="omitted"> ... 39 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 39 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 65 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 65 earlier diff lines omitted ...</span>
 <span class="add">+   * Deletes the specified FirewallPolicyKubeSelectorGroup.</span>
 <span class="add">+   */</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
@@ -601,7 +601,7 @@
 <span class="add">+   */</span>
 <span class="add">+  list is ArmResourceListByParent&lt;</span>
 <span class="add">+    FirewallPolicyKubeSelectorGroup,</span>
-<span class="omitted"> ... 20 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 20 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97">FirewallPolicyKubeSelectorGroup.tsp:L1-L97</a></p>
 </div>
@@ -615,7 +615,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 46 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 46 earlier diff lines omitted ...</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;These operations target the KubeSelectorGroup child of firewallPolicy, which uses the ARM Legacy resource pattern; @Azure.ResourceManager.Legacy.feature(Features.firewallPolicy) is required for consistency with the parent firewall policy resource tree.&quot;</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firewallPolicy)</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -628,7 +628,7 @@
 <span class="add">+</span>
 <span class="add">+  /**</span>
 <span class="add">+   * Creates or updates the specified FirewallPolicyKubeSelectorGroup.</span>
-<span class="omitted"> ... 39 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 39 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97">FirewallPolicyKubeSelectorGroup.tsp:L1-L97</a></p>
 </div>
@@ -642,7 +642,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 46 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 46 earlier diff lines omitted ...</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;These operations target the KubeSelectorGroup child of firewallPolicy, which uses the ARM Legacy resource pattern; @Azure.ResourceManager.Legacy.feature(Features.firewallPolicy) is required for consistency with the parent firewall policy resource tree.&quot;</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firewallPolicy)</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -655,13 +655,13 @@
 <span class="add">+</span>
 <span class="add">+  /**</span>
 <span class="add">+   * Creates or updates the specified FirewallPolicyKubeSelectorGroup.</span>
-<span class="omitted"> ... 39 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 39 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</span>
 <span class="meta">@@ -0,0 +1,97 @@</span>
-<span class="omitted"> ... 73 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 73 earlier diff lines omitted ...</span>
 <span class="add">+   * Lists all FirewallPolicyKubeSelectorGroups in a FirewallPolicy resource.</span>
 <span class="add">+   */</span>
 <span class="add">+  list is ArmResourceListByParent&lt;</span>
@@ -674,7 +674,7 @@
 <span class="add">+  FirewallPolicyKubeSelectorGroup.name,</span>
 <span class="add">+  &quot;The name of the FirewallPolicyKubeSelectorGroup.&quot;</span>
 <span class="add">+);</span>
-<span class="omitted"> ... 12 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 12 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97">FirewallPolicyKubeSelectorGroup.tsp:L1-L97</a></p>
 </div>
@@ -712,7 +712,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">@@ -439,6 +466,113 @@ interface NetworkWatchers {</span>
-<span class="omitted"> ... 10 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 10 earlier diff lines omitted ...</span>
 <span class="add">+  @put</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
 <span class="add">+  connectionAnalyzersCreate is ConnectionAnalyzerOps.ActionAsync&lt;</span>
@@ -725,7 +725,7 @@
 <span class="add">+          ConnectionAnalyzer,</span>
 <span class="add">+          LroHeaders = ArmAsyncOperationHeader&lt;FinalResult = ConnectionAnalyzer&gt; &amp;</span>
 <span class="add">+            Azure.Core.Foundations.RetryAfterHeader</span>
-<span class="omitted"> ... 91 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 91 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27062-L27900">models.tsp:L27062-L27900</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L1-L86">NetworkWatcher.tsp:L1-L86</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L466-L578">NetworkWatcher.tsp:L466-L578</a></p>
 </div>
@@ -739,7 +739,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">@@ -439,6 +466,113 @@ interface NetworkWatchers {</span>
-<span class="omitted"> ... 45 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 45 earlier diff lines omitted ...</span>
 <span class="add">+  @delete</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
 <span class="add">+  connectionAnalyzersDelete is ConnectionAnalyzerOps.ActionAsync&lt;</span>
@@ -752,7 +752,7 @@
 <span class="add">+</span>
 <span class="add">+  /**</span>
 <span class="add">+   * Updates the tags of the specified connection analyzer.</span>
-<span class="omitted"> ... 56 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 56 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27062-L27900">models.tsp:L27062-L27900</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L1-L86">NetworkWatcher.tsp:L1-L86</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L466-L578">NetworkWatcher.tsp:L466-L578</a></p>
 </div>
@@ -766,7 +766,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">@@ -439,6 +466,113 @@ interface NetworkWatchers {</span>
-<span class="omitted"> ... 31 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 31 earlier diff lines omitted ...</span>
 <span class="add">+  @get</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
 <span class="add">+  connectionAnalyzersGet is ConnectionAnalyzerOps.ActionSync&lt;</span>
@@ -779,7 +779,7 @@
 <span class="add">+  /**</span>
 <span class="add">+   * Deletes the specified connection analyzer.</span>
 <span class="add">+   */</span>
-<span class="omitted"> ... 70 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 70 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27062-L27900">models.tsp:L27062-L27900</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L1-L86">NetworkWatcher.tsp:L1-L86</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L466-L578">NetworkWatcher.tsp:L466-L578</a></p>
 </div>
@@ -793,7 +793,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">@@ -439,6 +466,113 @@ interface NetworkWatchers {</span>
-<span class="omitted"> ... 5 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="add">+   * Creates or updates a connection analyzer in the specified network watcher.</span>
 <span class="add">+   */</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
@@ -806,7 +806,7 @@
 <span class="add">+    ConnectionAnalyzer,</span>
 <span class="add">+    ConnectionAnalyzer,</span>
 <span class="add">+    Response =</span>
-<span class="omitted"> ... 96 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 96 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27062-L27900">models.tsp:L27062-L27900</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L1-L86">NetworkWatcher.tsp:L1-L86</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L466-L578">NetworkWatcher.tsp:L466-L578</a></p>
 </div>
@@ -820,7 +820,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">@@ -439,6 +466,113 @@ interface NetworkWatchers {</span>
-<span class="omitted"> ... 94 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 94 earlier diff lines omitted ...</span>
 <span class="add">+  @post</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}/query&quot;)</span>
 <span class="add">+  connectionAnalyzersQuery is ConnectionAnalyzerOps.ActionAsync&lt;</span>
@@ -833,7 +833,7 @@
 <span class="add">+          &quot;Operation succeeded.&quot;,</span>
 <span class="add">+          LroHeaders = ArmLroLocationHeader&lt;FinalResult = ConnectionAnalyzerQueryStatusResult&gt; &amp;</span>
 <span class="add">+            ArmAsyncOperationHeader&lt;FinalResult = ConnectionAnalyzerQueryStatusResult&gt; &amp;</span>
-<span class="omitted"> ... 7 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27062-L27900">models.tsp:L27062-L27900</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L1-L86">NetworkWatcher.tsp:L1-L86</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L466-L578">NetworkWatcher.tsp:L466-L578</a></p>
 </div>
@@ -847,7 +847,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</span>
 <span class="meta">@@ -439,6 +466,113 @@ interface NetworkWatchers {</span>
-<span class="omitted"> ... 60 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 60 earlier diff lines omitted ...</span>
 <span class="add">+  @patch(#{ implicitOptionality: false })</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
 <span class="add">+  connectionAnalyzersUpdateTags is ConnectionAnalyzerOps.ActionSync&lt;</span>
@@ -860,7 +860,7 @@
 <span class="add">+  /**</span>
 <span class="add">+   * Lists all connection analyzers in the specified network watcher.</span>
 <span class="add">+   */</span>
-<span class="omitted"> ... 41 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 41 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27062-L27900">models.tsp:L27062-L27900</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L1-L86">NetworkWatcher.tsp:L1-L86</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L466-L578">NetworkWatcher.tsp:L466-L578</a></p>
 </div>
@@ -921,7 +921,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">@@ -116,6 +138,28 @@ interface ServiceGateways {</span>
-<span class="omitted"> ... 16 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 16 earlier diff lines omitted ...</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  @sharedRoute</span>
 <span class="add">+  updateAddressLocations is ArmResourceActionSync&lt;</span>
@@ -964,7 +964,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</span>
 <span class="meta">@@ -132,6 +179,22 @@ interface ServiceGateways {</span>
-<span class="omitted"> ... 10 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 10 earlier diff lines omitted ...</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  @sharedRoute</span>
 <span class="add">+  updateServices is ArmResourceActionSync&lt;</span>
@@ -1035,7 +1035,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1048,13 +1048,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 144 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 144 earlier diff lines omitted ...</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
@@ -1067,7 +1067,7 @@
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
-<span class="omitted"> ... 146 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 146 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1081,7 +1081,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1094,13 +1094,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 166 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 166 earlier diff lines omitted ...</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
@@ -1113,7 +1113,7 @@
 <span class="add">+  &gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 124 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 124 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1127,7 +1127,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1140,13 +1140,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 203 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 203 earlier diff lines omitted ...</span>
 <span class="add">+  @action(&quot;generateLoa&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  generateLoa is ArmResourceActionSync&lt;</span>
@@ -1159,7 +1159,7 @@
 <span class="add">+  /**</span>
 <span class="add">+   * Retrieves the specified ExpressRouteLagLink resource.</span>
 <span class="add">+   */</span>
-<span class="omitted"> ... 87 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 87 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1173,7 +1173,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1186,13 +1186,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 137 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 137 earlier diff lines omitted ...</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
@@ -1205,7 +1205,7 @@
 <span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
 <span class="add">+    ExpressRouteLag,</span>
 <span class="add">+    Error = CloudError</span>
-<span class="omitted"> ... 153 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 153 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1219,7 +1219,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1232,13 +1232,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 216 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 216 earlier diff lines omitted ...</span>
 <span class="add">+  @get</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}&quot;)</span>
 <span class="add">+  linksGet is ExpressRouteLagLinkOps.ActionSync&lt;</span>
@@ -1251,7 +1251,7 @@
 <span class="add">+  /**</span>
 <span class="add">+   * Retrieve the ExpressRouteLagLink sub-resources of the specified ExpressRouteLag resource.</span>
 <span class="add">+   */</span>
-<span class="omitted"> ... 74 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 74 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1265,7 +1265,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1278,13 +1278,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 231 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 231 earlier diff lines omitted ...</span>
 <span class="add">+  @action(&quot;links&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  linksList is ArmResourceActionSync&lt;</span>
@@ -1297,7 +1297,7 @@
 <span class="add">+  /**</span>
 <span class="add">+   * Retrieves the specified ExpressRouteLagMember resource.</span>
 <span class="add">+   */</span>
-<span class="omitted"> ... 59 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 59 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1311,7 +1311,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1324,13 +1324,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 191 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 191 earlier diff lines omitted ...</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  list is ArmListBySubscription&lt;</span>
@@ -1343,7 +1343,7 @@
 <span class="add">+   * Generate a letter of authorization for the requested ExpressRouteLag resource.</span>
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
-<span class="omitted"> ... 99 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 99 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1357,7 +1357,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1370,13 +1370,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 180 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 180 earlier diff lines omitted ...</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  listByResourceGroup is ArmResourceListByParent&lt;</span>
@@ -1389,7 +1389,7 @@
 <span class="add">+   * List all the ExpressRouteLag resources in the specified subscription.</span>
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
-<span class="omitted"> ... 110 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 110 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1403,7 +1403,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1416,13 +1416,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 244 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 244 earlier diff lines omitted ...</span>
 <span class="add">+  @get</span>
 <span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}/members/{memberName}&quot;)</span>
 <span class="add">+  membersGet is ExpressRouteLagMemberOps.ActionSync&lt;</span>
@@ -1435,7 +1435,7 @@
 <span class="add">+  /**</span>
 <span class="add">+   * Retrieve the ExpressRouteLagMember sub-resources of the specified ExpressRouteLagLink resource.</span>
 <span class="add">+   */</span>
-<span class="omitted"> ... 46 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 46 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1449,7 +1449,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1462,13 +1462,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 290 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 290 earlier diff lines omitted ...</span>
 <span class="add">+);</span>
 <span class="add">+@@doc(</span>
 <span class="add">+  ExpressRouteLags.generateLoa::parameters.body,</span>
@@ -1494,7 +1494,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 130 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 130 earlier diff lines omitted ...</span>
 <span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
 <span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1507,13 +1507,13 @@
 <span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 160 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 160 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</span>
 <span class="meta">@@ -0,0 +1,302 @@</span>
-<span class="omitted"> ... 144 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 144 earlier diff lines omitted ...</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
 <span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
@@ -1526,7 +1526,7 @@
 <span class="add">+   */</span>
 <span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
 <span class="add">+  @autoRoute</span>
-<span class="omitted"> ... 146 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 146 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L1-L302">ExpressRouteLag.tsp:L1-L302</a></p>
 </div>
@@ -1564,7 +1564,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 92 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 92 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1577,13 +1577,13 @@
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 62 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 62 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 104 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 104 earlier diff lines omitted ...</span>
 <span class="add">+   * Creates or updates a first party service tag.</span>
 <span class="add">+   */</span>
 <span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
@@ -1596,7 +1596,7 @@
 <span class="add">+   */</span>
 <span class="add">+  @patch(#{ implicitOptionality: false })</span>
 <span class="add">+  updateTags is ArmCustomPatchAsync&lt;</span>
-<span class="omitted"> ... 50 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 50 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1519-L1534">main.tsp:L1519-L1534</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L1-L166">FirstPartyServiceTag.tsp:L1-L166</a></p>
 </div>
@@ -1610,7 +1610,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 92 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 92 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1623,13 +1623,13 @@
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 62 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 62 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 123 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 123 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-delete-operation-response-codes&quot; &quot;Matching existing Network resource pattern (VirtualNetwork, LoadBalancer, etc.) that supports both sync (200) and async (202) delete&quot;</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
@@ -1642,7 +1642,7 @@
 <span class="add">+  &gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 31 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 31 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1519-L1534">main.tsp:L1519-L1534</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L1-L166">FirstPartyServiceTag.tsp:L1-L166</a></p>
 </div>
@@ -1656,7 +1656,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 92 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 92 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1669,13 +1669,13 @@
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 62 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 62 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 99 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 99 earlier diff lines omitted ...</span>
 <span class="add">+   * Gets the specified first party service tag.</span>
 <span class="add">+   */</span>
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
@@ -1688,7 +1688,7 @@
 <span class="add">+    Error = CloudError</span>
 <span class="add">+  &gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 55 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 55 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1519-L1534">main.tsp:L1519-L1534</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L1-L166">FirstPartyServiceTag.tsp:L1-L166</a></p>
 </div>
@@ -1702,7 +1702,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 92 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 92 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1715,13 +1715,13 @@
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 62 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 62 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 135 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 135 earlier diff lines omitted ...</span>
 <span class="add">+   * Gets all the first party service tags in a resource group.</span>
 <span class="add">+   */</span>
 <span class="add">+  list is ArmResourceListByParent&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
@@ -1734,7 +1734,7 @@
 <span class="add">+</span>
 <span class="add">+@@doc(FirstPartyServiceTag.name, &quot;The name of the first party service tag.&quot;);</span>
 <span class="add">+@@doc(</span>
-<span class="omitted"> ... 19 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 19 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1519-L1534">main.tsp:L1519-L1534</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L1-L166">FirstPartyServiceTag.tsp:L1-L166</a></p>
 </div>
@@ -1748,7 +1748,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 92 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 92 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1761,13 +1761,13 @@
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 62 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 62 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 140 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 140 earlier diff lines omitted ...</span>
 <span class="add">+   * Gets all the first party service tags in a subscription.</span>
 <span class="add">+   */</span>
 <span class="add">+  listAll is ArmListBySubscription&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
@@ -1780,7 +1780,7 @@
 <span class="add">+);</span>
 <span class="add">+@@doc(</span>
 <span class="add">+  FirstPartyServiceTags.createOrUpdate::parameters.resource,</span>
-<span class="omitted"> ... 14 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 14 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1519-L1534">main.tsp:L1519-L1534</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L1-L166">FirstPartyServiceTag.tsp:L1-L166</a></p>
 </div>
@@ -1794,7 +1794,7 @@
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 92 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 92 earlier diff lines omitted ...</span>
 <span class="add">+</span>
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
 <span class="add version-decorator">+@added(Versions.v2025_09_01)</span>
@@ -1807,13 +1807,13 @@
 <span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
 <span class="add">+</span>
 <span class="add">+  /**</span>
-<span class="omitted"> ... 62 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 62 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div>
 <pre><span class="meta">--- /dev/null</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</span>
 <span class="meta">@@ -0,0 +1,166 @@</span>
-<span class="omitted"> ... 113 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 113 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add">+  @patch(#{ implicitOptionality: false })</span>
 <span class="add">+  updateTags is ArmCustomPatchAsync&lt;</span>
@@ -1826,7 +1826,7 @@
 <span class="add">+   * Deletes the specified first party service tag.</span>
 <span class="add">+   */</span>
 <span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-delete-operation-response-codes&quot; &quot;Matching existing Network resource pattern (VirtualNetwork, LoadBalancer, etc.) that supports both sync (200) and async (202) delete&quot;</span>
-<span class="omitted"> ... 41 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 41 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1519-L1534">main.tsp:L1519-L1534</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L1-L166">FirstPartyServiceTag.tsp:L1-L166</a></p>
 </div>
@@ -1864,7 +1864,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">@@ -231,6 +232,62 @@ interface NetworkVirtualAppliances {</span>
-<span class="omitted"> ... 48 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 48 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  abortMigration is ArmResourceActionAsyncBase&lt;</span>
@@ -1877,7 +1877,7 @@
 <span class="add">+    Error = CloudError</span>
 <span class="add">+  &gt;;</span>
 <span class="context"> }</span>
-<span class="omitted"> ... 2 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 2 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp#L232-L293">NetworkVirtualAppliance.tsp:L232-L293</a></p>
 </div>
@@ -1891,7 +1891,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">@@ -231,6 +232,62 @@ interface NetworkVirtualAppliances {</span>
-<span class="omitted"> ... 34 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 34 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  commitMigration is ArmResourceActionAsyncBase&lt;</span>
@@ -1904,7 +1904,7 @@
 <span class="add">+    Error = CloudError</span>
 <span class="add">+  &gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 16 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 16 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp#L232-L293">NetworkVirtualAppliance.tsp:L232-L293</a></p>
 </div>
@@ -1918,7 +1918,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">@@ -231,6 +232,62 @@ interface NetworkVirtualAppliances {</span>
-<span class="omitted"> ... 20 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 20 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  executeMigration is ArmResourceActionAsyncBase&lt;</span>
@@ -1931,7 +1931,7 @@
 <span class="add">+    Error = CloudError</span>
 <span class="add">+  &gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 30 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 30 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp#L232-L293">NetworkVirtualAppliance.tsp:L232-L293</a></p>
 </div>
@@ -1945,7 +1945,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</span>
 <span class="meta">@@ -231,6 +232,62 @@ interface NetworkVirtualAppliances {</span>
-<span class="omitted"> ... 6 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 6 earlier diff lines omitted ...</span>
 <span class="add">+   */</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  prepareMigration is ArmResourceActionAsyncBase&lt;</span>
@@ -1958,7 +1958,7 @@
 <span class="add">+    Error = CloudError</span>
 <span class="add">+  &gt;;</span>
 <span class="add">+</span>
-<span class="omitted"> ... 44 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 44 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp#L232-L293">NetworkVirtualAppliance.tsp:L232-L293</a></p>
 </div>
@@ -1996,7 +1996,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp</span>
 <span class="meta">@@ -137,6 +139,26 @@ interface VirtualNetworks {</span>
-<span class="omitted"> ... 10 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 10 earlier diff lines omitted ...</span>
 <span class="add">+  @action(&quot;moveIpConfigurations&quot;)</span>
 <span class="add">+  @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span>
 <span class="add">+  moveIpConfigurations is ArmResourceActionAsync&lt;</span>
@@ -2009,7 +2009,7 @@
 <span class="add">+      ArmLroLocationHeader&lt;FinalResult = void&gt; &amp;</span>
 <span class="add">+      Azure.Core.Foundations.RetryAfterHeader,</span>
 <span class="add">+    Error = CloudError</span>
-<span class="omitted"> ... 4 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 4 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp#L139-L164">VirtualNetwork.tsp:L139-L164</a></p>
 </div>
@@ -2047,7 +2047,7 @@
 <pre><span class="meta">--- a/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp</span>
 <span class="meta">+++ b/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp</span>
 <span class="meta">@@ -271,6 +272,18 @@ interface VirtualNetworkGateways {</span>
-<span class="omitted"> ... 6 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 6 earlier diff lines omitted ...</span>
 <span class="add version-decorator">+  @added(Versions.v2025_09_01)</span>
 <span class="add">+  @tag(&quot;VirtualNetworkGateways&quot;)</span>
 <span class="add">+  getEffectiveRoutes is ArmResourceActionAsync&lt;</span>
@@ -2112,7 +2112,7 @@
 <span class="add">+      afcManagedSync?: boolean;</span>
 <span class="add">+    },</span>
 <span class="context">     Error = CloudError</span>
-<span class="omitted"> ... 1 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp#L70-L82">FirewallPolicy.tsp:L70-L82</a></p>
 </div>
@@ -2127,8 +2127,6 @@
 <div class="appendix-body">
 <h3>Assessment Errors</h3>
 <p class="empty-state">None.</p>
-<h3>Code-to-Guidance Evidence</h3>
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody><tr><td>Mismatch</td><td>ARM resource types and modeling — Add ARM Resource Type</td><td>Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties. Child resources usually use the `ProxyResource&lt;TProperties&gt;` as their base resource type.</td><td>The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.</td><td>AddressPrefixSet.tsp:L1-L100, FirewallPolicyKubeSelectorGroup.tsp:L1-L97, NetworkWatcher.tsp:L12-L12, NetworkWatcher.tsp:L41-L66, NetworkWatcher.tsp:L469-L575, NetworkWatcher.tsp:L640-L647, models.tsp:L1517-L1522, models.tsp:L1567-L1595, models.tsp:L1615-L1668, models.tsp:L8677-L8682, models.tsp:L11390-L11409, models.tsp:L12244-L12244, models.tsp:L12246-L12250, models.tsp:L12252-L12252, models.tsp:L12254-L12254, models.tsp:L12256-L12257, models.tsp:L12259-L12266, models.tsp:L12268-L12268, models.tsp:L12270-L12270, models.tsp:L12273-L12273, models.tsp:L12275-L12275, models.tsp:L12278-L12278, models.tsp:L12281-L12281, models.tsp:L12284-L12284, models.tsp:L12287-L12287, models.tsp:L12290-L12290, models.tsp:L12292-L12292, models.tsp:L12295-L12295, models.tsp:L12297-L12298, models.tsp:L12301-L12301, models.tsp:L12303-L12304, models.tsp:L12307-L12307, models.tsp:L12309-L12311, models.tsp:L12314-L12314, models.tsp:L12316-L12317, models.tsp:L12320-L12320, models.tsp:L12322-L12323, models.tsp:L12326-L12326, models.tsp:L12328-L12328, models.tsp:L12331-L12331, models.tsp:L12333-L12334, models.tsp:L12337-L12337, models.tsp:L12339-L12340, models.tsp:L12343-L12343, models.tsp:L12345-L12345, models.tsp:L12349-L12349, models.tsp:L12351-L12356, models.tsp:L12358-L12358, models.tsp:L12360-L12360, models.tsp:L12362-L12364, models.tsp:L12366-L12368, models.tsp:L12371-L12371, models.tsp:L12373-L12374, models.tsp:L12377-L12377, models.tsp:L12379-L12380, models.tsp:L12384-L12384, models.tsp:L12386-L12390, models.tsp:L12392-L12392, models.tsp:L12394-L12395, models.tsp:L12398-L12398, models.tsp:L12400-L12401, models.tsp:L12277-L12282, models.tsp:L12404-L12404, models.tsp:L12406-L12406, models.tsp:L12409-L12409, models.tsp:L12411-L12412, models.tsp:L12294-L12299, models.tsp:L12415-L12415, models.tsp:L12417-L12417, models.tsp:L12420-L12420, models.tsp:L12422-L12423, models.tsp:L12427-L12427, models.tsp:L12429-L12434, models.tsp:L12436-L12436, models.tsp:L12438-L12438, models.tsp:L12440-L12446, models.tsp:L12449-L12449, models.tsp:L12451-L12452, models.tsp:L12455-L12455, models.tsp:L12457-L12458, models.tsp:L12462-L12462, models.tsp:L12464-L12468, models.tsp:L12470-L12470, models.tsp:L12472-L12473, models.tsp:L12476-L12476, models.tsp:L12478-L12479, models.tsp:L12482-L12482, models.tsp:L12484-L12485, models.tsp:L12488-L12488, models.tsp:L12490-L12491, models.tsp:L12392-L12397, models.tsp:L12494-L12494, models.tsp:L12496-L12497, models.tsp:L12500-L12500, models.tsp:L12502-L12502, models.tsp:L12505-L12505, models.tsp:L12507-L12508, models.tsp:L12512-L12512, models.tsp:L12514-L12518, models.tsp:L12520-L12520, models.tsp:L12522-L12522, models.tsp:L12525-L12525, models.tsp:L12527-L12528, models.tsp:L12530-L12537, models.tsp:L12539-L12539, models.tsp:L12541-L12541, models.tsp:L12545-L12545, models.tsp:L12549-L12549, models.tsp:L12551-L12551, models.tsp:L12553-L12554, models.tsp:L12557-L12557, models.tsp:L12559-L12560, models.tsp:L12454-L12459, models.tsp:L12563-L12563, models.tsp:L12565-L12567, models.tsp:L12570-L12570, models.tsp:L12572-L12573, models.tsp:L12576-L12576, models.tsp:L12578-L12578, models.tsp:L12581-L12581, models.tsp:L12583-L12584, models.tsp:L12587-L12587, models.tsp:L12589-L12590, models.tsp:L12593-L12593, models.tsp:L12595-L12595, models.tsp:L12598-L12598, models.tsp:L12600-L12600, models.tsp:L12603-L12603, models.tsp:L12605-L12605, models.tsp:L12501-L12506, models.tsp:L12608-L12608, models.tsp:L12610-L12610, models.tsp:L12513-L12518, models.tsp:L12613-L12613, models.tsp:L12615-L12615, models.tsp:L12618-L12618, models.tsp:L12620-L12620, models.tsp:L12530-L12535, models.tsp:L12623-L12623, models.tsp:L12625-L12625, models.tsp:L12542-L12547, models.tsp:L12628-L12628, models.tsp:L12630-L12630, models.tsp:L12633-L12633, models.tsp:L12635-L12635, models.tsp:L12638-L12638, models.tsp:L12640-L12640, models.tsp:L12643-L12643, models.tsp:L12645-L12645, models.tsp:L12647-L12647, models.tsp:L12651-L12651, models.tsp:L12655-L12655, models.tsp:L12657-L12657, models.tsp:L12659-L12659, models.tsp:L12662-L12662, models.tsp:L12664-L12664, models.tsp:L12668-L12668, models.tsp:L12672-L12672, models.tsp:L12674-L12674, models.tsp:L12676-L12676, models.tsp:L12679-L12679, models.tsp:L12681-L12681, models.tsp:L12684-L12684, models.tsp:L12686-L12687, models.tsp:L12689-L12694, models.tsp:L12696-L12696, models.tsp:L12698-L12699, models.tsp:L12702-L12702, models.tsp:L12704-L12704, models.tsp:L12708-L12708, models.tsp:L12712-L12712, models.tsp:L12714-L12714, models.tsp:L12716-L12716, models.tsp:L12719-L12719, models.tsp:L12721-L12721, models.tsp:L12725-L12725, models.tsp:L12729-L12729, models.tsp:L12731-L12731, models.tsp:L12733-L12733, models.tsp:L12736-L12736, models.tsp:L12738-L12738, models.tsp:L12742-L12742, models.tsp:L12744-L12744, models.tsp:L12747-L12747, models.tsp:L12749-L12749, models.tsp:L12751-L12751, models.tsp:L12754-L12756, models.tsp:L12759-L12759, models.tsp:L12761-L12761, models.tsp:L12763-L12763, models.tsp:L12766-L12766, models.tsp:L12768-L12768, models.tsp:L12771-L12771, models.tsp:L12773-L12775, models.tsp:L12777-L12782, models.tsp:L12784-L12784, models.tsp:L12786-L12787, models.tsp:L12790-L12790, models.tsp:L12792-L12794, models.tsp:L12797-L12797, models.tsp:L12799-L12801, models.tsp:L12804-L12804, models.tsp:L12806-L12807, models.tsp:L12810-L12810, models.tsp:L12812-L12814, models.tsp:L12817-L12817, models.tsp:L12819-L12820, models.tsp:L12822-L12827, models.tsp:L12829-L12829, models.tsp:L12831-L12831, models.tsp:L12834-L12834, models.tsp:L12836-L12841, models.tsp:L12845-L12845, models.tsp:L12749-L12749, models.tsp:L12849-L12849, models.tsp:L12851-L12851, models.tsp:L12853-L12864, models.tsp:L12868-L12868, models.tsp:L12872-L12872, models.tsp:L12874-L12874, models.tsp:L12876-L12881, models.tsp:L12885-L12885, models.tsp:L12889-L12889, models.tsp:L12891-L12891, models.tsp:L12893-L12928, models.tsp:L12932-L12932, models.tsp:L12936-L12936, models.tsp:L12938-L12938, models.tsp:L12940-L12940, models.tsp:L12943-L12945, models.tsp:L12948-L12948, models.tsp:L12950-L12950, models.tsp:L12952-L12952, models.tsp:L12955-L12955, models.tsp:L12957-L12958, models.tsp:L12960-L12965, models.tsp:L12967-L12967, models.tsp:L12969-L12970, models.tsp:L12972-L12978, models.tsp:L12980-L12982, models.tsp:L12984-L12985, models.tsp:L12988-L12988, models.tsp:L12990-L12992, models.tsp:L12994-L13012, models.tsp:L13014-L13021, models.tsp:L13023-L13024, models.tsp:L13026-L13027, models.tsp:L13030-L13031, models.tsp:L13033-L13033, models.tsp:L13036-L13038, models.tsp:L13040-L13040, models.tsp:L13044-L13044, models.tsp:L12851-L12851, models.tsp:L13048-L13048, models.tsp:L13067-L13072, models.tsp:L13076-L13076, models.tsp:L13078-L13081, models.tsp:L13083-L13083, models.tsp:L13085-L13085, models.tsp:L13088-L13088, models.tsp:L13090-L13090, models.tsp:L13093-L13093, models.tsp:L13100-L13100, models.tsp:L12922-L12922, models.tsp:L13103-L13105, models.tsp:L13107-L13107, models.tsp:L13109-L13109, models.tsp:L13112-L13112, models.tsp:L12957-L12957, models.tsp:L13117-L13117, models.tsp:L13119-L13121, models.tsp:L13125-L13125, models.tsp:L13127-L13129, models.tsp:L13131-L13131, models.tsp:L13133-L13134, models.tsp:L13137-L13137, models.tsp:L13139-L13139, models.tsp:L13142-L13142, models.tsp:L13144-L13144, models.tsp:L13147-L13147, models.tsp:L13149-L13151, models.tsp:L13154-L13154, models.tsp:L13156-L13156, models.tsp:L13160-L13160, models.tsp:L13162-L13164, models.tsp:L13166-L13166, models.tsp:L13168-L13168, models.tsp:L13171-L13171, models.tsp:L13173-L13173, models.tsp:L13177-L13177, models.tsp:L13180-L13181, models.tsp:L13183-L13183, models.tsp:L13185-L13185, models.tsp:L13188-L13188, models.tsp:L13190-L13190, models.tsp:L13194-L13194, models.tsp:L13197-L13202, models.tsp:L13205-L13205, models.tsp:L13207-L13208, models.tsp:L13211-L13211, models.tsp:L13213-L13214, models.tsp:L13216-L13216, models.tsp:L13218-L13218, models.tsp:L13221-L13221, models.tsp:L13223-L13223, models.tsp:L13226-L13226, models.tsp:L13228-L13228, models.tsp:L13231-L13231, models.tsp:L13233-L13233, models.tsp:L13236-L13236, models.tsp:L13238-L13238, models.tsp:L13241-L13241, models.tsp:L13243-L13243, models.tsp:L13246-L13246, models.tsp:L13248-L13248, models.tsp:L13251-L13251, models.tsp:L13253-L13253, models.tsp:L13256-L13256, models.tsp:L13258-L13258, models.tsp:L13140-L13145, models.tsp:L13261-L13261, models.tsp:L13263-L13263, models.tsp:L13266-L13266, models.tsp:L13268-L13268, models.tsp:L13272-L13272, models.tsp:L13274-L13274, models.tsp:L13276-L13283, models.tsp:L13286-L13286, models.tsp:L13289-L13290, models.tsp:L13292-L13292, models.tsp:L13294-L13295, models.tsp:L13297-L13302, models.tsp:L13304-L13304, models.tsp:L13306-L13307, models.tsp:L13309-L13320, models.tsp:L13322-L13326, models.tsp:L13328-L13328, models.tsp:L13330-L13330, models.tsp:L13333-L13333, models.tsp:L13335-L13335, models.tsp:L13338-L13338, models.tsp:L13340-L13340, models.tsp:L13343-L13343, models.tsp:L13345-L13345, models.tsp:L13348-L13348, models.tsp:L13350-L13350, models.tsp:L13353-L13381, models.tsp:L13384-L13397, models.tsp:L13401-L13401, models.tsp:L13405-L13405, models.tsp:L13408-L13408, models.tsp:L13412-L13412, models.tsp:L13417-L13417, models.tsp:L13419-L13419, models.tsp:L13422-L13422, models.tsp:L13424-L13425, models.tsp:L13428-L13428, models.tsp:L13430-L13435, models.tsp:L13445-L13445, models.tsp:L13269-L13269, models.tsp:L13451-L13451, models.tsp:L13453-L13453, models.tsp:L13455-L13455, models.tsp:L13457-L13459, models.tsp:L13462-L13462, models.tsp:L13464-L13466, models.tsp:L13468-L13472, models.tsp:L13474-L13474, models.tsp:L13476-L13477, models.tsp:L13480-L13480, models.tsp:L13482-L13483, models.tsp:L13486-L13486, models.tsp:L13488-L13489, models.tsp:L13492-L13492, models.tsp:L13494-L13496, models.tsp:L13498-L13504, models.tsp:L13506-L13506, models.tsp:L13508-L13508, models.tsp:L13512-L13512, models.tsp:L13514-L13514, models.tsp:L13516-L13516, models.tsp:L13519-L13519, models.tsp:L13522-L13522, models.tsp:L13524-L13525, models.tsp:L13528-L13528, models.tsp:L13531-L13531, models.tsp:L13534-L13534, models.tsp:L13537-L13538, models.tsp:L13362-L13367, models.tsp:L13541-L13541, models.tsp:L13543-L13545, models.tsp:L13549-L13549, models.tsp:L13551-L13551, models.tsp:L13553-L13553, models.tsp:L13555-L13556, models.tsp:L13392-L13398, models.tsp:L13559-L13559, models.tsp:L13561-L13563, models.tsp:L13567-L13567, models.tsp:L13570-L13571, models.tsp:L13573-L13573, models.tsp:L13575-L13576, models.tsp:L13579-L13579, models.tsp:L13581-L13581, models.tsp:L13585-L13585, models.tsp:L13588-L13592, models.tsp:L13594-L13594, models.tsp:L13596-L13596, models.tsp:L13600-L13600, models.tsp:L13603-L13604, models.tsp:L13606-L13606, models.tsp:L13609-L13609, models.tsp:L13612-L13612, models.tsp:L13615-L13616, models.tsp:L13619-L13619, models.tsp:L13622-L13622, models.tsp:L13625-L13625, models.tsp:L13628-L13628, models.tsp:L13631-L13631, models.tsp:L13633-L13634, models.tsp:L13491-L13496, models.tsp:L13637-L13637, models.tsp:L13639-L13641, models.tsp:L13644-L13644, models.tsp:L13647-L13648, models.tsp:L13651-L13651, models.tsp:L13653-L13655, models.tsp:L13658-L13658, models.tsp:L13660-L13662, models.tsp:L13666-L13666, models.tsp:L13669-L13670, models.tsp:L13672-L13672, models.tsp:L13674-L13674, models.tsp:L13531-L13536, models.tsp:L13677-L13677, models.tsp:L13679-L13679, models.tsp:L13683-L13683, models.tsp:L13687-L13687, models.tsp:L13690-L13690, models.tsp:L13694-L13694, models.tsp:L13696-L13696, models.tsp:L13698-L13698, models.tsp:L13701-L13701, models.tsp:L13703-L13706, models.tsp:L13709-L13709, models.tsp:L13711-L13712, models.tsp:L13715-L13715, models.tsp:L13717-L13718, models.tsp:L13721-L13721, models.tsp:L13723-L13725, models.tsp:L13728-L13728, models.tsp:L13730-L13732, models.tsp:L13735-L13735, models.tsp:L13737-L13746, models.tsp:L13750-L13750, models.tsp:L13754-L13754, models.tsp:L13757-L13757, models.tsp:L13761-L13764, models.tsp:L13766-L13766, models.tsp:L13768-L13769, models.tsp:L13772-L13772, models.tsp:L13774-L13774, models.tsp:L13777-L13777, models.tsp:L13779-L13781, models.tsp:L13784-L13784, models.tsp:L13786-L13787, models.tsp:L13791-L13803, models.tsp:L13805-L13806, models.tsp:L13809-L13809, models.tsp:L13811-L13811, models.tsp:L13813-L13814, models.tsp:L13817-L13817, models.tsp:L13819-L13820, models.tsp:L13823-L13823, models.tsp:L13825-L13826, models.tsp:L13653-L13658, models.tsp:L13829-L13829, models.tsp:L13831-L13831, models.tsp:L13834-L13834, models.tsp:L13836-L13837, models.tsp:L13840-L13840, models.tsp:L13842-L13842, models.tsp:L13845-L13845, models.tsp:L13847-L13847, models.tsp:L13850-L13850, models.tsp:L13852-L13854, models.tsp:L13856-L13862, models.tsp:L13864-L13864, models.tsp:L13866-L13867, models.tsp:L13870-L13870, models.tsp:L13872-L13872, models.tsp:L13875-L13875, models.tsp:L13877-L13878, models.tsp:L13881-L13881, models.tsp:L13883-L13885, models.tsp:L13887-L13892, models.tsp:L13894-L13894, models.tsp:L13896-L13898, models.tsp:L13900-L13905, models.tsp:L13907-L13907, models.tsp:L13909-L13909, models.tsp:L13912-L13912, models.tsp:L13914-L13915, models.tsp:L13917-L13923, models.tsp:L13925-L13925, models.tsp:L13927-L13929, models.tsp:L13931-L13936, models.tsp:L13938-L13938, models.tsp:L13940-L13941, models.tsp:L13944-L13944, models.tsp:L13946-L13946, models.tsp:L13950-L13950, models.tsp:L13953-L13954, models.tsp:L13956-L13956, models.tsp:L13958-L13960, models.tsp:L13962-L13967, models.tsp:L13969-L13969, models.tsp:L13971-L13972, models.tsp:L13975-L13975, models.tsp:L13977-L13978, models.tsp:L13981-L13981, models.tsp:L13984-L13984, models.tsp:L13987-L13987, models.tsp:L13990-L13990, models.tsp:L13994-L13994, models.tsp:L13997-L13998, models.tsp:L14000-L14000, models.tsp:L14002-L14002, models.tsp:L14005-L14005, models.tsp:L14007-L14007, models.tsp:L14010-L14010, models.tsp:L14012-L14013, models.tsp:L14017-L14017, models.tsp:L14020-L14021, models.tsp:L14023-L14023, models.tsp:L14025-L14025, models.tsp:L14028-L14028, models.tsp:L14030-L14031, models.tsp:L14034-L14034, models.tsp:L14036-L14041, models.tsp:L14045-L14045, models.tsp:L14048-L14049, models.tsp:L14051-L14051, models.tsp:L14053-L14053, models.tsp:L14057-L14057, models.tsp:L14060-L14061, models.tsp:L14063-L14063, models.tsp:L14065-L14067, models.tsp:L14069-L14075, models.tsp:L14077-L14082, models.tsp:L14084-L14084, models.tsp:L14086-L14086, models.tsp:L14089-L14089, models.tsp:L14091-L14091, models.tsp:L13859-L13864, models.tsp:L14094-L14094, models.tsp:L14096-L14096, models.tsp:L14099-L14099, models.tsp:L14101-L14101, models.tsp:L14104-L14104, models.tsp:L14106-L14106, models.tsp:L13881-L13886, models.tsp:L14109-L14109, models.tsp:L14111-L14111, models.tsp:L14114-L14114, models.tsp:L14116-L14116, models.tsp:L14120-L14120, models.tsp:L14123-L14126, models.tsp:L14128-L14133, models.tsp:L14135-L14135, models.tsp:L14137-L14137, models.tsp:L14140-L14140, models.tsp:L14142-L14142, models.tsp:L14145-L14145, models.tsp:L14147-L14147, models.tsp:L14150-L14150, models.tsp:L14152-L14153, models.tsp:L14157-L14157, models.tsp:L14160-L14161, models.tsp:L14163-L14163, models.tsp:L14165-L14165, models.tsp:L13956-L13961, models.tsp:L14168-L14168, models.tsp:L14170-L14170, models.tsp:L14173-L14173, models.tsp:L14175-L14175, models.tsp:L14179-L14179, models.tsp:L13978-L13978, models.tsp:L14182-L14183, models.tsp:L14185-L14185, models.tsp:L14187-L14187, models.tsp:L14190-L14190, models.tsp:L14192-L14192, models.tsp:L13995-L14000, models.tsp:L14195-L14195, models.tsp:L14197-L14197, models.tsp:L14200-L14200, models.tsp:L14202-L14202, models.tsp:L14205-L14205, models.tsp:L14207-L14207, models.tsp:L14017-L14022, models.tsp:L14210-L14210, models.tsp:L14212-L14212, models.tsp:L14215-L14215, models.tsp:L14217-L14217, models.tsp:L14220-L14220, models.tsp:L14222-L14222, models.tsp:L14225-L14225, models.tsp:L14227-L14227, models.tsp:L14230-L14230, models.tsp:L14232-L14232, models.tsp:L14235-L14235, models.tsp:L14237-L14237, models.tsp:L14240-L14240, models.tsp:L14242-L14242, models.tsp:L14245-L14245, models.tsp:L14247-L14247, models.tsp:L14250-L14250, models.tsp:L14252-L14257, models.tsp:L14261-L14261, models.tsp:L14265-L14265, models.tsp:L14267-L14267, models.tsp:L14269-L14269, models.tsp:L14272-L14272, models.tsp:L14274-L14274, models.tsp:L14090-L14095, models.tsp:L14277-L14277, models.tsp:L14279-L14279, models.tsp:L14282-L14282, models.tsp:L14284-L14285, models.tsp:L14288-L14288, models.tsp:L14290-L14291, models.tsp:L14295-L14295, models.tsp:L14299-L14299, models.tsp:L14301-L14301, models.tsp:L14303-L14303, models.tsp:L14306-L14306, models.tsp:L14308-L14308, models.tsp:L14311-L14311, models.tsp:L14313-L14315, models.tsp:L14319-L14319, models.tsp:L14323-L14323, models.tsp:L14325-L14325, models.tsp:L14327-L14328, models.tsp:L14331-L14331, models.tsp:L14333-L14340, models.tsp:L14344-L14344, models.tsp:L14348-L14348, models.tsp:L14350-L14350, models.tsp:L14352-L14354, models.tsp:L14356-L14361, models.tsp:L14363-L14363, models.tsp:L14365-L14366, models.tsp:L14369-L14369, models.tsp:L14371-L14371, models.tsp:L14374-L14374, models.tsp:L14376-L14381, models.tsp:L14385-L14385, models.tsp:L14389-L14389, models.tsp:L14391-L14391, models.tsp:L14393-L14393, models.tsp:L14396-L14401, models.tsp:L14200-L14200, models.tsp:L14407-L14407, models.tsp:L14411-L14411, models.tsp:L14413-L14413, models.tsp:L14415-L14417, models.tsp:L14420-L14420, models.tsp:L14422-L14424, models.tsp:L14426-L14431, models.tsp:L14433-L14433, models.tsp:L14435-L14436, models.tsp:L14439-L14439, models.tsp:L14441-L14441, models.tsp:L14444-L14444, models.tsp:L14446-L14446, models.tsp:L14449-L14449, models.tsp:L14451-L14451, models.tsp:L14454-L14454, models.tsp:L14456-L14456, models.tsp:L14459-L14459, models.tsp:L14461-L14461, models.tsp:L14465-L14465, models.tsp:L14469-L14469, models.tsp:L14471-L14471, models.tsp:L14473-L14478, models.tsp:L14482-L14482, models.tsp:L14269-L14269, models.tsp:L14486-L14486, models.tsp:L14488-L14488, models.tsp:L14490-L14491, models.tsp:L14494-L14494, models.tsp:L14496-L14512, models.tsp:L14515-L14515, models.tsp:L14517-L14517, models.tsp:L14521-L14521, models.tsp:L14524-L14525, models.tsp:L14527-L14527, models.tsp:L14532-L14532, models.tsp:L14534-L14534, models.tsp:L14537-L14537, models.tsp:L14539-L14539, models.tsp:L14543-L14543, models.tsp:L14546-L14547, models.tsp:L14549-L14549, models.tsp:L14551-L14551, models.tsp:L14554-L14554, models.tsp:L14556-L14556, models.tsp:L14559-L14559, models.tsp:L14561-L14562, models.tsp:L14565-L14565, models.tsp:L14567-L14567, models.tsp:L14570-L14570, models.tsp:L14572-L14572, models.tsp:L14350-L14357, models.tsp:L14575-L14575, models.tsp:L14577-L14578, models.tsp:L14581-L14581, models.tsp:L14584-L14584, models.tsp:L14587-L14587, models.tsp:L14589-L14589, models.tsp:L14592-L14592, models.tsp:L14594-L14595, models.tsp:L14599-L14599, models.tsp:L14602-L14603, models.tsp:L14605-L14605, models.tsp:L14607-L14607, models.tsp:L14610-L14610, models.tsp:L14612-L14613, models.tsp:L14615-L14620, models.tsp:L14622-L14622, models.tsp:L14624-L14624, models.tsp:L14627-L14627, models.tsp:L14629-L14629, models.tsp:L14632-L14632, models.tsp:L14634-L14634, models.tsp:L14638-L14638, models.tsp:L14641-L14642, models.tsp:L14644-L14644, models.tsp:L14646-L14646, models.tsp:L14649-L14649, models.tsp:L14651-L14651, models.tsp:L14654-L14654, models.tsp:L14656-L14656, models.tsp:L14659-L14659, models.tsp:L14661-L14661, models.tsp:L14665-L14665, models.tsp:L14669-L14669, models.tsp:L14671-L14671, models.tsp:L14673-L14678, models.tsp:L14682-L14682, models.tsp:L14686-L14686, models.tsp:L14688-L14688, models.tsp:L14690-L14690, models.tsp:L14693-L14693, models.tsp:L14695-L14707, models.tsp:L14711-L14711, models.tsp:L14715-L14715, models.tsp:L14717-L14717, models.tsp:L14720-L14720, models.tsp:L14735-L14735, models.tsp:L14741-L14751, models.tsp:L14765-L14765, models.tsp:L14780-L14780, models.tsp:L14784-L14784, models.tsp:L14786-L14786, models.tsp:L14788-L14801, models.tsp:L14804-L14804, models.tsp:L14807-L14807, models.tsp:L14810-L14810, models.tsp:L14812-L14812, models.tsp:L14816-L14816, models.tsp:L14819-L14822, models.tsp:L14824-L14824, models.tsp:L14826-L14826, models.tsp:L14829-L14829, models.tsp:L14831-L14831, models.tsp:L14834-L14834, models.tsp:L14836-L14836, models.tsp:L14840-L14840, models.tsp:L14843-L14846, models.tsp:L14848-L14848, models.tsp:L14850-L14850, models.tsp:L14853-L14853, models.tsp:L14855-L14855, models.tsp:L14858-L14858, models.tsp:L14861-L14861, models.tsp:L14864-L14864, models.tsp:L14866-L14866, models.tsp:L14869-L14869, models.tsp:L14871-L14872, models.tsp:L14876-L14876, models.tsp:L14879-L14882, models.tsp:L14884-L14884, models.tsp:L14886-L14886, models.tsp:L14647-L14652, models.tsp:L14889-L14889, models.tsp:L14891-L14892, models.tsp:L14895-L14895, models.tsp:L14898-L14898, models.tsp:L14901-L14921, models.tsp:L14924-L14924, models.tsp:L14927-L14927, models.tsp:L14929-L14930, models.tsp:L14933-L14933, models.tsp:L14935-L14947, models.tsp:L14951-L14951, models.tsp:L14954-L14957, models.tsp:L14959-L14959, models.tsp:L14961-L14962, models.tsp:L14965-L14965, models.tsp:L14967-L14980, models.tsp:L14984-L14984, models.tsp:L14988-L14988, models.tsp:L14990-L14990, models.tsp:L14992-L14992, models.tsp:L14996-L14996, models.tsp:L14718-L14718, models.tsp:L15000-L15000, models.tsp:L15002-L15002, models.tsp:L15004-L15005, models.tsp:L15008-L15008, models.tsp:L15010-L15012, models.tsp:L15014-L15019, models.tsp:L15021-L15021, models.tsp:L15023-L15024, models.tsp:L15027-L15027, models.tsp:L15029-L15030, models.tsp:L15034-L15034, models.tsp:L15038-L15039, models.tsp:L15041-L15041, models.tsp:L15043-L15043, models.tsp:L15046-L15046, models.tsp:L15048-L15048, models.tsp:L15051-L15051, models.tsp:L15053-L15053, models.tsp:L15056-L15056, models.tsp:L15058-L15059, models.tsp:L15062-L15062, models.tsp:L15064-L15069, models.tsp:L15073-L15073, models.tsp:L15077-L15077, models.tsp:L15079-L15079, models.tsp:L15081-L15081, models.tsp:L15084-L15084, models.tsp:L15087-L15087, models.tsp:L15090-L15090, models.tsp:L15093-L15093, models.tsp:L15097-L15097, models.tsp:L15101-L15101, models.tsp:L15103-L15103, models.tsp:L15118-L15122, models.tsp:L15126-L15126, models.tsp:L15130-L15130, models.tsp:L15132-L15132, models.tsp:L14843-L14848, models.tsp:L15147-L15157, models.tsp:L15161-L15161, models.tsp:L15165-L15165, models.tsp:L15173-L15173, models.tsp:L15177-L15177, models.tsp:L15184-L15184, models.tsp:L15186-L15187, models.tsp:L15190-L15190, models.tsp:L15192-L15193, models.tsp:L15196-L15196, models.tsp:L15198-L15198, models.tsp:L15201-L15201, models.tsp:L15203-L15204, models.tsp:L15206-L15211, models.tsp:L15213-L15433, models.tsp:L16406-L16412, models.tsp:L16514-L16521, models.tsp:L16527-L16540, models.tsp:L16595-L16608, models.tsp:L16816-L16816, models.tsp:L16818-L16819, models.tsp:L16821-L16823, models.tsp:L16825-L16825, models.tsp:L16827-L16832, models.tsp:L16836-L16836, models.tsp:L16838-L16956, models.tsp:L19850-L19856, models.tsp:L20405-L20453, models.tsp:L21655-L21724, models.tsp:L23866-L23877, models.tsp:L24217-L24223, models.tsp:L24231-L24247, models.tsp:L26268-L26273, models.tsp:L26426-L26431, models.tsp:L26989-L27006, models.tsp:L27082-L27561, models.tsp:L27563-L27566, models.tsp:L27568-L27568, models.tsp:L27570-L27570, models.tsp:L27573-L27573, models.tsp:L27575-L27576, models.tsp:L27580-L27580, models.tsp:L27582-L27585, models.tsp:L27587-L27587, models.tsp:L27589-L27593, models.tsp:L27596-L27596, models.tsp:L27598-L27598, models.tsp:L27602-L27602, models.tsp:L27604-L27607, models.tsp:L27609-L27609, models.tsp:L27611-L27611, models.tsp:L27614-L27614, models.tsp:L27616-L27616, models.tsp:L27620-L27620, models.tsp:L27622-L27625, models.tsp:L27627-L27627, models.tsp:L27629-L27629, models.tsp:L27632-L27632, models.tsp:L27634-L27634, models.tsp:L27638-L27638, models.tsp:L27640-L27643, models.tsp:L27645-L27645, models.tsp:L27647-L27651, models.tsp:L27654-L27654, models.tsp:L27656-L27656, models.tsp:L27660-L27660, models.tsp:L27662-L27665, models.tsp:L27667-L27667, models.tsp:L27669-L27669, models.tsp:L27673-L27673, models.tsp:L27675-L27678, models.tsp:L27680-L27680, models.tsp:L27682-L27682, models.tsp:L27685-L27685, models.tsp:L27687-L27687, models.tsp:L26332-L26337, models.tsp:L27690-L27690, models.tsp:L27692-L27693, models.tsp:L27696-L27696, models.tsp:L27698-L27698, models.tsp:L27701-L27701, models.tsp:L27703-L27703, models.tsp:L27706-L27706, models.tsp:L27708-L27709, models.tsp:L27711-L27714, models.tsp:L26367-L26373, models.tsp:L27717-L27717, models.tsp:L27719-L27720, models.tsp:L27723-L27723, models.tsp:L27725-L27726, models.tsp:L27728-L27733, models.tsp:L27736-L27736, models.tsp:L27738-L27744, models.tsp:L27746-L27746, models.tsp:L27748-L27749, models.tsp:L27752-L27752, models.tsp:L27755-L27755, models.tsp:L27758-L27758, models.tsp:L27760-L27761, models.tsp:L27764-L27764, models.tsp:L27767-L27767, models.tsp:L27770-L27782, models.tsp:L27785-L27785, models.tsp:L27788-L27788, models.tsp:L27790-L27790, models.tsp:L27794-L27794, models.tsp:L27796-L27804, models.tsp:L27806-L27810, models.tsp:L27814-L27814, models.tsp:L27816-L27819, models.tsp:L27821-L27821, models.tsp:L27823-L27823, models.tsp:L27826-L27826, models.tsp:L27828-L27828, models.tsp:L27831-L27836, models.tsp:L27838-L27839, models.tsp:L27841-L27847, models.tsp:L27849-L27849, models.tsp:L27852-L27852, models.tsp:L26480-L26486, models.tsp:L27855-L27855, models.tsp:L27857-L27857, models.tsp:L27860-L27860, models.tsp:L27862-L27862, models.tsp:L27865-L27865, models.tsp:L27867-L27867, models.tsp:L27870-L27870, models.tsp:L27872-L27872, models.tsp:L27875-L27875, models.tsp:L27877-L27878, models.tsp:L27880-L27880, models.tsp:L8674-L8685, models.tsp:L27062-L27900, NetworkWatcher.tsp:L1-L86, NetworkWatcher.tsp:L466-L578</td></tr><tr><td>Mismatch</td><td>ARM resource operations — Add ARM Resource Operation</td><td>Custom actions define any operations over resources outside the simple CRUDL (Create, Read, Update, Delete, List) or lifecycle operations described above.</td><td>ConnectionAnalyzerOps aliases Azure.ResourceManager.Legacy.RoutedOperations, and the changed NetworkWatchers declarations apply @put, @delete, @patch, @get, and @list directly to explicit /connectionAnalyzers routes rather than using the documented CRUDL templates.</td><td>NetworkWatcher.tsp:L12-L12, NetworkWatcher.tsp:L41-L66, NetworkWatcher.tsp:L469-L575, NetworkWatcher.tsp:L640-L647, NetworkWatcher.tsp:L1-L86, NetworkWatcher.tsp:L466-L578</td></tr></tbody></table></div>
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
 <h3>Artifact Evidence</h3>

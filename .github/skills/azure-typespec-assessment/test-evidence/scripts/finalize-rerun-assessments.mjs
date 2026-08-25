@@ -12,7 +12,6 @@ import { fileURLToPath } from "node:url";
 
 import { buildCompliance } from "./generate-document-compliance-evidence.mjs";
 import { sourceLink } from "../../scripts/prepare-assessment.mjs";
-import { renderAssessment } from "../../scripts/render-assessment.mjs";
 import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
 import { validateAssessment } from "../../scripts/validate-assessment.mjs";
 
@@ -811,8 +810,7 @@ function writeExistingAssessmentReports(reportRootValue, prValues) {
       assessment,
       complianceFixture[String(assessment.pr)],
     );
-    const markdown = renderAssessment(assessment);
-    const errors = validateAssessment(assessment, markdown);
+    const errors = validateAssessment(assessment);
     if (errors.length > 0) {
       throw new Error(`PR ${pr} report is invalid:\n${errors.join("\n")}`);
     }
@@ -820,7 +818,6 @@ function writeExistingAssessmentReports(reportRootValue, prValues) {
       assessmentPath,
       `${JSON.stringify(assessment, null, 2)}\n`,
     );
-    writeFileSync(join(outputDirectory, "assessment.md"), markdown);
     writeFileSync(
       join(outputDirectory, "assessment.html"),
       renderAssessmentHtml(assessment),
@@ -905,8 +902,7 @@ function main() {
     assessment.schemaVersion = 2;
     refineSemanticChanges(assessment, typeSpecDiffFixture, operationsByPr);
 
-    const markdown = htmlOnly ? undefined : renderAssessment(assessment);
-    const errors = validateAssessment(assessment, markdown);
+    const errors = validateAssessment(assessment);
     if (errors.length > 0) {
       throw new Error(`PR ${pr} report is invalid:\n${errors.join("\n")}`);
     }
@@ -918,7 +914,6 @@ function main() {
     if (htmlOnly) {
       for (const obsoletePath of [
         join(outputDirectory, "assessment.json"),
-        join(outputDirectory, "assessment.md"),
       ]) {
         if (existsSync(obsoletePath)) rmSync(obsoletePath);
       }
@@ -927,7 +922,6 @@ function main() {
         join(outputDirectory, "assessment.json"),
         `${JSON.stringify(assessment, null, 2)}\n`,
       );
-      writeFileSync(join(outputDirectory, "assessment.md"), markdown);
     }
     assessments.push(assessment);
   }
@@ -966,7 +960,7 @@ function main() {
           : duration.note?.toLowerCase().includes("approximate")
             ? `~${formatDuration(duration.totalMs)}`
             : formatDuration(duration.totalMs);
-      return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.md) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${assessment.dimensions.azureCompliance.status} | ${totalTime} | ${assessment.errors.length} |`;
+      return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.html) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${assessment.dimensions.azureCompliance.status} | ${totalTime} | ${assessment.errors.length} |`;
     });
     writeFileSync(
       join(reportRoot, "assessment-summary.md"),

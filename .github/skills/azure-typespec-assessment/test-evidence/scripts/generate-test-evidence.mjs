@@ -4,7 +4,6 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { renderAssessment } from "../../scripts/render-assessment.mjs";
 import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
 import { deriveOperationChanges } from "./operation-changes.mjs";
 
@@ -306,10 +305,6 @@ for (const assessment of assessments) {
     `${JSON.stringify(assessment, null, 2)}\n`,
   );
   writeFileSync(
-    resolve(outputDirectory, "assessment.md"),
-    renderAssessment(assessment),
-  );
-  writeFileSync(
     resolve(outputDirectory, "assessment.html"),
     renderAssessmentHtml(assessment),
   );
@@ -334,14 +329,14 @@ writeFileSync(
   `# TypeSpec Assessment Test Evidence
 
 Ten representative TypeSpec PRs created within the previous year. Each result
-uses the skill's current Markdown and JSON output contracts.
+uses the skill's current HTML and JSON output contracts.
 
 | PR | Case | State | Result | Assessment |
 | --- | --- | --- | --- | --- |
 ${cases
   .map(
     (item) =>
-      `| [#${item.pr}](${item.url}) | ${item.case} | ${item.state} | ${item.result} | [Markdown](assessments/${item.pr}/assessment.md) · [JSON](assessments/${item.pr}/assessment.json) |`,
+      `| [#${item.pr}](${item.url}) | ${item.case} | ${item.state} | ${item.result} | [HTML](assessments/${item.pr}/assessment.html) · [JSON](assessments/${item.pr}/assessment.json) |`,
   )
   .join("\n")}
 `,

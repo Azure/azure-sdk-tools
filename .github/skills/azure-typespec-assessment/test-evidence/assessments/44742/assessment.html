@@ -64,7 +64,7 @@
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">@@ -405,22 +389,6 @@ enum ListFilesIncludeType {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">   /** PermissionKey */</span>
 <span class="context">   PermissionKey,</span>
 <span class="remove">-</span>
@@ -77,13 +77,13 @@
 <span class="remove">-  LinkCount,</span>
 <span class="remove">-</span>
 <span class="remove">-  /** NfsAttributes */</span>
-<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 9 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">@@ -557,36 +525,6 @@ model FilesAndDirectoriesListSegment {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">   @Xml.name(&quot;File&quot;)</span>
 <span class="context">   fileItems: FileItem[];</span>
 <span class="remove">-</span>
@@ -96,13 +96,13 @@
 <span class="remove">-  /** The block device items. */</span>
 <span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
 <span class="remove">-  @Xml.unwrapped</span>
-<span class="omitted"> ... 23 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 23 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">@@ -691,116 +609,6 @@ model FileItem {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">   /** The permission key. */</span>
 <span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
 <span class="remove">-</span>
@@ -115,13 +115,13 @@
 <span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
 <span class="remove">-  @Xml.name(&quot;FileType&quot;)</span>
 <span class="remove">-  fileType?: NfsFileType;</span>
-<span class="omitted"> ... 103 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 103 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">@@ -284,22 +284,6 @@ union NfsFileType {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">   /** SymLink */</span>
 <span class="context">   SymLink: &quot;SymLink&quot;,</span>
 <span class="remove">-</span>
@@ -134,7 +134,7 @@
 <span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
 <span class="remove">-</span>
 <span class="remove">-  /** Socket */</span>
-<span class="omitted"> ... 9 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 9 later diff lines omitted ...</span></pre>
 </div>
 </details>
 
@@ -189,13 +189,13 @@
 <span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
 <span class="remove">-  LinkCount,</span>
 <span class="remove">-</span>
-<span class="omitted"> ... 10 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 10 later diff lines omitted ...</span></pre>
 </div><div class="diff">
 <div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">@@ -557,36 +525,6 @@ model FilesAndDirectoriesListSegment {</span>
-<span class="omitted"> ... 5 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
 <span class="remove">-  @Xml.unwrapped</span>
 <span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
@@ -208,7 +208,7 @@
 <span class="remove">-  blockDeviceItems?: BlockDeviceItem[];</span>
 <span class="remove">-</span>
 <span class="remove">-  /** The character device items. */</span>
-<span class="omitted"> ... 19 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 19 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
 </div>
@@ -258,7 +258,7 @@
 <span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
 <span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
 <span class="remove">-</span>
-<span class="omitted"> ... 10 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 10 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
 </div>
@@ -272,8 +272,6 @@
 <div class="appendix-body">
 <h3>Assessment Errors</h3>
 <p class="empty-state">None.</p>
-<h3>Code-to-Guidance Evidence</h3>
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody><tr><td>Matched</td><td>Versioning overview — API Versioning</td><td>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</td><td>The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.</td><td>models.tsp:L405-L426, models.tsp:L557-L592, models.tsp:L691-L806, models.tsp:L284-L305</td></tr><tr><td>Matched</td><td>Evolving APIs — API Versioning</td><td>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</td><td>The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.</td><td>models.tsp:L405-L426, models.tsp:L557-L592, models.tsp:L691-L806, models.tsp:L284-L305</td></tr><tr><td>Matched</td><td>Enums — Models and Enums</td><td>Enums | TypeSpec Skip to content TypeSpec Use cases OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Version 1.15.0 is now available! Search... OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Getting started Installation Editor VS Code Extension Visual Studio Extension Guides TypeSpec for REST Getting Started with TypeSpec For REST APIs Operations and Respons</td><td>The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.</td><td>models.tsp:L405-L426, models.tsp:L557-L592, models.tsp:L691-L806, models.tsp:L284-L305</td></tr></tbody></table></div>
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
 <h3>Artifact Evidence</h3>

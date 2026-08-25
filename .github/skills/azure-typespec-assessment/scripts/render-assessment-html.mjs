@@ -8,7 +8,7 @@ import {
   deriveCodeSafety,
   displayedHunkLines,
   displayedTypeSpecExcerpts,
-} from "./render-assessment.mjs";
+} from "./assessment-display.mjs";
 
 const CHANGE_LABELS = {
   added: ["➕", "Added"],
@@ -63,15 +63,6 @@ function sourceLinks(references) {
     .map(
       (reference) =>
         `<a href="${escapeHtml(reference.link)}">${escapeHtml(basename(reference.path))}:L${reference.startLine}-L${reference.endLine}</a>`,
-    )
-    .join(", ");
-}
-
-function sourceLabels(references) {
-  return (references ?? [])
-    .map(
-      (reference) =>
-        `${escapeHtml(basename(reference.path))}:L${reference.startLine}-L${reference.endLine}`,
     )
     .join(", ");
 }
@@ -784,9 +775,6 @@ function renderFindingCategory(findings, emptyMessage, render = renderFinding) {
 
 function renderAppendix(assessment) {
   const errors = assessment.errors ?? [];
-  const documents = assessment.dimensions.azureCompliance.documents ?? [];
-  const complianceFindings =
-    assessment.dimensions.azureCompliance.findings ?? [];
   const emitterRuns = assessment.assessmentEvidence?.emitterRuns ?? [];
   const tooling = [
     ...new Set(emitterRuns.map((run) => run.emitter).filter(Boolean)),
@@ -794,23 +782,11 @@ function renderAppendix(assessment) {
   const artifactEvidence = assessment.artifactEvidence
     ? Object.entries(assessment.artifactEvidence)
     : [];
-  const guidanceRows = documents
-    .map((document) => {
-      const result = complianceFindings.some(
-        (finding) => finding.documentationUrl === document.url,
-      )
-        ? "Mismatch"
-        : "Matched";
-      return `<tr><td>${result}</td><td>${escapeHtml(document.title)} — ${escapeHtml(document.section)}</td><td>${escapeHtml(document.guidanceExcerpt)}</td><td>${escapeHtml(document.evidence)}</td><td>${sourceLabels(document.sourceReferences)}</td></tr>`;
-    })
-    .join("");
   return `<details class="appendix-details">
 <summary>Appendix</summary>
 <div class="appendix-body">
 <h3>Assessment Errors</h3>
 ${errors.length > 0 ? `<ul>${errors.map((error) => `<li>${escapeHtml(error)}</li>`).join("")}</ul>` : '<p class="empty-state">None.</p>'}
-<h3>Code-to-Guidance Evidence</h3>
-${guidanceRows ? `<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody>${guidanceRows}</tbody></table></div>` : '<p class="empty-state">No authoritative document evidence was available.</p>'}
 <h3>Tooling Used</h3>
 ${tooling.length > 0 ? `<ul>${tooling.map((name) => `<li><code>${escapeHtml(name)}</code></li>`).join("")}</ul>` : '<p class="empty-state">No emitter or library usage recorded.</p>'}
 <h3>Artifact Evidence</h3>

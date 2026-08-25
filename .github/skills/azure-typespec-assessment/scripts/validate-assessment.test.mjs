@@ -12,8 +12,8 @@ import {
 } from "../test-evidence/scripts/finalize-rerun-assessments.mjs";
 import { buildCompliance } from "../test-evidence/scripts/generate-document-compliance-evidence.mjs";
 import { deriveOperationChanges } from "../test-evidence/scripts/operation-changes.mjs";
+import { deriveCodeSafety } from "./assessment-display.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
-import { deriveCodeSafety, renderAssessment } from "./render-assessment.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
 const sourceReference = {
@@ -126,10 +126,8 @@ function validDocument() {
   };
 }
 
-const markdown = renderAssessment(validDocument());
-
 test("valid assessment passes", () => {
-  assert.deepEqual(validateAssessment(validDocument(), markdown), []);
+  assert.deepEqual(validateAssessment(validDocument()), []);
 });
 
 test("finalized GitHub assessments use commit-pinned source links", () => {
@@ -168,55 +166,6 @@ test("overall code safety reflects assessment risk", () => {
   assert.equal(deriveCodeSafety(document), "Low");
 });
 
-test("action-required findings are ordered by severity", () => {
-  const document = validDocument();
-  document.dimensions.restBreakingChanges.findings.push({
-    id: "rest-high",
-    title: "High severity REST break",
-    severity: "high",
-    confidence: "high",
-    summary: "An existing wire contract is removed.",
-    evidence: ["AutoRest diff"],
-    sourceReferences: [sourceReference],
-  });
-  document.dimensions.azureCompliance.status = "failed";
-  document.dimensions.azureCompliance.findings.push({
-    id: "compliance-low",
-    title: "Low severity compliance mismatch",
-    severity: "low",
-    summary: "A documented convention is not followed.",
-    documentationUrl:
-      "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-    evidence: ["Fetched guidance", "Changed source"],
-    sourceReferences: [sourceReference],
-    codeSnippets: focusedCodeSnippets,
-  });
-  document.dimensions.azureCompliance.summary.findingCount = 1;
-  const rendered = renderAssessment(document);
-  assert.ok(
-    rendered.indexOf("High severity REST break") <
-      rendered.indexOf("Low severity compliance mismatch"),
-  );
-});
-
-test("blocked assessments require resolving assessment errors", () => {
-  const document = validDocument();
-  document.errors = ["Head AutoRest compilation failed."];
-  document.dimensions.restBreakingChanges.findings.push({
-    id: "rest-blocked",
-    title: "Known REST break",
-    severity: "high",
-    confidence: "high",
-    summary: "A known REST break also requires action.",
-    evidence: ["Source diff"],
-    sourceReferences: [sourceReference],
-  });
-  const rendered = renderAssessment(document);
-  assert.match(rendered, /Resolve the assessment blockers/);
-  assert.match(rendered, /Known REST break/);
-  assert.doesNotMatch(rendered, /No action required/);
-});
-
 test("findings require source references", () => {
   const document = validDocument();
   document.dimensions.restCompatibleDownstreamBreakingChanges.findings.push({
@@ -225,7 +174,7 @@ test("findings require source references", () => {
     sourceReferences: [],
   });
   assert.match(
-    validateAssessment(document, markdown).join("\n"),
+    validateAssessment(document).join("\n"),
     /requires sourceReferences/,
   );
 });
@@ -251,7 +200,7 @@ test("semantic operations require complete REST behavior", () => {
   delete document.dimensions.semanticUnderstanding.items[0].restRepresentation
     .operations[0].responsePayloads;
   assert.match(
-    validateAssessment(document, markdown).join("\n"),
+    validateAssessment(document).join("\n"),
     /responsePayloads is required/,
   );
 });
@@ -365,23 +314,6 @@ test("semantic changes require real TypeSpec diff hunks", () => {
   );
 });
 
-test("semantic rendering combines change kind and behavior in one table", () => {
-  const rendered = renderAssessment(validDocument());
-  const sourceDiff = rendered.match(/```diff\n([\s\S]*?)\n```/)?.[1] ?? "";
-  assert.match(sourceDiff, /\+  name: string = "widget";/);
-  assert.doesNotMatch(sourceDiff, /operation family|Before|After/);
-  assert.match(rendered, /\| Change \| Aspect \| Before \| After \|/);
-  assert.match(rendered, /\| ➕ Added \| operation family \| — \|/);
-  assert.doesNotMatch(rendered, /\*\*Behavior change\*\*/);
-  assert.match(
-    rendered,
-    /\*\*TypeSpec change:\*\* The changed TypeSpec declaration produces this semantic API change\./,
-  );
-  assert.doesNotMatch(rendered, /\*\*TypeSpec diff/);
-  assert.match(rendered, /```diff\n--- \/dev\/null\n\+\+\+ b\/spec\/main\.tsp/);
-  assert.doesNotMatch(rendered, /\*\*Effect:\*\*/);
-});
-
 test("HTML report prioritizes semantic changes and linked impacts", () => {
   const document = validDocument();
   document.dimensions.restBreakingChanges.findings.push({
@@ -421,7 +353,7 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
   assert.match(html, /<details class="appendix-details">/);
   assert.doesNotMatch(html, /<details class="appendix-details" open>/);
   assert.match(html, /Assessment Errors/);
-  assert.match(html, /Code-to-Guidance Evidence/);
+  assert.doesNotMatch(html, /Code-to-Guidance Evidence/);
   assert.match(html, /Tooling Used/);
   assert.match(html, /Artifact Evidence/);
   assert.doesNotMatch(html, /Impact overview|Detailed findings/);
@@ -714,44 +646,10 @@ test("HTML collapses compliance findings with linked TypeSpec code", () => {
   );
   const appendix = html.slice(html.indexOf('<section id="appendix">'));
   assert.doesNotMatch(appendix, /<a href=/);
-  assert.match(appendix, /Models — Model properties/);
-  assert.match(appendix, /main\.tsp:L2-L4/);
-
-  const markdown = renderAssessment(document);
-  assert.ok(
-    markdown.indexOf("## 🛡️ Compatibility Assessment") <
-      markdown.indexOf("## ☁️ Azure Compliance") &&
-      markdown.indexOf("## ☁️ Azure Compliance") <
-        markdown.indexOf("## 🧠 Semantic Understanding"),
-  );
-  assert.match(
-    markdown,
-    /\*\*TypeSpec source:\*\* \[main\.tsp:L2-L4\]\([^)]*spec\/main\.tsp#L2-L4\)/,
-  );
-  const markdownAppendix = markdown.slice(markdown.indexOf("## 📎 Appendix"));
-  assert.doesNotMatch(markdownAppendix, /\]\(https?:|spec\/main\.tsp#L/);
+  assert.doesNotMatch(appendix, /Models — Model properties|main\.tsp:L2-L4/);
 });
 
-test("Markdown limits source diffs while JSON retains every hunk", () => {
-  const document = validDocument();
-  const change = document.dimensions.semanticUnderstanding.items[0].changes[0];
-  change.typeSpecDiffs = [1, 2, 3].map((number) => ({
-    ...structuredClone(change.typeSpecDiffs[0]),
-    oldStart: number,
-    newStart: number,
-    context: `hunk ${number}`,
-  }));
-  const rendered = renderAssessment(document);
-  assert.equal((rendered.match(/```diff/g) ?? []).length, 2);
-  assert.match(
-    rendered,
-    /1 additional TypeSpec hunk omitted; complete diffs are in `assessment\.json`/,
-  );
-  assert.equal(change.typeSpecDiffs.length, 3);
-  assert.deepEqual(validateAssessment(document, rendered), []);
-});
-
-test("Markdown prioritizes decorators named by the TypeSpec change summary", () => {
+test("HTML prioritizes decorators named by the TypeSpec change summary", () => {
   const document = validDocument();
   const change = document.dimensions.semanticUnderstanding.items[0].changes[0];
   change.typeSpecCause =
@@ -776,15 +674,14 @@ test("Markdown prioritizes decorators named by the TypeSpec change summary", () 
       lines: ["+@added(Versions.v2)", "+newOperation is ActionSync;"],
     },
   ];
-  const rendered = renderAssessment(document);
-  assert.match(rendered, /\+@removed\(Versions\.v2\)/);
-  assert.match(rendered, /\+@added\(Versions\.v2\)/);
-  assert.doesNotMatch(rendered, /placeholder/);
+  const html = renderAssessmentHtml(document);
+  assert.match(html, /\+@removed\(Versions\.v2\)/);
   assert.match(
-    renderAssessmentHtml(document),
+    html,
     /class="add version-decorator">\+@added\(Versions\.v2\)/,
   );
-  assert.deepEqual(validateAssessment(document, rendered), []);
+  assert.doesNotMatch(html, /placeholder/);
+  assert.deepEqual(validateAssessment(document), []);
 });
 
 test("added, modified, and removed changes have distinct icons", () => {
@@ -804,8 +701,6 @@ test("added, modified, and removed changes have distinct icons", () => {
         : kind === "removed"
           ? { field: "operation", before: "Present.", after: null }
           : { field: "operation", before: "Before.", after: "After." };
-    const rendered = renderAssessment(document);
-    assert.match(rendered, new RegExp(marker));
     const [icon, label] = marker.split(" ");
     assert.match(
       renderAssessmentHtml(document),
@@ -813,7 +708,7 @@ test("added, modified, and removed changes have distinct icons", () => {
         `<span class="change-badge ${kind}">${icon} ${label}</span>`,
       ),
     );
-    assert.deepEqual(validateAssessment(document, rendered), []);
+    assert.deepEqual(validateAssessment(document), []);
   }
 });
 
@@ -847,12 +742,12 @@ test("semantic impacts link to breaking and compliance findings", () => {
   document.dimensions.semanticUnderstanding.items[0].changes[0].linkedFindingIds.push(
     "widget-sdk-break",
   );
-  const rendered = renderAssessment(document);
+  const rendered = renderAssessmentHtml(document);
   assert.match(
     rendered,
-    /\*\*Impact:\*\* \[Widget default changes\]\(#finding-widget-default-break\)/,
+    /href="#finding-widget-default-break">Widget default changes<\/a>/,
   );
-  assert.deepEqual(validateAssessment(document, rendered), []);
+  assert.deepEqual(validateAssessment(document), []);
 
   document.dimensions.azureCompliance.status = "failed";
   document.dimensions.azureCompliance.findings.push({
@@ -869,12 +764,12 @@ test("semantic impacts link to breaking and compliance findings", () => {
   document.dimensions.semanticUnderstanding.items[0].changes[0].linkedFindingIds.push(
     "widget-compliance-impact",
   );
-  const renderedWithCompliance = renderAssessment(document);
+  const renderedWithCompliance = renderAssessmentHtml(document);
   assert.match(
     renderedWithCompliance,
-    /\[Widget does not follow documented guidance\]\(#finding-widget-compliance-impact\)/,
+    /href="#finding-widget-compliance-impact">Widget does not follow documented guidance<\/a>/,
   );
-  assert.deepEqual(validateAssessment(document, renderedWithCompliance), []);
+  assert.deepEqual(validateAssessment(document), []);
 });
 
 test("impact findings must link back to a semantic change", () => {
@@ -1000,14 +895,11 @@ test("failed compliance requires documented source-linked findings", () => {
   document.dimensions.azureCompliance.summary.findingCount = 1;
   document.dimensions.semanticUnderstanding.items[0].changes[0].linkedFindingIds =
     ["compliance-standard-operation"];
-  assert.deepEqual(
-    validateAssessment(document, renderAssessment(document)),
-    [],
-  );
-  const rendered = renderAssessment(document);
-  assert.match(rendered, /\*\*Gap:\*\* The operation duplicates/);
-  assert.match(rendered, /<summary><strong>Expected<\/strong><\/summary>/);
-  assert.match(rendered, /<summary><strong>Actual<\/strong><\/summary>/);
+  assert.deepEqual(validateAssessment(document), []);
+  const rendered = renderAssessmentHtml(document);
+  assert.match(rendered, /<strong>Gap:<\/strong> The operation duplicates/);
+  assert.match(rendered, /<summary>Expected<\/summary>/);
+  assert.match(rendered, /<summary>Actual<\/summary>/);
   assert.match(rendered, /Documented model example/);
 });
 
@@ -1084,7 +976,7 @@ test("compliance findings must cite a fetched document", () => {
   });
   document.dimensions.azureCompliance.summary.findingCount = 1;
   assert.match(
-    validateAssessment(document, renderAssessment(document)).join("\n"),
+    validateAssessment(document).join("\n"),
     /must match a fetched compliance document/,
   );
 });
@@ -1093,7 +985,7 @@ test("compliance documents require fetched guidance evidence", () => {
   const document = validDocument();
   delete document.dimensions.azureCompliance.documents[0].guidanceExcerpt;
   assert.match(
-    validateAssessment(document, markdown).join("\n"),
+    validateAssessment(document).join("\n"),
     /guidanceExcerpt must be a short fetched-content excerpt/,
   );
 });
@@ -1198,40 +1090,16 @@ test("not-assessed compliance requires a reason and empty findings", () => {
     documents: [],
     findings: [],
   };
-  assert.deepEqual(
-    validateAssessment(document, renderAssessment(document)),
-    [],
-  );
+  assert.deepEqual(validateAssessment(document), []);
 });
 
-test("overall confidence is required and must match Markdown", () => {
+test("overall confidence is required", () => {
   const document = validDocument();
-  document.overallConfidence = "low";
+  delete document.overallConfidence;
   assert.match(
-    validateAssessment(document, markdown).join("\n"),
-    /overall confidence must match/,
+    validateAssessment(document).join("\n"),
+    /overallConfidence must be high, medium, or low/,
   );
-});
-
-test("PR report shows only total assessment time", () => {
-  const document = validDocument();
-  document.assessmentDuration = {
-    toolchainSetupMs: 120000,
-    preparationMs: 120000,
-    documentationReviewMs: 960000,
-    totalMs: 1200000,
-    note: "Approximate shared documentation research time.",
-  };
-  const rendered = renderAssessment(document);
-  assert.match(
-    rendered,
-    /\*\*Total assessment time:\*\* ~20m 0s; includes approximate timing/,
-  );
-  assert.doesNotMatch(
-    rendered,
-    /Other assessment time|Compliance assessment time|Toolchain setup|Preparation:/,
-  );
-  assert.deepEqual(validateAssessment(document, rendered), []);
 });
 
 test("HTML renders the execution-time dimension breakdown in the Appendix", () => {
@@ -1266,46 +1134,6 @@ test("HTML renders the execution-time dimension breakdown in the Appendix", () =
   assert.match(html, /Compliance/);
   assert.match(html, /40s/);
   assert.match(html, /catalog only/);
-});
-
-test("reasoning-only reassessment may record only total time", () => {
-  const document = validDocument();
-  document.assessmentDuration = {
-    totalMs: 472057,
-    note: "Dimension timing is recorded in the aggregate timing report.",
-  };
-  const rendered = renderAssessment(document);
-  assert.match(rendered, /\*\*Total assessment time:\*\* 7m 52s/);
-  assert.deepEqual(validateAssessment(document, rendered), []);
-});
-
-test("local working-tree reports use baseline-aware detail prompts", () => {
-  const document = validDocument();
-  document.head = {
-    commit: "head-commit",
-    hasWorkingTreeChanges: true,
-    changeScope: { staged: true, unstaged: true, untracked: false },
-  };
-  const rendered = renderAssessment(document);
-  assert.doesNotMatch(rendered, /\*\*PR:\*\*/);
-  assert.match(rendered, /working-tree changes: true \(staged, unstaged\)/);
-  assert.match(
-    rendered,
-    /Using assessment\.json for changes from origin\/main to the current working tree, show the complete REST representation for every affected operation/,
-  );
-  assert.equal((rendered.match(/Using assessment\.json for/g) ?? []).length, 1);
-  assert.deepEqual(validateAssessment(document, rendered), []);
-});
-
-test("stale Markdown is rejected", () => {
-  const document = validDocument();
-  const rendered = renderAssessment(document);
-  document.dimensions.azureCompliance.documents[0].evidence =
-    "The source changed after Markdown was rendered.";
-  assert.match(
-    validateAssessment(document, rendered).join("\n"),
-    /must be generated from assessment.json/,
-  );
 });
 
 test("generated fixture reports are reproducible in a clean checkout", () => {
@@ -1347,16 +1175,18 @@ test("generated fixture reports are reproducible in a clean checkout", () => {
     for (const assessment of evidence.assessments) {
       const directory = join(output, "assessments", String(assessment.pr));
       const jsonPath = join(directory, "assessment.json");
-      const markdownPath = join(directory, "assessment.md");
+      const htmlPath = join(directory, "assessment.html");
       assert.ok(existsSync(jsonPath));
-      assert.ok(existsSync(markdownPath));
+      assert.ok(existsSync(htmlPath));
+      assert.equal(existsSync(join(directory, "assessment.md")), false);
       const standalone = JSON.parse(readFileSync(jsonPath, "utf8"));
-      const rendered = readFileSync(markdownPath, "utf8");
+      const rendered = readFileSync(htmlPath, "utf8");
       assert.deepEqual(standalone, assessment);
-      assert.deepEqual(validateAssessment(standalone, rendered), []);
+      assert.deepEqual(validateAssessment(standalone), []);
+      assert.equal(rendered, renderAssessmentHtml(standalone));
       assert.match(
         summary,
-        new RegExp(`assessments/${assessment.pr}/assessment\\.md`),
+        new RegExp(`assessments/${assessment.pr}/assessment\\.html`),
       );
     }
   } finally {
@@ -1490,52 +1320,4 @@ test("compliance fixtures select exact source evidence", () => {
       );
     }
   }
-});
-
-test("large reports keep operation details in JSON and omit REST cards", () => {
-  const document = validDocument();
-  const sourceItem = document.dimensions.semanticUnderstanding.items[0];
-  const sourceOperation = sourceItem.restRepresentation.operations[0];
-  const operationCounts = [7, 7, 7, 7, 7, 7, 7, 7, 6, 6];
-  document.dimensions.semanticUnderstanding.items = operationCounts.map(
-    (count, intentIndex) => {
-      const item = {
-        ...structuredClone(sourceItem),
-        id: `semantic-${intentIndex + 1}`,
-        intent: `Intent ${intentIndex + 1}`,
-        restRepresentation: {
-          ...sourceItem.restRepresentation,
-          operations: Array.from({ length: count }, (_, operationIndex) => ({
-            ...structuredClone(sourceOperation),
-            operationId: `Intent${intentIndex + 1}_Operation${operationIndex + 1}`,
-          })),
-        },
-      };
-      item.changes = deriveOperationChanges(
-        item,
-        item.restRepresentation.operations,
-        {
-          typeSpecDiffs: sourceItem.changes[0].typeSpecDiffs,
-          linkedFindingIds: [],
-        },
-      );
-      return item;
-    },
-  );
-  const rendered = renderAssessment(document);
-  assert.match(
-    rendered,
-    /\*\*Scope:\*\* 10 intent\(s\), 68 affected operation\(s\)/,
-  );
-  assert.ok(
-    rendered.indexOf("## 🧠 Semantic Understanding") <
-      rendered.indexOf(
-        "Need the complete REST representation for every affected operation?",
-      ),
-  );
-  assert.doesNotMatch(rendered, /\*\*HTTP path:\*\*/);
-  assert.doesNotMatch(rendered, /Details on Demand/);
-  assert.doesNotMatch(rendered, /Intent10_Operation6/);
-  assert.equal((rendered.match(/Using assessment\.json for/g) ?? []).length, 1);
-  assert.deepEqual(validateAssessment(document, rendered), []);
 });

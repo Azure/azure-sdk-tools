@@ -26,29 +26,3 @@ Maintainers classify each Copilot finding using its review comment:
 
 Comments and replies are evidence for maintainers; Copilot does not process
 replies to its review comments.
-
-## Weekly Triage
-
-After each group of reviewed pull requests:
-
-1. Count confirmed findings, false positives, duplicates, missed defects, and
-   routing failures.
-2. Sanitize confirmed misses and false positives into Vally fixtures without
-   source code, credentials, customer data, or private repository context.
-3. Run each new fixture at least three times to detect unstable behavior.
-4. Update the skill only when the collected evidence demonstrates a recurring
-   review problem.
-
-Use these pilot measurements:
-
-| Measurement | Calculation |
-| --- | --- |
-| Review precision | Confirmed findings / all non-duplicate findings |
-| Duplicate rate | Duplicate findings / all findings |
-| Missed-defect count | Confirmed defects absent from the Copilot review |
-| Routing accuracy | Correct skill-routing decisions / reviewed pull requests |
-| Stability | Runs producing the expected result / repeated fixture runs |
-
-Pilot findings must not become merge-blocking checks. Reconsider enforcement
-only after the skill demonstrates high precision, stable repeated results, and
-low duplication across representative azsdk-cli pull requests.

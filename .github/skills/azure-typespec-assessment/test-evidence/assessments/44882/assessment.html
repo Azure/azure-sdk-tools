@@ -131,7 +131,7 @@
 <span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;Override to reorder parameters for the Go SDK&quot;</span>
 <span class="add">+op newRelicMonitorResourceDelete(</span>
 <span class="add">+  ...ApiVersionParameter,</span>
-<span class="omitted"> ... 22 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 22 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354">client.tsp:L321-L354</a></p>
 </div>
@@ -145,8 +145,6 @@
 <div class="appendix-body">
 <h3>Assessment Errors</h3>
 <p class="empty-state">None.</p>
-<h3>Code-to-Guidance Evidence</h3>
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody><tr><td>Mismatch</td><td>Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</td><td>Remove the replaced preview version from the version enum.</td><td>Expected: &quot;Remove the replaced preview version from the version enum.&quot; Actual: Versions contains both v2025_05_01_preview: &quot;2025-05-01-preview&quot; and v2026_06_01: &quot;2026-06-01&quot;.</td><td>main.tsp:L38-L48</td></tr><tr><td>Matched</td><td>TypeSpec Client Generator Core decorators — Retained authoritative evidence</td><td>Customize a method&#39;s signature in the generated client SDK. Currently, only parameter signature customization is supported.</td><td>The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the &quot;go&quot; scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance.</td><td>main.tsp:L38-L48, client.tsp:L321-L354, main.tsp:L43-L47</td></tr></tbody></table></div>
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
 <h3>Artifact Evidence</h3>

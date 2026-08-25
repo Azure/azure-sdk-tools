@@ -353,6 +353,7 @@ export function parseSourceHunks(
   baseCommit,
   remoteUrl,
   headCommit,
+  repoRoot,
 ) {
   const references = [];
   let path;
@@ -391,6 +392,7 @@ export function parseSourceHunks(
         remoteUrl,
         startLine,
         Math.max(startLine, startLine + count - 1),
+        repoRoot,
       ),
     });
   }
@@ -413,8 +415,13 @@ export function sourceLink(
   remoteUrl,
   startLine,
   endLine,
+  repoRoot,
 ) {
   const fragment = `#L${startLine}-L${endLine}`;
+  if (revision === "head" && repoRoot) {
+    const absolutePath = resolve(repoRoot, path).replaceAll("\\", "/");
+    return `vscode://file/${encodeURI(absolutePath)}:${startLine}:1`;
+  }
   const github = normalizeRemoteUrl(remoteUrl);
   if (github && commit) {
     return `${github}/blob/${commit}/${path}${fragment}`;
@@ -440,7 +447,15 @@ export function untrackedReferences(
       revision: "head",
       startLine: 1,
       endLine: lines,
-      link: sourceLink(path, "head", headCommit, remoteUrl, 1, lines),
+      link: sourceLink(
+        path,
+        "head",
+        headCommit,
+        remoteUrl,
+        1,
+        lines,
+        repoRoot,
+      ),
     };
   });
 }
@@ -1166,6 +1181,7 @@ export async function prepareAssessment(options) {
         baseCommit,
         remoteUrl,
         headCommit,
+        repoRoot,
       ),
       ...untrackedReferences(
         repoRoot,

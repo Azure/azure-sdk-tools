@@ -147,9 +147,8 @@ documentation retrieval so an empty impact report remains evidence-based.
    LRO/paging metadata, and service behavior in
    `restRepresentation.operations`. These details remain in JSON and are
    retrieved through the report's generated copyable prompts.
-10. Write `assessment.json`, render the assessment-first Markdown with
-    `scripts/render-assessment.mjs`, render the standalone HTML with
-    `scripts/render-assessment-html.mjs`, and validate the reports.
+10. Validate the structured assessment and render only `assessment.html` with
+    `scripts/render-assessment-html.mjs`.
 
 Compilation failure blocks a complete assessment. Report the first compiler
 diagnostic, error count, and referenced compile log; never interpret missing
@@ -157,8 +156,6 @@ artifacts as “no break.”
 
 Temporary worktrees are removed automatically. Generated assessment output is not committed unless the user requests it.
 
-For a curated HTML-only evidence set, run
-`test-evidence/scripts/finalize-rerun-assessments.mjs` with `--html-only`.
-The finalizer validates each transient JSON/Markdown pair before retaining
-only `assessment.html`; it also removes the aggregate JSON/Markdown report
-files.
+For a curated evidence set, run
+`test-evidence/scripts/finalize-rerun-assessments.mjs`. The finalizer validates
+each structured assessment and retains only `assessment.html`.

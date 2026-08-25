@@ -4,7 +4,6 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { renderAssessment } from "../../scripts/render-assessment.mjs";
 import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
 import { linkImpactFindings } from "./operation-changes.mjs";
 
@@ -171,7 +170,7 @@ function updateSummary(path, assessments) {
       0,
     );
     const compliance = assessment.dimensions.azureCompliance;
-    return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.md) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${compliance.status} | ${compliance.documents.length} | ${formatDuration(assessment.assessmentDuration.preparationMs)} | ${assessment.errors.length} |`;
+    return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.html) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${compliance.status} | ${compliance.documents.length} | ${formatDuration(assessment.assessmentDuration.preparationMs)} | ${assessment.errors.length} |`;
   });
   writeFileSync(
     path,
@@ -214,7 +213,6 @@ function main() {
     assessment.assessmentDuration = duration;
     const directory = join(root, "assessments", pr);
     const jsonPath = join(directory, "assessment.json");
-    const markdownPath = join(directory, "assessment.md");
     const htmlPath = join(directory, "assessment.html");
     const standalone = JSON.parse(readFileSync(jsonPath, "utf8"));
     standalone.dimensions.azureCompliance = compliance;
@@ -223,15 +221,12 @@ function main() {
     outputs.push({
       jsonPath,
       json: `${JSON.stringify(standalone, null, 2)}\n`,
-      markdownPath,
-      markdown: renderAssessment(standalone),
       htmlPath,
       html: renderAssessmentHtml(standalone),
     });
   }
   for (const output of outputs) {
     writeFileSync(output.jsonPath, output.json);
-    writeFileSync(output.markdownPath, output.markdown);
     writeFileSync(output.htmlPath, output.html);
   }
   aggregate.generatedAt = new Date().toISOString();

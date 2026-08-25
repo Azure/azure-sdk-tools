@@ -1,7 +1,6 @@
 # Output Contract
 
-Produce `assessment.json`, `assessment.md`, and `assessment.html` from the same
-findings.
+Produce `assessment.html` from the validated structured assessment.
 
 Before the final assessment, deterministic preparation produces the bounded
 `model-input.json` and a pretty diagnostic copy in `assessment-draft.json`.
@@ -17,10 +16,10 @@ and matched documentation excerpts. Complete operation contracts and raw TCGC
 leaf diffs remain in `analysis.json` and must not be loaded into model context
 unless a candidate requires deeper inspection.
 
-Render Markdown with `scripts/render-assessment.mjs`; do not hand-author or
-patch individual sections. Render the standalone, responsive HTML report with
-`scripts/render-assessment-html.mjs`. The renderers derive the assessment
-decision and all summary counts from JSON.
+Render the standalone, responsive report with
+`scripts/render-assessment-html.mjs`; do not hand-author or patch individual
+sections. The renderer derives the assessment decision and all summary counts
+from the structured assessment.
 
 ## JSON shape
 
@@ -131,12 +130,11 @@ decision and all summary counts from JSON.
 `overallConfidence` is required and must be `high`, `medium`, or `low`. It
 reflects confidence in the complete report, not an individual finding. Lower it
 when compilation failures or missing evidence block a complete assessment.
-Markdown displays it as `🟢 high`, `🟡 medium`, or `🔴 low`.
-Markdown also displays a derived overall code-safety indicator: `🔴 Low` for
-assessment errors or high-severity findings, `🟡 Medium` for other findings or
-unassessed compliance, and `🟢 High` only when no errors/findings exist and
-compliance passed. This value is derived by the renderer rather than stored in
-JSON.
+The HTML report displays confidence in its hero metadata and a derived overall
+code-safety indicator: Low for assessment errors or high-severity findings,
+Medium for other findings or unassessed compliance, and High only when no
+errors/findings exist and compliance passed. Code safety is derived by the
+renderer rather than stored in the structured assessment.
 `assessmentDuration` records the end-to-end total. When per-dimension timing is
 available, `breakdown` records semantic understanding, REST breaking,
 downstream breaking, compliance, overhead, total, timing-quality labels, and
@@ -303,16 +301,14 @@ change records only fields that differ, while `restRepresentation.operations`
 retains the complete REST contract. A mixed intent may use multiple change
 records. Pure-addition operation families may use one grouped aspect rather
 than repeating every REST signature; the exact operation IDs remain in
-`operationIds`. Markdown emits one prompt that asks for the complete
-representation of every affected operation rather than one prompt per change
-group.
+``operationIds`.
 
 `typeSpecDiffs` contains the real Git source hunks that caused the semantic
 change. Every hunk records its TypeSpec path, old/new ranges, optional hunk
 context, and source lines with their original `" "`, `"+"`, or `"-"` prefix.
 The renderer shows at most two relevant hunks per semantic change and may
 excerpt an unusually large hunk, but every complete hunk remains in JSON.
-The HTML report also renders every affected operation as an individually
+The report renders every affected operation as an individually
 collapsed disclosure. Expanding an operation shows its corresponding TypeSpec
 decorator/declaration excerpts and source links without expanding unrelated
 operations. Added and removed operations show their REST API signature;
@@ -320,8 +316,7 @@ modified operations show concrete signature diff lines containing the
 method/path and only structurally different parameters, request, responses, LRO,
 or paging fields. When no wire field changes, the report says `REST wire
 signature unchanged` rather than converting a semantic summary into a fake REST
-diff. Unlike Markdown, HTML does not render a REST-details prompt because all
-affected operations are directly available in these disclosures.
+diff. All affected operations are directly available in these disclosures.
 TypeSpec diff blocks appear only inside those operation disclosures. Each
 semantic change table includes an `Impact` column linking directly to its REST,
 downstream, or compliance findings.
@@ -347,14 +342,13 @@ Semantic intents are individually collapsed and sorted with linked-impact
 intents first; impacted intent titles display a warning icon. Up to ten intent
 summaries are visible initially. Only intents beyond the first ten are hidden
 behind a collapsed `Show N more semantic intents` disclosure.
-The HTML report ends with a collapsed Appendix containing the same categories
-as Markdown—assessment errors, code-to-guidance evidence, tooling used, and
-artifact evidence—plus the detailed execution-time breakdown. Execution timing
-is not a top-level HTML section or navigation item.
+The report ends with a collapsed Appendix containing assessment errors,
+code-to-guidance evidence, tooling used, artifact evidence, and the detailed
+execution-time breakdown. Execution timing is not a top-level section or
+navigation item.
 `linkedFindingIds` references REST breaking, downstream breaking, or compliance
-findings caused by the change. Markdown renders those links as `Impact` and
-omits generic effect text when no finding is linked. Every breaking or
-compliance finding must be linked from at least one semantic change.
+findings caused by the change. Every breaking or compliance finding must be
+linked from at least one semantic change.
 
 Each source reference requires:
 
@@ -371,18 +365,9 @@ Each source reference requires:
 Use baseline revision links for deleted source. Every item, change, and finding
 must have at least one TypeSpec source reference.
 
-## Markdown output
+## HTML output
 
-Render `assessment.md` using the
-[assessment-first Markdown template](assessment-markdown-template.md).
-Semantic Understanding displays change kind, aspect, and plain-language
-Before/After values in one summary table, followed by real TypeSpec Git diff
-blocks. Each diff is introduced by the change's concise `typeSpecCause` as a
-one-line **TypeSpec change** explanation. No separate diff label is rendered
-because the fenced block and Git `---` / `+++` headers already identify it.
-Complete operation contracts and internal transformation chains remain in JSON
-rather than being expanded in Markdown. Supporting execution and guidance
-evidence is grouped in the Appendix rather than interleaved with the assessment
-conclusions. Do not repeat a `Changed TypeSpec` inventory in the Appendix
-because every semantic change already contains source links and Git diff
-headers.
+Render only `assessment.html`. Semantic Understanding displays change kind,
+aspect, and plain-language Before/After values, with focused TypeSpec source
+diffs inside the affected operation disclosures. Supporting execution and
+guidance evidence remains in the collapsed Appendix.

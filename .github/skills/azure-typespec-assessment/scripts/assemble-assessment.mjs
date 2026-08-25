@@ -11,7 +11,6 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { analyzeArtifacts } from "./analyze-artifacts.mjs";
-import { renderAssessment } from "./render-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { parseTypeSpecDiffHunks } from "./typespec-diff-hunks.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
@@ -1844,7 +1843,7 @@ function assertSafeOutputDirectory(outputDirectory, materializationPath) {
     outputDirectory !== dirname(materializationPath),
     "Output directory must differ from the deterministic materialization directory.",
   );
-  for (const name of ["assessment.json", "assessment.md", "assessment.html"]) {
+  for (const name of ["assessment.html"]) {
     assert(
       !existsSync(join(outputDirectory, name)),
       `Refusing to overwrite existing report file: ${join(outputDirectory, name)}.`,
@@ -1948,7 +1947,6 @@ export function assembleAssessmentFiles({
   const deterministicAssemblyMs = elapsedMs(assemblyStartedAt);
 
   const renderStartedAt = process.hrtime.bigint();
-  renderAssessment(assessment);
   renderAssessmentHtml(assessment);
   const renderMs = elapsedMs(renderStartedAt);
   assessment = assembleAssessment({
@@ -1961,20 +1959,14 @@ export function assembleAssessmentFiles({
     deterministicAssemblyMs,
     renderMs,
   });
-  const markdown = renderAssessment(assessment);
   const html = renderAssessmentHtml(assessment);
-  const validationErrors = validateAssessment(assessment, markdown);
+  const validationErrors = validateAssessment(assessment);
   assert(
     validationErrors.length === 0,
     `Assembled assessment is invalid:\n${validationErrors.join("\n")}`,
   );
 
   mkdirSync(resolvedOutput, { recursive: true });
-  writeFileSync(
-    join(resolvedOutput, "assessment.json"),
-    `${JSON.stringify(assessment, null, 2)}\n`,
-  );
-  writeFileSync(join(resolvedOutput, "assessment.md"), markdown);
   writeFileSync(join(resolvedOutput, "assessment.html"), html);
   return assessment;
 }

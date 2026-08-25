@@ -4,26 +4,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  deriveCodeSafety,
-  formatCodeSafety,
-  formatConfidence,
-  renderAssessment,
-} from "./render-assessment.mjs";
-
-const REQUIRED_HEADINGS = [
-  "## 📌 Executive Summary",
-  "## 🎯 Action Required",
-  "## 🛡️ Compatibility Assessment",
-  "## ☁️ Azure Compliance",
-  "## 🧠 Semantic Understanding",
-  "## 📎 Appendix",
-];
-const CHANGE_KIND_MARKERS = {
-  added: "➕ Added",
-  modified: "✏️ Modified",
-  removed: "➖ Removed",
-};
 const INTERNAL_GENERATOR_TERMS =
   /\bTCGC\b|cross-language definition IDs?|\bisUnionAsEnum\b|\bisFixed\b/i;
 
@@ -761,7 +741,7 @@ function validateCompliance(compliance, errors) {
   }
 }
 
-export function validateAssessment(document, markdown) {
+export function validateAssessment(document) {
   const errors = [];
   assert(document?.schemaVersion === 2, "schemaVersion must be 2", errors);
   assert(
@@ -973,174 +953,18 @@ export function validateAssessment(document, markdown) {
     errors,
   );
   validateCompliance(dimensions?.azureCompliance, errors);
-  if (markdown !== undefined) {
-    assert(
-      markdown.includes(
-        `**Overall confidence:** ${formatConfidence(document.overallConfidence)}`,
-      ),
-      "assessment.md overall confidence must match assessment.json",
-      errors,
-    );
-    assert(
-      markdown.includes(
-        `**Overall code safety:** ${formatCodeSafety(deriveCodeSafety(document))}`,
-      ),
-      "assessment.md overall code safety must match assessment findings",
-      errors,
-    );
-    for (const heading of REQUIRED_HEADINGS) {
-      assert(
-        markdown.includes(heading),
-        `assessment.md is missing heading: ${heading}`,
-        errors,
-      );
-    }
-    assert(
-      !/^ +## /m.test(markdown),
-      "assessment.md second-level headings must not be indented",
-      errors,
-    );
-    assert(
-      (markdown.match(/\*\*Total assessment time:\*\*/g) ?? []).length === 1 &&
-        !markdown.includes("### Timing") &&
-        !markdown.includes("Other assessment time") &&
-        !markdown.includes("Compliance assessment time"),
-      "assessment.md must contain exactly one total assessment time and no detailed timing",
-      errors,
-    );
-    assert(
-      markdown.includes("```diff"),
-      "assessment.md is missing TypeSpec diff blocks",
-      errors,
-    );
-    assert(
-      markdown.includes("| Change | Aspect | Before | After |") &&
-        markdown.includes("```diff\n--- ") &&
-        markdown.includes("\n+++ "),
-      "assessment.md must summarize behavior in one table before TypeSpec source diffs",
-      errors,
-    );
-    assert(
-      !markdown.includes("**TypeSpec diff"),
-      "assessment.md must not add a redundant TypeSpec diff label",
-      errors,
-    );
-    assert(
-      !markdown.includes("**Behavior change**"),
-      "assessment.md must not render a separate Behavior change heading",
-      errors,
-    );
-    assert(
-      !markdown.includes("**Effect:**") &&
-        !markdown.includes("**TypeSpec cause:**"),
-      "assessment.md must not render generic effect or prose-only TypeSpec cause lines",
-      errors,
-    );
-    assert(
-      (markdown.match(/\*\*TypeSpec change:\*\*/g) ?? []).length ===
-        (semantic ?? []).reduce(
-          (total, item) => total + (item.changes?.length ?? 0),
-          0,
-        ),
-      "assessment.md must briefly explain every structured TypeSpec change",
-      errors,
-    );
-    assert(
-      !markdown.includes("Details on Demand"),
-      "assessment.md must not use a Details on Demand section",
-      errors,
-    );
-    assert(
-      (markdown.match(/Using assessment\.json for/g) ?? []).length === 1 &&
-        markdown.includes(
-          "show the complete REST representation for every affected operation",
-        ),
-      "assessment.md must contain one prompt for all affected operations",
-      errors,
-    );
-    assert(
-      !markdown.includes("**HTTP path:**") &&
-        !markdown.includes("**Request payload:**") &&
-        !markdown.includes("**Response payloads:**"),
-      "assessment.md must not include exhaustive REST operation cards",
-      errors,
-    );
-    for (let index = 1; index < REQUIRED_HEADINGS.length; index += 1) {
-      assert(
-        markdown.indexOf(REQUIRED_HEADINGS[index - 1]) <
-          markdown.indexOf(REQUIRED_HEADINGS[index]),
-        `assessment.md heading order is invalid near ${REQUIRED_HEADINGS[index]}`,
-        errors,
-      );
-    }
-    const operationTotal = (semantic ?? []).reduce(
-      (total, item) => total + item.restRepresentation.operations.length,
-      0,
-    );
-    assert(
-      markdown.includes(
-        `**Scope:** ${(semantic ?? []).length} intent(s), ${operationTotal} affected operation(s)`,
-      ),
-      "assessment.md scope counts must match assessment.json",
-      errors,
-    );
-    const findings = [
-      ...(rest ?? []),
-      ...(downstream ?? []),
-      ...(dimensions?.azureCompliance?.findings ?? []),
-    ];
-    for (const finding of findings) {
-      assert(
-        markdown.includes(finding.title),
-        `assessment.md is missing finding: ${finding.title}`,
-        errors,
-      );
-    }
-    for (const item of semantic ?? []) {
-      for (const change of item.changes ?? []) {
-        assert(
-          markdown.includes(CHANGE_KIND_MARKERS[change.kind]),
-          `assessment.md is missing the ${change.kind} change icon`,
-          errors,
-        );
-        for (const findingId of change.linkedFindingIds ?? []) {
-          const findingAnchor = findingId
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "");
-          assert(
-            markdown.includes(`#finding-${findingAnchor}`),
-            `assessment.md is missing impact link for ${findingId}`,
-            errors,
-          );
-        }
-      }
-    }
-    if (errors.length === 0) {
-      assert(
-        markdown === renderAssessment(document),
-        "assessment.md must be generated from assessment.json with render-assessment.mjs",
-        errors,
-      );
-    }
-  }
   return errors;
 }
 
 function main() {
-  const [jsonPath, markdownPath] = process.argv.slice(2);
+  const [jsonPath] = process.argv.slice(2);
   if (!jsonPath) {
-    process.stderr.write(
-      "Usage: validate-assessment.mjs <assessment.json> [assessment.md]\n",
-    );
+    process.stderr.write("Usage: validate-assessment.mjs <assessment.json>\n");
     process.exitCode = 1;
     return;
   }
   const document = JSON.parse(readFileSync(resolve(jsonPath), "utf8"));
-  const markdown = markdownPath
-    ? readFileSync(resolve(markdownPath), "utf8")
-    : undefined;
-  const errors = validateAssessment(document, markdown);
+  const errors = validateAssessment(document);
   if (errors.length > 0) {
     process.stderr.write(`${errors.join("\n")}\n`);
     process.exitCode = 1;

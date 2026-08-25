@@ -43,7 +43,7 @@
 <pre><span class="meta">--- a/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">+++ b/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">@@ -283,10 +283,14 @@ union IdentityType {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted; full hunk is in assessment.json ...</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context">  * Sku name of the Cloud HSM Cluster</span>
 <span class="context">  */</span>
 <span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
@@ -56,7 +56,7 @@
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
 <span class="add">+</span>
-<span class="omitted"> ... 5 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 5 later diff lines omitted ...</span></pre>
 </div>
 </details>
 
@@ -104,7 +104,7 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
 </div>
@@ -130,7 +130,7 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
 </div>
@@ -156,7 +156,7 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
 </div>
@@ -182,7 +182,7 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
 </div>
@@ -208,7 +208,7 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted; full hunk is in assessment.json ...</span></pre>
+<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
 </div>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
 </div>
@@ -222,8 +222,6 @@
 <div class="appendix-body">
 <h3>Assessment Errors</h3>
 <p class="empty-state">None.</p>
-<h3>Code-to-Guidance Evidence</h3>
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Result</th><th>Document section</th><th>Fetched guidance</th><th>Observed TypeSpec</th><th>Evidence</th></tr></thead><tbody><tr><td>Matched</td><td>Azure.Core no-enum rule — Models and Enums</td><td>no-enum | TypeSpec Azure Skip to content TypeSpec Azure Docs Playground TypeSpec Core Docs Can I Use (Azure Client) Benchmarks Search... Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining c</td><td>The applicable official Azure.Core no-enum guidance identifies enum declarations as the disallowed pattern. The changed TypeSpec directly replaces CloudHsmClusterSkuName&#39;s enum declaration with a union and removes the no-enum suppression, so the changed declaration follows that guidance. The other fetched documents describe general data types, TypeSpec enum syntax, or operation interfaces and impose no additional requirement on this declaration.</td><td>models.tsp:L286-L293, models.tsp:L286-L293</td></tr></tbody></table></div>
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
 <h3>Artifact Evidence</h3>

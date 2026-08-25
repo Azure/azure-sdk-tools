@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -17,7 +18,6 @@ import {
   operationHasMaterialAspectChange,
   validateJudgment,
 } from "./assemble-assessment.mjs";
-import { renderAssessment } from "./render-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
@@ -619,10 +619,7 @@ test("compliance findings use bounded documents and deterministic source", () =>
     )[0],
     /The changed declaration follows the fetched TypeSpec model guidance\./,
   );
-  assert.deepEqual(
-    validateAssessment(assessment, renderAssessment(assessment)),
-    [],
-  );
+  assert.deepEqual(validateAssessment(assessment), []);
 });
 
 test("compliance finding evidence accepts a non-empty string", () => {
@@ -680,17 +677,10 @@ test("assembler writes renderer output that passes report validation", () => {
     });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Assembled and validated assessment for PR 123/);
-    const persisted = JSON.parse(
-      readFileSync(join(outputDirectory, "assessment.json"), "utf8"),
-    );
-    const markdown = readFileSync(
-      join(outputDirectory, "assessment.md"),
-      "utf8",
-    );
     const html = readFileSync(join(outputDirectory, "assessment.html"), "utf8");
 
-    assert.equal(markdown, renderAssessment(persisted));
-    assert.deepEqual(validateAssessment(persisted, markdown), []);
+    assert.equal(existsSync(join(outputDirectory, "assessment.json")), false);
+    assert.equal(existsSync(join(outputDirectory, "assessment.md")), false);
     assert.match(html, /<!doctype html>/);
     assert.match(html, /Update widget response/);
   } finally {
@@ -748,23 +738,13 @@ test("CLI materializes operations found only in retained artifact evidence", () 
       /missing complete operation contract.*Widgets_List/,
     );
 
-    const result = spawnSync(
-      process.execPath,
-      [
-        join(scriptDirectory, "assemble-assessment.mjs"),
-        inputPath,
-        judgmentPath,
-        materializationPath,
-        outputDirectory,
-        "--evidence-directory",
-        evidenceDirectory,
-      ],
-      { encoding: "utf8" },
-    );
-    assert.equal(result.status, 0, result.stderr);
-    const assessment = JSON.parse(
-      readFileSync(join(outputDirectory, "assessment.json"), "utf8"),
-    );
+    const assessment = assembleAssessmentFiles({
+      modelInputPath: inputPath,
+      judgmentPath,
+      materializationPath,
+      outputDirectory,
+      evidenceDirectory,
+    });
     const operations =
       assessment.dimensions.semanticUnderstanding.items[0].restRepresentation
         .operations;
@@ -778,13 +758,10 @@ test("CLI materializes operations found only in retained artifact evidence", () 
     );
     assert.match(operations[0].responsePayloads[0], /WidgetList/);
     assert.match(operations[1].responsePayloads[0], /UpdatedWidgetList/);
-    assert.deepEqual(
-      validateAssessment(
-        assessment,
-        readFileSync(join(outputDirectory, "assessment.md"), "utf8"),
-      ),
-      [],
-    );
+    assert.deepEqual(validateAssessment(assessment), []);
+    assert.equal(existsSync(join(outputDirectory, "assessment.json")), false);
+    assert.equal(existsSync(join(outputDirectory, "assessment.md")), false);
+    assert.ok(existsSync(join(outputDirectory, "assessment.html")));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

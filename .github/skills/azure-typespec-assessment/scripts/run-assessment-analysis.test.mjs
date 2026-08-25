@@ -545,10 +545,55 @@ test("operation groups link to versioned model owners and operation files", () =
     complianceEvidence: { durationMs: 1, documents: [] },
     totalMs: 2,
   });
+
   assert.deepEqual(draft.projects[0].rest.operationGroups[0].sourceLinks, [
     { path: "spec/models.tsp", owners: ["WidgetProperties"] },
     { path: "spec/Widget.tsp", owners: undefined },
   ]);
+});
+
+test("fast source changes retain commit-pinned TypeSpec links", () => {
+  const draft = buildAssessmentDraft({
+    evidence: {
+      baseline: { commit: "base" },
+      head: { commit: "head" },
+      changedFiles: ["spec/main.tsp"],
+      sourceReferences: [
+        {
+          path: "spec/main.tsp",
+          revision: "head",
+          startLine: 10,
+          endLine: 12,
+          link: "https://github.com/Azure/example/blob/head/spec/main.tsp#L10-L12",
+        },
+      ],
+      typeSpecDiffs: [
+        {
+          path: "spec/main.tsp",
+          context: "model Widget",
+          oldStart: 10,
+          oldCount: 2,
+          newStart: 10,
+          newCount: 3,
+          lines: [" model Widget {", "+  name?: string;", " }"],
+        },
+      ],
+      errors: [],
+      durationMs: 1,
+      phaseDurations: { deterministicAnalysisMs: 1 },
+    },
+    analysis: {
+      durationMs: 1,
+      sourceIndex: [],
+      projects: [],
+    },
+    complianceEvidence: { durationMs: 1, documents: [] },
+    totalMs: 2,
+  });
+  assert.equal(
+    draft.sourceFiles[0].changes[0].sourceLink,
+    "https://github.com/Azure/example/blob/head/spec/main.tsp#L10-L12",
+  );
 });
 
 test("added paging decorators become downstream review candidates", () => {

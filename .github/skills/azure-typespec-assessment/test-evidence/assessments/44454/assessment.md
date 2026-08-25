@@ -28,6 +28,58 @@
 | --- | --- | --- | --- | --- | --- |
 | medium | Compliance | @@clientLocation customizations are outside client.tsp | Expected: the Clients documentation says customizations should always be made in client.tsp alongside main.tsp. Actual: five @@clientLocation decorators, which the decorator reference defines as changing operation location in the client, are added in back-compatible.tsp. Gap: these client customizations use a nonstandard customization file instead of client.tsp. | [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), +1 more | [The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
 
+## ☁️ Azure Compliance
+
+**Status:** `failed`
+
+### Compliance Findings
+
+<a id="finding-compliance-client-customization-file"></a>
+### @@clientLocation customizations are outside client.tsp
+
+**Severity:** medium
+
+**Gap:** Expected: the Clients documentation says customizations should always be made in client.tsp alongside main.tsp. Actual: five @@clientLocation decorators, which the decorator reference defines as changing operation location in the client, are added in back-compatible.tsp. Gap: these client customizations use a nonstandard customization file instead of client.tsp.
+
+**TypeSpec source:** [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.
+
+**Guidance:** [Clients — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/)
+
+**Documented TypeSpec example**
+
+```tsp
+import "@azure-tools/typespec-client-generator-core";
+using Azure.ClientGenerator.Core;
+
+@@clientLocation(Feeds.feed, PetStore);
+@@clientLocation(Pets.pet, PetStore);
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Clients, Customizations: "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`." @Azure.ClientGenerator.Core.clientLocation: "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name." The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp.
+
+**[back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113)**
+
+```tsp
+  "!csharp,!java,!python"
+);
+@@clientLocation(
+  ElasticMonitorResources.createAndAssociateIPFilterCreate,
+  "CreateAndAssociateIPFilter",
+  "python"
+```
+
+</details>
+
 ## 🧠 Semantic Understanding
 
 <a id="intent-1-restore-released-python-pascalcase-operation-gro"></a>
@@ -94,56 +146,6 @@ None detected.
 
 None detected.
 
-## ☁️ Azure Compliance
-
-**Status:** `failed`
-
-### Compliance Findings
-
-<a id="finding-compliance-client-customization-file"></a>
-### @@clientLocation customizations are outside client.tsp
-
-**Severity:** medium
-
-**Gap:** Expected: the Clients documentation says customizations should always be made in client.tsp alongside main.tsp. Actual: five @@clientLocation decorators, which the decorator reference defines as changing operation location in the client, are added in back-compatible.tsp. Gap: these client customizations use a nonstandard customization file instead of client.tsp.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.
-
-**Guidance:** [Clients — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/)
-
-**Documented TypeSpec example**
-
-```tsp
-import "@azure-tools/typespec-client-generator-core";
-using Azure.ClientGenerator.Core;
-
-@@clientLocation(Feeds.feed, PetStore);
-@@clientLocation(Pets.pet, PetStore);
-```
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-Clients, Customizations: "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`." @Azure.ClientGenerator.Core.clientLocation: "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name." The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp.
-
-**[back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113)**
-
-```tsp
-  "!csharp,!java,!python"
-);
-@@clientLocation(
-  ElasticMonitorResources.createAndAssociateIPFilterCreate,
-  "CreateAndAssociateIPFilter",
-  "python"
-```
-
-</details>
-
 ## 📎 Appendix
 
 ### Assessment Errors
@@ -154,8 +156,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [TypeSpec Client Generator Core decorators - Decorators](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name. | The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch. | [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131) |
-| Mismatch | [Clients - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | Clients, Customizations: "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`." @Azure.ClientGenerator.Core.clientLocation: "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name." The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. | [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131) |
+| Matched | TypeSpec Client Generator Core decorators - Decorators | Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name. | The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch. | back-compatible.tsp:L108-L113, back-compatible.tsp:L108-L113, back-compatible.tsp:L94-L131 |
+| Mismatch | Clients - Retained authoritative evidence | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | Clients, Customizations: "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`." @Azure.ClientGenerator.Core.clientLocation: "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name." The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. | back-compatible.tsp:L108-L113, back-compatible.tsp:L108-L113, back-compatible.tsp:L94-L131 |
 
 ### Tooling Used
 

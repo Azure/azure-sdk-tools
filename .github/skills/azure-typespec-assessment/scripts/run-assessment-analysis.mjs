@@ -676,7 +676,7 @@ function sourceDownstreamCandidates(sourceFiles, projectPath, typeSpecDiffs) {
 
 const sourceLineLimitPerFile = 200;
 
-function compactSourceHunk(hunk, limit) {
+function compactSourceHunk(hunk, limit, sourceReferences = []) {
   const significantLines = hunk.lines.flatMap((rawLine, index) => {
     if (!/^[+-]/.test(rawLine)) return [];
     const line = rawLine.slice(1).trim();
@@ -738,6 +738,20 @@ function compactSourceHunk(hunk, limit) {
     )
     .slice(0, limit)
     .sort((left, right) => left.index - right.index);
+  const revision = hunk.newCount === 0 ? "base" : "head";
+  const startLine = revision === "base" ? hunk.oldStart : hunk.newStart;
+  const lineCount = revision === "base" ? hunk.oldCount : hunk.newCount;
+  const sourceReference = sourceReferences.find(
+    (reference) =>
+      reference.path === hunk.path &&
+      reference.revision === revision &&
+      reference.startLine <= startLine &&
+      reference.endLine >= startLine,
+  );
+  const sourceLink = sourceReference?.link.replace(
+    /#L\d+-L\d+$/,
+    `#L${startLine}-L${Math.max(startLine, startLine + lineCount - 1)}`,
+  );
   return {
     id: `${hunk.path}:${hunk.newStart}:${hunk.oldStart}`,
     path: hunk.path,
@@ -748,11 +762,12 @@ function compactSourceHunk(hunk, limit) {
       kind,
       text: line,
     })),
+    ...(sourceLink ? { sourceLink } : {}),
     omittedLineCount: Math.max(0, uniqueSignificantLines.length - limit),
   };
 }
 
-function compactSourceFiles(sourceIndex, typeSpecDiffs) {
+function compactSourceFiles(sourceIndex, typeSpecDiffs, sourceReferences = []) {
   const files = new Map();
   const hunkCounts = new Map();
   for (const hunk of typeSpecDiffs) {
@@ -816,6 +831,7 @@ function compactSourceFiles(sourceIndex, typeSpecDiffs) {
           1,
           Math.floor(sourceLineLimitPerFile / (hunkCounts.get(hunk.path) ?? 1)),
         ),
+        sourceReferences,
       ),
     );
     files.set(hunk.path, file);
@@ -924,6 +940,7 @@ export function buildAssessmentDraft({
   const sourceFiles = compactSourceFiles(
     analysis.sourceIndex,
     evidence.typeSpecDiffs,
+    evidence.sourceReferences,
   );
   const projects = linkOperationGroupsToSource(
     analysis.projects.map((project) => compactAnalysisProject(project)),

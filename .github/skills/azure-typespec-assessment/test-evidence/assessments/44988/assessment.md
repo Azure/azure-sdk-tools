@@ -32,6 +32,228 @@
 | medium | Compliance | ConnectionAnalyzer lifecycle operations do not use the documented ARM templates | The documented CRUDL pattern declares resource operations with the ArmResource templates and reserves custom actions for behavior outside CRUDL. The changed ConnectionAnalyzer lifecycle uses a Legacy.RoutedOperations alias plus explicit HTTP verbs and routes for create, delete, update, get, and list. | [NetworkWatcher.tsp:L41-L487](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L487), [NetworkWatcher.tsp:L470-L552](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552) | [The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/) |
 | medium | Compliance | FirewallPolicyKubeSelectorGroup does not use the documented child-resource model template | The documented child-resource pattern uses ProxyResource<TProperties> and spreads ResourceNameParameter<T>. FirewallPolicyKubeSelectorGroup instead extends SubResourceModel, declares properties separately, and manually declares its path/key/segment name. | [FirewallPolicyKubeSelectorGroup.tsp:L1-L97](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97) | [The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/) |
 
+## ☁️ Azure Compliance
+
+**Status:** `failed`
+
+### Compliance Findings
+
+<a id="finding-address-prefix-set-child-resource-template"></a>
+### AddressPrefixSet does not use the documented child-resource model template
+
+**Severity:** medium
+
+**Gap:** The documented child-resource pattern uses ProxyResource<TProperties> and spreads ResourceNameParameter<T>. AddressPrefixSet instead extends the local non-generic ProxyResource, declares properties separately, and manually declares its path/key/segment name.
+
+**TypeSpec source:** [AddressPrefixSet.tsp:L1-L100](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L1-L100)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
+
+**Guidance:** [ARM resource types and modeling — Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/)
+
+**Documented TypeSpec example**
+
+```tsp
+@parentResource(Employee)
+model Job is ProxyResource<JobProperties> {
+  ...ResourceNameParameter<Job>;
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.
+
+**[AddressPrefixSet.tsp:L25-L36](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L25-L36)**
+
+```tsp
+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)
+@parentResource(ApplicationSecurityGroup)
+@Http.Private.includeInapplicableMetadataInPayload(false)
+model AddressPrefixSet extends ProxyResource {
+  /** Properties of the address prefix set. */
+  properties?: AddressPrefixSetPropertiesFormat;
+
+  /** The name of the address prefix set. */
+  @visibility(Lifecycle.Read)
+  @path
+  @key("addressPrefixSetName")
+  @segment("addressPrefixSets")
+```
+
+</details>
+
+<a id="finding-firewall-policy-kube-selector-group-child-resource-template"></a>
+### FirewallPolicyKubeSelectorGroup does not use the documented child-resource model template
+
+**Severity:** medium
+
+**Gap:** The documented child-resource pattern uses ProxyResource<TProperties> and spreads ResourceNameParameter<T>. FirewallPolicyKubeSelectorGroup instead extends SubResourceModel, declares properties separately, and manually declares its path/key/segment name.
+
+**TypeSpec source:** [FirewallPolicyKubeSelectorGroup.tsp:L1-L97](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
+
+**Guidance:** [ARM resource types and modeling — Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/)
+
+**Documented TypeSpec example**
+
+```tsp
+@parentResource(Employee)
+model Job is ProxyResource<JobProperties> {
+  ...ResourceNameParameter<Job>;
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.
+
+**[FirewallPolicyKubeSelectorGroup.tsp:L25-L36](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L25-L36)**
+
+```tsp
+@parentResource(FirewallPolicy)
+@Http.Private.includeInapplicableMetadataInPayload(false)
+@added(Versions.v2025_09_01)
+model FirewallPolicyKubeSelectorGroup extends SubResourceModel {
+  properties?: FirewallPolicyKubeSelectorGroupProperties;
+
+  /**
+   * The name of the resource that is unique within a resource group. This name can be used to access the resource.
+   */
+  @visibility(Lifecycle.Read)
+  @path
+  @key("kubeSelectorGroupName")
+```
+
+</details>
+
+<a id="finding-connection-analyzer-child-resource-template"></a>
+### ConnectionAnalyzer does not use the documented child-resource model template
+
+**Severity:** medium
+
+**Gap:** The documented child-resource pattern declares a parent resource, uses ProxyResource<TProperties>, and spreads ResourceNameParameter<T>. ConnectionAnalyzer is instead a plain legacy custom Azure resource model with only an optional read-only name, while its changed routes place it beneath NetworkWatcher.
+
+**TypeSpec source:** [models.tsp:L27735-L27791](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
+
+**Guidance:** [ARM resource types and modeling — Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/)
+
+**Documented TypeSpec example**
+
+```tsp
+@parentResource(Employee)
+model Job is ProxyResource<JobProperties> {
+  ...ResourceNameParameter<Job>;
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.
+
+**[models.tsp:L27738-L27749](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27738-L27749)**
+
+```tsp
+#suppress "@azure-tools/typespec-azure-core/no-legacy-usage" "Required to attach Connection Analyzer child models to the existing NetworkWatcher resource which is modeled with the legacy ARM resource pattern via Azure.ResourceManager.Legacy.feature."
+#suppress "@azure-tools/typespec-azure-resource-manager/arm-custom-resource-no-key" "ConnectionAnalyzer is exposed via the legacy NetworkWatcher action pattern; its key is supplied by the routed operation, not modeled on the resource."
+#suppress "@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage" "Connection Analyzer follows the existing legacy custom-resource pattern used by sibling NetworkWatcher child resources in this project."
+@added(Versions.v2025_09_01)
+@Azure.ResourceManager.Legacy.feature(Features.networkWatcher)
+@Azure.ResourceManager.Legacy.customAzureResource(#{ isAzureResource: true })
+model ConnectionAnalyzer {
+  /**
+   * Name of the connection analyzer.
+   */
+  @visibility(Lifecycle.Read)
+  name?: string;
+```
+
+</details>
+
+<a id="finding-connection-analyzer-lifecycle-operation-templates"></a>
+### ConnectionAnalyzer lifecycle operations do not use the documented ARM templates
+
+**Severity:** medium
+
+**Gap:** The documented CRUDL pattern declares resource operations with the ArmResource templates and reserves custom actions for behavior outside CRUDL. The changed ConnectionAnalyzer lifecycle uses a Legacy.RoutedOperations alias plus explicit HTTP verbs and routes for create, delete, update, get, and list.
+
+**TypeSpec source:** [NetworkWatcher.tsp:L41-L487](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L487), [NetworkWatcher.tsp:L470-L552](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
+
+**Guidance:** [ARM resource operations — Add ARM Resource Operation](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/)
+
+**Documented TypeSpec example**
+
+```tsp
+get is ArmResourceRead<Resource>;
+createOrUpdate is ArmResourceCreateOrReplaceAsync<Resource>;
+update is ArmCustomPatchSync<Resource, PatchRequest>;
+delete is ArmResourceDeleteSync<Resource>;
+listByParent is ArmResourceListByParent<Resource>;
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+ConnectionAnalyzerOps aliases Azure.ResourceManager.Legacy.RoutedOperations, and the changed NetworkWatchers declarations apply @put, @delete, @patch, @get, and @list directly to explicit /connectionAnalyzers routes rather than using the documented CRUDL templates.
+
+**[NetworkWatcher.tsp:L41-L46](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L46)**
+
+```tsp
+alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations<
+  {
+    ...ApiVersionParameter;
+    ...SubscriptionIdParameter;
+    ...ResourceGroupParameter;
+
+```
+
+**[NetworkWatcher.tsp:L476-L487](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L476-L487)**
+
+```tsp
+  @put
+  @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}")
+  connectionAnalyzersCreate is ConnectionAnalyzerOps.ActionAsync<
+    NetworkWatcher,
+    ConnectionAnalyzer,
+    ConnectionAnalyzer,
+    Response =
+      | ArmResourceUpdatedResponse<ConnectionAnalyzer>
+      | ArmResourceCreatedResponse<
+          ConnectionAnalyzer,
+          LroHeaders = ArmAsyncOperationHeader<FinalResult = ConnectionAnalyzer> &
+            Azure.Core.Foundations.RetryAfterHeader
+```
+
+</details>
+
 ## 🧠 Semantic Understanding
 
 <a id="intent-1-introduce-the-2025-09-01-network-api-version-wit"></a>
@@ -519,220 +741,6 @@ None detected.
 - **TypeSpec source:** [ServiceGateway.tsp:L49-L77](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L49-L77), [ServiceGateway.tsp:L126-L135](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L126-L135), [ServiceGateway.tsp:L138-L165](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L138-L165), [ServiceGateway.tsp:L167-L176](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L167-L176), [ServiceGateway.tsp:L179-L200](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L179-L200)
 
 
-## ☁️ Azure Compliance
-
-**Status:** `failed`
-
-### Compliance Findings
-
-<a id="finding-address-prefix-set-child-resource-template"></a>
-### AddressPrefixSet does not use the documented child-resource model template
-
-**Severity:** medium
-
-**Gap:** The documented child-resource pattern uses ProxyResource<TProperties> and spreads ResourceNameParameter<T>. AddressPrefixSet instead extends the local non-generic ProxyResource, declares properties separately, and manually declares its path/key/segment name.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
-
-**Guidance:** [ARM resource types and modeling — Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/)
-
-**Documented TypeSpec example**
-
-```tsp
-@parentResource(Employee)
-model Job is ProxyResource<JobProperties> {
-  ...ResourceNameParameter<Job>;
-}
-```
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.
-
-**[AddressPrefixSet.tsp:L25-L36](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L25-L36)**
-
-```tsp
-@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)
-@parentResource(ApplicationSecurityGroup)
-@Http.Private.includeInapplicableMetadataInPayload(false)
-model AddressPrefixSet extends ProxyResource {
-  /** Properties of the address prefix set. */
-  properties?: AddressPrefixSetPropertiesFormat;
-
-  /** The name of the address prefix set. */
-  @visibility(Lifecycle.Read)
-  @path
-  @key("addressPrefixSetName")
-  @segment("addressPrefixSets")
-```
-
-</details>
-
-<a id="finding-firewall-policy-kube-selector-group-child-resource-template"></a>
-### FirewallPolicyKubeSelectorGroup does not use the documented child-resource model template
-
-**Severity:** medium
-
-**Gap:** The documented child-resource pattern uses ProxyResource<TProperties> and spreads ResourceNameParameter<T>. FirewallPolicyKubeSelectorGroup instead extends SubResourceModel, declares properties separately, and manually declares its path/key/segment name.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
-
-**Guidance:** [ARM resource types and modeling — Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/)
-
-**Documented TypeSpec example**
-
-```tsp
-@parentResource(Employee)
-model Job is ProxyResource<JobProperties> {
-  ...ResourceNameParameter<Job>;
-}
-```
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.
-
-**[FirewallPolicyKubeSelectorGroup.tsp:L25-L36](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L25-L36)**
-
-```tsp
-@parentResource(FirewallPolicy)
-@Http.Private.includeInapplicableMetadataInPayload(false)
-@added(Versions.v2025_09_01)
-model FirewallPolicyKubeSelectorGroup extends SubResourceModel {
-  properties?: FirewallPolicyKubeSelectorGroupProperties;
-
-  /**
-   * The name of the resource that is unique within a resource group. This name can be used to access the resource.
-   */
-  @visibility(Lifecycle.Read)
-  @path
-  @key("kubeSelectorGroupName")
-```
-
-</details>
-
-<a id="finding-connection-analyzer-child-resource-template"></a>
-### ConnectionAnalyzer does not use the documented child-resource model template
-
-**Severity:** medium
-
-**Gap:** The documented child-resource pattern declares a parent resource, uses ProxyResource<TProperties>, and spreads ResourceNameParameter<T>. ConnectionAnalyzer is instead a plain legacy custom Azure resource model with only an optional read-only name, while its changed routes place it beneath NetworkWatcher.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
-
-**Guidance:** [ARM resource types and modeling — Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/)
-
-**Documented TypeSpec example**
-
-```tsp
-@parentResource(Employee)
-model Job is ProxyResource<JobProperties> {
-  ...ResourceNameParameter<Job>;
-}
-```
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}.
-
-**[models.tsp:L27738-L27749](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27738-L27749)**
-
-```tsp
-#suppress "@azure-tools/typespec-azure-core/no-legacy-usage" "Required to attach Connection Analyzer child models to the existing NetworkWatcher resource which is modeled with the legacy ARM resource pattern via Azure.ResourceManager.Legacy.feature."
-#suppress "@azure-tools/typespec-azure-resource-manager/arm-custom-resource-no-key" "ConnectionAnalyzer is exposed via the legacy NetworkWatcher action pattern; its key is supplied by the routed operation, not modeled on the resource."
-#suppress "@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage" "Connection Analyzer follows the existing legacy custom-resource pattern used by sibling NetworkWatcher child resources in this project."
-@added(Versions.v2025_09_01)
-@Azure.ResourceManager.Legacy.feature(Features.networkWatcher)
-@Azure.ResourceManager.Legacy.customAzureResource(#{ isAzureResource: true })
-model ConnectionAnalyzer {
-  /**
-   * Name of the connection analyzer.
-   */
-  @visibility(Lifecycle.Read)
-  name?: string;
-```
-
-</details>
-
-<a id="finding-connection-analyzer-lifecycle-operation-templates"></a>
-### ConnectionAnalyzer lifecycle operations do not use the documented ARM templates
-
-**Severity:** medium
-
-**Gap:** The documented CRUDL pattern declares resource operations with the ArmResource templates and reserves custom actions for behavior outside CRUDL. The changed ConnectionAnalyzer lifecycle uses a Legacy.RoutedOperations alias plus explicit HTTP verbs and routes for create, delete, update, get, and list.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The retained ARM guidance applies to the changed declarations identified below. AddressPrefixSet and FirewallPolicyKubeSelectorGroup explicitly use nonstandard child-resource base types, while ConnectionAnalyzer explicitly uses a legacy custom resource model and Legacy.RoutedOperations with manual CRUDL routes. No finding is inferred merely because a compact excerpt omits operation declarations, and no separate provisioning-state consequence is counted.
-
-**Guidance:** [ARM resource operations — Add ARM Resource Operation](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/)
-
-**Documented TypeSpec example**
-
-```tsp
-get is ArmResourceRead<Resource>;
-createOrUpdate is ArmResourceCreateOrReplaceAsync<Resource>;
-update is ArmCustomPatchSync<Resource, PatchRequest>;
-delete is ArmResourceDeleteSync<Resource>;
-listByParent is ArmResourceListByParent<Resource>;
-```
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-ConnectionAnalyzerOps aliases Azure.ResourceManager.Legacy.RoutedOperations, and the changed NetworkWatchers declarations apply @put, @delete, @patch, @get, and @list directly to explicit /connectionAnalyzers routes rather than using the documented CRUDL templates.
-
-**[NetworkWatcher.tsp:L41-L46](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L46)**
-
-```tsp
-alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations<
-  {
-    ...ApiVersionParameter;
-    ...SubscriptionIdParameter;
-    ...ResourceGroupParameter;
-
-```
-
-**[NetworkWatcher.tsp:L476-L487](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L476-L487)**
-
-```tsp
-  @put
-  @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}")
-  connectionAnalyzersCreate is ConnectionAnalyzerOps.ActionAsync<
-    NetworkWatcher,
-    ConnectionAnalyzer,
-    ConnectionAnalyzer,
-    Response =
-      | ArmResourceUpdatedResponse<ConnectionAnalyzer>
-      | ArmResourceCreatedResponse<
-          ConnectionAnalyzer,
-          LroHeaders = ArmAsyncOperationHeader<FinalResult = ConnectionAnalyzer> &
-            Azure.Core.Foundations.RetryAfterHeader
-```
-
-</details>
-
 ## 📎 Appendix
 
 ### Assessment Errors
@@ -743,8 +751,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Mismatch | [ARM resource types and modeling - Add ARM Resource Type](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/) | Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties. Child resources usually use the `ProxyResource<TProperties>` as their base resource type. | The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}. | [AddressPrefixSet.tsp:L1-L100](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L1-L100), [FirewallPolicyKubeSelectorGroup.tsp:L1-L97](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L1-L97), [NetworkWatcher.tsp:L12-L12](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L12-L12), +988 more |
-| Mismatch | [ARM resource operations - Add ARM Resource Operation](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/) | Custom actions define any operations over resources outside the simple CRUDL (Create, Read, Update, Delete, List) or lifecycle operations described above. | ConnectionAnalyzerOps aliases Azure.ResourceManager.Legacy.RoutedOperations, and the changed NetworkWatchers declarations apply @put, @delete, @patch, @get, and @list directly to explicit /connectionAnalyzers routes rather than using the documented CRUDL templates. | [NetworkWatcher.tsp:L12-L12](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L12-L12), [NetworkWatcher.tsp:L41-L66](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L66), [NetworkWatcher.tsp:L469-L575](https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L469-L575), +3 more |
+| Mismatch | ARM resource types and modeling - Add ARM Resource Type | Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties. Child resources usually use the `ProxyResource<TProperties>` as their base resource type. | The changed declaration is @parentResource(ApplicationSecurityGroup) model AddressPrefixSet extends ProxyResource, followed by a separate properties property and a manually decorated name property; its suppression explicitly identifies ProxyResource as the local Network RP base type. The changed declaration is @parentResource(FirewallPolicy) model FirewallPolicyKubeSelectorGroup extends SubResourceModel, followed by a separate properties property and a manually decorated name property. The changed model uses @Azure.ResourceManager.Legacy.customAzureResource and declares model ConnectionAnalyzer with only @visibility(Lifecycle.Read) name?: string; the changed NetworkWatcher routes address /networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}. | AddressPrefixSet.tsp:L1-L100, FirewallPolicyKubeSelectorGroup.tsp:L1-L97, NetworkWatcher.tsp:L12-L12, +988 more |
+| Mismatch | ARM resource operations - Add ARM Resource Operation | Custom actions define any operations over resources outside the simple CRUDL (Create, Read, Update, Delete, List) or lifecycle operations described above. | ConnectionAnalyzerOps aliases Azure.ResourceManager.Legacy.RoutedOperations, and the changed NetworkWatchers declarations apply @put, @delete, @patch, @get, and @list directly to explicit /connectionAnalyzers routes rather than using the documented CRUDL templates. | NetworkWatcher.tsp:L12-L12, NetworkWatcher.tsp:L41-L66, NetworkWatcher.tsp:L469-L575, +3 more |
 
 ### Tooling Used
 

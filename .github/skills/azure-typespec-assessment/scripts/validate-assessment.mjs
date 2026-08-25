@@ -14,9 +14,9 @@ import {
 const REQUIRED_HEADINGS = [
   "## 📌 Executive Summary",
   "## 🎯 Action Required",
+  "## ☁️ Azure Compliance",
   "## 🧠 Semantic Understanding",
   "## 🛡️ Compatibility Assessment",
-  "## ☁️ Azure Compliance",
   "## 📎 Appendix",
 ];
 const CHANGE_KIND_MARKERS = {

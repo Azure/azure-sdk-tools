@@ -28,6 +28,55 @@
 | --- | --- | --- | --- | --- | --- |
 | medium | Compliance | Replaced preview version remains in the version enum | The stable 2026-06-01 version is added without removing the replaced 2025-05-01-preview enum member, contrary to the documented stable-after-preview procedure. | [main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48) | [The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the "go" scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance.](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) |
 
+## ☁️ Azure Compliance
+
+**Status:** `failed`
+
+### Compliance Findings
+
+<a id="finding-compliance-remove-replaced-preview-version"></a>
+### Replaced preview version remains in the version enum
+
+**Severity:** medium
+
+**Gap:** The stable 2026-06-01 version is added without removing the replaced 2025-05-01-preview enum member, contrary to the documented stable-after-preview procedure.
+
+**TypeSpec source:** [main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the "go" scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance.
+
+**Guidance:** [Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/)
+
+_The bounded official document evidence did not contain an example block._
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Expected: "Remove the replaced preview version from the version enum." Actual: Versions contains both v2025_05_01_preview: "2025-05-01-preview" and v2026_06_01: "2026-06-01".
+
+**[main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48)**
+
+```tsp
+enum Versions {
+  /**
+   * The 2025-05-01-preview API version.
+   */
+  v2025_05_01_preview: "2025-05-01-preview",
+
+  /**
+   * The 2026-06-01 API version.
+   */
+  v2026_06_01: "2026-06-01",
+}
+```
+
+</details>
+
 ## 🧠 Semantic Understanding
 
 <a id="intent-1-preserve-the-released-go-delete-parameter-order"></a>
@@ -102,53 +151,6 @@ None detected.
 
 None detected.
 
-## ☁️ Azure Compliance
-
-**Status:** `failed`
-
-### Compliance Findings
-
-<a id="finding-compliance-remove-replaced-preview-version"></a>
-### Replaced preview version remains in the version enum
-
-**Severity:** medium
-
-**Gap:** The stable 2026-06-01 version is added without removing the replaced 2025-05-01-preview enum member, contrary to the documented stable-after-preview procedure.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the "go" scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance.
-
-**Guidance:** [Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/)
-
-_The bounded official document evidence did not contain an example block._
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-Expected: "Remove the replaced preview version from the version enum." Actual: Versions contains both v2025_05_01_preview: "2025-05-01-preview" and v2026_06_01: "2026-06-01".
-
-**[main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48)**
-
-```tsp
-enum Versions {
-  /**
-   * The 2025-05-01-preview API version.
-   */
-  v2025_05_01_preview: "2025-05-01-preview",
-
-  /**
-   * The 2026-06-01 API version.
-   */
-  v2026_06_01: "2026-06-01",
-}
-```
-
-</details>
-
 ## 📎 Appendix
 
 ### Assessment Errors
@@ -159,8 +161,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Mismatch | [Adding a Stable Version when the Last Version was Preview - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) | Remove the replaced preview version from the version enum. | Expected: "Remove the replaced preview version from the version enum." Actual: Versions contains both v2025_05_01_preview: "2025-05-01-preview" and v2026_06_01: "2026-06-01". | [main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48) |
-| Matched | [TypeSpec Client Generator Core decorators - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported. | The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the "go" scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance. | [main.tsp:L38-L48](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48), [client.tsp:L321-L354](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354), [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47) |
+| Mismatch | Adding a Stable Version when the Last Version was Preview - Retained authoritative evidence | Remove the replaced preview version from the version enum. | Expected: "Remove the replaced preview version from the version enum." Actual: Versions contains both v2025_05_01_preview: "2025-05-01-preview" and v2026_06_01: "2026-06-01". | main.tsp:L38-L48 |
+| Matched | TypeSpec Client Generator Core decorators - Retained authoritative evidence | Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported. | The stable-after-preview guidance requires removing the replaced preview version from the version enum, but the changed Versions enum retains v2025_05_01_preview while adding v2026_06_01. The Go customization is compliant: @@override targets parameter-signature customization and the "go" scope limits that customization to the Go emitter, matching the client-generator-core decorator guidance. | main.tsp:L38-L48, client.tsp:L321-L354, main.tsp:L43-L47 |
 
 ### Tooling Used
 

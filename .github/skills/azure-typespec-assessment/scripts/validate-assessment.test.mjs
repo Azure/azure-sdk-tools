@@ -397,6 +397,10 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
   document.dimensions.semanticUnderstanding.items[0].changes[0].linkedFindingIds =
     ["html-impact"];
   const html = renderAssessmentHtml(document);
+  assert.ok(
+    html.indexOf('<section id="azure-compliance">') <
+      html.indexOf('<section id="semantic-intents">'),
+  );
   assert.match(html, /<!doctype html>/);
   assert.match(html, /<section id="semantic-intents">/);
   assert.match(html, /<section id="rest-breaking">/);
@@ -693,6 +697,26 @@ test("HTML collapses compliance findings with linked TypeSpec code", () => {
     /<details class="comparison-details (?:expected|actual)-details" open>/,
   );
   assert.match(html, /<strong>Gap:<\/strong>/);
+  assert.match(
+    html,
+    /<strong>TypeSpec source:<\/strong> <a href="[^"]*spec\/main\.tsp#L2-L4">main\.tsp:L2-L4<\/a>/,
+  );
+  const appendix = html.slice(html.indexOf('<section id="appendix">'));
+  assert.doesNotMatch(appendix, /<a href=/);
+  assert.match(appendix, /Models — Model properties/);
+  assert.match(appendix, /main\.tsp:L2-L4/);
+
+  const markdown = renderAssessment(document);
+  assert.ok(
+    markdown.indexOf("## ☁️ Azure Compliance") <
+      markdown.indexOf("## 🧠 Semantic Understanding"),
+  );
+  assert.match(
+    markdown,
+    /\*\*TypeSpec source:\*\* \[main\.tsp:L2-L4\]\([^)]*spec\/main\.tsp#L2-L4\)/,
+  );
+  const markdownAppendix = markdown.slice(markdown.indexOf("## 📎 Appendix"));
+  assert.doesNotMatch(markdownAppendix, /\]\(https?:|spec\/main\.tsp#L/);
 });
 
 test("Markdown limits source diffs while JSON retains every hunk", () => {

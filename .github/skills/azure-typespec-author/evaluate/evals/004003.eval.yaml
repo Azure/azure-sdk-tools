@@ -20,7 +20,7 @@ stimuli:
       suite: "decorators"
       mode: "trigger"
     prompt: |
-      Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
+      Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore both @operationId and its associated #suppress for no-openapi for operationIds that do not contain underscores and do not begin with a lowercase letter.
     environment: &shared_environment
       files:
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
@@ -83,7 +83,7 @@ stimuli:
       suite: "decorators"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
+      @azure-typespec-author Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore both @operationId and its associated #suppress for no-openapi for operationIds that do not contain underscores and do not begin with a lowercase letter.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -186,7 +186,7 @@ stimuli:
     tags:
       suite: "decorators"
       mode: "no-skill"
-    prompt: "Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter."
+    prompt: "Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore both @operationId and its associated #suppress for no-openapi for operationIds that do not contain underscores and do not begin with a lowercase letter."
     environment: *shared_environment
     graders:
       - *file_not_matches

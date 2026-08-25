@@ -47,3 +47,4 @@ jobs:
         displayName: 'Prompt Copilot'
         env:
           GH_TOKEN: $(GH_TOKEN)
+          COPILOT_GITHUB_TOKEN: $(GH_TOKEN)

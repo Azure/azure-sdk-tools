@@ -18,7 +18,7 @@ Assess changed TypeSpec without editing it.
    `ask_user` once to select:
    - **Mode:** `complete` (default) or `fast` impact-only.
    - **Baseline branch:** free text, default `main`.
-   Normalize `main` to the tracked remote ref (normally `origin/main`).
+     Normalize `main` to the tracked remote ref (normally `origin/main`).
 2. Read the [assessment workflow](references/workflow.md).
 3. For complete mode, run
    `node .github/skills/azure-typespec-assessment/scripts/run-assessment-analysis.mjs --base <baseline>`.
@@ -27,8 +27,10 @@ Assess changed TypeSpec without editing it.
    [classification rules](references/classification.md). Use its operation
    groups, compact before/after summaries, source-impact links, and candidates
    instead of reconstructing operation details from raw artifact diffs.
-5. Write `assessment.json` following the [output contract](references/output-contract.md).
-6. Render and validate the report as described in the workflow.
+5. Write `assessment-judgment.json` following
+   `scripts/assessment-judgment.schema.json`.
+6. Assemble and validate `assessment.json`, then render `assessment.html`
+   following the [output contract](references/output-contract.md) and workflow.
 
 For an impact-only fast assessment, run analysis with `--fast`, review every
 candidate in `fast-model-input.json`, write
@@ -37,7 +39,7 @@ candidate in `fast-model-input.json`, write
 
 ```bash
 node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.mjs \
-  fast-model-input.json fast-assessment-judgment.json fast-assessment.html
+  fast-model-input.json fast-assessment-judgment.json assessment.html
 ```
 
 ## Rules

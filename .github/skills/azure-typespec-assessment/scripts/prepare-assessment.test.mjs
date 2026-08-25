@@ -479,7 +479,7 @@ test("source links fall back locally without a GitHub remote", () => {
   );
 });
 
-test("local head source links open the workspace file in VS Code", () => {
+test("working-tree source links are non-remote repository locations", () => {
   assert.equal(
     sourceLink(
       "spec/main.tsp",
@@ -488,29 +488,10 @@ test("local head source links open the workspace file in VS Code", () => {
       "https://github.com/Azure/example.git",
       2,
       3,
-      "C:\\workspace\\example",
+      true,
     ),
-    "vscode://file/C:/workspace/example/spec/main.tsp:2:1",
+    "spec/main.tsp#L2-L3",
   );
-});
-
-test("untracked source links use the head commit", () => {
-  const { repo } = createRepository();
-  try {
-    writeFileSync(join(repo, "spec", "new.tsp"), "model NewModel {}\n");
-    const references = untrackedReferences(
-      repo,
-      ["spec/new.tsp"],
-      "def456",
-      "https://github.com/Azure/example.git",
-    );
-    assert.equal(
-      references[0].link,
-      `vscode://file/${join(repo, "spec", "new.tsp").replaceAll("\\", "/")}:1:1`,
-    );
-  } finally {
-    rmSync(repo, { recursive: true, force: true });
-  }
 });
 
 test("prepareAssessment creates source evidence without compilation", async () => {

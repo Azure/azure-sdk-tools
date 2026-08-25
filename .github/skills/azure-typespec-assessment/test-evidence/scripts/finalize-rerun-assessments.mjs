@@ -1,16 +1,10 @@
 #!/usr/bin/env node
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildCompliance } from "./generate-document-compliance-evidence.mjs";
+import { buildCompliance } from "./document-compliance.mjs";
 import { sourceLink } from "../../scripts/prepare-assessment.mjs";
 import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
 import { validateAssessment } from "../../scripts/validate-assessment.mjs";
@@ -35,8 +29,7 @@ const curatedDiffAliases = {
   "add-express-route-lags": "express-route-lag-family",
   "add-firewall-policy-kube-selector-groups":
     "firewall-policy-kube-selector-groups",
-  "add-afc-managed-firewall-policy-writes":
-    "firewall-policy-afc-managed-sync",
+  "add-afc-managed-firewall-policy-writes": "firewall-policy-afc-managed-sync",
   "add-first-party-service-tags": "first-party-service-tags",
   "add-network-virtual-appliance-migration-actions":
     "network-virtual-appliance-migration",
@@ -70,12 +63,6 @@ function emitterRuns(evidence) {
       })),
     ),
   );
-}
-
-function formatDuration(milliseconds) {
-  const seconds = Math.round(milliseconds / 1000);
-  const minutes = Math.floor(seconds / 60);
-  return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 }
 
 function assessmentRemoteUrl(assessmentUrl) {
@@ -186,8 +173,7 @@ function correctNetwork44988(assessment, items) {
         ),
       }))
       .filter(
-        (change) =>
-          change.kind !== "modified" || change.aspects.length > 0,
+        (change) => change.kind !== "modified" || change.aspects.length > 0,
       );
     const retainedOperationIds = new Set(
       item.changes.flatMap((change) => change.operationIds),
@@ -198,9 +184,7 @@ function correctNetwork44988(assessment, items) {
       );
   }
 
-  const kubeSelectors = items.get(
-    "add-firewall-policy-kube-selector-groups",
-  );
+  const kubeSelectors = items.get("add-firewall-policy-kube-selector-groups");
   if (kubeSelectors) {
     const summary =
       "The 2025-09-01 API adds FirewallPolicyKubeSelectorGroup child resources with create-or-update and delete LROs, get, and pageable list operations beneath a firewall policy.";
@@ -228,18 +212,15 @@ function correctNetwork44988(assessment, items) {
       "Add the optional afcManagedSync query parameter to FirewallPolicies_CreateOrUpdate in the 2025-09-01 version.";
     firewallPolicyChange.linkedFindingIds = [];
 
-    const firewallOperation =
-      kubeSelectors.restRepresentation.operations.find(
-        ({ operationId }) =>
-          operationId === "FirewallPolicies_CreateOrUpdate",
-      );
+    const firewallOperation = kubeSelectors.restRepresentation.operations.find(
+      ({ operationId }) => operationId === "FirewallPolicies_CreateOrUpdate",
+    );
     kubeSelectors.changes = kubeSelectors.changes.filter(
       (change) => change !== firewallPolicyChange,
     );
     kubeSelectors.restRepresentation.operations =
       kubeSelectors.restRepresentation.operations.filter(
-        ({ operationId }) =>
-          operationId !== "FirewallPolicies_CreateOrUpdate",
+        ({ operationId }) => operationId !== "FirewallPolicies_CreateOrUpdate",
       );
     if (firewallOperation) {
       const firewallReference = {
@@ -291,8 +272,7 @@ function correctNetwork44988(assessment, items) {
     const summary =
       "The new 2025-09-01 REST version intentionally replaces the prior 202/204 Location-polled behavior of UpdateAddressLocations and UpdateServices with a synchronous 200 response. Earlier API versions remain unchanged, so this is not a REST breaking change; however, an SDK that adopts 2025-09-01 can replace its existing poller or operation-handle methods with synchronous methods returning ServiceGatewayActionOkResponseBody.";
     replaceSemanticText(serviceGateway, {
-      intent:
-        "Make service gateway update actions synchronous in 2025-09-01",
+      intent: "Make service gateway update actions synchronous in 2025-09-01",
       summary,
     });
     for (const change of serviceGateway.changes) {
@@ -360,10 +340,7 @@ function historicalOperation(operationsByPr, pr, operationId, references) {
   };
 }
 
-export function correctHistoricalSemanticChains(
-  assessment,
-  operationsByPr,
-) {
+export function correctHistoricalSemanticChains(assessment, operationsByPr) {
   const items = new Map(
     assessment.dimensions.semanticUnderstanding.items.map((item) => [
       item.id,
@@ -411,8 +388,7 @@ export function correctHistoricalSemanticChains(
     "promote-recovery-services-backup-api-version",
   );
   if (backupVersion) {
-    backupVersion.id =
-      "promote-recovery-services-backup-api-version-lineage";
+    backupVersion.id = "promote-recovery-services-backup-api-version-lineage";
     const summary =
       "Seven existing Recovery Services Backup operations are published under the new stable 2026-02-01 API version. Their HTTP methods, paths, parameters, requests, responses, LRO behavior, and paging behavior are inherited without change.";
     replaceSemanticText(backupVersion, {
@@ -440,7 +416,7 @@ export function correctHistoricalSemanticChains(
   const chaosLro = items.get("intent-location-based-lro-metadata");
   if (chaosLro) {
     const summary =
-      "Six existing operations retain their 202 response, Location and Retry-After headers, Location polling, and final result. Replacing raw OpenAPI extensions with @Azure.Core.useFinalStateVia(\"location\") makes the same LRO behavior visible to TypeSpec-aware SDK generators.";
+      'Six existing operations retain their 202 response, Location and Retry-After headers, Location polling, and final result. Replacing raw OpenAPI extensions with @Azure.Core.useFinalStateVia("location") makes the same LRO behavior visible to TypeSpec-aware SDK generators.';
     replaceSemanticText(chaosLro, {
       intent:
         "Model existing Location-based long-running behavior with TypeSpec LRO metadata",
@@ -453,7 +429,7 @@ export function correctHistoricalSemanticChains(
           before:
             "Final-state-via Location is represented with raw OpenAPI extensions.",
           after:
-            "Final-state-via Location is represented with @Azure.Core.useFinalStateVia(\"location\").",
+            'Final-state-via Location is represented with @Azure.Core.useFinalStateVia("location").',
         },
       ],
       effect: summary,
@@ -475,8 +451,7 @@ export function correctHistoricalSemanticChains(
       aspects: [
         {
           field: "`sku.name` accepted values",
-          before:
-            "The closed enum accepts only Standard_B1 and Standard B10.",
+          before: "The closed enum accepts only Standard_B1 and Standard B10.",
           after:
             "The open string union preserves both known values and accepts future string values.",
         },
@@ -508,8 +483,8 @@ export function correctHistoricalSemanticChains(
         "Keep AssociationUpdate.properties nested in generated JavaScript",
       summary,
     });
-    const associationReference = flattening.sourceReferences.find(
-      ({ path }) => path.endsWith("/main.tsp"),
+    const associationReference = flattening.sourceReferences.find(({ path }) =>
+      path.endsWith("/main.tsp"),
     );
     const associationReferences = associationReference
       ? [associationReference]
@@ -545,9 +520,7 @@ export function correctHistoricalSemanticChains(
       change.effect = summary;
       change.typeSpecCause =
         "Change the AssociationUpdate.properties flattenProperty scope from all languages to !javascript.";
-      change.linkedFindingIds = [
-        "source-javascript-flattening-scope-changed",
-      ];
+      change.linkedFindingIds = ["source-javascript-flattening-scope-changed"];
     }
   }
 
@@ -584,8 +557,7 @@ export function correctHistoricalSemanticChains(
     const summary =
       "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.";
     replaceSemanticText(commonTypes, {
-      intent:
-        "Align the new Device Registry previews with ARM common-types v5",
+      intent: "Align the new Device Registry previews with ARM common-types v5",
       summary,
     });
     setChangeExplanation(commonTypes, {
@@ -601,10 +573,7 @@ export function correctHistoricalSemanticChains(
         "Change @armCommonTypesVersion from v6 to v5 on the 2026-11-01-preview and 2026-11-02-preview version members.",
     });
     for (const operation of commonTypes.restRepresentation.operations) {
-      operation.apiVersions = [
-        "2026-11-01-preview",
-        "2026-11-02-preview",
-      ];
+      operation.apiVersions = ["2026-11-01-preview", "2026-11-02-preview"];
     }
   }
 
@@ -620,8 +589,7 @@ export function correctHistoricalSemanticChains(
       aspects: [
         {
           field: "Generated Java enum members",
-          before:
-            "The affected members rely on newly derived Java names.",
+          before: "The affected members rely on newly derived Java names.",
           after:
             "Explicit Java-only names preserve the six released enum constants.",
         },
@@ -641,11 +609,11 @@ export function correctHistoricalSemanticChains(
     const deleteOperation = allOperations.find(
       ({ operationId }) => operationId === "Monitors_Delete",
     );
-    const mainReference = combinedNewRelic.sourceReferences.find(
-      ({ path }) => path.endsWith("/main.tsp"),
+    const mainReference = combinedNewRelic.sourceReferences.find(({ path }) =>
+      path.endsWith("/main.tsp"),
     );
-    const clientReference = combinedNewRelic.sourceReferences.find(
-      ({ path }) => path.endsWith("/client.tsp"),
+    const clientReference = combinedNewRelic.sourceReferences.find(({ path }) =>
+      path.endsWith("/client.tsp"),
     );
     const originalChange = combinedNewRelic.changes[0];
     const versionSummary =
@@ -661,9 +629,7 @@ export function correctHistoricalSemanticChains(
           kind: "added",
           summary:
             "Publish the inherited New Relic management surface in stable 2026-06-01",
-          operationIds: allOperations.map(
-            ({ operationId }) => operationId,
-          ),
+          operationIds: allOperations.map(({ operationId }) => operationId),
           apiVersions: ["2026-06-01"],
           aspects: [
             {
@@ -674,8 +640,7 @@ export function correctHistoricalSemanticChains(
             },
           ],
           effect: versionSummary,
-          typeSpecCause:
-            "Add the stable Versions.v2026_06_01 member.",
+          typeSpecCause: "Add the stable Versions.v2026_06_01 member.",
           sourceReferences: mainReference ? [mainReference] : [],
           linkedFindingIds: ["compliance-remove-replaced-preview-version"],
         },
@@ -717,8 +682,7 @@ export function correctHistoricalSemanticChains(
           field: "Go method parameter order",
           before:
             "The default generated order places monitorName before userEmail.",
-          after:
-            "The Go-only override preserves userEmail before monitorName.",
+          after: "The Go-only override preserves userEmail before monitorName.",
         },
       ];
       change.effect = combinedNewRelic.restRepresentation.summary;
@@ -803,7 +767,12 @@ function writeExistingAssessmentReports(reportRootValue, prValues) {
   );
   for (const pr of prValues) {
     const outputDirectory = join(reportRoot, "assessments", pr);
-    const assessmentPath = join(outputDirectory, "assessment.json");
+    const assessmentPath = join(
+      reportRoot,
+      "fixtures",
+      "assessments",
+      `${pr}.json`,
+    );
     const assessment = readJson(assessmentPath);
     refineSemanticChanges(assessment, typeSpecDiffFixture, operationsByPr);
     correctHistoricalComplianceEvidence(
@@ -814,13 +783,14 @@ function writeExistingAssessmentReports(reportRootValue, prValues) {
     if (errors.length > 0) {
       throw new Error(`PR ${pr} report is invalid:\n${errors.join("\n")}`);
     }
-    writeFileSync(
-      assessmentPath,
-      `${JSON.stringify(assessment, null, 2)}\n`,
-    );
+    writeFileSync(assessmentPath, `${JSON.stringify(assessment, null, 2)}\n`);
     writeFileSync(
       join(outputDirectory, "assessment.html"),
       renderAssessmentHtml(assessment),
+    );
+    writeFileSync(
+      join(outputDirectory, "assessment.json"),
+      `${JSON.stringify(assessment, null, 2)}\n`,
     );
   }
   process.stdout.write(`Refreshed ${prValues.length} assessment reports.\n`);
@@ -837,13 +807,10 @@ function main() {
     writeExistingAssessmentReports(reportRootValue, prValues);
     return;
   }
-  const [reportRootValue, rerunRootValue, ...remainingValues] =
-    process.argv.slice(2);
-  const htmlOnly = remainingValues[0] === "--html-only";
-  const prValues = htmlOnly ? remainingValues.slice(1) : remainingValues;
+  const [reportRootValue, rerunRootValue, ...prValues] = process.argv.slice(2);
   if (!reportRootValue || !rerunRootValue || prValues.length === 0) {
     throw new Error(
-      "Usage: finalize-rerun-assessments.mjs <report-root> <rerun-root> [--html-only] <pr>...",
+      "Usage: finalize-rerun-assessments.mjs <report-root> <rerun-root> <pr>...",
     );
   }
   const reportRoot = resolve(reportRootValue);
@@ -864,7 +831,13 @@ function main() {
 
   for (const pr of prValues) {
     const outputDirectory = join(reportRoot, "assessments", pr);
-    const assessment = readJson(join(outputDirectory, "assessment.json"));
+    const assessmentPath = join(
+      reportRoot,
+      "fixtures",
+      "assessments",
+      `${pr}.json`,
+    );
+    const assessment = readJson(assessmentPath);
     const evidence = readJson(join(rerunRoot, pr, "evidence.json"));
     const complianceSpecification = complianceFixture[pr];
     const executionTimeBreakdown = executionTimeBreakdowns[pr];
@@ -881,7 +854,7 @@ function main() {
     assessment.projects = evidence.projects.map((project) => project.path);
     assessment.assessmentDuration = {
       totalMs: executionTimeBreakdown.totalMs,
-      note: "Assessment-only timings retained from execution-time-analysis.md. Worktree creation, dependency installation, and other environment setup are excluded. Quality labels distinguish measured, estimated, and derived values.",
+      note: "Assessment-only timings retained from benchmark evidence. Worktree creation, dependency installation, and other environment setup are excluded. Quality labels distinguish measured, estimated, and derived values.",
       breakdown: executionTimeBreakdown,
     };
     assessment.assessmentEvidence = {
@@ -911,69 +884,14 @@ function main() {
       join(outputDirectory, "assessment.html"),
       renderAssessmentHtml(assessment),
     );
-    if (htmlOnly) {
-      for (const obsoletePath of [
-        join(outputDirectory, "assessment.json"),
-      ]) {
-        if (existsSync(obsoletePath)) rmSync(obsoletePath);
-      }
-    } else {
-      writeFileSync(
-        join(outputDirectory, "assessment.json"),
-        `${JSON.stringify(assessment, null, 2)}\n`,
-      );
-    }
+    writeFileSync(
+      join(outputDirectory, "assessment.json"),
+      `${JSON.stringify(assessment, null, 2)}\n`,
+    );
+    writeFileSync(assessmentPath, `${JSON.stringify(assessment, null, 2)}\n`);
     assessments.push(assessment);
   }
 
-  if (htmlOnly) {
-    for (const obsoletePath of [
-      join(reportRoot, "assessments.json"),
-      join(reportRoot, "assessment-summary.md"),
-      join(reportRoot, "assessments", "execution-time-analysis.md"),
-    ]) {
-      if (existsSync(obsoletePath)) rmSync(obsoletePath);
-    }
-  } else {
-    writeFileSync(
-      join(reportRoot, "assessments.json"),
-      `${JSON.stringify(
-        {
-          schemaVersion: 2,
-          generatedAt: new Date().toISOString(),
-          assessments,
-        },
-        null,
-        2,
-      )}\n`,
-    );
-    const rows = assessments.map((assessment) => {
-      const operations =
-        assessment.dimensions.semanticUnderstanding.items.reduce(
-          (sum, item) => sum + item.restRepresentation.operations.length,
-          0,
-        );
-      const duration = assessment.assessmentDuration;
-      const totalTime =
-        duration.documentationReviewMs === null
-          ? "unavailable"
-          : duration.note?.toLowerCase().includes("approximate")
-            ? `~${formatDuration(duration.totalMs)}`
-            : formatDuration(duration.totalMs);
-      return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.html) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${assessment.dimensions.azureCompliance.status} | ${totalTime} | ${assessment.errors.length} |`;
-    });
-    writeFileSync(
-      join(reportRoot, "assessment-summary.md"),
-      `# Live TypeSpec Assessment Evidence
-
-All ${assessments.length} assessments were rerun from their recorded PR head and base revisions with exact lockfile dependencies plus base/head AutoRest and generic TCGC compilation. Compliance was assessed by comparing Agent-searched authoritative documentation directly with changed TypeSpec source.
-
-| PR | Confidence | Operations | REST findings | Downstream findings | Compliance | Total assessment | Errors |
-| --- | --- | ---: | ---: | ---: | --- | ---: | ---: |
-${rows.join("\n")}
-`,
-    );
-  }
   process.stdout.write(`Finalized ${assessments.length} assessment reports.\n`);
 }
 

@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -220,13 +215,15 @@ function validateDecisionArray(decisions, candidates, label) {
 }
 
 export function validateJudgment(judgment, modelInput) {
-  assert(modelInput?.schemaVersion === 1, "model-input.json schemaVersion must be 1.");
+  assert(
+    modelInput?.schemaVersion === 1,
+    "model-input.json schemaVersion must be 1.",
+  );
   const evidence = flattenedEvidence(modelInput);
   assertExactKeys(
     judgment,
     [
       "schemaVersion",
-      "pr",
       "semanticIntents",
       "restCandidates",
       "downstreamCandidates",
@@ -234,14 +231,16 @@ export function validateJudgment(judgment, modelInput) {
       "overallConfidence",
       "blockers",
     ],
-    [],
+    ["pr"],
     "assessment judgment",
   );
   assert(
     judgment.schemaVersion === 1,
     "assessment judgment schemaVersion must be exactly 1.",
   );
-  normalizePositiveInteger(judgment.pr, "assessment judgment pr");
+  if (judgment.pr !== undefined) {
+    normalizePositiveInteger(judgment.pr, "assessment judgment pr");
+  }
   assert(
     Array.isArray(judgment.semanticIntents) &&
       judgment.semanticIntents.length > 0,
@@ -270,7 +269,10 @@ export function validateJudgment(judgment, modelInput) {
     for (const field of ["id", "title", "rationale"]) {
       assertNonEmptyString(intent[field], `${label}.${field}`);
     }
-    assert(!semanticIds.has(intent.id), `Duplicate semantic intent ID: ${intent.id}.`);
+    assert(
+      !semanticIds.has(intent.id),
+      `Duplicate semantic intent ID: ${intent.id}.`,
+    );
     semanticIds.add(intent.id);
     for (const field of [
       "operationChangeIds",
@@ -287,12 +289,7 @@ export function validateJudgment(judgment, modelInput) {
       );
       for (const [aspectIndex, aspect] of intent.aspects.entries()) {
         const aspectLabel = `${label}.aspects[${aspectIndex}]`;
-        assertExactKeys(
-          aspect,
-          ["field", "before", "after"],
-          [],
-          aspectLabel,
-        );
+        assertExactKeys(aspect, ["field", "before", "after"], [], aspectLabel);
         for (const field of ["field", "before", "after"]) {
           assertNonEmptyString(aspect[field], `${aspectLabel}.${field}`);
         }
@@ -300,9 +297,9 @@ export function validateJudgment(judgment, modelInput) {
     }
     assert(
       intent.operationChangeIds.length +
-          intent.operationGroupIds.length +
-          intent.sourceChangeIds.length +
-          intent.sourcePaths.length >
+        intent.operationGroupIds.length +
+        intent.sourceChangeIds.length +
+        intent.sourcePaths.length >
         0,
       `${label} must reference bounded evidence.`,
     );
@@ -354,7 +351,10 @@ export function validateJudgment(judgment, modelInput) {
       `compliance.documentUrls references unknown document URL: ${url}.`,
     );
   }
-  assert(Array.isArray(compliance.findings), "compliance.findings must be an array.");
+  assert(
+    Array.isArray(compliance.findings),
+    "compliance.findings must be an array.",
+  );
   const complianceIds = new Set();
   for (const [index, finding] of compliance.findings.entries()) {
     const label = `compliance.findings[${index}]`;
@@ -376,8 +376,14 @@ export function validateJudgment(judgment, modelInput) {
     for (const field of ["id", "title", "summary", "documentationUrl"]) {
       assertNonEmptyString(finding[field], `${label}.${field}`);
     }
-    assert(!complianceIds.has(finding.id), `Duplicate compliance finding ID: ${finding.id}.`);
-    assert(!semanticIds.has(finding.id), `Duplicate report item ID: ${finding.id}.`);
+    assert(
+      !complianceIds.has(finding.id),
+      `Duplicate compliance finding ID: ${finding.id}.`,
+    );
+    assert(
+      !semanticIds.has(finding.id),
+      `Duplicate report item ID: ${finding.id}.`,
+    );
     complianceIds.add(finding.id);
     assert(
       CONFIDENCE.has(finding.severity),
@@ -389,7 +395,10 @@ export function validateJudgment(judgment, modelInput) {
     );
     if (Array.isArray(finding.evidence)) {
       assertUniqueStrings(finding.evidence, `${label}.evidence`);
-      assert(finding.evidence.length > 0, `${label}.evidence must not be empty.`);
+      assert(
+        finding.evidence.length > 0,
+        `${label}.evidence must not be empty.`,
+      );
     } else {
       assertNonEmptyString(finding.evidence, `${label}.evidence`);
     }
@@ -440,7 +449,9 @@ export function validateJudgment(judgment, modelInput) {
     ["operation change", operationChangeUse],
     ["operation group", operationGroupUse],
   ]) {
-    const duplicates = [...use].filter(([, count]) => count !== 1).map(([id]) => id);
+    const duplicates = [...use]
+      .filter(([, count]) => count !== 1)
+      .map(([id]) => id);
     assert(
       duplicates.length === 0,
       `${label} evidence ID(s) must be referenced exactly once: ${duplicates.join(", ")}.`,
@@ -467,7 +478,9 @@ function materializationData(
   const items = materialization.dimensions?.semanticUnderstanding?.items ?? [];
   return {
     items,
-    operations: items.flatMap((item) => item.restRepresentation?.operations ?? []),
+    operations: items.flatMap(
+      (item) => item.restRepresentation?.operations ?? [],
+    ),
     artifactProjects: artifactAnalysis?.projects ?? [],
     changes: items.flatMap((item) => item.changes ?? []),
     sourceReferences: uniqueByJson([
@@ -483,14 +496,12 @@ function materializationData(
         ),
       ),
     ]),
-    typeSpecDiffs: uniqueByJson(
-      [
-        ...(retainedEvidence?.typeSpecDiffs ?? []),
-        ...items.flatMap((item) =>
-          (item.changes ?? []).flatMap((change) => change.typeSpecDiffs ?? []),
-        ),
-      ],
-    ),
+    typeSpecDiffs: uniqueByJson([
+      ...(retainedEvidence?.typeSpecDiffs ?? []),
+      ...items.flatMap((item) =>
+        (item.changes ?? []).flatMap((change) => change.typeSpecDiffs ?? []),
+      ),
+    ]),
   };
 }
 
@@ -538,8 +549,7 @@ function operationMatches(operation, descriptor) {
   if (descriptor.operationKey) {
     const [, method, ...pathParts] = descriptor.operationKey.split(":");
     return (
-      operation.method === method &&
-      operation.path === pathParts.join(":")
+      operation.method === method && operation.path === pathParts.join(":")
     );
   }
   return !descriptor.apiVersion;
@@ -734,11 +744,9 @@ function reportOperation(
     serviceBehavior: serviceBehavior(operation, richer),
     lro: lroDescription(operation, richer),
     paging: pagingDescription(operation, richer),
-    sourceReferences: artifactSourceReferences(
-      project,
-      selection,
-      richer,
-    ).map((reference) => structuredClone(reference)),
+    sourceReferences: artifactSourceReferences(project, selection, richer).map(
+      (reference) => structuredClone(reference),
+    ),
     artifactEvidence: {
       revision,
       sourceArtifact: operation.sourceArtifact,
@@ -762,7 +770,9 @@ function artifactOperations(descriptor, materialized, selection) {
   return projects.flatMap((project) =>
     revisions.flatMap((revision) =>
       (project.rest?.[revision] ?? [])
-        .filter((operation) => normalizedOperationMatches(operation, descriptor))
+        .filter((operation) =>
+          normalizedOperationMatches(operation, descriptor),
+        )
         .map((operation) =>
           reportOperation(
             operation,
@@ -798,7 +808,9 @@ function selectOperations(intent, evidence, materialized, selection) {
       )
       .flatMap((item) => item.restRepresentation?.operations ?? []);
   }
-  const missing = [...new Set(descriptors.map((item) => item.operationId))].filter(
+  const missing = [
+    ...new Set(descriptors.map((item) => item.operationId)),
+  ].filter(
     (operationId) =>
       !selected.some((operation) => operation.operationId === operationId),
   );
@@ -810,10 +822,15 @@ function selectOperations(intent, evidence, materialized, selection) {
 }
 
 function sourceSelections(item, evidence) {
-  const changes = item.sourceChangeIds.map((id) => evidence.sourceChanges.get(id));
+  const changes = item.sourceChangeIds.map((id) =>
+    evidence.sourceChanges.get(id),
+  );
   return {
     changes,
-    paths: new Set([...item.sourcePaths, ...changes.map((change) => change.path)]),
+    paths: new Set([
+      ...item.sourcePaths,
+      ...changes.map((change) => change.path),
+    ]),
     projectPaths: new Set(
       intentEvidence(item, evidence)
         .map((entry) => entry.project)
@@ -837,9 +854,7 @@ function selectDiffs(selection, materialized) {
       )
       .sort(
         (left, right) =>
-          left.oldCount +
-          left.newCount -
-          (right.oldCount + right.newCount),
+          left.oldCount + left.newCount - (right.oldCount + right.newCount),
       );
     return matches.slice(0, 1);
   });
@@ -1045,7 +1060,9 @@ function evidenceAspects(items, kind, operationCount) {
   }
   return [
     {
-      field: humanField(items.flatMap((item) => item.changedAspects ?? [])[0] ?? "API contract"),
+      field: humanField(
+        items.flatMap((item) => item.changedAspects ?? [])[0] ?? "API contract",
+      ),
       before: "Baseline operation contract.",
       after: "The operation contract reflects the judged TypeSpec change.",
     },
@@ -1103,9 +1120,7 @@ function materializeSemanticIntent(intent, evidence, materialized, confidence) {
       item = {
         ...item,
         changes: materialChanges,
-        operationIds: materialChanges.map(
-          (operation) => operation.operationId,
-        ),
+        operationIds: materialChanges.map((operation) => operation.operationId),
       };
     }
     const kind = reportKind(item.kind);
@@ -1176,7 +1191,9 @@ function materializeSemanticIntent(intent, evidence, materialized, confidence) {
       summary: intent.title,
       operationIds,
       apiVersions: [
-        ...new Set(changeOperations.flatMap((operation) => operation.apiVersions)),
+        ...new Set(
+          changeOperations.flatMap((operation) => operation.apiVersions),
+        ),
       ],
       aspects:
         intent.aspects ??
@@ -1237,7 +1254,9 @@ const RULE_TITLES = {
 function findingTitle(candidate) {
   return (
     RULE_TITLES[candidate.rule] ??
-    sanitizeNarrative(candidate.summary ?? humanField(candidate.rule ?? "API impact"))
+    sanitizeNarrative(
+      candidate.summary ?? humanField(candidate.rule ?? "API impact"),
+    )
       .replace(/\.$/, "")
       .slice(0, 140)
   );
@@ -1294,7 +1313,9 @@ function findingEvidence(candidate) {
   if (candidate.evidence?.operation) {
     result.push(`Compared REST operation: ${candidate.evidence.operation}.`);
   }
-  return result.length > 0 ? result : ["Bounded deterministic change evidence."];
+  return result.length > 0
+    ? result
+    : ["Bounded deterministic change evidence."];
 }
 
 function materializeCandidateFindings(decisions, candidates, items, evidence) {
@@ -1369,7 +1390,9 @@ function findingCodeAnchors(finding) {
     : finding.evidence;
   const text = `${finding.title} ${evidence}`;
   const declarationPhrases = [
-    ...text.matchAll(/\b(model|interface|alias|enum|union)\s+([A-Za-z_][A-Za-z0-9_]*)/g),
+    ...text.matchAll(
+      /\b(model|interface|alias|enum|union)\s+([A-Za-z_][A-Za-z0-9_]*)/g,
+    ),
   ].map((match) => `${match[1]} ${match[2]}`);
   for (const match of text.matchAll(
     /\b([A-Za-z_][A-Za-z0-9_]*)\s+aliases\b/g,
@@ -1380,8 +1403,7 @@ function findingCodeAnchors(finding) {
     declarationPhrases: [...new Set(declarationPhrases)],
     tokens: [
       ...new Set(
-      `${finding.title} ${evidence}`
-        .match(/[A-Z][A-Za-z0-9_]{3,}/g) ?? [],
+        `${finding.title} ${evidence}`.match(/[A-Z][A-Za-z0-9_]{3,}/g) ?? [],
       ),
     ].sort((left, right) => right.length - left.length),
   };
@@ -1431,17 +1453,15 @@ function snippetFromDiff(
           anchors.declarationPhrases.reduce(
             (score, phrase) =>
               score +
-              (new RegExp(
-                `\\b${phrase.replace(" ", "\\s+")}\\b`,
-              ).test(row.line)
+              (new RegExp(`\\b${phrase.replace(" ", "\\s+")}\\b`).test(row.line)
                 ? 100
                 : 0),
             0,
           ) +
           anchors.tokens.reduce(
-          (score, anchor) => score + (row.line.includes(anchor) ? 1 : 0),
-          0,
-        ),
+            (score, anchor) => score + (row.line.includes(anchor) ? 1 : 0),
+            0,
+          ),
       }));
       const anchored = scoredRows.sort(
         (left, right) => right.score - left.score,
@@ -1491,7 +1511,12 @@ function complianceSources(finding, evidence, materialized) {
   return { references, snippet };
 }
 
-function materializeCompliance(judgment, evidence, materialized, semanticItems) {
+function materializeCompliance(
+  judgment,
+  evidence,
+  materialized,
+  semanticItems,
+) {
   const findingData = judgment.findings.map((finding) => {
     const sources = complianceSources(finding, evidence, materialized);
     return {
@@ -1603,10 +1628,7 @@ function allocateJudgmentMs(modelInput, judgmentMs) {
     operationGroups: project.rest?.operationGroups ?? [],
   }));
   const values = {
-    semanticUnderstandingMs: [
-      modelInput.sourceFiles ?? [],
-      semanticProjects,
-    ],
+    semanticUnderstandingMs: [modelInput.sourceFiles ?? [], semanticProjects],
     restBreakingMs: (modelInput.projects ?? []).flatMap(
       (project) => project.rest?.breakingCandidates ?? [],
     ),
@@ -1661,8 +1683,7 @@ function timing(modelInput, judgmentElapsedMs, assemblyMs, renderMs) {
       restBreakingQuality: "estimated",
       downstreamBreakingMs: judgmentAllocation.downstreamBreakingMs,
       downstreamBreakingQuality: "estimated",
-      complianceMs:
-        judgmentAllocation.complianceMs + documentationEvidenceMs,
+      complianceMs: judgmentAllocation.complianceMs + documentationEvidenceMs,
       complianceQuality: "estimated/measured",
       overheadMs:
         preparationMs - documentationEvidenceMs + assemblyMs + renderMs,
@@ -1689,12 +1710,15 @@ export function assembleAssessment({
   renderMs = 0,
 }) {
   const evidence = validateJudgment(judgment, modelInput);
-  const pr = normalizePositiveInteger(judgment.pr, "assessment judgment pr");
+  const pr =
+    judgment.pr === undefined
+      ? undefined
+      : normalizePositiveInteger(judgment.pr, "assessment judgment pr");
   assert(
     materialization?.schemaVersion === 2,
     "Deterministic materialization assessment schemaVersion must be 2.",
   );
-  if (materialization.pr !== undefined) {
+  if (pr !== undefined && materialization.pr !== undefined) {
     const materializationPr = normalizePositiveInteger(
       materialization.pr,
       "materialization pr",
@@ -1782,27 +1806,48 @@ export function assembleAssessment({
   const assessment = {
     schemaVersion: 2,
     overallConfidence: judgment.overallConfidence,
-    pr,
   };
-  for (const field of metadataFields) {
+  if (pr !== undefined) assessment.pr = pr;
+  for (const field of pr === undefined ? [] : metadataFields) {
     if (materialization[field] !== undefined) {
       assessment[field] = structuredClone(materialization[field]);
     }
   }
   assessment.baseline = structuredClone(
-    materialization.baseline ?? modelInput.baseline ?? modelInput.comparison?.baseline,
+    pr === undefined
+      ? (modelInput.baseline ?? modelInput.comparison?.baseline)
+      : (materialization.baseline ??
+          modelInput.baseline ??
+          modelInput.comparison?.baseline),
   );
   assessment.head = structuredClone(
-    materialization.head ?? modelInput.head ?? modelInput.comparison?.head,
+    pr === undefined
+      ? (modelInput.head ?? modelInput.comparison?.head)
+      : (materialization.head ??
+          modelInput.head ??
+          modelInput.comparison?.head),
   );
-  assessment.projects = (modelInput.projects ?? []).map((project) => project.path);
-  if (materialization.assessmentEvidence) {
+  assessment.projects = (modelInput.projects ?? []).map(
+    (project) => project.path,
+  );
+  if (pr === undefined) {
+    assessment.assessmentEvidence = {
+      changedTypeSpec: materialized.sourceReferences.map((reference) =>
+        structuredClone(reference),
+      ),
+      emitterRuns: structuredClone(
+        materialization.assessmentEvidence?.emitterRuns ?? [],
+      ),
+    };
+  } else if (materialization.assessmentEvidence) {
     assessment.assessmentEvidence = structuredClone(
       materialization.assessmentEvidence,
     );
   }
   if (materialization.artifactEvidence) {
-    assessment.artifactEvidence = structuredClone(materialization.artifactEvidence);
+    assessment.artifactEvidence = structuredClone(
+      materialization.artifactEvidence,
+    );
   }
   assessment.dimensions = {
     semanticUnderstanding: { items: semanticItems },
@@ -1829,7 +1874,8 @@ export function assembleAssessment({
 function isInside(parent, child) {
   const normalizedParent =
     process.platform === "win32" ? parent.toLowerCase() : parent;
-  const normalizedChild = process.platform === "win32" ? child.toLowerCase() : child;
+  const normalizedChild =
+    process.platform === "win32" ? child.toLowerCase() : child;
   const value = relative(normalizedParent, normalizedChild);
   return value === "" || (!value.startsWith(`..${sep}`) && value !== "..");
 }
@@ -1843,10 +1889,11 @@ function assertSafeOutputDirectory(outputDirectory, materializationPath) {
     outputDirectory !== dirname(materializationPath),
     "Output directory must differ from the deterministic materialization directory.",
   );
-  for (const name of ["assessment.html"]) {
+  for (const name of ["assessment.json", "assessment.html"]) {
+    const reportPath = join(outputDirectory, name);
     assert(
-      !existsSync(join(outputDirectory, name)),
-      `Refusing to overwrite existing report file: ${join(outputDirectory, name)}.`,
+      !existsSync(reportPath),
+      `Refusing to overwrite existing report file: ${reportPath}.`,
     );
   }
 }
@@ -1967,6 +2014,10 @@ export function assembleAssessmentFiles({
   );
 
   mkdirSync(resolvedOutput, { recursive: true });
+  writeFileSync(
+    join(resolvedOutput, "assessment.json"),
+    `${JSON.stringify(assessment, null, 2)}\n`,
+  );
   writeFileSync(join(resolvedOutput, "assessment.html"), html);
   return assessment;
 }
@@ -2010,9 +2061,13 @@ function parseArguments(values) {
 
 function main() {
   try {
-    const assessment = assembleAssessmentFiles(parseArguments(process.argv.slice(2)));
+    const assessment = assembleAssessmentFiles(
+      parseArguments(process.argv.slice(2)),
+    );
     process.stdout.write(
-      `Assembled and validated assessment for PR ${assessment.pr}.\n`,
+      assessment.pr === undefined
+        ? "Assembled and validated local assessment.\n"
+        : `Assembled and validated assessment for PR ${assessment.pr}.\n`,
     );
   } catch (error) {
     process.stderr.write(`${error.message}\n`);

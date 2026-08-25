@@ -113,7 +113,7 @@ Render the standalone report with:
 node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.mjs \
   .typespec-fast-assessment/fast-model-input.json \
   fast-assessment-judgment.json \
-  fast-assessment.html
+  assessment.html
 ```
 
 Fast mode omits semantic intents and non-actionable change explanations. It
@@ -147,8 +147,8 @@ documentation retrieval so an empty impact report remains evidence-based.
    LRO/paging metadata, and service behavior in
    `restRepresentation.operations`. These details remain in JSON and are
    retrieved through the report's generated copyable prompts.
-10. Validate the structured assessment and render only `assessment.html` with
-    `scripts/render-assessment-html.mjs`.
+10. Validate and write `assessment.json`, then render `assessment.html` with
+    `scripts/render-assessment-html.mjs`. Do not generate Markdown.
 
 Compilation failure blocks a complete assessment. Report the first compiler
 diagnostic, error count, and referenced compile log; never interpret missing
@@ -158,4 +158,5 @@ Temporary worktrees are removed automatically. Generated assessment output is no
 
 For a curated evidence set, run
 `test-evidence/scripts/finalize-rerun-assessments.mjs`. The finalizer validates
-each structured assessment and retains only `assessment.html`.
+each structured assessment and retains `assessment.json` and
+`assessment.html`.

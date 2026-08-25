@@ -6,7 +6,6 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
-    "pr",
     "semanticIntents",
     "restCandidates",
     "downstreamCandidates",

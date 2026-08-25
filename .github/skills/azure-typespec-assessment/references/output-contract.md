@@ -1,6 +1,7 @@
 # Output Contract
 
-Produce `assessment.html` from the validated structured assessment.
+Produce `assessment.json` and `assessment.html` from the same validated
+structured assessment. Do not generate `assessment.md`.
 
 Before the final assessment, deterministic preparation produces the bounded
 `model-input.json` and a pretty diagnostic copy in `assessment-draft.json`.
@@ -365,9 +366,10 @@ Each source reference requires:
 Use baseline revision links for deleted source. Every item, change, and finding
 must have at least one TypeSpec source reference.
 
-## HTML output
+## Report output
 
-Render only `assessment.html`. Semantic Understanding displays change kind,
-aspect, and plain-language Before/After values, with focused TypeSpec source
-diffs inside the affected operation disclosures. Supporting execution and
-guidance evidence remains in the collapsed Appendix.
+Write the complete structured assessment to `assessment.json`, then render
+`assessment.html`. Semantic Understanding displays change kind, aspect, and
+plain-language Before/After values, with focused TypeSpec source diffs inside
+the affected operation disclosures. Supporting execution and guidance evidence
+remains in the collapsed Appendix.

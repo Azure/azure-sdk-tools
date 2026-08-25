@@ -143,8 +143,14 @@ function validateDecisions(decisions, candidates, label, evidence) {
   for (const [index, decision] of decisions.entries()) {
     const itemLabel = `${label}[${index}]`;
     nonEmpty(decision.id, `${itemLabel}.id`);
-    assert(candidates.has(decision.id), `${itemLabel} references an unknown candidate.`);
-    assert(!seen.has(decision.id), `${itemLabel} duplicates candidate ${decision.id}.`);
+    assert(
+      candidates.has(decision.id),
+      `${itemLabel} references an unknown candidate.`,
+    );
+    assert(
+      !seen.has(decision.id),
+      `${itemLabel} duplicates candidate ${decision.id}.`,
+    );
     seen.add(decision.id);
     assert(
       ["approve", "reject"].includes(decision.decision),
@@ -168,7 +174,10 @@ export function validateFastJudgment(judgment, modelInput) {
     modelInput?.schemaVersion === 1 && modelInput.mode === "impact-only",
     "fast-model-input.json must be an impact-only schemaVersion 1 document.",
   );
-  assert(judgment?.schemaVersion === 1, "Fast judgment schemaVersion must be 1.");
+  assert(
+    judgment?.schemaVersion === 1,
+    "Fast judgment schemaVersion must be 1.",
+  );
   const evidence = evidenceIndex(modelInput);
   validateDecisions(
     judgment.restCandidates,
@@ -193,12 +202,9 @@ export function validateFastJudgment(judgment, modelInput) {
   );
   for (const [index, finding] of judgment.compliance.findings.entries()) {
     nonEmpty(finding.id, `compliance.findings[${index}].id`);
-    validateFinding(
-      finding,
-      `compliance.findings[${index}]`,
-      evidence,
-      { compliance: true },
-    );
+    validateFinding(finding, `compliance.findings[${index}]`, evidence, {
+      compliance: true,
+    });
   }
   assert(
     judgment.compliance.status !== "failed" ||
@@ -228,7 +234,9 @@ function escapeHtml(value) {
 }
 
 function sourceSnippets(item, evidence) {
-  const snippets = item.sourceChangeIds.map((id) => evidence.sourceChanges.get(id));
+  const snippets = item.sourceChangeIds.map((id) =>
+    evidence.sourceChanges.get(id),
+  );
   const referencedPaths = new Set(snippets.map((snippet) => snippet.path));
   for (const path of item.sourcePaths) {
     if (!referencedPaths.has(path)) snippets.push({ path, lines: [] });
@@ -244,7 +252,7 @@ function sourceLocation(snippet) {
 
 function sourceLocationLink(snippet) {
   const location = escapeHtml(sourceLocation(snippet));
-  return snippet.sourceLink
+  return /^https:\/\//.test(snippet.sourceLink ?? "")
     ? `<a href="${escapeHtml(snippet.sourceLink)}">${location}</a>`
     : `<code>${location}</code>`;
 }
@@ -299,15 +307,11 @@ const complianceStopWords = new Set([
 ]);
 
 function focusedComplianceSnippets(item, snippets) {
-  const terms = [
-    item.title,
-    item.actual,
-    item.expected,
-    ...item.evidence,
-  ]
-    .join(" ")
-    .match(/[@A-Za-z_][A-Za-z0-9_.-]{3,}/g)
-    ?.filter((term) => !complianceStopWords.has(term.toLowerCase())) ?? [];
+  const terms =
+    [item.title, item.actual, item.expected, ...item.evidence]
+      .join(" ")
+      .match(/[@A-Za-z_][A-Za-z0-9_.-]{3,}/g)
+      ?.filter((term) => !complianceStopWords.has(term.toLowerCase())) ?? [];
   const scored = snippets
     .map((snippet, index) => {
       const source = [
@@ -316,7 +320,8 @@ function focusedComplianceSnippets(item, snippets) {
       ].join("\n");
       return {
         index,
-        score: [...new Set(terms)].filter((term) => source.includes(term)).length,
+        score: [...new Set(terms)].filter((term) => source.includes(term))
+          .length,
         snippet,
       };
     })
@@ -388,9 +393,7 @@ function renderFinding(
   const sourceLocations = [
     ...new Set(
       selectedSnippets.map((snippet) =>
-        snippet.newStart
-          ? `${snippet.path}:${snippet.newStart}`
-          : snippet.path,
+        snippet.newStart ? `${snippet.path}:${snippet.newStart}` : snippet.path,
       ),
     ),
   ];
@@ -442,9 +445,10 @@ ${expectedCode}
   const findingEvidence = compliance
     ? `<div class="evidence"><strong>Evidence</strong><ul>${item.evidence.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul></div>`
     : "";
-  const sourceCode = downstream || compliance
-    ? `<div class="source-code"><h4>TypeSpec code change ${compliance ? '<span class="hint">expand to inspect</span>' : ""}</h4>${snippets}</div>`
-    : "";
+  const sourceCode =
+    downstream || compliance
+      ? `<div class="source-code"><h4>TypeSpec code change ${compliance ? '<span class="hint">expand to inspect</span>' : ""}</h4>${snippets}</div>`
+      : "";
   return `<article class="finding severity-border-${escapeHtml(item.severity)}">
 <div class="finding-heading"><span class="severity severity-${escapeHtml(item.severity)}">${escapeHtml(item.severity)}</span><h3>${escapeHtml(item.title)}</h3></div>
 ${behavior}
@@ -528,15 +532,12 @@ export function assembleFastAssessmentFiles(
   const judgment = JSON.parse(readFileSync(resolve(judgmentPath), "utf8"));
   const resolvedOutput = outputPath
     ? resolve(outputPath)
-    : resolve(dirname(resolve(judgmentPath)), "fast-assessment.html");
+    : resolve(dirname(resolve(judgmentPath)), "assessment.html");
   assert(
     !existsSync(resolvedOutput),
     `Refusing to overwrite existing report: ${resolvedOutput}.`,
   );
-  writeFileSync(
-    resolvedOutput,
-    renderFastAssessmentHtml(modelInput, judgment),
-  );
+  writeFileSync(resolvedOutput, renderFastAssessmentHtml(modelInput, judgment));
   return resolvedOutput;
 }
 
@@ -544,7 +545,7 @@ function main() {
   const [modelInputPath, judgmentPath, outputPath] = process.argv.slice(2);
   assert(
     modelInputPath && judgmentPath,
-    "Usage: assemble-fast-assessment.mjs <fast-model-input.json> <fast-assessment-judgment.json> [fast-assessment.html]",
+    "Usage: assemble-fast-assessment.mjs <fast-model-input.json> <fast-assessment-judgment.json> [assessment.html]",
   );
   const output = assembleFastAssessmentFiles(
     modelInputPath,

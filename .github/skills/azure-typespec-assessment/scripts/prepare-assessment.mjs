@@ -353,7 +353,7 @@ export function parseSourceHunks(
   baseCommit,
   remoteUrl,
   headCommit,
-  repoRoot,
+  hasLocalTypeSpecChanges = false,
 ) {
   const references = [];
   let path;
@@ -392,7 +392,7 @@ export function parseSourceHunks(
         remoteUrl,
         startLine,
         Math.max(startLine, startLine + count - 1),
-        repoRoot,
+        hasLocalTypeSpecChanges,
       ),
     });
   }
@@ -415,12 +415,11 @@ export function sourceLink(
   remoteUrl,
   startLine,
   endLine,
-  repoRoot,
+  hasLocalTypeSpecChanges = false,
 ) {
   const fragment = `#L${startLine}-L${endLine}`;
-  if (revision === "head" && repoRoot) {
-    const absolutePath = resolve(repoRoot, path).replaceAll("\\", "/");
-    return `vscode://file/${encodeURI(absolutePath)}:${startLine}:1`;
+  if (revision === "head" && hasLocalTypeSpecChanges) {
+    return `${path}${fragment}`;
   }
   const github = normalizeRemoteUrl(remoteUrl);
   if (github && commit) {
@@ -454,7 +453,7 @@ export function untrackedReferences(
         remoteUrl,
         1,
         lines,
-        repoRoot,
+        true,
       ),
     };
   });
@@ -1144,6 +1143,12 @@ export async function prepareAssessment(options) {
   );
   const sourceEvidence = measuredSync("sourceDiscoveryMs", () => {
     const headCommit = gitText(repoRoot, ["rev-parse", "HEAD"]);
+    const hasLocalTypeSpecChanges =
+      git(
+        repoRoot,
+        ["status", "--porcelain", "--untracked-files=all", "--", "*.tsp"],
+        { allowFailure: true },
+      ).stdout.trim().length > 0;
     const remoteUrl = git(
       repoRoot,
       ["config", "--get", `remote.${baseRef.split("/")[0]}.url`],
@@ -1181,7 +1186,7 @@ export async function prepareAssessment(options) {
         baseCommit,
         remoteUrl,
         headCommit,
-        repoRoot,
+        hasLocalTypeSpecChanges,
       ),
       ...untrackedReferences(
         repoRoot,

@@ -38,8 +38,8 @@ const typeSpecDiff = {
   context: "interface Widgets",
   lines: [
     " interface Widgets {",
-    "-  @doc(\"Old behavior\")",
-    "+  @doc(\"New behavior\")",
+    '-  @doc("Old behavior")',
+    '+  @doc("New behavior")',
     "   get is ArmResourceRead<Widget>;",
   ],
 };
@@ -144,9 +144,7 @@ function modelInput() {
           url: "https://typespec.io/docs/language-basics/models/",
           matchingExcerpt:
             "Models are collections of named properties and their types.",
-          candidateCodeBlocks: [
-            "model Widget {\n  name: string;\n}",
-          ],
+          candidateCodeBlocks: ["model Widget {\n  name: string;\n}"],
         },
       ],
     },
@@ -325,9 +323,7 @@ function catalogOnlyInputs() {
 
   const value = judgment();
   value.semanticIntents[0].operationChangeIds = [];
-  value.semanticIntents[0].operationGroupIds = [
-    "version-modified-widget-list",
-  ];
+  value.semanticIntents[0].operationGroupIds = ["version-modified-widget-list"];
   value.restCandidates = [];
   value.downstreamCandidates = [];
   return { input, value };
@@ -570,17 +566,16 @@ test("compliance findings use bounded documents and deterministic source", () =>
   const value = judgment();
   value.compliance = {
     status: "failed",
-    rationale:
-      "The fetched model guidance applies to the changed declaration.",
+    rationale: "The fetched model guidance applies to the changed declaration.",
     documentUrls: ["https://typespec.io/docs/language-basics/models/"],
     findings: [
       {
         id: "model-guidance-gap",
         title: "Changed model does not follow the documented pattern",
         severity: "medium",
-        summary: "The changed declaration differs from the documented model pattern.",
-        documentationUrl:
-          "https://typespec.io/docs/language-basics/models/",
+        summary:
+          "The changed declaration differs from the documented model pattern.",
+        documentationUrl: "https://typespec.io/docs/language-basics/models/",
         evidence: [
           "The fetched guidance and changed declaration use different patterns.",
         ],
@@ -634,8 +629,7 @@ test("compliance finding evidence accepts a non-empty string", () => {
         title: "Changed model differs from guidance",
         severity: "medium",
         summary: "The changed declaration differs from the documented pattern.",
-        documentationUrl:
-          "https://typespec.io/docs/language-basics/models/",
+        documentationUrl: "https://typespec.io/docs/language-basics/models/",
         evidence: "The changed declaration uses a different model pattern.",
         sourceChangeIds: ["source-widget"],
         sourcePaths: [],
@@ -647,10 +641,28 @@ test("compliance finding evidence accepts a non-empty string", () => {
     judgment: value,
     materialization: materialization(),
   });
-  assert.deepEqual(
-    assessment.dimensions.azureCompliance.findings[0].evidence,
-    ["The changed declaration uses a different model pattern."],
-  );
+  assert.deepEqual(assessment.dimensions.azureCompliance.findings[0].evidence, [
+    "The changed declaration uses a different model pattern.",
+  ]);
+});
+
+test("local judgments omit historical PR metadata", () => {
+  const input = modelInput();
+  input.baseline = { ref: "origin/main", commit: "local-base" };
+  input.head = { commit: "local-head", hasWorkingTreeChanges: false };
+  const value = judgment();
+  delete value.pr;
+  const assessment = assembleAssessment({
+    modelInput: input,
+    judgment: value,
+    materialization: materialization(),
+  });
+
+  assert.equal(assessment.pr, undefined);
+  assert.equal(assessment.title, undefined);
+  assert.equal(assessment.url, undefined);
+  assert.deepEqual(assessment.baseline, input.baseline);
+  assert.deepEqual(assessment.head, input.head);
 });
 
 test("assembler writes renderer output that passes report validation", () => {
@@ -664,22 +676,32 @@ test("assembler writes renderer output that passes report validation", () => {
     writeFileSync(judgmentPath, JSON.stringify(judgment()));
     writeFileSync(materializationPath, JSON.stringify(materialization()));
 
-    const result = spawnSync(process.execPath, [
-      join(scriptDirectory, "assemble-assessment.mjs"),
-      inputPath,
-      judgmentPath,
-      materializationPath,
-      outputDirectory,
-      "--judgment-elapsed-ms",
-      "45",
-    ], {
-      encoding: "utf8",
-    });
+    const result = spawnSync(
+      process.execPath,
+      [
+        join(scriptDirectory, "assemble-assessment.mjs"),
+        inputPath,
+        judgmentPath,
+        materializationPath,
+        outputDirectory,
+        "--judgment-elapsed-ms",
+        "45",
+      ],
+      {
+        encoding: "utf8",
+      },
+    );
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /Assembled and validated assessment for PR 123/);
+    assert.match(
+      result.stdout,
+      /Assembled and validated assessment for PR 123/,
+    );
     const html = readFileSync(join(outputDirectory, "assessment.html"), "utf8");
+    const persisted = JSON.parse(
+      readFileSync(join(outputDirectory, "assessment.json"), "utf8"),
+    );
 
-    assert.equal(existsSync(join(outputDirectory, "assessment.json")), false);
+    assert.deepEqual(validateAssessment(persisted), []);
     assert.equal(existsSync(join(outputDirectory, "assessment.md")), false);
     assert.match(html, /<!doctype html>/);
     assert.match(html, /Update widget response/);
@@ -759,7 +781,12 @@ test("CLI materializes operations found only in retained artifact evidence", () 
     assert.match(operations[0].responsePayloads[0], /WidgetList/);
     assert.match(operations[1].responsePayloads[0], /UpdatedWidgetList/);
     assert.deepEqual(validateAssessment(assessment), []);
-    assert.equal(existsSync(join(outputDirectory, "assessment.json")), false);
+    assert.deepEqual(
+      JSON.parse(
+        readFileSync(join(outputDirectory, "assessment.json"), "utf8"),
+      ),
+      assessment,
+    );
     assert.equal(existsSync(join(outputDirectory, "assessment.md")), false);
     assert.ok(existsSync(join(outputDirectory, "assessment.html")));
   } finally {

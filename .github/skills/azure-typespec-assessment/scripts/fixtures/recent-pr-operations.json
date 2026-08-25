@@ -305,6 +305,124 @@
   ],
   "44200": [
     {
+      "operationId": "PrivateEndpointConnectionsInterface_ListByTrafficController",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "200: PrivateEndpointConnectionListResult",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Lists private endpoint connections under a traffic controller.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "PrivateEndpointConnection",
+        "nextLinkName": "nextLink",
+        "continuation": "Follow the opaque nextLink URL returned by the service."
+      }
+    },
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_Get",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateEndpointConnectionName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: PrivateEndpointConnection", "default: ErrorResponse"],
+      "serviceBehavior": "Gets one private endpoint connection.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_Update",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "PUT",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateEndpointConnectionName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: PrivateEndpointConnection",
+      "responses": [
+        "200: PrivateEndpointConnection",
+        "201: PrivateEndpointConnection",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Creates or replaces a private endpoint connection synchronously.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_Delete",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "DELETE",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateEndpointConnectionName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: deletion accepted with Location and Retry-After headers",
+        "204: resource does not exist",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Deletes a private endpoint connection asynchronously.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location"
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "PrivateLinkResourcesInterface_ListByTrafficController",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "200: PrivateLinkResourceListResult",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Lists private-link resources under a traffic controller.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "PrivateLinkResource",
+        "nextLinkName": "nextLink",
+        "continuation": "Follow the opaque nextLink URL returned by the service."
+      }
+    },
+    {
+      "operationId": "PrivateLinkResourcesInterface_Get",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources/{privateLinkResourceName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateLinkResourceName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: PrivateLinkResource", "default: ErrorResponse"],
+      "serviceBehavior": "Gets one private-link resource.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
       "operationId": "Associations_Update",
       "apiVersions": ["2025-05-01-preview"],
       "method": "PATCH",
@@ -516,7 +634,7 @@
   "45348": [
     {
       "operationId": "SchemaRegistries_CreateOrReplace",
-      "apiVersions": ["2026-11-01-preview", "2026-11-15-preview"],
+      "apiVersions": ["2026-11-01-preview", "2026-11-02-preview"],
       "method": "PUT",
       "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
       "parameters": [
@@ -535,7 +653,7 @@
     },
     {
       "operationId": "Namespaces_CreateOrReplace",
-      "apiVersions": ["2026-11-01-preview", "2026-11-15-preview"],
+      "apiVersions": ["2026-11-01-preview", "2026-11-02-preview"],
       "method": "PUT",
       "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
       "parameters": [

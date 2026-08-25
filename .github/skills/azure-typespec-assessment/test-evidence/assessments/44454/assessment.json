@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "overallConfidence": "medium",
+  "schemaVersion": 2,
+  "overallConfidence": "high",
   "pr": 44454,
   "title": "Mitigate operation group casing breaking changes for azure-mgmt-elastic",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454",
@@ -12,13 +12,16 @@
   },
   "head": {
     "commit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
-    "hasWorkingTreeChanges": false
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
   },
-  "result": "compatibility-mitigation",
-  "artifactEvidence": {
-    "autorest": "base/head succeeded with no wire artifact diff",
-    "tcgc": "base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence"
-  },
+  "projects": [
+    "specification/elastic/Elastic.Management"
+  ],
   "assessmentEvidence": {
     "changedTypeSpec": [
       {
@@ -80,29 +83,132 @@
         "status": "succeeded",
         "evidence": "artifacts/specification__elastic__Elastic.Management/head/tcgc"
       }
-    ],
-    "repositoryValidation": [
-      {
-        "project": "specification/elastic/Elastic.Management",
-        "tool": "TypeSpecValidation",
-        "status": "skipped",
-        "durationMs": 0,
-        "reason": "Skipped by explicit --skip-validation request."
-      }
     ]
+  },
+  "artifactEvidence": {
+    "autorest": "base/head succeeded with no wire artifact diff",
+    "tcgc": "base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence"
   },
   "dimensions": {
     "semanticUnderstanding": {
       "items": [
         {
-          "id": "pr-44454-intent",
-          "intent": "Restore released Python PascalCase operation-group names without changing other languages.",
+          "id": "semantic-intent-1",
+          "intent": "Restore released Python PascalCase operation-group names for three operations",
           "transformationChain": [
-            "Exclude Python from shared camelCase locations.",
-            "Add Python-only PascalCase client locations."
+            "Three existing operations receive Python-only PascalCase client locations while Python is excluded from their shared camelCase locations. Their REST contracts are unchanged; generated Python operation-group names return to ListAssociatedTrafficFilters, CreateAndAssociateIPFilter, and CreateAndAssociatePLFilter."
+          ],
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Assign existing operations to explicit client locations",
+              "operationIds": [
+                "ElasticMonitors_ListAssociatedTrafficFilters",
+                "ElasticMonitors_CreateAndAssociateIPFilter",
+                "ElasticMonitors_CreateAndAssociatePLFilter"
+              ],
+              "apiVersions": [
+                "2024-03-01"
+              ],
+              "aspects": [
+                {
+                  "field": "Python operation-group location",
+                  "before": "The operations use shared camelCase client locations in generated Python.",
+                  "after": "Python uses the released PascalCase client locations while other languages retain their existing locations."
+                }
+              ],
+              "effect": "Generated Python clients preserve the released operation-group names for the three listed operations; no HTTP method, path, parameter, request, or response changes.",
+              "typeSpecCause": "Exclude Python from three shared @@clientLocation rules and add three Python-only PascalCase rules.",
+              "sourceReferences": [
+                {
+                  "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                  "revision": "head",
+                  "startLine": 108,
+                  "endLine": 113,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+                },
+                {
+                  "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                  "revision": "head",
+                  "startLine": 108,
+                  "endLine": 113,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+                },
+                {
+                  "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                  "revision": "head",
+                  "startLine": 94,
+                  "endLine": 131,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                  "oldStart": 94,
+                  "oldCount": 13,
+                  "newStart": 94,
+                  "newCount": 23,
+                  "context": "using Microsoft.Elastic;",
+                  "lines": [
+                    " @@clientLocation(",
+                    "   ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+                    "   \"listAssociatedTrafficFilters\",",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!python\"",
+                    "+);",
+                    "+@@clientLocation(",
+                    "+  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+                    "+  \"ListAssociatedTrafficFilters\",",
+                    "+  \"python\"",
+                    " );",
+                    " @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, \"list\");",
+                    " @@clientLocation(",
+                    "   ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+                    "   \"createAndAssociateIPFilter\",",
+                    "-  \"!csharp,!java\"",
+                    "+  \"!csharp,!java,!python\"",
+                    "+);",
+                    "+@@clientLocation(",
+                    "+  ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+                    "+  \"CreateAndAssociateIPFilter\",",
+                    "+  \"python\"",
+                    " );",
+                    " @@clientName(",
+                    "   ElasticMonitorResources.createAndAssociateIPFilterCreate,"
+                  ]
+                },
+                {
+                  "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                  "oldStart": 109,
+                  "oldCount": 7,
+                  "newStart": 119,
+                  "newCount": 12,
+                  "context": "using Microsoft.Elastic;",
+                  "lines": [
+                    " @@clientLocation(",
+                    "   ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+                    "   \"createAndAssociatePLFilter\",",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!python\"",
+                    "+);",
+                    "+@@clientLocation(",
+                    "+  ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+                    "+  \"CreateAndAssociatePLFilter\",",
+                    "+  \"python\"",
+                    " );",
+                    " @@clientName(",
+                    "   ElasticMonitorResources.createAndAssociatePLFilterCreate,"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "compliance-client-customization-file"
+              ]
+            }
           ],
           "restRepresentation": {
-            "summary": "REST operations, paths, parameters, and payloads are unchanged.",
+            "summary": "Three existing operations receive Python-only PascalCase client locations while Python is excluded from their shared camelCase locations. Their REST contracts are unchanged; generated Python operation-group names return to ListAssociatedTrafficFilters, CreateAndAssociateIPFilter, and CreateAndAssociatePLFilter.",
             "operations": [
               {
                 "operationId": "ElasticMonitors_ListAssociatedTrafficFilters",
@@ -208,8 +314,22 @@
               }
             ]
           },
-          "confidence": "high",
+          "confidence": "medium",
           "sourceReferences": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+            },
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
@@ -237,24 +357,17 @@
         {
           "title": "TypeSpec Client Generator Core decorators",
           "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
-          "section": "@Azure.ClientGenerator.Core.clientLocation",
+          "section": "Decorators",
           "guidanceExcerpt": "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.",
-          "applicableGuidance": "A string target and a supported language scope are valid clientLocation arguments.",
-          "evidence": "The Python-specific @@clientLocation calls use documented string targets and scopes.",
+          "applicableGuidance": "The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.",
+          "evidence": "The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.",
           "sourceReferences": [
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
-              "startLine": 94,
-              "endLine": 131,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
-            },
-            {
-              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
-              "revision": "head",
-              "startLine": 97,
-              "endLine": 102,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
             },
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
@@ -266,33 +379,26 @@
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
-              "startLine": 122,
-              "endLine": 127,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
             }
           ]
         },
         {
           "title": "Clients",
           "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
-          "section": "Customizations",
+          "section": "Retained authoritative evidence",
           "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
-          "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
-          "evidence": "The new customizations are in back-compatible.tsp despite an existing imported client.tsp.",
+          "applicableGuidance": "The retained decorator reference confirms that @@clientLocation is a client customization used to change an operation's client location. The retained Clients guidance says customizations should always be made in client.tsp alongside main.tsp, but the changed source adds five @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp. This exact decorator-to-path comparison establishes a documented file-placement mismatch.",
+          "evidence": "Clients, Customizations: \"Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.\" @Azure.ClientGenerator.Core.clientLocation: \"Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.\" The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp.",
           "sourceReferences": [
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
-              "startLine": 94,
-              "endLine": 131,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
-            },
-            {
-              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
-              "revision": "head",
-              "startLine": 97,
-              "endLine": 102,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
             },
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
@@ -304,37 +410,48 @@
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
-              "startLine": 122,
-              "endLine": 127,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+            }
+          ],
+          "expectedCodeStatus": "available",
+          "expectedCodeSnippets": [
+            {
+              "language": "tsp",
+              "caption": "Documented TypeSpec example",
+              "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+              "section": "Retained authoritative evidence",
+              "lines": [
+                "import \"@azure-tools/typespec-client-generator-core\";",
+                "using Azure.ClientGenerator.Core;",
+                "",
+                "@@clientLocation(Feeds.feed, PetStore);",
+                "@@clientLocation(Pets.pet, PetStore);"
+              ]
             }
           ]
         }
       ],
       "findings": [
         {
-          "id": "compliance-44454-client-file",
-          "title": "New client hierarchy customizations are outside client.tsp",
-          "severity": "low",
-          "summary": "The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention.",
+          "id": "compliance-client-customization-file",
+          "title": "@@clientLocation customizations are outside client.tsp",
+          "severity": "medium",
+          "summary": "Expected: the Clients documentation says customizations should always be made in client.tsp alongside main.tsp. Actual: five @@clientLocation decorators, which the decorator reference defines as changing operation location in the client, are added in back-compatible.tsp. Gap: these client customizations use a nonstandard customization file instead of client.tsp.",
           "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
           "evidence": [
-            "The project already imports client.tsp, where client hierarchy customizations should be placed."
+            "Clients, Customizations: \"Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.\"",
+            "@Azure.ClientGenerator.Core.clientLocation: \"Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.\"",
+            "The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp."
           ],
           "sourceReferences": [
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
-              "startLine": 94,
-              "endLine": 131,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
-            },
-            {
-              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
-              "revision": "head",
-              "startLine": 97,
-              "endLine": 102,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
             },
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
@@ -346,9 +463,24 @@
             {
               "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
               "revision": "head",
-              "startLine": 122,
-              "endLine": 127,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+            }
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "startLine": 108,
+              "endLine": 113,
+              "lines": [
+                "  \"!csharp,!java,!python\"",
+                ");",
+                "@@clientLocation(",
+                "  ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+                "  \"CreateAndAssociateIPFilter\",",
+                "  \"python\""
+              ]
             }
           ]
         }
@@ -356,11 +488,29 @@
     }
   },
   "errors": [],
-  "projects": [
-    "specification/elastic/Elastic.Management"
-  ],
   "assessmentDuration": {
-    "totalMs": 629133,
-    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
+    "totalMs": 219297,
+    "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
+    "phases": {
+      "deterministicPreparationMs": 367,
+      "deterministicAssemblyMs": 215,
+      "judgmentMs": 218706,
+      "renderMs": 9
+    },
+    "breakdown": {
+      "semanticUnderstandingMs": 26842,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 55,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 55,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 192055,
+      "complianceQuality": "estimated/measured",
+      "overheadMs": 290,
+      "overheadQuality": "measured",
+      "totalMs": 219297,
+      "totalQuality": "measured",
+      "searchRoute": "bounded official document evidence"
+    }
   }
 }

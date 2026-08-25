@@ -1,0 +1,1396 @@
+{
+  "schemaVersion": 2,
+  "overallConfidence": "high",
+  "pr": 43308,
+  "title": "Fix TypeSpec LRO operations: remove @extension, use @useFinalStateVia",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/43308",
+  "state": "merged",
+  "createdAt": "2026-05-18T16:45:29Z",
+  "baseline": {
+    "ref": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
+    "commit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3"
+  },
+  "head": {
+    "commit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "result": "rest-compatible-downstream-breaking-change",
+  "artifactEvidence": {
+    "autorest": "Base/head OpenAPI wire contracts are identical for all six operations after excluding documentation text; both retain x-ms-long-running-operation and final-state-via location.",
+    "tcgc": "Execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel change from kind: basic without lroMetadata to kind: lro with finalStateVia: location. Validate, fixResourcePermissions, and refreshRecommendations remain kind: lro.",
+    "canonicalComparison": "Materially consistent overall: both reports identify one emitter-metadata intent, no REST break, one high-severity REST-compatible downstream break, passed compliance with no findings, high confidence, and a rest-compatible-downstream-breaking-change conclusion. The fresh report narrows the downstream scope: preserved TCGC proves only ScenarioConfigurations.execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel change from basic to lro; validate, fixResourcePermissions, and refreshRecommendations were already lro methods. The canonical semantic wording therefore overstates SDK LRO recognition as newly affecting all six operations."
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp",
+        "revision": "head",
+        "startLine": 12,
+        "endLine": 15,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp#L12-L15"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp",
+        "revision": "head",
+        "startLine": 59,
+        "endLine": 77,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp#L59-L77"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "base",
+        "startLine": 5,
+        "endLine": 5,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "base",
+        "startLine": 11,
+        "endLine": 11,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "base",
+        "startLine": 27,
+        "endLine": 27,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "head",
+        "startLine": 28,
+        "endLine": 28,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "base",
+        "startLine": 70,
+        "endLine": 70,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "head",
+        "startLine": 66,
+        "endLine": 66,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "base",
+        "startLine": 110,
+        "endLine": 110,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "head",
+        "startLine": 101,
+        "endLine": 101,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+        "revision": "head",
+        "startLine": 226,
+        "endLine": 226,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L226-L226"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+        "revision": "head",
+        "startLine": 278,
+        "endLine": 278,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L278-L278"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+        "revision": "head",
+        "startLine": 421,
+        "endLine": 421,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L421-L421"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+        "revision": "head",
+        "startLine": 457,
+        "endLine": 457,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L457-L457"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+        "revision": "base",
+        "startLine": 51,
+        "endLine": 52,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L51-L52"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+        "revision": "base",
+        "startLine": 62,
+        "endLine": 62,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L62-L62"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+        "revision": "base",
+        "startLine": 64,
+        "endLine": 64,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L64-L64"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+        "revision": "base",
+        "startLine": 74,
+        "endLine": 74,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L74-L74"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+        "revision": "base",
+        "startLine": 84,
+        "endLine": 84,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L84-L84"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+        "revision": "head",
+        "startLine": 8,
+        "endLine": 8,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp#L8-L8"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+        "revision": "head",
+        "startLine": 15,
+        "endLine": 42,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp#L15-L42"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "base",
+        "startLine": 5,
+        "endLine": 5,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "base",
+        "startLine": 14,
+        "endLine": 14,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "head",
+        "startLine": 17,
+        "endLine": 17,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "head",
+        "startLine": 22,
+        "endLine": 27,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "head",
+        "startLine": 29,
+        "endLine": 34,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "base",
+        "startLine": 57,
+        "endLine": 58,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "base",
+        "startLine": 60,
+        "endLine": 60,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+        "revision": "base",
+        "startLine": 74,
+        "endLine": 74,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L74-L74"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+        "revision": "head",
+        "startLine": 63,
+        "endLine": 63,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp#L63-L63"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__chaos__resource-manager__Microsoft.Chaos__Chaos/base/autorest"
+      },
+      {
+        "project": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__chaos__resource-manager__Microsoft.Chaos__Chaos/base/tcgc"
+      },
+      {
+        "project": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__chaos__resource-manager__Microsoft.Chaos__Chaos/head/autorest"
+      },
+      {
+        "project": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__chaos__resource-manager__Microsoft.Chaos__Chaos/head/tcgc"
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-43308-intent",
+          "intent": "Replace OpenAPI-only long-running-operation extensions with Azure.Core @useFinalStateVia(\"location\"), preserving all six REST contracts while making three operations consistently recognizable as LROs to SDK generators.",
+          "transformationChain": [
+            "Replace raw x-ms-long-running-operation and final-state-via extensions on the shared action helpers with @Azure.Core.useFinalStateVia(\"location\").",
+            "Remove operation-level polling suppressions and explicit polling links made unnecessary by the shared TypeSpec LRO metadata.",
+            "Preserve POST routes, parameters, 202 responses, Location and Retry-After headers, and final-state-via location in emitted OpenAPI.",
+            "Represent the existing Location-polled behavior directly in TypeSpec so all affected operations have explicit LRO semantics."
+          ],
+          "restRepresentation": {
+            "summary": "All six POST operations retain their existing 202 responses, Location and Retry-After headers, and Location-based final-state behavior; the change represents that existing LRO contract directly in TypeSpec.",
+            "operations": [
+              {
+                "operationId": "ScenarioConfigurations_Execute",
+                "apiVersions": [
+                  "2026-05-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Starts a scenario run and returns before execution completes.",
+                "lro": {
+                  "polling": "Wait Retry-After, then poll the Location URL until the scenario run reaches a terminal state.",
+                  "finalResult": "ScenarioRun from the Location endpoint.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "202: no body; Location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute",
+                "sourceReferences": [
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                    "revision": "head",
+                    "startLine": 22,
+                    "endLine": 119,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                    "revision": "head",
+                    "startLine": 48,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                    "revision": "head",
+                    "startLine": 44,
+                    "endLine": 52,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                    "revision": "head",
+                    "startLine": 69,
+                    "endLine": 80,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                  }
+                ]
+              },
+              {
+                "operationId": "ScenarioConfigurations_Validate",
+                "apiVersions": [
+                  "2026-05-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Starts asynchronous validation of a scenario configuration.",
+                "lro": {
+                  "polling": "Poll Location after Retry-After until terminal completion.",
+                  "finalResult": "Validation result from the Location endpoint.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "202: no body; Location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate",
+                "sourceReferences": [
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                    "revision": "head",
+                    "startLine": 22,
+                    "endLine": 119,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                    "revision": "head",
+                    "startLine": 48,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                    "revision": "head",
+                    "startLine": 44,
+                    "endLine": 52,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                    "revision": "head",
+                    "startLine": 69,
+                    "endLine": 80,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                  }
+                ]
+              },
+              {
+                "operationId": "ScenarioConfigurations_Cancel",
+                "apiVersions": [
+                  "2024-11-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Requests cancellation through the scenario configuration endpoint in versions before its removal.",
+                "lro": {
+                  "polling": "Poll Location after Retry-After until Succeeded, Failed, or Canceled.",
+                  "finalResult": "OperationStatusResult from the Location endpoint.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "202: no body; Location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel",
+                "sourceReferences": [
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                    "revision": "head",
+                    "startLine": 22,
+                    "endLine": 119,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                    "revision": "head",
+                    "startLine": 48,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                    "revision": "head",
+                    "startLine": 44,
+                    "endLine": 52,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                    "revision": "head",
+                    "startLine": 69,
+                    "endLine": 80,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                  }
+                ]
+              },
+              {
+                "operationId": "ScenarioConfigurations_FixResourcePermissions",
+                "apiVersions": [
+                  "2026-05-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/fixResourcePermissions",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Starts asynchronous repair of permissions required by the scenario.",
+                "lro": {
+                  "polling": "Poll Location after Retry-After until terminal completion.",
+                  "finalResult": "PermissionsFix result from the Location endpoint.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "optional application/json body: FixResourcePermissionsRequest",
+                "responsePayloads": [
+                  "202: no body; Location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/fixResourcePermissions",
+                "sourceReferences": [
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                    "revision": "head",
+                    "startLine": 22,
+                    "endLine": 119,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                    "revision": "head",
+                    "startLine": 48,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                    "revision": "head",
+                    "startLine": 44,
+                    "endLine": 52,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                    "revision": "head",
+                    "startLine": 69,
+                    "endLine": 80,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                  }
+                ]
+              },
+              {
+                "operationId": "ScenarioRuns_Cancel",
+                "apiVersions": [
+                  "2026-05-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, workspaceName, scenarioName, runId: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Requests cancellation of an active scenario run.",
+                "lro": {
+                  "polling": "Poll Location after Retry-After until Succeeded, Failed, or Canceled.",
+                  "finalResult": "ScenarioRun from the Location endpoint.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "202: no body; Location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel",
+                "sourceReferences": [
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                    "revision": "head",
+                    "startLine": 22,
+                    "endLine": 119,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                    "revision": "head",
+                    "startLine": 48,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                    "revision": "head",
+                    "startLine": 44,
+                    "endLine": 52,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                    "revision": "head",
+                    "startLine": 69,
+                    "endLine": 80,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                  }
+                ]
+              },
+              {
+                "operationId": "Workspaces_RefreshRecommendations",
+                "apiVersions": [
+                  "2026-05-01-preview"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/refreshRecommendations",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, workspaceName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Starts asynchronous regeneration of workspace recommendations.",
+                "lro": {
+                  "polling": "Poll Location after Retry-After until terminal completion.",
+                  "finalResult": "No response body after successful completion.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "202: no body; Location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/refreshRecommendations",
+                "sourceReferences": [
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                    "revision": "head",
+                    "startLine": 22,
+                    "endLine": 119,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                    "revision": "head",
+                    "startLine": 48,
+                    "endLine": 84,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                    "revision": "head",
+                    "startLine": 44,
+                    "endLine": 52,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                  },
+                  {
+                    "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                    "revision": "head",
+                    "startLine": 69,
+                    "endLine": 80,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 119,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "head",
+              "startLine": 48,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 44,
+              "endLine": 52,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "revision": "head",
+              "startLine": 69,
+              "endLine": 80,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+            }
+          ],
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Replace OpenAPI-only long-running-operation extensions with Azure.Core @useFinalStateVia(\"location\"), preserving all six REST contracts while making three operations consistently recognizable as LROs to SDK generators.",
+              "operationIds": [
+                "ScenarioConfigurations_Execute",
+                "ScenarioConfigurations_Validate",
+                "ScenarioConfigurations_Cancel",
+                "ScenarioConfigurations_FixResourcePermissions",
+                "ScenarioRuns_Cancel",
+                "Workspaces_RefreshRecommendations"
+              ],
+              "apiVersions": [
+                "2026-05-01-preview",
+                "2024-11-01-preview"
+              ],
+              "aspects": [
+                {
+                  "field": "TypeSpec LRO metadata",
+                  "before": "The operations use raw OpenAPI LRO extensions and operation-level polling metadata while already returning 202 with Location and Retry-After headers.",
+                  "after": "The shared TypeSpec helpers use @Azure.Core.useFinalStateVia(\"location\") to represent the same 202 Location-polled REST behavior."
+                }
+              ],
+              "effect": "All six POST operations retain their existing 202 responses, Location and Retry-After headers, and Location-based final-state behavior; the change represents that existing LRO contract directly in TypeSpec.",
+              "typeSpecCause": "Replace OpenAPI-only LRO extensions with @Azure.Core.useFinalStateVia(\"location\") and remove redundant explicit polling metadata.",
+              "sourceReferences": [
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                  "revision": "head",
+                  "startLine": 22,
+                  "endLine": 119,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                  "revision": "head",
+                  "startLine": 48,
+                  "endLine": 84,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                  "revision": "head",
+                  "startLine": 44,
+                  "endLine": 52,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                  "revision": "head",
+                  "startLine": 69,
+                  "endLine": 80,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                  "oldStart": 24,
+                  "oldCount": 15,
+                  "newStart": 22,
+                  "newCount": 10,
+                  "context": "namespace Microsoft.Chaos;",
+                  "lines": [
+                    " #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"template\"",
+                    " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"template\"",
+                    " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Custom LRO operation with specific response codes\"",
+                    "-#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Required for LRO extensions in OpenAPI output\"",
+                    " @autoRoute",
+                    " @armResourceAction(Resource)",
+                    " @post",
+                    "-@extension(\"x-ms-long-running-operation\", true)",
+                    "-@extension(",
+                    "-  \"x-ms-long-running-operation-options\",",
+                    "-  #{ `final-state-via`: \"location\" }",
+                    "-)",
+                    "+@Azure.Core.useFinalStateVia(\"location\")",
+                    " op ArmResourceActionAsyncWithLocation<",
+                    "   Resource extends Azure.ResourceManager.Foundations.Resource,",
+                    "   Request extends TypeSpec.Reflection.Model | void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                  "oldStart": 67,
+                  "oldCount": 15,
+                  "newStart": 60,
+                  "newCount": 10,
+                  "context": "op ArmResourceActionAsyncWithLocation<",
+                  "lines": [
+                    " #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"template\"",
+                    " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"template\"",
+                    " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Custom LRO operation with specific response codes\"",
+                    "-#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Required for LRO extensions in OpenAPI output\"",
+                    " @autoRoute",
+                    " @armResourceAction(Resource)",
+                    " @post",
+                    "-@extension(\"x-ms-long-running-operation\", true)",
+                    "-@extension(",
+                    "-  \"x-ms-long-running-operation-options\",",
+                    "-  #{ `final-state-via`: \"location\" }",
+                    "-)",
+                    "+@Azure.Core.useFinalStateVia(\"location\")",
+                    " op ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "   Resource extends Azure.ResourceManager.Foundations.Resource,",
+                    "   Request extends TypeSpec.Reflection.Model | void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+                  "oldStart": 107,
+                  "oldCount": 15,
+                  "newStart": 95,
+                  "newCount": 10,
+                  "context": "op ArmResourceActionNoContentAsyncWithLocationResult<",
+                  "lines": [
+                    " #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"template\"",
+                    " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"template\"",
+                    " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Custom LRO operation with specific response codes\"",
+                    "-#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Required for LRO extensions in OpenAPI output\"",
+                    " @autoRoute",
+                    " @armResourceAction(Resource)",
+                    " @post",
+                    "-@extension(\"x-ms-long-running-operation\", true)",
+                    "-@extension(",
+                    "-  \"x-ms-long-running-operation-options\",",
+                    "-  #{ `final-state-via`: \"location\" }",
+                    "-)",
+                    "+@Azure.Core.useFinalStateVia(\"location\")",
+                    " op ArmResourceActionNoBodyAsyncWithLocation<",
+                    "   Resource extends Azure.ResourceManager.Foundations.Resource,",
+                    "   Request extends TypeSpec.Reflection.Model | void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                  "oldStart": 48,
+                  "oldCount": 8,
+                  "newStart": 48,
+                  "newCount": 6,
+                  "context": "interface ScenarioConfigurations {",
+                  "lines": [
+                    "   /**",
+                    "    * Execute the scenario execution with the given scenario configuration.",
+                    "    */",
+                    "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+                    "-  @pollingOperation(ScenarioRuns.get)",
+                    "   execute is ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "     ScenarioConfiguration,",
+                    "     void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                  "oldStart": 59,
+                  "oldCount": 9,
+                  "newStart": 57,
+                  "newCount": 7,
+                  "context": "interface ScenarioConfigurations {",
+                  "lines": [
+                    "   /**",
+                    "    * Cancel the currently running scenario execution.",
+                    "    */",
+                    "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+                    "   @removed(Microsoft.Chaos.Versions.v2026_05_01_preview)",
+                    "-  @pollingOperation(ScenarioRuns.get)",
+                    "   cancel is ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "     ScenarioConfiguration,",
+                    "     void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                  "oldStart": 71,
+                  "oldCount": 7,
+                  "newStart": 67,
+                  "newCount": 6,
+                  "context": "interface ScenarioConfigurations {",
+                  "lines": [
+                    "   /**",
+                    "    * Validate the given scenario configuration.",
+                    "    */",
+                    "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+                    "   validate is ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "     ScenarioConfiguration,",
+                    "     void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                  "oldStart": 81,
+                  "oldCount": 7,
+                  "newStart": 76,
+                  "newCount": 6,
+                  "context": "interface ScenarioConfigurations {",
+                  "lines": [
+                    "   /**",
+                    "    * Fixes resource permissions for the given scenario configuration.",
+                    "    */",
+                    "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+                    "   fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "     ScenarioConfiguration,",
+                    "     FixResourcePermissionsRequest,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                  "oldStart": 54,
+                  "oldCount": 10,
+                  "newStart": 44,
+                  "newCount": 7,
+                  "context": "interface ScenarioRuns {",
+                  "lines": [
+                    "   /**",
+                    "    * Cancel the currently running scenario execution.",
+                    "    */",
+                    "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+                    "-  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern\"",
+                    "   @added(Microsoft.Chaos.Versions.v2026_05_01_preview)",
+                    "-  @pollingOperation(ScenarioRuns.get)",
+                    "   cancel is ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "     ScenarioRun,",
+                    "     void,"
+                  ]
+                },
+                {
+                  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                  "oldStart": 71,
+                  "oldCount": 7,
+                  "newStart": 71,
+                  "newCount": 6,
+                  "context": "interface Workspaces {",
+                  "lines": [
+                    "   /**",
+                    "    * Refreshes recommendation status for all scenarios in a given workspace.",
+                    "    */",
+                    "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Async LRO POST returning 202 + Location, not a synchronous POST\"",
+                    "   refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult<",
+                    "     Workspace,",
+                    "     void,"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "pr-43308-lro-recognition"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": [
+        {
+          "id": "pr-43308-lro-recognition",
+          "title": "Three generated SDK methods change from basic to long-running",
+          "severity": "high",
+          "confidence": "high",
+          "summary": "The wire contract is unchanged, but ScenarioConfigurations.execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel now expose poller/LRO return types and asynchronous completion semantics.",
+          "evidence": [
+            "Before the change, generated clients treat the three methods as ordinary operations rather than long-running operations.",
+            "After the change, generated clients expose Location-polled LRO behavior with typed final responses.",
+            "Base/head OpenAPI method, path, parameters, responses, x-ms-long-running-operation, and final-state-via values are identical."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 119,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "head",
+              "startLine": 48,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 44,
+              "endLine": 52,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+            }
+          ]
+        }
+      ]
+    },
+    "azureCompliance": {
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 3,
+        "findingCount": 0
+      },
+      "documents": [
+        {
+          "title": "Azure.Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/decorators/",
+          "section": "@Azure.Core.useFinalStateVia",
+          "guidanceExcerpt": "Overrides the final state value for an operation. The supported values include `location`.",
+          "applicableGuidance": "Use @useFinalStateVia(\"location\") to select the Location-based LRO final-state strategy.",
+          "evidence": "The changed LRO helpers apply @Azure.Core.useFinalStateVia(\"location\").",
+          "sourceReferences": [
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 119,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 5,
+              "endLine": 5,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 11,
+              "endLine": 11,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 27,
+              "endLine": 27,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 28,
+              "endLine": 28,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 70,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 66,
+              "endLine": 66,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 110,
+              "endLine": 110,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 101,
+              "endLine": 101,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
+            }
+          ]
+        },
+        {
+          "title": "ARM long-running operations",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+          "section": "Action operations",
+          "guidanceExcerpt": "The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action.",
+          "applicableGuidance": "Location-polled ARM actions use matching Location headers, Retry-After, and logical final-result types.",
+          "evidence": "The helpers use ArmLroLocationHeader<FinalResult = ...>, RetryAfterHeader, and concrete action result types.",
+          "sourceReferences": [
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 119,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "head",
+              "startLine": 48,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 44,
+              "endLine": 52,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "revision": "head",
+              "startLine": 69,
+              "endLine": 80,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 5,
+              "endLine": 5,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 11,
+              "endLine": 11,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 27,
+              "endLine": 27,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 28,
+              "endLine": 28,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 70,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 66,
+              "endLine": 66,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 110,
+              "endLine": 110,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 101,
+              "endLine": 101,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 51,
+              "endLine": 52,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L51-L52"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 62,
+              "endLine": 62,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L62-L62"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 64,
+              "endLine": 64,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L64-L64"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 74,
+              "endLine": 74,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L74-L74"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 84,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L84-L84"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 5,
+              "endLine": 5,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 14,
+              "endLine": 14,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 17,
+              "endLine": 17,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 27,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 29,
+              "endLine": 34,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 57,
+              "endLine": 58,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 60,
+              "endLine": 60,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "revision": "base",
+              "startLine": 74,
+              "endLine": 74,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L74-L74"
+            }
+          ]
+        },
+        {
+          "title": "Azure Core no-openapi rule",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+          "section": "Rule summary",
+          "guidanceExcerpt": "Azure specs should not be using decorators from @typespec/openapi or @azure-tools/typespec-autorest because other emitters will not be able to understand them.",
+          "applicableGuidance": "Represent behavior with emitter-independent TypeSpec and Azure constructs instead of raw OpenAPI extensions.",
+          "evidence": "The PR removes raw x-ms-long-running-operation extensions and replaces them with Azure.Core LRO metadata.",
+          "sourceReferences": [
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 119,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 44,
+              "endLine": 52,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 5,
+              "endLine": 5,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 11,
+              "endLine": 11,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 27,
+              "endLine": 27,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 28,
+              "endLine": 28,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 70,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 66,
+              "endLine": 66,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "base",
+              "startLine": 110,
+              "endLine": 110,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+              "revision": "head",
+              "startLine": 101,
+              "endLine": 101,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 5,
+              "endLine": 5,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 14,
+              "endLine": 14,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 17,
+              "endLine": 17,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 22,
+              "endLine": 27,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "head",
+              "startLine": 29,
+              "endLine": 34,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 57,
+              "endLine": 58,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 60,
+              "endLine": 60,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/chaos/resource-manager/Microsoft.Chaos/Chaos"
+  ],
+  "assessmentDuration": {
+    "totalMs": 829433,
+    "note": "Assessment-only timings retained from execution-time-analysis.md. Worktree creation, dependency installation, and other environment setup are excluded. Quality labels distinguish measured, estimated, and derived values.",
+    "breakdown": {
+      "semanticUnderstandingMs": 190000,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 80000,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 60000,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 471000,
+      "complianceQuality": "measured",
+      "overheadMs": 29000,
+      "overheadQuality": "derived",
+      "totalMs": 829433,
+      "totalQuality": "measured",
+      "searchRoute": "expanded beyond catalog"
+    }
+  }
+}

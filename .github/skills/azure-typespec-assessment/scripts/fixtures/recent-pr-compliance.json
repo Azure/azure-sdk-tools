@@ -37,10 +37,29 @@
         "guidanceExcerpt": "For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum.",
         "applicableGuidance": "A stable version replacing a preview removes the preview member and reverses preview-only additions.",
         "evidence": "RecoveryServicesBackup retains v2026_01_31_preview beside v2026_02_01 and retains preview-only declarations with @removed(v2026_02_01).",
+        "expectedCodeStatus": "not-present",
+        "expectedCodeReason": "The guidance requires deleting the replaced preview declarations; it does not provide replacement TypeSpec for this case.",
         "sourcePathIncludes": [
           "RecoveryServicesBackup/main.tsp",
           "RecoveryPointResource.tsp",
           "RecoveryServicesBackup/models.tsp"
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+            "startLine": 63,
+            "endLine": 70,
+            "lines": [
+              "   * The 2026-01-31-preview API version.",
+              "   */",
+              "  v2026_01_31_preview: \"2026-01-31-preview\",",
+              "",
+              "  /**",
+              "   * The 2026-02-01 API version.",
+              "   */",
+              "  v2026_02_01: \"2026-02-01\","
+            ]
+          }
         ]
       },
       {
@@ -50,8 +69,35 @@
         "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
         "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
         "evidence": "The edited @@clientLocation declarations remain in back-compatible.tsp.",
-        "sourcePathIncludes": [
-          "RecoveryServicesBackup/back-compatible.tsp"
+        "expectedCodeStatus": "available",
+        "expectedCodeSnippets": [
+          {
+            "language": "tsp",
+            "caption": "Documented client.tsp customization example",
+            "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+            "section": "Customizations",
+            "lines": [
+              "import \"@azure-tools/typespec-client-generator-core\";",
+              "using Azure.ClientGenerator.Core;",
+              "",
+              "@@clientLocation(Feeds.feed, PetStore);",
+              "@@clientLocation(Pets.pet, PetStore);"
+            ]
+          }
+        ],
+        "sourcePathIncludes": ["RecoveryServicesBackup/back-compatible.tsp"],
+        "codeSnippets": [
+          {
+            "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+            "startLine": 68,
+            "endLine": 71,
+            "lines": [
+              "@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,",
+              "  Microsoft.RecoveryServices,",
+              "  \"!csharp,!go\"",
+              ");"
+            ]
+          }
         ]
       }
     ],
@@ -65,6 +111,25 @@
         "evidence": [
           "The guide says to remove the replaced preview member and delete preview-only additions.",
           "The PR instead retains the preview member and scopes preview-only declarations out with @removed(v2026_02_01)."
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp",
+            "startLine": 62,
+            "endLine": 71,
+            "lines": [
+              "  /**",
+              "   * The 2026-01-31-preview API version.",
+              "   */",
+              "  v2026_01_31_preview: \"2026-01-31-preview\",",
+              "",
+              "  /**",
+              "   * The 2026-02-01 API version.",
+              "   */",
+              "  v2026_02_01: \"2026-02-01\",",
+              "}"
+            ]
+          }
         ],
         "sourcePathIncludes": [
           "RecoveryServicesBackup/main.tsp",
@@ -82,9 +147,28 @@
           "The decorators correctly customize client hierarchy and language scope.",
           "Their placement does not follow the documented client.tsp convention."
         ],
-        "sourcePathIncludes": [
-          "RecoveryServicesBackup/back-compatible.tsp"
-        ]
+        "codeSnippets": [
+          {
+            "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+            "startLine": 68,
+            "endLine": 79,
+            "lines": [
+              "@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,",
+              "  Microsoft.RecoveryServices,",
+              "  \"!csharp,!go\"",
+              ");",
+              "@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,",
+              "  Microsoft.RecoveryServices,",
+              "  \"!csharp,!go\"",
+              ");",
+              "@@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,",
+              "  Microsoft.RecoveryServices,",
+              "  \"!csharp,!go\"",
+              ");"
+            ]
+          }
+        ],
+        "sourcePathIncludes": ["RecoveryServicesBackup/back-compatible.tsp"]
       }
     ]
   },
@@ -98,9 +182,7 @@
         "guidanceExcerpt": "Overrides the final state value for an operation. The supported values include `location`.",
         "applicableGuidance": "Use @useFinalStateVia(\"location\") to select the Location-based LRO final-state strategy.",
         "evidence": "The changed LRO helpers apply @Azure.Core.useFinalStateVia(\"location\").",
-        "sourcePathIncludes": [
-          "lro-helpers.tsp"
-        ]
+        "sourcePathIncludes": ["lro-helpers.tsp"]
       },
       {
         "title": "ARM long-running operations",
@@ -123,10 +205,7 @@
         "guidanceExcerpt": "Azure specs should not be using decorators from @typespec/openapi or @azure-tools/typespec-autorest because other emitters will not be able to understand them.",
         "applicableGuidance": "Represent behavior with emitter-independent TypeSpec and Azure constructs instead of raw OpenAPI extensions.",
         "evidence": "The PR removes raw x-ms-long-running-operation extensions and replaces them with Azure.Core LRO metadata.",
-        "sourcePathIncludes": [
-          "lro-helpers.tsp",
-          "scenarioRun.tsp"
-        ]
+        "sourcePathIncludes": ["lro-helpers.tsp", "scenarioRun.tsp"]
       }
     ]
   },
@@ -140,9 +219,7 @@
         "guidanceExcerpt": "Using a union with the base scalar (`string`, `int32`, `int64`, etc.) as a variant instead of an enum makes it extensible.",
         "applicableGuidance": "Use an open union containing the base scalar and named known values for an extensible service value.",
         "evidence": "CloudHsmClusterSkuName changes from a suppressed enum to a union containing string and two named variants with unchanged wire values.",
-        "sourcePathIncludes": [
-          "models.tsp"
-        ]
+        "sourcePathIncludes": ["models.tsp"]
       }
     ]
   },
@@ -156,8 +233,33 @@
         "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
         "applicableGuidance": "A stable release replacing a preview removes the preview member and retargets promoted changes.",
         "evidence": "The enum retains v2025_10_01_preview and appends stable v2026_03_01.",
-        "sourcePathIncludes": [
-          "main.tsp"
+        "expectedCodeStatus": "not-present",
+        "expectedCodeReason": "The guidance requires removing the replaced preview member; it does not provide a replacement enum example.",
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 28,
+            "endLine": 35,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L28-L35"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "startLine": 28,
+            "endLine": 35,
+            "lines": [
+              "  /** 2025-03-01 preview version */",
+              "  v2025_03_01_preview: \"2025-03-01-preview\",",
+              "",
+              "  /** 2025-10-01 preview version */",
+              "  v2025_10_01_preview: \"2025-10-01-preview\",",
+              "",
+              "  /** 2026-03-01 stable version */",
+              "  v2026_03_01: \"2026-03-01\","
+            ]
+          }
         ]
       },
       {
@@ -167,8 +269,67 @@
         "guidanceExcerpt": "Resource providers that support private endpoint connections must declare a private endpoint connection resource type and use the standard `PrivateEndpoints` interface to expose operations.",
         "applicableGuidance": "Private endpoint connections extend PrivateEndpointConnectionResource and use PrivateEndpoints operations.",
         "evidence": "The PR manually models PrivateEndpointConnection as ProxyResource and uses generic ArmResource operations.",
-        "sourcePathIncludes": [
-          "main.tsp"
+        "expectedCodeStatus": "available",
+        "expectedCodeSnippets": [
+          {
+            "language": "tsp",
+            "caption": "Documented private endpoint resource and operations",
+            "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+            "section": "Defining a Private Endpoint Connection Resource",
+            "lines": [
+              "model PrivateEndpointConnection is PrivateEndpointConnectionResource;",
+              "alias PrivateEndpointOperations = PrivateEndpoints<PrivateEndpointConnection>;",
+              "",
+              "getPrivateEndpointConnection is PrivateEndpointOperations.Read<Employee>;",
+              "createOrUpdatePrivateEndpointConnection is PrivateEndpointOperations.CreateOrUpdateAsync<Employee>;",
+              "deletePrivateEndpointConnection is PrivateEndpointOperations.DeleteAsync<Employee>;",
+              "listPrivateEndpointConnections is PrivateEndpointOperations.ListByParent<Employee>;"
+            ]
+          }
+        ],
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 357,
+            "endLine": 385,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L385"
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 543,
+            "endLine": 550,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L550"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "startLine": 359,
+            "endLine": 362,
+            "lines": [
+              "@added(Versions.v2025_10_01_preview)",
+              "@parentResource(TrafficController)",
+              "model PrivateEndpointConnection",
+              "  is ProxyResource<PrivateEndpointConnectionProperties> {"
+            ]
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "startLine": 543,
+            "endLine": 550,
+            "lines": [
+              "@added(Versions.v2025_10_01_preview)",
+              "@armResourceOperations",
+              "interface PrivateEndpointConnectionsInterface {",
+              "  get is ArmResourceRead<PrivateEndpointConnection>;",
+              "  update is ArmResourceCreateOrReplaceSync<PrivateEndpointConnection>;",
+              "  delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>;",
+              "  listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>;",
+              "}"
+            ]
+          }
         ]
       },
       {
@@ -178,8 +339,62 @@
         "guidanceExcerpt": "Resource providers that support private link resources must declare a private link resource type and use the standard `PrivateLinks` interface to expose operations.",
         "applicableGuidance": "Private-link discovery uses the standard PrivateLink model and PrivateLinks operation interface.",
         "evidence": "The PR manually models PrivateLinkResource as ProxyResource and uses generic read/list templates.",
-        "sourcePathIncludes": [
-          "main.tsp"
+        "expectedCodeStatus": "available",
+        "expectedCodeSnippets": [
+          {
+            "language": "tsp",
+            "caption": "Documented private link resource and operations",
+            "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+            "section": "Defining a Private Link Resource",
+            "lines": [
+              "model MyPrivateLinkResource is PrivateLink;",
+              "alias PrivateLinkOperations = PrivateLinks<MyPrivateLinkResource>;",
+              "",
+              "getPrivateLink is PrivateLinkOperations.Read<Employee>;",
+              "listPrivateLinks is PrivateLinkOperations.ListByParent<Employee>;"
+            ]
+          }
+        ],
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 426,
+            "endLine": 458,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L426-L458"
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 552,
+            "endLine": 557,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L552-L557"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "startLine": 428,
+            "endLine": 430,
+            "lines": [
+              "@added(Versions.v2025_10_01_preview)",
+              "@parentResource(TrafficController)",
+              "model PrivateLinkResource is ProxyResource<PrivateLinkResourceProperties> {"
+            ]
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "startLine": 552,
+            "endLine": 557,
+            "lines": [
+              "@added(Versions.v2025_10_01_preview)",
+              "@armResourceOperations",
+              "interface PrivateLinkResourcesInterface {",
+              "  get is ArmResourceRead<PrivateLinkResource>;",
+              "  listByTrafficController is ArmResourceListByParent<PrivateLinkResource>;",
+              "}"
+            ]
+          }
         ]
       },
       {
@@ -189,9 +404,73 @@
         "guidanceExcerpt": "Set whether a model property should be flattened or not. This decorator is not recommended to use for green field services.",
         "applicableGuidance": "Do not add legacy flattening to newly introduced API models without an existing compatibility requirement.",
         "evidence": "The new private endpoint and private link resource properties are flattened for AutoRest and C#.",
-        "sourcePathIncludes": [
-          "back-compatible.tsp",
-          "client.tsp"
+        "expectedCodeStatus": "not-present",
+        "expectedCodeReason": "The guidance discourages the legacy decorator for new models; it does not prescribe replacement TypeSpec.",
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 357,
+            "endLine": 385,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L385"
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 426,
+            "endLine": 458,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L426-L458"
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
+            "revision": "head",
+            "startLine": 29,
+            "endLine": 38,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L29-L38"
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+            "revision": "head",
+            "startLine": 162,
+            "endLine": 171,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L162-L171"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
+            "startLine": 29,
+            "endLine": 38,
+            "lines": [
+              "#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
+              "@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+              "  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,",
+              "  \"autorest\"",
+              ");",
+              "#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
+              "@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+              "  Microsoft.ServiceNetworking.PrivateLinkResource.properties,",
+              "  \"autorest\"",
+              ");"
+            ]
+          },
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+            "startLine": 162,
+            "endLine": 171,
+            "lines": [
+              "#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"property flatten for SDK backward compatibility\"",
+              "@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+              "  PrivateEndpointConnection.properties,",
+              "  \"csharp\"",
+              ");",
+              "#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"property flatten for SDK backward compatibility\"",
+              "@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+              "  PrivateLinkResource.properties,",
+              "  \"csharp\"",
+              ");"
+            ]
+          }
         ]
       }
     ],
@@ -205,9 +484,7 @@
         "evidence": [
           "The documented workflow removes the replaced preview member and retargets promoted changes to stable."
         ],
-        "sourcePathIncludes": [
-          "main.tsp"
-        ]
+        "sourcePathIncludes": ["main.tsp"]
       },
       {
         "id": "compliance-44200-private-endpoint",
@@ -218,9 +495,7 @@
         "evidence": [
           "The official private-endpoint guide requires the standard resource base and PrivateEndpoints interface."
         ],
-        "sourcePathIncludes": [
-          "main.tsp"
-        ]
+        "sourcePathIncludes": ["main.tsp"]
       },
       {
         "id": "compliance-44200-private-link",
@@ -231,9 +506,7 @@
         "evidence": [
           "The official private-link guide requires the standard model and PrivateLinks interface."
         ],
-        "sourcePathIncludes": [
-          "main.tsp"
-        ]
+        "sourcePathIncludes": ["main.tsp"]
       },
       {
         "id": "compliance-44200-flattening",
@@ -244,10 +517,7 @@
         "evidence": [
           "The changed types are newly introduced, so they have no prior flattened SDK contract to preserve."
         ],
-        "sourcePathIncludes": [
-          "back-compatible.tsp",
-          "client.tsp"
-        ]
+        "sourcePathIncludes": ["back-compatible.tsp", "client.tsp"]
       }
     ]
   },
@@ -261,8 +531,25 @@
         "guidanceExcerpt": "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.",
         "applicableGuidance": "A string target and a supported language scope are valid clientLocation arguments.",
         "evidence": "The Python-specific @@clientLocation calls use documented string targets and scopes.",
-        "sourcePathIncludes": [
-          "back-compatible.tsp"
+        "sourcePathIncludes": ["back-compatible.tsp"],
+        "codeSnippets": [
+          {
+            "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+            "startLine": 94,
+            "endLine": 103,
+            "lines": [
+              "@@clientLocation(",
+              "  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+              "  \"listAssociatedTrafficFilters\",",
+              "  \"!csharp,!python\"",
+              ");",
+              "@@clientLocation(",
+              "  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+              "  \"ListAssociatedTrafficFilters\",",
+              "  \"python\"",
+              ");"
+            ]
+          }
         ]
       },
       {
@@ -272,9 +559,23 @@
         "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
         "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
         "evidence": "The new customizations are in back-compatible.tsp despite an existing imported client.tsp.",
-        "sourcePathIncludes": [
-          "back-compatible.tsp"
-        ]
+        "expectedCodeStatus": "available",
+        "expectedCodeSnippets": [
+          {
+            "language": "tsp",
+            "caption": "Documented client.tsp customization example",
+            "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+            "section": "Customizations",
+            "lines": [
+              "import \"@azure-tools/typespec-client-generator-core\";",
+              "using Azure.ClientGenerator.Core;",
+              "",
+              "@@clientLocation(Feeds.feed, PetStore);",
+              "@@clientLocation(Pets.pet, PetStore);"
+            ]
+          }
+        ],
+        "sourcePathIncludes": ["back-compatible.tsp"]
       }
     ],
     "findings": [
@@ -287,8 +588,25 @@
         "evidence": [
           "The project already imports client.tsp, where client hierarchy customizations should be placed."
         ],
-        "sourcePathIncludes": [
-          "back-compatible.tsp"
+        "sourcePathIncludes": ["back-compatible.tsp"],
+        "codeSnippets": [
+          {
+            "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+            "startLine": 94,
+            "endLine": 103,
+            "lines": [
+              "@@clientLocation(",
+              "  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+              "  \"listAssociatedTrafficFilters\",",
+              "  \"!csharp,!python\"",
+              ");",
+              "@@clientLocation(",
+              "  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+              "  \"ListAssociatedTrafficFilters\",",
+              "  \"python\"",
+              ");"
+            ]
+          }
         ]
       }
     ]
@@ -303,9 +621,7 @@
         "guidanceExcerpt": "The TypeSpec should represent the current state of the API.",
         "applicableGuidance": "Delete declarations that should exist in no API version; use @removed only when retaining them for earlier versions.",
         "evidence": "The removed NFSv2 declarations existed only in the latest unreleased version and should no longer exist in any version.",
-        "sourcePathIncludes": [
-          "models.tsp"
-        ]
+        "sourcePathIncludes": ["models.tsp"]
       }
     ]
   },
@@ -319,8 +635,26 @@
         "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
         "applicableGuidance": "The stable version replaces the prior preview member.",
         "evidence": "The enum retains v2025_05_01_preview and appends v2026_06_01.",
-        "sourcePathIncludes": [
-          "main.tsp"
+        "expectedCodeStatus": "not-present",
+        "expectedCodeReason": "The guidance requires removing the replaced preview member; it does not provide a replacement enum example.",
+        "sourcePathIncludes": ["main.tsp"],
+        "codeSnippets": [
+          {
+            "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+            "startLine": 39,
+            "endLine": 47,
+            "lines": [
+              "  /**",
+              "   * The 2025-05-01-preview API version.",
+              "   */",
+              "  v2025_05_01_preview: \"2025-05-01-preview\",",
+              "",
+              "  /**",
+              "   * The 2026-06-01 API version.",
+              "   */",
+              "  v2026_06_01: \"2026-06-01\","
+            ]
+          }
         ]
       },
       {
@@ -330,9 +664,7 @@
         "guidanceExcerpt": "Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported.",
         "applicableGuidance": "Use a language-scoped override operation to customize parameter order.",
         "evidence": "The Go-only @@override is in client.tsp and reorders the delete operation parameters.",
-        "sourcePathIncludes": [
-          "client.tsp"
-        ]
+        "sourcePathIncludes": ["client.tsp"]
       }
     ],
     "findings": [
@@ -345,9 +677,27 @@
         "evidence": [
           "The Go-specific override follows its documentation and is not part of this finding."
         ],
-        "sourcePathIncludes": [
-          "main.tsp"
-        ]
+        "codeSnippets": [
+          {
+            "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+            "startLine": 38,
+            "endLine": 48,
+            "lines": [
+              "enum Versions {",
+              "  /**",
+              "   * The 2025-05-01-preview API version.",
+              "   */",
+              "  v2025_05_01_preview: \"2025-05-01-preview\",",
+              "",
+              "  /**",
+              "   * The 2026-06-01 API version.",
+              "   */",
+              "  v2026_06_01: \"2026-06-01\",",
+              "}"
+            ]
+          }
+        ],
+        "sourcePathIncludes": ["main.tsp"]
       }
     ]
   },
@@ -361,6 +711,21 @@
         "guidanceExcerpt": "Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties. Child resources usually use the `ProxyResource<TProperties>` as their base resource type.",
         "applicableGuidance": "A resource-shaped child chooses a documented ARM base and declares its parent instead of reconstructing the envelope in a legacy plain model.",
         "evidence": "ConnectionAnalyzer is a plain model with Legacy.customAzureResource and manually repeated ARM envelope fields.",
+        "expectedCodeStatus": "available",
+        "expectedCodeSnippets": [
+          {
+            "language": "tsp",
+            "caption": "Documented child resource model",
+            "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+            "section": "Resource types and child resources",
+            "lines": [
+              "@parentResource(Employee)",
+              "model Job is ProxyResource<JobProperties> {",
+              "  ...ResourceNameParameter<Job>;",
+              "}"
+            ]
+          }
+        ],
         "sourceReferences": [
           {
             "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
@@ -368,6 +733,22 @@
             "startLine": 27735,
             "endLine": 27791,
             "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
+            "startLine": 27738,
+            "endLine": 27744,
+            "lines": [
+              "#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Required to attach Connection Analyzer child models to the existing NetworkWatcher resource which is modeled with the legacy ARM resource pattern via Azure.ResourceManager.Legacy.feature.\"",
+              "#suppress \"@azure-tools/typespec-azure-resource-manager/arm-custom-resource-no-key\" \"ConnectionAnalyzer is exposed via the legacy NetworkWatcher action pattern; its key is supplied by the routed operation, not modeled on the resource.\"",
+              "#suppress \"@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage\" \"Connection Analyzer follows the existing legacy custom-resource pattern used by sibling NetworkWatcher child resources in this project.\"",
+              "@added(Versions.v2025_09_01)",
+              "@Azure.ResourceManager.Legacy.feature(Features.networkWatcher)",
+              "@Azure.ResourceManager.Legacy.customAzureResource(#{ isAzureResource: true })",
+              "model ConnectionAnalyzer {"
+            ]
           }
         ]
       },
@@ -378,6 +759,22 @@
         "guidanceExcerpt": "Custom actions define any operations over resources outside the simple CRUDL (Create, Read, Update, Delete, List) or lifecycle operations described above.",
         "applicableGuidance": "CRUDL uses ArmResourceRead, ArmResourceCreateOrReplace, ArmTagsPatch or ArmCustomPatch, ArmResourceDelete, and ArmResourceListByParent; actions are reserved for behavior outside CRUDL.",
         "evidence": "ConnectionAnalyzer PUT, GET, PATCH, and DELETE use Legacy.RoutedOperations action helpers, while list is manually routed.",
+        "expectedCodeStatus": "available",
+        "expectedCodeSnippets": [
+          {
+            "language": "tsp",
+            "caption": "Documented ARM child-resource operations",
+            "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+            "section": "Recommended operations and custom actions",
+            "lines": [
+              "get is ArmResourceRead<Resource>;",
+              "createOrUpdate is ArmResourceCreateOrReplaceAsync<Resource>;",
+              "update is ArmCustomPatchSync<Resource, PatchRequest>;",
+              "delete is ArmResourceDeleteSync<Resource>;",
+              "listByParent is ArmResourceListByParent<Resource>;"
+            ]
+          }
+        ],
         "sourceReferences": [
           {
             "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
@@ -392,6 +789,39 @@
             "startLine": 470,
             "endLine": 552,
             "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "startLine": 473,
+            "endLine": 480,
+            "lines": [
+              "  @added(Versions.v2025_09_01)",
+              "  @tag(\"ConnectionAnalyzers\")",
+              "  @Azure.Core.useFinalStateVia(\"azure-async-operation\")",
+              "  @put",
+              "  @route(\"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}\")",
+              "  connectionAnalyzersCreate is ConnectionAnalyzerOps.ActionAsync<",
+              "    NetworkWatcher,",
+              "    ConnectionAnalyzer,"
+            ]
+          },
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "startLine": 524,
+            "endLine": 532,
+            "lines": [
+              "  @added(Versions.v2025_09_01)",
+              "  @tag(\"ConnectionAnalyzers\")",
+              "  @patch(#{ implicitOptionality: false })",
+              "  @route(\"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}\")",
+              "  connectionAnalyzersUpdateTags is ConnectionAnalyzerOps.ActionSync<",
+              "    NetworkWatcher,",
+              "    TagsObject,",
+              "    Response = ArmResponse<ConnectionAnalyzer>,",
+              "    OverrideErrorType = ErrorResponse"
+            ]
           }
         ]
       }
@@ -414,6 +844,27 @@
             "startLine": 27735,
             "endLine": 27791,
             "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791"
+          }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
+            "startLine": 27738,
+            "endLine": 27749,
+            "lines": [
+              "#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Required to attach Connection Analyzer child models to the existing NetworkWatcher resource which is modeled with the legacy ARM resource pattern via Azure.ResourceManager.Legacy.feature.\"",
+              "#suppress \"@azure-tools/typespec-azure-resource-manager/arm-custom-resource-no-key\" \"ConnectionAnalyzer is exposed via the legacy NetworkWatcher action pattern; its key is supplied by the routed operation, not modeled on the resource.\"",
+              "#suppress \"@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage\" \"Connection Analyzer follows the existing legacy custom-resource pattern used by sibling NetworkWatcher child resources in this project.\"",
+              "@added(Versions.v2025_09_01)",
+              "@Azure.ResourceManager.Legacy.feature(Features.networkWatcher)",
+              "@Azure.ResourceManager.Legacy.customAzureResource(#{ isAzureResource: true })",
+              "model ConnectionAnalyzer {",
+              "  /**",
+              "   * Name of the connection analyzer.",
+              "   */",
+              "  @visibility(Lifecycle.Read)",
+              "  name?: string;"
+            ]
           }
         ]
       },
@@ -442,6 +893,40 @@
             "endLine": 552,
             "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552"
           }
+        ],
+        "codeSnippets": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "startLine": 41,
+            "endLine": 46,
+            "lines": [
+              "alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations<",
+              "  {",
+              "    ...ApiVersionParameter;",
+              "    ...SubscriptionIdParameter;",
+              "    ...ResourceGroupParameter;",
+              ""
+            ]
+          },
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "startLine": 476,
+            "endLine": 487,
+            "lines": [
+              "  @put",
+              "  @route(\"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}\")",
+              "  connectionAnalyzersCreate is ConnectionAnalyzerOps.ActionAsync<",
+              "    NetworkWatcher,",
+              "    ConnectionAnalyzer,",
+              "    ConnectionAnalyzer,",
+              "    Response =",
+              "      | ArmResourceUpdatedResponse<ConnectionAnalyzer>",
+              "      | ArmResourceCreatedResponse<",
+              "          ConnectionAnalyzer,",
+              "          LroHeaders = ArmAsyncOperationHeader<FinalResult = ConnectionAnalyzer> &",
+              "            Azure.Core.Foundations.RetryAfterHeader"
+            ]
+          }
         ]
       }
     ]
@@ -456,9 +941,7 @@
         "guidanceExcerpt": "This decorator is used either on a namespace or a version enum value to indicate the version of the Azure Resource Manager common-types to use for refs in emitted Swagger files.",
         "applicableGuidance": "A version enum member may select the ARM common-types version it emits.",
         "evidence": "Both changed preview members select Azure.ResourceManager.CommonTypes.Versions.v5.",
-        "sourcePathIncludes": [
-          "main.tsp"
-        ]
+        "sourcePathIncludes": ["main.tsp"]
       },
       {
         "title": "arm-common-types-version rule",
@@ -467,9 +950,7 @@
         "guidanceExcerpt": "If the common types version is updated in later versions, the decorator should appear on each version enum member.",
         "applicableGuidance": "Services with varying historical common-types versions use per-version decorators.",
         "evidence": "The project already uses per-version declarations and the PR preserves that pattern.",
-        "sourcePathIncludes": [
-          "main.tsp"
-        ]
+        "sourcePathIncludes": ["main.tsp"]
       }
     ]
   },
@@ -483,10 +964,7 @@
         "guidanceExcerpt": "Overrides the generated name for client SDK elements including clients, methods, parameters, unions, models, enums, and model properties.",
         "applicableGuidance": "Use a language-scoped @clientName to preserve SDK identifiers without changing service-facing values.",
         "evidence": "Six augment decorators target union members, provide released Java identifiers, and use the supported java scope.",
-        "sourcePathIncludes": [
-          "client.tsp",
-          "models.tsp"
-        ]
+        "sourcePathIncludes": ["client.tsp", "models.tsp"]
       },
       {
         "title": "Clients",
@@ -495,9 +973,7 @@
         "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. This can be achieved with the augment decorator: `@clientName`.",
         "applicableGuidance": "Client-name compatibility customizations use augment decorators in client.tsp.",
         "evidence": "The changed @@clientName declarations are in client.tsp and leave serialized union values unchanged.",
-        "sourcePathIncludes": [
-          "client.tsp"
-        ]
+        "sourcePathIncludes": ["client.tsp"]
       }
     ]
   }

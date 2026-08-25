@@ -2,62 +2,119 @@
 
 **PR:** [#44200 - Support for Private Frontend on Application Gateway for Containers](https://github.com/Azure/azure-rest-api-specs/pull/44200)
 
-**Overall confidence:** 🟡 medium<br>
+**Overall confidence:** 🟢 high<br>
 **Overall code safety:** 🔴 Low
 
-**Baseline:** `0d3ff673b6b63361a7ba06a355d929902e596dac`<br>
+**Baseline:** `c3011918b7318f44dcc15e92d4ffb307aa50a475 (0d3ff673b6b63361a7ba06a355d929902e596dac)`<br>
 **Head:** `b1582b12f39f1d122fce3c7bbb24b812b0c5c487`; working-tree changes: false<br>
-**Total assessment time:** 12m 8s
+**Total assessment time:** 11m 12s
 
 ## 📌 Executive Summary
 
 | Dimension | Result | Findings |
 | --- | --- | ---: |
-| Semantic understanding | ✅ Assessed — 1 intent(s), 1 operation(s) | n/a |
+| Semantic understanding | ✅ Assessed — 2 intent(s), 13 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ❌ Issues found | 1 |
 | Azure compliance | ❌ failed | 4 |
 
-**Scope:** 1 intent(s), 1 affected operation(s), 1 project(s).<br>
+**Scope:** 2 intent(s), 13 affected operation(s), 1 project(s).<br>
+**Changes:** 6 added, 1 modified, 0 removed.<br>
 **Highest severity:** high.
 
 ## 🎯 Action Required
 
 | Severity | Area | Finding | Why it matters | Code | Guidance |
 | --- | --- | --- | --- | --- | --- |
-| high | Downstream | JavaScript property access changes from flattened to nested | Existing JavaScript construction and member access can break while the intended wire object remains properties. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127) | n/a |
-| medium | Compliance | Private endpoint connections bypass the standard templates | PrivateEndpointConnection is manually modeled and uses generic operations instead of PrivateEndpointConnectionResource and PrivateEndpoints. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), +6 more | [Private endpoint connections extend PrivateEndpointConnectionResource and use PrivateEndpoints operations.](https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/) |
-| medium | Compliance | Private-link discovery bypasses the standard templates | PrivateLinkResource is manually modeled and uses generic operations instead of PrivateLink and PrivateLinks. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), +6 more | [Private-link discovery uses the standard PrivateLink model and PrivateLinks operation interface.](https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/) |
-| medium | Compliance | The stable version retains the replaced preview version | The enum keeps v2025_10_01_preview while appending v2026_03_01, contrary to the stable-after-preview procedure. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), +6 more | [A stable release replacing a preview removes the preview member and retargets promoted changes.](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) |
-| low | Compliance | Legacy flattening is applied to newly introduced models | New private endpoint and private link resource properties use a legacy decorator that the reference does not recommend for greenfield types. | [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), +1 more | [Do not add legacy flattening to newly introduced API models without an existing compatibility requirement.](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) |
+| high | Downstream | Generated SDK model property shape changes | Excluding JavaScript from an existing property-flattening rule preserves the serialized JSON but can replace flattened constructor arguments and direct property access with nested model access. Existing JavaScript callers can therefore stop compiling or require source changes even though their HTTP requests and responses remain compatible. | [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), +13 more | n/a |
+| medium | Compliance | Private endpoint resource and operations do not use the standard pattern | The private endpoint guidance requires PrivateEndpointConnectionResource with the standard PrivateEndpoints interface, but the change adds a custom parented PrivateEndpointConnection model and a custom @armResourceOperations PrivateEndpointConnectionsInterface. | [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), +2 more | [The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.](https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/) |
+| medium | Compliance | Private link resource and operations do not use the standard pattern | The private link guidance requires the PrivateLink resource type with the standard PrivateLinks interface, but the change adds PrivateLinkResource as ProxyResource<PrivateLinkResourceProperties> and exposes it through a custom @armResourceOperations PrivateLinkResourcesInterface. | [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), +2 more | [The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.](https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/) |
+| medium | Compliance | The replaced preview version is retained when adding the stable version | The stable-after-preview guidance says to remove the replaced preview version, but the changed version enum retains v2025_10_01_preview alongside v2026_03_01. | [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +13 more | [The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) |
+| low | Compliance | New models use the legacy property-flattening decorator | The decorator guidance does not recommend Legacy.flattenProperty for green-field services, but the changed client customization applies it to properties of the newly introduced private endpoint and private link models. | [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), +2 more | [The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) |
 
 ## 🧠 Semantic Understanding
 
-### Change Overview
+<a id="intent-1-add-private-endpoint-connection-and-private-link"></a>
+### 1. Add private endpoint connection and private link resource management
 
-| # | Intent | Operations | API versions | Details |
-| ---: | --- | ---: | --- | --- |
-| 1 | Add private frontend support and stop flattening AssociationUpdate.properties for JavaScript. | 1 | 2025-05-01-preview | [details](#intent-1-add-private-frontend-support-and-stop-flattening) |
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ➕ Added | Operation family | — | 6 REST operations added. |
 
-### Operation Details
+**TypeSpec change:** The change introduces the 2025-10-01-preview API version, adds PrivateEndpointConnection and PrivateLinkResource as children of TrafficController, and adds resource-operation interfaces for them. The preview and subsequent 2026-03-01 version expose get, list, update, and delete operations for private endpoint connections and get and list operations for private link resources.
 
-<a id="intent-1-add-private-frontend-support-and-stop-flattening"></a>
-### 1. Add private frontend support and stop flattening AssociationUpdate.properties for JavaScript.
+```diff
+--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp
++++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp
+@@ -392,4 +540,20 @@ interface TrafficControllerInterface {
+ ... 2 earlier diff lines omitted; full hunk is in assessment.json ...
++@added(Versions.v2025_10_01_preview)
++@armResourceOperations
++interface PrivateEndpointConnectionsInterface {
++  get is ArmResourceRead<PrivateEndpointConnection>;
++  update is ArmResourceCreateOrReplaceSync<PrivateEndpointConnection>;
++  delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>;
++  listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>;
++}
++
++@added(Versions.v2025_10_01_preview)
++@armResourceOperations
++interface PrivateLinkResourcesInterface {
+ ... 5 later diff lines omitted; full hunk is in assessment.json ...
+```
 
-**Confidence:** high<br>
-**REST summary:** The flattening edit intends to retain the same JSON properties object while changing JavaScript model access.
+```diff
+--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp
++++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp
+@@ -392,4 +540,20 @@ interface TrafficControllerInterface {
+ ... 7 earlier diff lines omitted; full hunk is in assessment.json ...
++  delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>;
++  listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>;
++}
++
++@added(Versions.v2025_10_01_preview)
++@armResourceOperations
++interface PrivateLinkResourcesInterface {
++  get is ArmResourceRead<PrivateLinkResource>;
++  listByTrafficController is ArmResourceListByParent<PrivateLinkResource>;
++}
++
+ interface Operations extends Azure.ResourceManager.Operations {}
+```
 
-#### `Associations_Update`
+**Impact:** [The replaced preview version is retained when adding the stable version](#finding-compliance-stable-version-retains-replaced-preview), [Private endpoint resource and operations do not use the standard pattern](#finding-compliance-private-endpoint-standard-pattern), [Private link resource and operations do not use the standard pattern](#finding-compliance-private-link-standard-pattern), [New models use the legacy property-flattening decorator](#finding-compliance-legacy-flattening-on-new-models)<br>
+**Source:** [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314)
 
-- **HTTP path:** `PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}`
-- **API versions:** `2025-05-01-preview`
-- **Parameters:** path subscriptionId, resourceGroupName, trafficControllerName, associationName: string, required; query api-version: string, required
-- **Request payload:** application/json body: AssociationUpdate
-- **Response payloads:** 200: Association; 202: async headers; default: ErrorResponse
-- **Service behavior:** Updates an association; JavaScript now receives properties as a nested object.
-- **LRO:** arm; via azure-async-operation; Poll the emitted async endpoint after Retry-After until a terminal state.; final result: Use the final response contract described for this operation.
-- **Paging:** No.
-- **TypeSpec source:** [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127)
+<a id="intent-2-keep-associationupdate-properties-nested-in-gene"></a>
+### 2. Keep AssociationUpdate.properties nested in generated JavaScript
+
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ✏️ Modified | JavaScript AssociationUpdate model shape | properties is flattened into AssociationUpdate. | properties remains a nested object in JavaScript. |
+
+**TypeSpec change:** Change the AssociationUpdate.properties flattenProperty scope from all languages to !javascript.
+
+```diff
+--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp
++++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp
+@@ -82,7 +122,7 @@ model AssociationUpdate {
+
+   /** The resource-specific properties for this resource. */
+   #suppress "@azure-tools/typespec-azure-core/no-legacy-usage"
+-  @Azure.ClientGenerator.Core.Legacy.flattenProperty
++  @Azure.ClientGenerator.Core.Legacy.flattenProperty("!javascript")
+   properties?: AssociationUpdateProperties;
+ }
+
+```
+
+**Impact:** [Generated SDK model property shape changes](#finding-source-javascript-flattening-scope-changed)<br>
+**Source:** [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39), [client.tsp:L194-L203](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)
+
+Need the complete REST representation for every affected operation? Use this prompt:
+
+`Using assessment.json for PR #44200, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
+
 ## 🛡️ Compatibility Assessment
 
 ### REST Breaking Changes
@@ -66,13 +123,14 @@ None detected.
 
 ### Downstream Breaking Changes
 
-### JavaScript property access changes from flattened to nested
+<a id="finding-source-javascript-flattening-scope-changed"></a>
+### Generated SDK model property shape changes
 
 - **Severity:** high
 - **Confidence:** high
-- **Summary:** Existing JavaScript construction and member access can break while the intended wire object remains properties.
-- **Evidence:** flattenProperty changes to flattenProperty("!javascript").
-- **TypeSpec source:** [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127)
+- **Summary:** Excluding JavaScript from an existing property-flattening rule preserves the serialized JSON but can replace flattened constructor arguments and direct property access with nested model access. Existing JavaScript callers can therefore stop compiling or require source changes even though their HTTP requests and responses remain compatible.
+- **Evidence:** Changing flattenProperty to exclude JavaScript can change generated JavaScript construction and property access from flattened to nested.; Changed TypeSpec source: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp.; Changed TypeSpec source: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp.; Changed TypeSpec source: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp.
+- **TypeSpec source:** [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39), [client.tsp:L194-L203](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203)
 
 
 ## ☁️ Azure Compliance
@@ -81,37 +139,185 @@ None detected.
 
 ### Compliance Findings
 
-### The stable version retains the replaced preview version
+<a id="finding-compliance-stable-version-retains-replaced-preview"></a>
+### The replaced preview version is retained when adding the stable version
 
-- **Severity:** medium
-- **Summary:** The enum keeps v2025_10_01_preview while appending v2026_03_01, contrary to the stable-after-preview procedure.
-- **Evidence:** The documented workflow removes the replaced preview member and retargets promoted changes to stable.
-- **TypeSpec source:** [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)
-- **Guidance:** https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/
+**Severity:** medium
 
-### Private endpoint connections bypass the standard templates
+**Gap:** The stable-after-preview guidance says to remove the replaced preview version, but the changed version enum retains v2025_10_01_preview alongside v2026_03_01.
 
-- **Severity:** medium
-- **Summary:** PrivateEndpointConnection is manually modeled and uses generic operations instead of PrivateEndpointConnectionResource and PrivateEndpoints.
-- **Evidence:** The official private-endpoint guide requires the standard resource base and PrivateEndpoints interface.
-- **TypeSpec source:** [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)
-- **Guidance:** https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/
+<details>
+<summary><strong>Expected</strong></summary>
 
-### Private-link discovery bypasses the standard templates
+The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.
 
-- **Severity:** medium
-- **Summary:** PrivateLinkResource is manually modeled and uses generic operations instead of PrivateLink and PrivateLinks.
-- **Evidence:** The official private-link guide requires the standard model and PrivateLinks interface.
-- **TypeSpec source:** [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)
-- **Guidance:** https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/
+**Guidance:** [Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/)
 
-### Legacy flattening is applied to newly introduced models
+_The bounded official document evidence did not contain an example block._
 
-- **Severity:** low
-- **Summary:** New private endpoint and private link resource properties use a legacy decorator that the reference does not recommend for greenfield types.
-- **Evidence:** The changed types are newly introduced, so they have no prior flattened SDK contract to preserve.
-- **TypeSpec source:** [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [client.tsp:L194-L203](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203)
-- **Guidance:** https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Guidance: "Remove the replaced preview version from the version enum." Changed source at main.tsp:28 contains both v2025_10_01_preview: "2025-10-01-preview" and v2026_03_01: "2026-03-01".
+
+**[main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35)**
+
+```tsp
+
+  /** 2025-10-01 preview version */
+  v2025_10_01_preview: "2025-10-01-preview",
+
+  /** 2026-03-01 stable version */
+  v2026_03_01: "2026-03-01",
+```
+
+</details>
+
+<a id="finding-compliance-private-endpoint-standard-pattern"></a>
+### Private endpoint resource and operations do not use the standard pattern
+
+**Severity:** medium
+
+**Gap:** The private endpoint guidance requires PrivateEndpointConnectionResource with the standard PrivateEndpoints interface, but the change adds a custom parented PrivateEndpointConnection model and a custom @armResourceOperations PrivateEndpointConnectionsInterface.
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.
+
+**Guidance:** [Private Endpoints — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/)
+
+**Documented TypeSpec example**
+
+```tsp
+model PrivateEndpointConnection is PrivateEndpointConnectionResource;
+alias PrivateEndpointOperations = PrivateEndpoints<PrivateEndpointConnection>;
+
+getPrivateEndpointConnection is PrivateEndpointOperations.Read<Employee>;
+createOrUpdatePrivateEndpointConnection is PrivateEndpointOperations.CreateOrUpdateAsync<Employee>;
+deletePrivateEndpointConnection is PrivateEndpointOperations.DeleteAsync<Employee>;
+listPrivateEndpointConnections is PrivateEndpointOperations.ListByParent<Employee>;
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Guidance: private endpoint providers must declare a private endpoint connection resource type and use the standard PrivateEndpoints interface. Changed source adds @parentResource(TrafficController) model PrivateEndpointConnection and @armResourceOperations interface PrivateEndpointConnectionsInterface rather than PrivateEndpointConnectionResource and PrivateEndpoints<PrivateEndpointConnection>.
+
+**[main.tsp:L357-L368](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L368)**
+
+```tsp
+//----------------------- PrivateEndpointConnection -----------------------
+/** Private Endpoint Connection resource of Traffic Controller. */
+@added(Versions.v2025_10_01_preview)
+@parentResource(TrafficController)
+model PrivateEndpointConnection
+  is ProxyResource<PrivateEndpointConnectionProperties> {
+  /** Private Endpoint Connection */
+  @key("privateEndpointConnectionName")
+  @visibility(Lifecycle.Read)
+  @path
+  @segment("privateEndpointConnections")
+  @pattern("^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$")
+```
+
+</details>
+
+<a id="finding-compliance-private-link-standard-pattern"></a>
+### Private link resource and operations do not use the standard pattern
+
+**Severity:** medium
+
+**Gap:** The private link guidance requires the PrivateLink resource type with the standard PrivateLinks interface, but the change adds PrivateLinkResource as ProxyResource<PrivateLinkResourceProperties> and exposes it through a custom @armResourceOperations PrivateLinkResourcesInterface.
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.
+
+**Guidance:** [Private Links — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/)
+
+**Documented TypeSpec example**
+
+```tsp
+model MyPrivateLinkResource is PrivateLink;
+alias PrivateLinkOperations = PrivateLinks<MyPrivateLinkResource>;
+
+getPrivateLink is PrivateLinkOperations.Read<Employee>;
+listPrivateLinks is PrivateLinkOperations.ListByParent<Employee>;
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Guidance: private link providers must declare a private link resource type and use the standard PrivateLinks interface. Changed source adds model PrivateLinkResource is ProxyResource<PrivateLinkResourceProperties> and @armResourceOperations interface PrivateLinkResourcesInterface rather than PrivateLink and PrivateLinks<PrivateLinkResource>.
+
+**[main.tsp:L357-L368](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L368)**
+
+```tsp
+//----------------------- PrivateEndpointConnection -----------------------
+/** Private Endpoint Connection resource of Traffic Controller. */
+@added(Versions.v2025_10_01_preview)
+@parentResource(TrafficController)
+model PrivateEndpointConnection
+  is ProxyResource<PrivateEndpointConnectionProperties> {
+  /** Private Endpoint Connection */
+  @key("privateEndpointConnectionName")
+  @visibility(Lifecycle.Read)
+  @path
+  @segment("privateEndpointConnections")
+  @pattern("^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$")
+```
+
+</details>
+
+<a id="finding-compliance-legacy-flattening-on-new-models"></a>
+### New models use the legacy property-flattening decorator
+
+**Severity:** low
+
+**Gap:** The decorator guidance does not recommend Legacy.flattenProperty for green-field services, but the changed client customization applies it to properties of the newly introduced private endpoint and private link models.
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The changed source retains the preview version replaced by the new stable version, implements private endpoint and private link resources with custom resource and operation patterns instead of the documented standard patterns, and applies the legacy flattenProperty decorator to newly introduced models despite guidance against its use for green-field services.
+
+**Guidance:** [TypeSpec Client Generator Core decorators — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/)
+
+_The bounded official document evidence did not contain an example block._
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Guidance: "This decorator is not recommended to use for green field services." Changed source adds @@Azure.ClientGenerator.Core.Legacy.flattenProperty calls in client.tsp for models introduced by the same change as PrivateEndpointConnection and PrivateLinkResource.
+
+**[client.tsp:L146-L157](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L157)**
+
+```tsp
+@@alternateType(
+  TrafficControllerProperties.privateEndpointConnections,
+  Azure.ResourceManager.Models.SubResource[],
+  "csharp"
+);
+@@alternateType(
+  FrontendAssociation.id,
+  Azure.Core.armResourceIdentifier,
+  "csharp"
+);
+@@alternateType(
+  FrontendAssociationUpdate.id,
+```
+
+</details>
 
 ## 📎 Appendix
 
@@ -123,29 +329,17 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Mismatch | [Adding a Stable Version when the Last Version was Preview - Making Changes to your TypeSpec spec](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) | Remove the replaced preview version from the version enum. | The enum retains v2025_10_01_preview and appends stable v2026_03_01. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
-| Mismatch | [Private Endpoints - Defining a Private Endpoint Connection Resource](https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/) | Resource providers that support private endpoint connections must declare a private endpoint connection resource type and use the standard `PrivateEndpoints` interface to expose operations. | The PR manually models PrivateEndpointConnection as ProxyResource and uses generic ArmResource operations. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
-| Mismatch | [Private Links - Defining a Private Link Resource](https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/) | Resource providers that support private link resources must declare a private link resource type and use the standard `PrivateLinks` interface to expose operations. | The PR manually models PrivateLinkResource as ProxyResource and uses generic read/list templates. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
-| Mismatch | [TypeSpec Client Generator Core decorators - @Azure.ClientGenerator.Core.Legacy.flattenProperty](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Set whether a model property should be flattened or not. This decorator is not recommended to use for green field services. | The new private endpoint and private link resource properties are flattened for AutoRest and C#. | [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [client.tsp:L194-L203](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203) |
+| Mismatch | [Adding a Stable Version when the Last Version was Preview - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) | Remove the replaced preview version from the version enum. | Guidance: "Remove the replaced preview version from the version enum." Changed source at main.tsp:28 contains both v2025_10_01_preview: "2025-10-01-preview" and v2026_03_01: "2026-03-01". | [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), +12 more |
+| Mismatch | [Private Endpoints - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/) | Resource providers that support private endpoint connections must declare a private endpoint connection resource type and use the standard `PrivateEndpoints` interface to expose operations. | Guidance: private endpoint providers must declare a private endpoint connection resource type and use the standard PrivateEndpoints interface. Changed source adds @parentResource(TrafficController) model PrivateEndpointConnection and @armResourceOperations interface PrivateEndpointConnectionsInterface rather than PrivateEndpointConnectionResource and PrivateEndpoints<PrivateEndpointConnection>. | [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), +1 more |
+| Mismatch | [Private Links - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/) | Resource providers that support private link resources must declare a private link resource type and use the standard `PrivateLinks` interface to expose operations. | Guidance: private link providers must declare a private link resource type and use the standard PrivateLinks interface. Changed source adds model PrivateLinkResource is ProxyResource<PrivateLinkResourceProperties> and @armResourceOperations interface PrivateLinkResourcesInterface rather than PrivateLink and PrivateLinks<PrivateLinkResource>. | [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), +1 more |
+| Mismatch | [TypeSpec Client Generator Core decorators - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Set whether a model property should be flattened or not. This decorator is not recommended to use for green field services. | Guidance: "This decorator is not recommended to use for green field services." Changed source adds @@Azure.ClientGenerator.Core.Legacy.flattenProperty calls in client.tsp for models introduced by the same change as PrivateEndpointConnection and PrivateLinkResource. | [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), +1 more |
 
 ### Tooling Used
 
 - `@azure-tools/typespec-autorest`
 - `@azure-tools/typespec-client-generator-core`
 
-### Repository Validation
-
-| Project | Tool | Status | Duration | Log |
-| --- | --- | --- | ---: | --- |
-| `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking` | `TypeSpecValidation` | skipped | 0s | `unknown` |
-
 ### Artifact Evidence
 
-- **autorest:** base succeeded; head failed with duplicate FrontendAssociationUpdate type name
-- **tcgc:** base/head succeeded and shows AssociationUpdate model-shape changes
-
-### Changed TypeSpec
-
-- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp`: [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39)
-- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp`: [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [client.tsp:L194-L203](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203)
-- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp`: [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)
+- **autorest:** base/head succeeded; added preview 2025-10-01-preview and stable 2026-03-01 contracts were compared
+- **tcgc:** base/head succeeded; AssociationUpdate client-shape evidence requires JavaScript-specific review

@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://azure.github.io/azure-sdk-tools/schemas/assessment-judgment.schema.json",
+  "title": "Azure TypeSpec assessment judgment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "pr",
+    "semanticIntents",
+    "restCandidates",
+    "downstreamCandidates",
+    "compliance",
+    "overallConfidence",
+    "blockers"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "pr": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "string",
+          "pattern": "^0*[1-9][0-9]*$"
+        }
+      ]
+    },
+    "semanticIntents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/semanticIntent"
+      }
+    },
+    "restCandidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidateDecision"
+      }
+    },
+    "downstreamCandidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidateDecision"
+      }
+    },
+    "compliance": {
+      "$ref": "#/$defs/compliance"
+    },
+    "overallConfidence": {
+      "$ref": "#/$defs/confidence"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uniqueStrings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "severity": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "semanticIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "rationale",
+        "operationChangeIds",
+        "operationGroupIds",
+        "sourceChangeIds",
+        "sourcePaths"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "operationChangeIds": {
+          "$ref": "#/$defs/uniqueStrings"
+        },
+        "operationGroupIds": {
+          "$ref": "#/$defs/uniqueStrings"
+        },
+        "sourceChangeIds": {
+          "$ref": "#/$defs/uniqueStrings"
+        },
+        "sourcePaths": {
+          "$ref": "#/$defs/uniqueStrings"
+        },
+        "aspects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field", "before", "after"],
+            "properties": {
+              "field": { "$ref": "#/$defs/nonEmptyString" },
+              "before": { "$ref": "#/$defs/nonEmptyString" },
+              "after": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      }
+    },
+    "candidateDecision": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "decision",
+            "rationale"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "decision": {
+              "const": "approve"
+            },
+            "severity": {
+              "$ref": "#/$defs/severity"
+            },
+            "rationale": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "decision",
+            "rationale"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "decision": {
+              "const": "reject"
+            },
+            "rationale": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          }
+        }
+      ]
+    },
+    "complianceFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "severity",
+        "summary",
+        "documentationUrl",
+        "evidence",
+        "sourceChangeIds",
+        "sourcePaths"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "documentationUrl": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://(azure\\.github\\.io/typespec-azure|typespec\\.io)/"
+        },
+        "evidence": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/nonEmptyString"
+              }
+            }
+          ]
+        },
+        "sourceChangeIds": {
+          "$ref": "#/$defs/uniqueStrings"
+        },
+        "sourcePaths": {
+          "$ref": "#/$defs/uniqueStrings"
+        }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "documentUrls": {
+                "minItems": 1
+              },
+              "findings": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "documentUrls": {
+                "minItems": 1
+              },
+              "findings": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not-assessed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "findings": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "status",
+        "rationale",
+        "documentUrls",
+        "findings"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not-assessed"
+          ]
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "documentUrls": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/complianceFinding"
+          }
+        }
+      }
+    }
+  }
+}

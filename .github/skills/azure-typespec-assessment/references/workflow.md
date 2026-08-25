@@ -2,43 +2,86 @@
 
 ## Prepare evidence
 
-Run from the repository root:
+Run the complete deterministic preparation from the repository root:
 
 ```bash
-node .github/skills/azure-typespec-assessment/scripts/prepare-assessment.mjs \
+node .github/skills/azure-typespec-assessment/scripts/run-assessment-analysis.mjs \
   --output .typespec-assessment
 ```
 
 Optional flags:
 
-| Flag                | Purpose                                                                       |
-| ------------------- | ----------------------------------------------------------------------------- |
-| `--base <ref>`      | Override the auto-detected tracked/default remote baseline                    |
-| `--repo <path>`     | Assess another Git worktree                                                   |
-| `--output <path>`   | Change the artifact directory                                                 |
-| `--skip-compile`    | Debug project/source discovery only; never use for a final assessment         |
-| `--skip-validation` | Experimental timing comparison only; records repository validation as skipped |
+| Flag                      | Purpose                                                               |
+| ------------------------- | --------------------------------------------------------------------- |
+| `--base <ref>`            | Override the auto-detected tracked/default remote baseline            |
+| `--repo <path>`           | Assess another Git worktree                                           |
+| `--output <path>`         | Change the artifact directory                                         |
+| `--skip-compile`          | Debug project/source discovery only; never use for a final assessment |
+| `--document-cache <path>` | Override the persistent fetched-document cache                        |
+| `--artifact-cache <path>` | Override the persistent input-keyed emitter artifact cache            |
+| `--checkout-cache <path>` | Override the persistent base/head sparse-worktree cache               |
+| `--raw-artifact-diffs`    | Also generate expensive textual artifact diffs for diagnostics        |
 
-The script compares the baseline merge-base with committed, staged, unstaged, and untracked work. It discovers affected TypeSpec projects where `tspconfig.yaml`/`tspconfig.yml` and `main.tsp` coexist in either the baseline or head, so deleting an entrypoint still produces removal evidence. Before compilation, it verifies that the active Node version satisfies `package.json#engines.node` and that the installed TypeSpec compiler, OpenAPI, AutoRest, ARM, and client-generator-core libraries exactly match `package-lock.json`.
+To measure the complete local pre-PR workflow with and without warm caches,
+including compilation and documentation search, run:
 
-The baseline and head use isolated sparse worktrees containing only the parent roots of affected projects. The head worktree overlays and commits the relevant staged, unstaged, and untracked source so validation cannot format or regenerate files in the user's worktree.
+```bash
+node .github/skills/azure-typespec-assessment/scripts/benchmark-assessment.mjs \
+  --repo . \
+  --base origin/main \
+  --output .typespec-assessment-benchmark
+```
 
-For every affected head project, the script also runs the repository-native
-`eng/tools/typespec-validation/cmd/tsv.js` CLI. This is the same underlying
-tool used by the `TypeSpec Validation` pipeline and includes ruleset selection,
-`tsp compile --warn-as-error`, generated-output drift, formatting, and
-repository configuration checks. A failed or unavailable validator blocks a
-complete compliance assessment. A successful run is evidence only for checks
-the tool implements; documentation assessment remains required for patterns the
-linter does not detect.
+The command performs one cold run and one input-identical warm run, then writes
+`benchmark.json`. Use this result rather than `--skip-compile` timing when
+evaluating assessment performance.
 
-Base and head then compile concurrently while AutoRest and generic TCGC run as individually timed stages. Package CLI JavaScript entrypoints are launched with the active `process.execPath`, so a runtime selected through commands such as `npx node@24` remains active. Progress and elapsed time are written to stderr for baseline resolution, sparse checkout, repository validation, emitter compilation, artifact diffs, and overall completion.
+The primary scenario is a local pre-PR worktree. The script compares the
+baseline merge-base with the current `HEAD` plus committed, staged, unstaged,
+and untracked work. Historical PRs are regression evidence only; the workflow
+does not require PR metadata or a remote branch. It discovers affected TypeSpec
+projects where `tspconfig.yaml`/`tspconfig.yml` and `main.tsp` coexist in either
+the baseline or head, so deleting an entrypoint still produces removal
+evidence. Before compilation, it verifies that the active Node version satisfies
+`package.json#engines.node` and that the installed TypeSpec compiler, OpenAPI,
+AutoRest, ARM, and client-generator-core libraries exactly match
+`package-lock.json`.
+
+The baseline and head use isolated sparse worktrees containing only the parent
+roots of affected projects. The head worktree overlays and commits the relevant
+staged, unstaged, and untracked source so compilation cannot format or
+regenerate files in the user's worktree.
+
+Base/head and their isolated AutoRest and generic TCGC emitter runs execute
+concurrently and remain individually timed. Package CLI JavaScript entrypoints
+are launched with the active `process.execPath`, so a runtime selected through
+commands such as `npx node@24` remains active. Progress and elapsed time are
+written to stderr for baseline resolution, sparse checkout, emitter
+compilation, artifact diffs, and overall completion.
+
+AutoRest and TCGC artifacts are reused on warm local reruns only when the
+synthetic project tree, which includes staged, unstaged, and untracked content,
+the project emitter configuration, lockfile, Node version, and emitter identity
+all match. Base and synthetic-head sparse worktrees are also retained and reset
+to their input commits on later runs instead of being recreated. Structured
+`analysis.json` is the default artifact comparison; textual `git diff
+--no-index` files are generated only with `--raw-artifact-diffs`.
 
 Generated emitter configs retain the project's existing options. AutoRest keeps options such as `output-splitting: legacy-feature-files` while using deterministic assessment output directories and `{version-status}/{version}/{feature}.json` files. Generic TCGC emits all API versions.
 
 The script writes:
 
-- `evidence.json`: changed files, source hunks, projects, repository-validation and compile results, total and per-stage `durationMs`, and precise failure summaries;
+- `evidence.json`: changed files, source hunks, projects, compile results, total
+  and per-stage `durationMs`, and precise failure summaries;
+- `analysis.json`: canonical baseline/head REST operations, field-level changes,
+  REST breaking candidates, and normalized TCGC downstream candidates;
+- `compliance-evidence.json`: changed TypeSpec symbols, routed authoritative
+  documents, content hashes, cache status, and matching excerpts;
+- `model-input.json`: the minified, size-gated deterministic input for model
+  review, including operation groups, compact before/after summaries,
+  source-impact links, documentation evidence, and timing;
+- `assessment-draft.json`: a pretty-printed diagnostic copy of the same bounded
+  input;
 - `artifacts/<project>/<side>/<emitter>/`: generated OpenAPI and TCGC artifacts;
 - `diffs/<project>/<emitter>/`: paired artifact diffs;
 - `compile-logs/`: explicit failures and diagnostics.
@@ -47,7 +90,8 @@ The final report records measured preparation and total assessment time per PR.
 
 ## Assess
 
-1. Read `evidence.json` and every changed TypeSpec hunk.
+1. Read `model-input.json`. Consult raw `evidence.json` or artifacts by stable
+   evidence ID only when a candidate is marked ambiguous or unsupported.
 2. Correlate related decorators and declarations into one author intent.
 3. Use AutoRest diffs for wire behavior and TCGC diffs for client shape.
 4. Inspect source decorators directly for scoped client behavior missing from generic TCGC.
@@ -58,12 +102,30 @@ The final report records measured preparation and total assessment time per PR.
 6. Record each fetched document's matching section and short verbatim excerpt,
    then compare it with the exact changed declaration. Report a source-linked
    finding only for a documented mismatch.
-7. For every operation directly or transitively affected by the diff, read the
-   emitted operation and record its signature, parameters, request, responses,
-   LRO/paging metadata, and service behavior.
-8. Write `assessment.json`, render the assessment-first Markdown with
-   `scripts/render-assessment.mjs`, and validate both reports.
+7. For every operation directly or transitively affected by the diff, compare
+   baseline and head artifacts field by field. Classify it as added, modified,
+   or removed; record only changed aspects as structured before/after values
+   and link the exact TypeSpec cause.
+8. Attach the corresponding real TypeSpec Git hunks to each semantic change.
+   Keep behavior before/after text separate from source diff lines. Select
+   excerpts around the declarations and decorators named by the TypeSpec change
+   summary. Link semantic changes to the breaking or compliance findings they
+   cause.
+9. Preserve the complete signature, parameters, request, responses,
+   LRO/paging metadata, and service behavior in
+   `restRepresentation.operations`. These details remain in JSON and are
+   retrieved through the report's generated copyable prompts.
+10. Write `assessment.json`, render the assessment-first Markdown with
+    `scripts/render-assessment.mjs`, render the standalone HTML with
+    `scripts/render-assessment-html.mjs`, and validate the reports.
 
-Repository-validation or compilation failure blocks a complete assessment. Report the validator's `failureSummary`, or the first compiler diagnostic, error count, and referenced compile log; never interpret missing artifacts as “no break.”
+Compilation failure blocks a complete assessment. Report the first compiler
+diagnostic, error count, and referenced compile log; never interpret missing
+artifacts as “no break.”
 
 Temporary worktrees are removed automatically. Generated assessment output is not committed unless the user requests it.
+
+For a curated HTML-only evidence set, run
+`scripts/finalize-rerun-assessments.mjs` with `--html-only`. The finalizer
+validates each transient JSON/Markdown pair before retaining only
+`assessment.html`; it also removes the aggregate JSON/Markdown report files.

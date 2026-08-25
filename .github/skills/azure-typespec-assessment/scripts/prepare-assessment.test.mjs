@@ -14,26 +14,31 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 
 import {
+  artifactCacheKey,
   canonicalTempDirectory,
   discoverProjectRoots,
-  ensureNodeWithNpm,
   findTspCommand,
-  findTypeSpecValidationCommand,
   linkDependencies,
   listChangedFiles,
   parseArgs,
   parseSourceHunks,
   preflightToolchain,
   prepareAssessment,
+  prepareSparseCheckout,
   readEmitterOptions,
   resolveBaseline,
+  restoreArtifactCache,
   satisfiesNodeEngine,
   summarizeCompilerFailure,
-  summarizeValidationFailure,
   sourceLink,
+  storeArtifactCache,
   untrackedReferences,
   writeEmitterConfig,
 } from "./prepare-assessment.mjs";
+import {
+  parseTypeSpecDiffHunks,
+  untrackedTypeSpecDiffHunk,
+} from "./typespec-diff-hunks.mjs";
 
 function git(repo, ...args) {
   return execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
@@ -75,17 +80,94 @@ test("parseArgs accepts overrides", () => {
       "main",
       "--output",
       "o",
+      "--artifact-cache",
+      "cache",
       "--skip-compile",
-      "--skip-validation",
     ]),
     {
       repo: "r",
       base: "main",
       output: "o",
+      artifactCache: "cache",
+      checkoutCache: undefined,
+      rawArtifactDiffs: false,
       skipCompile: true,
-      skipValidation: true,
     },
   );
+});
+
+test("artifact cache keys include local synthetic tree content", () => {
+  const common = {
+    lockHash: "lock",
+    node: "v24.0.0",
+    emitter: "@azure-tools/typespec-autorest",
+    config: "emit: []",
+  };
+  assert.notEqual(
+    artifactCacheKey({ ...common, projectTree: "tree-before-local-change" }),
+    artifactCacheKey({ ...common, projectTree: "tree-after-local-change" }),
+  );
+});
+
+test("artifact cache stores and restores emitter output", () => {
+  const root = mkdtempSync(join(tmpdir(), "assessment-artifact-cache-"));
+  const output = join(root, "output");
+  const cache = join(root, "cache");
+  try {
+    mkdirSync(output, { recursive: true });
+    writeFileSync(join(output, "artifact.json"), '{"version":1}');
+    storeArtifactCache(cache, output);
+    writeFileSync(join(output, "artifact.json"), '{"version":2}');
+    assert.equal(restoreArtifactCache(cache, output), true);
+    assert.equal(
+      readFileSync(join(output, "artifact.json"), "utf8"),
+      '{"version":1}',
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("persistent sparse checkouts are reset and reused", () => {
+  const { repo, baseCommit } = createRepository();
+  const checkout = join(repo, "..", `${repo.split(/[\\/]/).at(-1)}-checkout`);
+  try {
+    const first = prepareSparseCheckout({
+      repoRoot: repo,
+      checkoutRoot: checkout,
+      commit: baseCommit,
+      projectRoots: ["spec"],
+      inputKey: "base-input",
+    });
+    assert.equal(first.reused, false);
+    const gitFile = readFileSync(join(checkout, ".git"), "utf8");
+    writeFileSync(join(checkout, "local.tmp"), "temporary");
+    const refreshed = prepareSparseCheckout({
+      repoRoot: repo,
+      checkoutRoot: checkout,
+      commit: baseCommit,
+      projectRoots: ["spec"],
+      inputKey: "base-input",
+      previousInputKey: "base-input",
+    });
+    assert.equal(refreshed.reused, false);
+    assert.equal(readFileSync(join(checkout, ".git"), "utf8"), gitFile);
+    assert.equal(existsSync(join(checkout, "local.tmp")), false);
+    assert.equal(git(checkout, "rev-parse", "HEAD"), baseCommit);
+    const reused = prepareSparseCheckout({
+      repoRoot: repo,
+      checkoutRoot: checkout,
+      commit: baseCommit,
+      projectRoots: ["spec"],
+      inputKey: "base-input",
+      previousInputKey: "base-input",
+    });
+    assert.equal(reused.reused, true);
+  } finally {
+    git(repo, "worktree", "remove", "--force", checkout);
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(checkout, { recursive: true, force: true });
+  }
 });
 
 test("resolveBaseline uses default remote head", () => {
@@ -252,69 +334,6 @@ test("assessment temp paths use the canonical Windows path", () => {
   );
 });
 
-test("repository TypeSpec Validation CLI runs through the active Node executable", () => {
-  const root = mkdtempSync(join(tmpdir(), "typespec-assessment-tsv-"));
-  try {
-    const script = join(
-      root,
-      "eng",
-      "tools",
-      "typespec-validation",
-      "cmd",
-      "tsv.js",
-    );
-    mkdirSync(join(root, "eng", "tools", "typespec-validation", "cmd"), {
-      recursive: true,
-    });
-    writeFileSync(script, "");
-    assert.deepEqual(findTypeSpecValidationCommand(root), {
-      command: process.execPath,
-      prefix: [script],
-    });
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("standalone Node runtimes receive the active npm installation", () => {
-  const root = mkdtempSync(join(tmpdir(), "typespec-assessment-node-runtime-"));
-  try {
-    const sourceNode = join(root, "source", "node.exe");
-    const npmCli = join(root, "npm", "bin", "npm-cli.js");
-    mkdirSync(dirname(sourceNode), { recursive: true });
-    mkdirSync(dirname(npmCli), { recursive: true });
-    writeFileSync(sourceNode, "node");
-    writeFileSync(npmCli, "npm");
-    const originalExecPath = process.execPath;
-    Object.defineProperty(process, "execPath", {
-      configurable: true,
-      value: sourceNode,
-    });
-    try {
-      const runtimeNode = ensureNodeWithNpm(join(root, "temp"), npmCli);
-      assert.ok(existsSync(runtimeNode));
-      assert.ok(
-        existsSync(
-          join(
-            dirname(runtimeNode),
-            "node_modules",
-            "npm",
-            "bin",
-            "npm-cli.js",
-          ),
-        ),
-      );
-    } finally {
-      Object.defineProperty(process, "execPath", {
-        configurable: true,
-        value: originalExecPath,
-      });
-    }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
 test("compiler failure summaries include first diagnostic, count, and log", () => {
   const summary = summarizeCompilerFailure(
     [
@@ -327,20 +346,6 @@ test("compiler failure summaries include first diagnostic, count, and log", () =
   assert.equal(
     summary,
     "spec/main.tsp:4:3 - error invalid-type: First diagnostic (2 errors; log: compile-logs/spec-head-autorest.log)",
-  );
-});
-
-test("repository validation failure summaries retain the diagnostic and log", () => {
-  assert.equal(
-    summarizeValidationFailure(
-      [
-        "Executing rule: Compile",
-        "spec/main.tsp:4:3 - warning no-legacy-usage: Legacy usage is not allowed.",
-        "Rule Compile failed",
-      ].join("\n"),
-      "validation-logs/spec-head.log",
-    ),
-    "spec/main.tsp:4:3 - warning no-legacy-usage: Legacy usage is not allowed. (log: validation-logs/spec-head.log)",
   );
 });
 
@@ -423,6 +428,46 @@ test("source hunks map additions and deletions to the correct revision", () => {
   );
 });
 
+test("TypeSpec diff hunks retain source code and Git ranges", () => {
+  const hunks = parseTypeSpecDiffHunks(
+    [
+      "diff --git a/spec/main.tsp b/spec/main.tsp",
+      "--- a/spec/main.tsp",
+      "+++ b/spec/main.tsp",
+      "@@ -2,2 +2,3 @@ model Widget {",
+      "   name: string;",
+      "+  size?: int32;",
+      " }",
+    ].join("\n"),
+  );
+  assert.deepEqual(hunks, [
+    {
+      path: "spec/main.tsp",
+      oldStart: 2,
+      oldCount: 2,
+      newStart: 2,
+      newCount: 3,
+      context: "model Widget {",
+      lines: ["   name: string;", "+  size?: int32;", " }"],
+    },
+  ]);
+});
+
+test("untracked TypeSpec files become added-file hunks", () => {
+  assert.deepEqual(
+    untrackedTypeSpecDiffHunk("spec/new.tsp", "model New {}\n"),
+    {
+      path: "spec/new.tsp",
+      oldStart: 0,
+      oldCount: 0,
+      newStart: 1,
+      newCount: 1,
+      context: "",
+      lines: ["+model New {}"],
+    },
+  );
+});
+
 test("source links fall back locally without a GitHub remote", () => {
   assert.equal(
     sourceLink("spec/main.tsp", "head", "def456", "", 2, 3),
@@ -470,10 +515,30 @@ test("prepareAssessment creates source evidence without compilation", async () =
     assert.equal(evidence.projects[0].path, "spec");
     assert.equal(evidence.compileSkipped, true);
     assert.equal(evidence.sourceReferences[0].path, "spec/main.tsp");
+    assert.equal(evidence.typeSpecDiffs[0].path, "spec/main.tsp");
+    assert.ok(
+      evidence.typeSpecDiffs[0].lines.some((line) => line.startsWith("+")),
+    );
+    assert.deepEqual(evidence.head.changeScope, {
+      staged: false,
+      unstaged: true,
+      untracked: false,
+    });
     assert.ok(evidence.durationMs >= 0);
+    assert.ok(evidence.phaseDurations.baselineResolutionMs >= 0);
+    assert.ok(evidence.phaseDurations.deterministicAnalysisMs >= 0);
+    assert.equal(
+      JSON.parse(readFileSync(join(output, "analysis.json"), "utf8"))
+        .schemaVersion,
+      1,
+    );
     assert.equal(
       evidence.complianceAssessment.agenticSearchProcedure,
-      ".github/skills/azure-typespec-author/references/agentic-search.md",
+      ".github/skills/azure-typespec-assessment/references/agentic-search.md",
+    );
+    assert.equal(
+      evidence.complianceAssessment.method,
+      "authoritative-document-pattern-assessment",
     );
     assert.equal(
       JSON.parse(readFileSync(join(output, "evidence.json"), "utf8"))
@@ -539,4 +604,38 @@ test("recent PR evidence includes LRO and paging operation cases", () => {
     ),
     "expected PR 42435 to exercise combined LRO and paging behavior",
   );
+});
+
+test("historical fixtures retain TypeSpec source diffs for every case", () => {
+  const fixture = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/recent-pr-typespec-diffs.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(Object.keys(fixture).sort(), [
+    "42435",
+    "42853",
+    "43308",
+    "43745",
+    "44200",
+    "44454",
+    "44742",
+    "44882",
+    "44988",
+    "45348",
+    "45536",
+  ]);
+  for (const intents of Object.values(fixture)) {
+    for (const hunks of Object.values(intents)) {
+      assert.ok(hunks.length > 0);
+      assert.ok(
+        hunks.every(
+          (hunk) =>
+            hunk.path.endsWith(".tsp") &&
+            hunk.lines.some((line) => /^[+-]/.test(line)),
+        ),
+      );
+    }
+  }
 });

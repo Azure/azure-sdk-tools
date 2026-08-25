@@ -2,12 +2,12 @@
 
 **PR:** [#45348 - Fix cross-version breaking changes for 2026-11 previews](https://github.com/Azure/azure-rest-api-specs/pull/45348)
 
-**Overall confidence:** 🟡 medium<br>
+**Overall confidence:** 🟢 high<br>
 **Overall code safety:** 🟢 High
 
 **Baseline:** `2991970c5377110244bcf9614be03e5aaf32362f`<br>
 **Head:** `b209254310b3e569b16210d3c59fc8b8ac3b84b4`; working-tree changes: false<br>
-**Total assessment time:** 11m 29s
+**Total assessment time:** 2m 14s
 
 ## 📌 Executive Summary
 
@@ -19,6 +19,7 @@
 | Azure compliance | ✅ passed | 0 |
 
 **Scope:** 1 intent(s), 2 affected operation(s), 1 project(s).<br>
+**Changes:** 0 added, 2 modified, 0 removed.<br>
 **Highest severity:** none.
 
 ## 🎯 Action Required
@@ -27,43 +28,40 @@ No action required from the assessed dimensions.
 
 ## 🧠 Semantic Understanding
 
-### Change Overview
+<a id="intent-1-align-the-new-device-registry-previews-with-arm-"></a>
+### 1. Align the new Device Registry previews with ARM common-types v5
 
-| # | Intent | Operations | API versions | Details |
-| ---: | --- | ---: | --- | --- |
-| 1 | Align the two new Device Registry previews with ARM common-types v5 used by prior versions. | 2 | 2026-11-01-preview, 2026-11-15-preview | [details](#intent-1-align-the-two-new-device-registry-previews-with-) |
+| Change | Aspect | Before | After |
+| --- | --- | --- | --- |
+| ✏️ Modified | ARM common-types dependency | The two preview versions reference common-types v6. | Both preview versions reference common-types v5. |
 
-### Operation Details
+**TypeSpec change:** Change @armCommonTypesVersion from v6 to v5 on the 2026-11-01-preview and 2026-11-02-preview version members.
 
-<a id="intent-1-align-the-two-new-device-registry-previews-with-"></a>
-### 1. Align the two new Device Registry previews with ARM common-types v5 used by prior versions.
+```diff
+--- a/specification/deviceregistry/DeviceRegistry.Management/main.tsp
++++ b/specification/deviceregistry/DeviceRegistry.Management/main.tsp
+@@ -75,12 +75,12 @@ enum Versions {
+   v2026_04_01: "2026-04-01",
 
-**Confidence:** high<br>
-**REST summary:** Generated OpenAPI references v5 ARM envelopes instead of v6, removing cross-version identity, SKU, plan, and requiredness drift.
+   @doc("Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.")
+-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)
++  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+   v2026_11_01_preview: "2026-11-01-preview",
 
-#### `SchemaRegistries_CreateOrReplace`
+   @doc("Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.")
+   @Azure.Core.previewVersion
+-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)
++  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+   v2026_11_02_preview: "2026-11-02-preview",
+ ... 2 later diff lines omitted; full hunk is in assessment.json ...
+```
 
-- **HTTP path:** `PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}`
-- **API versions:** `2026-11-01-preview`, `2026-11-15-preview`
-- **Parameters:** path subscriptionId, resourceGroupName, schemaRegistryName: string, required; query api-version: string, required
-- **Request payload:** application/json body: SchemaRegistry
-- **Response payloads:** 200 or 201: SchemaRegistry; default: ErrorResponse
-- **Service behavior:** Creates or replaces a schema registry using ARM common-types v5 envelopes.
-- **LRO:** arm; via azure-async-operation; Poll the emitted async endpoint after Retry-After until a terminal state.; final result: Use the final response contract described for this operation.
-- **Paging:** No.
-- **TypeSpec source:** [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84)
+**Source:** [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84)
 
-#### `Namespaces_CreateOrReplace`
+Need the complete REST representation for every affected operation? Use this prompt:
 
-- **HTTP path:** `PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}`
-- **API versions:** `2026-11-01-preview`, `2026-11-15-preview`
-- **Parameters:** path subscriptionId, resourceGroupName, namespaceName: string, required; query api-version: string, required
-- **Request payload:** application/json body: Namespace
-- **Response payloads:** 200 or 201: Namespace; default: ErrorResponse
-- **Service behavior:** Creates or replaces a namespace using ARM common-types v5 envelopes.
-- **LRO:** arm; via azure-async-operation; Poll the emitted async endpoint after Retry-After until a terminal state.; final result: Use the final response contract described for this operation.
-- **Paging:** No.
-- **TypeSpec source:** [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84)
+`Using assessment.json for PR #45348, show the complete REST representation for every affected operation, including operation ID, method/path, parameters, request, responses, LRO, paging, and TypeSpec source.`
+
 ## 🛡️ Compatibility Assessment
 
 ### REST Breaking Changes
@@ -92,25 +90,14 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Azure.ResourceManager decorators - @armCommonTypesVersion](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/) | This decorator is used either on a namespace or a version enum value to indicate the version of the Azure Resource Manager common-types to use for refs in emitted Swagger files. | Both changed preview members select Azure.ResourceManager.CommonTypes.Versions.v5. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
-| Matched | [arm-common-types-version rule - Correct per-version placement](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/) | If the common types version is updated in later versions, the decorator should appear on each version enum member. | The project already uses per-version declarations and the PR preserves that pattern. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
+| Matched | [ARM common types version rule - Models and Enums](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/) | . Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining child resources 7. Defining custom resource actions 8. Customizing operations with traits 9. Versioning 10. Complete Example 11. Advanced Topics ARM Service 1. Installing Tools 2. Defining the Service 3. Defining | The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84) |
 
 ### Tooling Used
 
 - `@azure-tools/typespec-autorest`
 - `@azure-tools/typespec-client-generator-core`
 
-### Repository Validation
-
-| Project | Tool | Status | Duration | Log |
-| --- | --- | --- | ---: | --- |
-| `specification/deviceregistry/DeviceRegistry.Management` | `TypeSpecValidation` | skipped | 0s | `unknown` |
-
 ### Artifact Evidence
 
 - **autorest:** base/head succeeded; both preview OpenAPI files switch common-type references from v6 to v5
 - **tcgc:** base/head succeeded; client model reflects aligned ARM envelope types
-
-### Changed TypeSpec
-
-- `specification/deviceregistry/DeviceRegistry.Management/main.tsp`: [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83)

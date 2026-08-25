@@ -5,6 +5,8 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { renderAssessment } from "./render-assessment.mjs";
+import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { linkImpactFindings } from "./operation-changes.mjs";
 
 const fixture = JSON.parse(
   readFileSync(
@@ -103,13 +105,35 @@ export function buildCompliance(assessment, specification) {
     documents,
     findings: (specification.findings ?? []).map((finding, index) => {
       const { semanticItemIds, sourcePathIncludes, ...content } = finding;
+      const supportingDocument = documents.find(
+        (document) => document.url === finding.documentationUrl,
+      );
+      const codeSnippets =
+        content.codeSnippets ?? supportingDocument?.codeSnippets;
+      const sourceReferences =
+        codeSnippets === supportingDocument?.codeSnippets
+          ? supportingDocument.sourceReferences
+          : selectedSources(
+              assessment,
+              finding,
+              `Compliance finding ${index + 1}`,
+            );
+      for (const snippet of codeSnippets ?? []) {
+        const reference = sourceReferences.find(
+          (candidate) => candidate.path === snippet.path,
+        );
+        if (!reference) continue;
+        reference.startLine = Math.min(reference.startLine, snippet.startLine);
+        reference.endLine = Math.max(reference.endLine, snippet.endLine);
+        reference.link = reference.link.replace(
+          /#L\d+-L\d+$/,
+          `#L${reference.startLine}-L${reference.endLine}`,
+        );
+      }
       return {
         ...content,
-        sourceReferences: selectedSources(
-          assessment,
-          finding,
-          `Compliance finding ${index + 1}`,
-        ),
+        ...(codeSnippets ? { codeSnippets } : {}),
+        sourceReferences,
       };
     }),
   };
@@ -191,19 +215,24 @@ function main() {
     const directory = join(root, "assessments", pr);
     const jsonPath = join(directory, "assessment.json");
     const markdownPath = join(directory, "assessment.md");
+    const htmlPath = join(directory, "assessment.html");
     const standalone = JSON.parse(readFileSync(jsonPath, "utf8"));
     standalone.dimensions.azureCompliance = compliance;
     standalone.assessmentDuration = duration;
+    linkImpactFindings(standalone);
     outputs.push({
       jsonPath,
       json: `${JSON.stringify(standalone, null, 2)}\n`,
       markdownPath,
       markdown: renderAssessment(standalone),
+      htmlPath,
+      html: renderAssessmentHtml(standalone),
     });
   }
   for (const output of outputs) {
     writeFileSync(output.jsonPath, output.json);
     writeFileSync(output.markdownPath, output.markdown);
+    writeFileSync(output.htmlPath, output.html);
   }
   aggregate.generatedAt = new Date().toISOString();
   writeFileSync(aggregatePath, `${JSON.stringify(aggregate, null, 2)}\n`);

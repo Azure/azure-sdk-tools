@@ -1,0 +1,1814 @@
+{
+  "schemaVersion": 2,
+  "overallConfidence": "high",
+  "pr": 44882,
+  "title": "Add new stable version 2026-06-01 for New Relic",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882",
+  "state": "merged",
+  "baseline": {
+    "ref": "9eb0993333857ef0ffb2863ccc76f8b123cae90b",
+    "commit": "9eb0993333857ef0ffb2863ccc76f8b123cae90b"
+  },
+  "head": {
+    "commit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "result": "compatibility-mitigation-with-compliance-gap",
+  "artifactEvidence": {
+    "autorest": "Cached base/head compilation succeeded. Head adds the complete stable 2026-06-01 OpenAPI surface; comparison with the prior preview shows no incompatible wire-contract changes.",
+    "tcgc": "Cached base/head compilation succeeded. The generic client surface adds 2026-06-01 and changes every client API-version default from 2025-05-01-preview to 2026-06-01; the Go-only override is verified from changed TypeSpec source."
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 7,
+        "endLine": 7,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7"
+      },
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 9,
+        "endLine": 9,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9"
+      },
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 324,
+        "endLine": 354,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354"
+      },
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+        "revision": "head",
+        "startLine": 38,
+        "endLine": 48,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/base/autorest"
+      },
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/base/tcgc"
+      },
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/head/autorest"
+      },
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/head/tcgc"
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-44882-stable-version-and-go-compatibility",
+          "intent": "Publish the existing New Relic management surface as stable 2026-06-01 and preserve the released Go delete method parameter order.",
+          "transformationChain": [
+            "Append 2026-06-01 to the service version enum.",
+            "Expose all existing operations and models in the new stable version and make it the generated-client default.",
+            "Define a replacement delete signature and apply a Go-only @@override so the stable SDK does not reorder existing parameters."
+          ],
+          "restRepresentation": {
+            "summary": "All 35 existing operations become available under api-version 2026-06-01 with their established wire contracts; only generated Go parameter ordering is customized.",
+            "operations": [
+              {
+                "operationId": "Operations_List",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/providers/NewRelic.Observability/operations",
+                "signature": "GET /providers/NewRelic.Observability/operations",
+                "parameters": [
+                  "query api-version: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: OperationListResult",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "List the operations for the provider",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from OperationListResult",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Accounts_List",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/accounts",
+                "signature": "GET /subscriptions/{subscriptionId}/providers/NewRelic.Observability/accounts",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "query userEmail: string, required",
+                  "query location: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: AccountsListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all the New Relic accounts linked to your email address, helping you understand the existing accounts that have been created",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from AccountsListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "SaaS_ActivateResource",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/activateSaaS",
+                "signature": "POST /subscriptions/{subscriptionId}/providers/NewRelic.Observability/activateSaaS",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "body request: ActivateSaaSParameterRequest, required"
+                ],
+                "requestPayload": "application/json payload: ActivateSaaSParameterRequest",
+                "responsePayloads": [
+                  "200 application/json payload: SaaSResourceDetailsResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Resolve the token to get the SaaS resource ID and activate the SaaS resource",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_ListBySubscription",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/monitors",
+                "signature": "GET /subscriptions/{subscriptionId}/providers/NewRelic.Observability/monitors",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResourceListResult",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all New Relic monitor resources either within a specific subscription",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from NewRelicMonitorResourceListResult",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Organizations_List",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/organizations",
+                "signature": "GET /subscriptions/{subscriptionId}/providers/NewRelic.Observability/organizations",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "query userEmail: string, required",
+                  "query location: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: OrganizationsListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all the New Relic organizations linked to your email address, helping you understand the existing organizations that have been created",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from OrganizationsListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Plans_List",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/plans",
+                "signature": "GET /subscriptions/{subscriptionId}/providers/NewRelic.Observability/plans",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "query accountId: string, optional",
+                  "query organizationId: string, optional"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: PlanDataListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists the plans data linked to your organization, providing an overview of the available plans",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from PlanDataListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_ListByResourceGroup",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResourceListResult",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Retrieves a list of all New Relic monitor resources either a specific resource group",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from NewRelicMonitorResourceListResult",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_Get",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResource",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Retrieves the properties and configuration details of a specific New Relic monitor resource, providing insight into its setup and status",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_CreateOrUpdate",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "PUT",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "signature": "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body resource: NewRelicMonitorResource, required"
+                ],
+                "requestPayload": "application/json payload: NewRelicMonitorResource",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResource",
+                  "201 application/json payload: NewRelicMonitorResource; headers: Azure-AsyncOperation, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Creates a new or updates an existing New Relic monitor resource in your Azure subscription. This sets up the integration between Azure and your New Relic account, enabling observability and monitoring of your Azure resources through New Relic",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation",
+                  "polling": "Poll the azure-async-operation URL after Retry-After until a terminal state.",
+                  "finalResult": "Return NewRelicMonitorResource after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_Update",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "PATCH",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "signature": "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body properties: NewRelicMonitorResourceUpdate, required"
+                ],
+                "requestPayload": "application/json payload: NewRelicMonitorResourceUpdate",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResource",
+                  "202 no body; headers: Location, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Updates an existing New Relic monitor resource from your Azure subscription",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "Poll the location URL after Retry-After until a terminal state.",
+                  "finalResult": "Return NewRelicMonitorResource after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_Delete",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "DELETE",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "signature": "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "query userEmail: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 no body",
+                  "202 no body; headers: Azure-AsyncOperation, Retry-After",
+                  "204 no body",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation",
+                  "polling": "Poll the azure-async-operation URL after Retry-After until a terminal state.",
+                  "finalResult": "Return the terminal no-content response."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  },
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                    "revision": "head",
+                    "startLine": 321,
+                    "endLine": 354,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+                  }
+                ]
+              },
+              {
+                "operationId": "BillingInfo_Get",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getBillingInfo",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getBillingInfo",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: BillingInfoResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "A synchronous resource action.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_GetMetricRules",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getMetricRules",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getMetricRules",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body request: MetricsRequest, required"
+                ],
+                "requestPayload": "application/json payload: MetricsRequest",
+                "responsePayloads": [
+                  "200 application/json payload: MetricRules",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Retrieves the metric rules that are configured in the New Relic monitor resource",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_GetMetricStatus",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getMetricStatus",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getMetricStatus",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body request: MetricsStatusRequest, required"
+                ],
+                "requestPayload": "application/json payload: MetricsStatusRequest",
+                "responsePayloads": [
+                  "200 application/json payload: MetricsStatusResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Retrieves the metric status that are configured in the New Relic monitor resource",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_LatestLinkedSaaS",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/latestLinkedSaaS",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/latestLinkedSaaS",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: LatestLinkedSaaSResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Returns the latest SaaS linked to the newrelic organization of the underlying monitor.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_LinkSaaS",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/linkSaaS",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/linkSaaS",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body body: SaaSData, required"
+                ],
+                "requestPayload": "application/json payload: SaaSData",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResource",
+                  "202 no body; headers: Azure-AsyncOperation, Location, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Links a new SaaS to the newrelic organization of the underlying monitor.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation",
+                  "polling": "Poll the azure-async-operation URL after Retry-After until a terminal state.",
+                  "finalResult": "Return NewRelicMonitorResource after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_ListAppServices",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listAppServices",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listAppServices",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body request: AppServicesGetRequest, required"
+                ],
+                "requestPayload": "application/json payload: AppServicesGetRequest",
+                "responsePayloads": [
+                  "200 application/json payload: AppServicesListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists the app service resources currently being monitored by the New Relic resource, helping you understand which app services are under monitoring",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from AppServicesListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "ConnectedPartnerResources_List",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listConnectedPartnerResources",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listConnectedPartnerResources",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body body: email, optional"
+                ],
+                "requestPayload": "application/json payload: email",
+                "responsePayloads": [
+                  "200 application/json payload: ConnectedPartnerResourcesListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "A synchronous resource action.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from ConnectedPartnerResourcesListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_ListHosts",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listHosts",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listHosts",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body request: HostsGetRequest, required"
+                ],
+                "requestPayload": "application/json payload: HostsGetRequest",
+                "responsePayloads": [
+                  "200 application/json payload: VMHostsListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all VM resources currently being monitored by the New Relic monitor resource, helping you manage observability",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from VMHostsListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_ListLinkedResources",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listLinkedResources",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listLinkedResources",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: LinkedResourceListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all Azure resources that are linked to the same New Relic organization as the specified monitor resource, helping you understand the scope of integration",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from LinkedResourceListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_ListMonitoredResources",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredResources",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredResources",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: MonitoredResourceListResponse",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all Azure resources that are currently being monitored by the specified New Relic monitor resource, providing insight into the coverage of your observability setup",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from MonitoredResourceListResponse",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "MonitoredSubscriptions_List",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: MonitoredSubscriptionPropertiesList",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "List MonitoredSubscriptionProperties resources by NewRelicMonitorResource",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from MonitoredSubscriptionPropertiesList",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "MonitoredSubscriptions_Get",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path configurationName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: MonitoredSubscriptionProperties",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Get a MonitoredSubscriptionProperties",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "MonitoredSubscriptions_CreateOrUpdate",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "PUT",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "signature": "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path configurationName: string, required",
+                  "body body: MonitoredSubscriptionProperties, optional"
+                ],
+                "requestPayload": "application/json payload: MonitoredSubscriptionProperties",
+                "responsePayloads": [
+                  "200 application/json payload: MonitoredSubscriptionProperties",
+                  "201 application/json payload: MonitoredSubscriptionProperties; headers: Location, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Create a MonitoredSubscriptionProperties",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "Poll the location URL after Retry-After until a terminal state.",
+                  "finalResult": "Return MonitoredSubscriptionProperties after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "MonitoredSubscriptions_Update",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "PATCH",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "signature": "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path configurationName: string, required",
+                  "body body: MonitoredSubscriptionProperties, optional"
+                ],
+                "requestPayload": "application/json payload: MonitoredSubscriptionProperties",
+                "responsePayloads": [
+                  "200 application/json payload: MonitoredSubscriptionProperties",
+                  "202 no body; headers: Location, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Update a MonitoredSubscriptionProperties",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "Poll the location URL after Retry-After until a terminal state.",
+                  "finalResult": "Return MonitoredSubscriptionProperties after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "MonitoredSubscriptions_Delete",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "DELETE",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "signature": "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path configurationName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "202 no body; headers: Location, Retry-After",
+                  "204 no body",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Delete a MonitoredSubscriptionProperties",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location",
+                  "polling": "Poll the location URL after Retry-After until a terminal state.",
+                  "finalResult": "Return the terminal no-content response."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_RefreshIngestionKey",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/refreshIngestionKey",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/refreshIngestionKey",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "204 no body",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Refreshes the ingestion key for all monitors linked to the same account associated to the underlying monitor.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_Resubscribe",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/resubscribe",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/resubscribe",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body body: ResubscribeProperties, optional"
+                ],
+                "requestPayload": "application/json payload: ResubscribeProperties",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResource",
+                  "202 no body; headers: Azure-AsyncOperation, Location, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "A long-running resource action.",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation",
+                  "polling": "Poll the azure-async-operation URL after Retry-After until a terminal state.",
+                  "finalResult": "Return NewRelicMonitorResource after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_SwitchBilling",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/switchBilling",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/switchBilling",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "body request: SwitchBillingRequest, required"
+                ],
+                "requestPayload": "application/json payload: SwitchBillingRequest",
+                "responsePayloads": [
+                  "200 application/json payload: NewRelicMonitorResource",
+                  "202 no body; headers: Retry-After",
+                  "204 no body",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Switches the billing for the New Relic Monitor resource to be billed by Azure Marketplace",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "TagRules_ListByNewRelicMonitorResource",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: TagRuleListResult",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Lists all tag rules associated with a specific New Relic monitor resource, helping you manage and audit the rules that control resource monitoring",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "items from TagRuleListResult",
+                  "nextLinkName": "nextLink",
+                  "continuation": "Treat nextLink as an opaque absolute URL and GET it for the next page."
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "TagRules_Get",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "signature": "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path ruleSetName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: TagRule",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Retrieves the details of the tag rules for a specific New Relic monitor resource, providing insight into its setup and status",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "TagRules_CreateOrUpdate",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "PUT",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "signature": "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path ruleSetName: string, required",
+                  "body resource: TagRule, required"
+                ],
+                "requestPayload": "application/json payload: TagRule",
+                "responsePayloads": [
+                  "200 application/json payload: TagRule",
+                  "201 application/json payload: TagRule; headers: Azure-AsyncOperation, Retry-After",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Creates a new set of tag rules for a specific New Relic monitor resource, determining which Azure resources are monitored based on their tags",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation",
+                  "polling": "Poll the azure-async-operation URL after Retry-After until a terminal state.",
+                  "finalResult": "Return TagRule after terminal success."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "TagRules_Update",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "PATCH",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "signature": "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path ruleSetName: string, required",
+                  "body properties: TagRuleUpdate, required"
+                ],
+                "requestPayload": "application/json payload: TagRuleUpdate",
+                "responsePayloads": [
+                  "200 application/json payload: TagRule",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Updates the tag rules for a specific New Relic monitor resource, allowing you to modify the rules that control which Azure resources are monitored",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "TagRules_Delete",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "DELETE",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "signature": "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required",
+                  "path ruleSetName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 no body",
+                  "202 no body; headers: Azure-AsyncOperation, Retry-After",
+                  "204 no body",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Deletes a tag rule set for a given New Relic monitor resource, removing fine-grained control over observability based on resource tags",
+                "lro": {
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "azure-async-operation",
+                  "polling": "Poll the azure-async-operation URL after Retry-After until a terminal state.",
+                  "finalResult": "Return the terminal no-content response."
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              },
+              {
+                "operationId": "Monitors_VmHostPayload",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/vmHostPayloads",
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/vmHostPayloads",
+                "parameters": [
+                  "query api-version: string, required",
+                  "path subscriptionId: string, required",
+                  "path resourceGroupName: string, required",
+                  "path monitorName: string, required"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: VMExtensionPayload",
+                  "default application/json payload: ErrorResponse"
+                ],
+                "serviceBehavior": "Returns the payload that needs to be passed in the request body for installing the New Relic agent on a VM, providing the necessary configuration details",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                    "revision": "head",
+                    "startLine": 43,
+                    "endLine": 47,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                  }
+                ]
+              }
+            ]
+          },
+          "changes": [
+            {
+              "kind": "modified",
+              "summary": "Publish the existing New Relic management surface as stable 2026-06-01 and preserve the released Go delete method parameter order.",
+              "operationIds": [
+                "Operations_List",
+                "Accounts_List",
+                "SaaS_ActivateResource",
+                "Monitors_ListBySubscription",
+                "Organizations_List",
+                "Plans_List",
+                "Monitors_ListByResourceGroup",
+                "Monitors_Get",
+                "Monitors_CreateOrUpdate",
+                "Monitors_Update",
+                "Monitors_Delete",
+                "BillingInfo_Get",
+                "Monitors_GetMetricRules",
+                "Monitors_GetMetricStatus",
+                "Monitors_LatestLinkedSaaS",
+                "Monitors_LinkSaaS",
+                "Monitors_ListAppServices",
+                "ConnectedPartnerResources_List",
+                "Monitors_ListHosts",
+                "Monitors_ListLinkedResources",
+                "Monitors_ListMonitoredResources",
+                "MonitoredSubscriptions_List",
+                "MonitoredSubscriptions_Get",
+                "MonitoredSubscriptions_CreateOrUpdate",
+                "MonitoredSubscriptions_Update",
+                "MonitoredSubscriptions_Delete",
+                "Monitors_RefreshIngestionKey",
+                "Monitors_Resubscribe",
+                "Monitors_SwitchBilling",
+                "TagRules_ListByNewRelicMonitorResource",
+                "TagRules_Get",
+                "TagRules_CreateOrUpdate",
+                "TagRules_Update",
+                "TagRules_Delete",
+                "Monitors_VmHostPayload"
+              ],
+              "apiVersions": [
+                "2026-06-01"
+              ],
+              "aspects": [
+                {
+                  "field": "API-version availability",
+                  "before": "The service surface is available only as 2025-05-01-preview.",
+                  "after": "The same 35-operation surface is also available as stable 2026-06-01."
+                },
+                {
+                  "field": "generated client API-version default",
+                  "before": "Generated clients default to 2025-05-01-preview.",
+                  "after": "Generated clients default to 2026-06-01."
+                },
+                {
+                  "field": "Go Monitors_Delete parameter order",
+                  "before": "The stable generation would use the default TypeSpec parameter order.",
+                  "after": "A Go-scoped override preserves the released apiVersion, subscriptionId, resourceGroupName, provider, userEmail, monitorName order."
+                }
+              ],
+              "effect": "All 35 existing operations become available under api-version 2026-06-01 with their established wire contracts; only generated Go parameter ordering is customized.",
+              "typeSpecCause": "Append `v2026_06_01` to `Versions` and apply a Go-only `@@override` for `NewRelicMonitorResources.delete`.",
+              "sourceReferences": [
+                {
+                  "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                  "revision": "head",
+                  "startLine": 43,
+                  "endLine": 47,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+                },
+                {
+                  "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                  "revision": "head",
+                  "startLine": 321,
+                  "endLine": 354,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                  "oldStart": 319,
+                  "oldCount": 3,
+                  "newStart": 321,
+                  "newCount": 34,
+                  "context": "namespace Azure.ResourceManager.Models {",
+                  "lines": [
+                    " @@usage(AccountProperties, Usage.input | Usage.output, \"csharp\");",
+                    " @@usage(OrganizationProperties, Usage.input | Usage.output, \"csharp\");",
+                    " @@usage(PlanDataProperties, Usage.input | Usage.output, \"csharp\");",
+                    "+",
+                    "+// ===== Go delete parameter reorder =====",
+                    "+// Reorder the delete method parameters for the Go SDK to keep backward compatibility.",
+                    "+/**",
+                    "+ * Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic",
+                    "+ */",
+                    "+#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"Override to reorder parameters for the Go SDK\"",
+                    "+op newRelicMonitorResourceDelete(",
+                    "+  ...ApiVersionParameter,",
+                    "+  ...SubscriptionIdParameter,",
+                    "+  ...ResourceGroupParameter,",
+                    "+  ...Azure.ResourceManager.Legacy.Provider,",
+                    "+",
+                    "+  /**",
+                    "+   * User Email.",
+                    "+   */",
+                    "+  @query(\"userEmail\")",
+                    "+  userEmail: string,",
+                    "+",
+                    "+  /**",
+                    "+   * Name of the Monitors resource.",
+                    "+   */",
+                    "+  @path",
+                    "+  monitorName: string,",
+                    "+): void;",
+                    "+",
+                    "+@@override(",
+                    "+  NewRelicMonitorResources.delete,",
+                    "+  newRelicMonitorResourceDelete,",
+                    "+  \"go\"",
+                    "+);"
+                  ]
+                },
+                {
+                  "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+                  "oldStart": 40,
+                  "oldCount": 6,
+                  "newStart": 40,
+                  "newCount": 11,
+                  "context": "enum Versions {",
+                  "lines": [
+                    "    * The 2025-05-01-preview API version.",
+                    "    */",
+                    "   v2025_05_01_preview: \"2025-05-01-preview\",",
+                    "+",
+                    "+  /**",
+                    "+   * The 2026-06-01 API version.",
+                    "+   */",
+                    "+  v2026_06_01: \"2026-06-01\",",
+                    " }",
+                    " ",
+                    " interface Operations extends Azure.ResourceManager.Operations {}"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "compliance-44882-stable-after-preview"
+              ]
+            }
+          ],
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "revision": "head",
+              "startLine": 43,
+              "endLine": 47,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 321,
+              "endLine": 354,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": []
+    },
+    "azureCompliance": {
+      "status": "failed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 1
+      },
+      "documents": [
+        {
+          "title": "Adding a Stable Version when the Last Version was Preview",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "section": "Making Changes to your TypeSpec spec",
+          "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
+          "applicableGuidance": "The stable version replaces the prior preview member.",
+          "evidence": "The enum retains v2025_05_01_preview and appends v2026_06_01.",
+          "expectedCodeStatus": "not-present",
+          "expectedCodeReason": "The guidance requires removing the replaced preview member; it does not provide a replacement enum example.",
+          "codeSnippets": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "startLine": 39,
+              "endLine": 47,
+              "lines": [
+                "  /**",
+                "   * The 2025-05-01-preview API version.",
+                "   */",
+                "  v2025_05_01_preview: \"2025-05-01-preview\",",
+                "",
+                "  /**",
+                "   * The 2026-06-01 API version.",
+                "   */",
+                "  v2026_06_01: \"2026-06-01\","
+              ]
+            }
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "revision": "head",
+              "startLine": 38,
+              "endLine": 48,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48"
+            }
+          ]
+        },
+        {
+          "title": "TypeSpec Client Generator Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "section": "@Azure.ClientGenerator.Core.override",
+          "guidanceExcerpt": "Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported.",
+          "applicableGuidance": "Use a language-scoped override operation to customize parameter order.",
+          "evidence": "The Go-only @@override is in client.tsp and reorders the delete operation parameters.",
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 321,
+              "endLine": 354,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 7,
+              "endLine": 7,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 9,
+              "endLine": 9,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 324,
+              "endLine": 354,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354"
+            }
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "compliance-44882-stable-after-preview",
+          "title": "The stable version retains the replaced preview version",
+          "severity": "medium",
+          "summary": "The enum keeps v2025_05_01_preview beside v2026_06_01 instead of following the stable-after-preview replacement procedure.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "evidence": [
+            "The Go-specific override follows its documentation and is not part of this finding."
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "startLine": 38,
+              "endLine": 48,
+              "lines": [
+                "enum Versions {",
+                "  /**",
+                "   * The 2025-05-01-preview API version.",
+                "   */",
+                "  v2025_05_01_preview: \"2025-05-01-preview\",",
+                "",
+                "  /**",
+                "   * The 2026-06-01 API version.",
+                "   */",
+                "  v2026_06_01: \"2026-06-01\",",
+                "}"
+              ]
+            }
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "revision": "head",
+              "startLine": 38,
+              "endLine": 48,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/newrelic/NewRelicObservability.Management"
+  ],
+  "assessmentDuration": {
+    "totalMs": 939098,
+    "note": "Assessment-only timings retained from execution-time-analysis.md. Worktree creation, dependency installation, and other environment setup are excluded. Quality labels distinguish measured, estimated, and derived values.",
+    "breakdown": {
+      "semanticUnderstandingMs": 420000,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 150000,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 60000,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 218000,
+      "complianceQuality": "measured",
+      "overheadMs": 91000,
+      "overheadQuality": "derived",
+      "totalMs": 939098,
+      "totalQuality": "measured",
+      "searchRoute": "official source fallback"
+    }
+  }
+}

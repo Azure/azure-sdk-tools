@@ -31,6 +31,22 @@ Report the initial status/body, `Azure-AsyncOperation`, `Location`,
 endpoint/status model, terminal states, final GET/result, and delete visibility
 behavior when applicable.
 
+For a modified LRO, use the metadata change to select the service behaviors
+that best explain its effect:
+
+- **initial operation**: request, accepted status/body, and async headers;
+- **polling operation**: polling URL/header, HTTP method, status model, and
+  terminal states;
+- **final result**: result type, body location, or no-content completion;
+- **final operation**: the final GET or other request used after polling.
+
+Do not mechanically list every field. Prioritize changed behaviors and retain
+only enough unchanged context to establish what callers still observe. Keep
+this separate from TypeSpec LRO metadata changes: replacing raw OpenAPI
+extensions with `@useFinalStateVia`, for example, changes how TypeSpec
+represents the LRO even when its start, polling/completion, and result behavior
+remain unchanged.
+
 For data plane, use the
 [Azure REST LRO guidance](https://github.com/microsoft/api-guidelines/blob/vNext/azure/ConsiderationsForServiceDesign.md#long-running-operations).
 Distinguish the target resource from the ephemeral status monitor. Report how
@@ -55,3 +71,7 @@ Use the
 [Azure REST pagination guidance](https://github.com/microsoft/api-guidelines/blob/vNext/azure/ConsiderationsForServiceDesign.md#pagination).
 Adding paging metadata to an existing response can be REST-compatible while
 changing generated SDK return shapes and iteration behavior.
+As with LROs, use the paging metadata diff to explain the useful service-level
+effect: item collection, continuation link/request, termination, and any
+client-controlled page parameters. Emphasize what changed instead of rendering
+a fixed checklist.

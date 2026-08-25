@@ -1,0 +1,640 @@
+{
+  "schemaVersion": 2,
+  "overallConfidence": "high",
+  "pr": 44742,
+  "title": "Removed NFSv2 from STG103/104 TypeSpec & Swagger",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/44742",
+  "state": "merged",
+  "createdAt": "2026-07-16T22:13:58Z",
+  "baseline": {
+    "ref": "af067c9fc987b837f27a34b86e3ac591507711c9",
+    "commit": "e75a07cd7ea1b2207190a362305db02b639715ec"
+  },
+  "head": {
+    "commit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
+    "hasWorkingTreeChanges": false,
+    "changeScope": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "result": "rest-breaking-change",
+  "artifactEvidence": {
+    "autorest": "base/head succeeded; OpenAPI removes enum values, properties, and schemas",
+    "tcgc": "base/head succeeded; client models and properties are removed"
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 287,
+        "endLine": 302,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 408,
+        "endLine": 423,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 560,
+        "endLine": 589,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L560-L589"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 609,
+        "endLine": 613,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L609-L613"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 660,
+        "endLine": 674,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L660-L674"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 694,
+        "endLine": 803,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/storage/data-plane/FileStorage",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__storage__data-plane__FileStorage/base/autorest"
+      },
+      {
+        "project": "specification/storage/data-plane/FileStorage",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__storage__data-plane__FileStorage/base/tcgc"
+      },
+      {
+        "project": "specification/storage/data-plane/FileStorage",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__storage__data-plane__FileStorage/head/autorest"
+      },
+      {
+        "project": "specification/storage/data-plane/FileStorage",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__storage__data-plane__FileStorage/head/tcgc"
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-44742-intent",
+          "intent": "Remove NFSv2 file types, include values, response fields, and item models from the 2026-12-06 File Storage API.",
+          "transformationChain": [
+            "Delete versioned enum values.",
+            "Delete XML response properties and NFS item models."
+          ],
+          "restRepresentation": {
+            "summary": "The stable 2026-12-06 OpenAPI removes accepted include values and response shapes such as BlockDeviceItem, CharDeviceItem, FIFO, Socket, and NFS metadata.",
+            "operations": [
+              {
+                "operationId": "Directory_ListFilesAndDirectories",
+                "apiVersions": [
+                  "2026-12-06"
+                ],
+                "method": "GET",
+                "path": "/{filesystem}/{directoryPath}",
+                "parameters": [
+                  "path filesystem and directoryPath: string, required",
+                  "query restype=directory and comp=list: constant, required",
+                  "query include, marker, maxresults, prefix, timeout: optional"
+                ],
+                "serviceBehavior": "Lists directory entries, including NFS-specific item shapes when requested.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "File or Directory entry",
+                  "nextLinkName": "NextMarker",
+                  "continuation": "Send the returned marker in the next marker query parameter; stop when absent."
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200: application/xml ListFilesAndDirectoriesSegmentResponse",
+                  "default: StorageError"
+                ],
+                "signature": "GET /{filesystem}/{directoryPath}",
+                "sourceReferences": [
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "base",
+                    "startLine": 284,
+                    "endLine": 806,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+                  }
+                ]
+              }
+            ]
+          },
+          "changes": [
+            {
+              "kind": "removed",
+              "summary": "Remove NFSv2 file types, include values, response fields, and item models from the 2026-12-06 File Storage API.",
+              "operationIds": [
+                "Directory_ListFilesAndDirectories"
+              ],
+              "apiVersions": [
+                "2026-12-06"
+              ],
+              "aspects": [
+                {
+                  "field": "2026-12-06 File Storage contracts",
+                  "before": "NFSv2 file types, include values, response fields, and item models are present.",
+                  "after": null
+                }
+              ],
+              "effect": "The stable 2026-12-06 OpenAPI removes accepted include values and response shapes such as BlockDeviceItem, CharDeviceItem, FIFO, Socket, and NFS metadata.",
+              "typeSpecCause": "Delete versioned enum values.",
+              "sourceReferences": [
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 284,
+                  "endLine": 806,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+                }
+              ],
+              "typeSpecDiffs": [
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 284,
+                  "oldCount": 22,
+                  "newStart": 284,
+                  "newCount": 6,
+                  "context": "union NfsFileType {",
+                  "lines": [
+                    " ",
+                    "   /** SymLink */",
+                    "   SymLink: \"SymLink\",",
+                    "-",
+                    "-  /** BlockDevice */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  BlockDevice: \"BlockDevice\",",
+                    "-",
+                    "-  /** CharacterDevice */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  CharacterDevice: \"CharacterDevice\",",
+                    "-",
+                    "-  /** Socket */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  Socket: \"Socket\",",
+                    "-",
+                    "-  /** Fifo */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  Fifo: \"Fifo\",",
+                    " }",
+                    " ",
+                    " /** The file property semantics. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 405,
+                  "oldCount": 22,
+                  "newStart": 389,
+                  "newCount": 6,
+                  "context": "enum ListFilesIncludeType {",
+                  "lines": [
+                    " ",
+                    "   /** PermissionKey */",
+                    "   PermissionKey,",
+                    "-",
+                    "-  /** Permissions */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  Permissions,",
+                    "-",
+                    "-  /** LinkCount */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  LinkCount,",
+                    "-",
+                    "-  /** NfsAttributes */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  NfsAttributes,",
+                    "-",
+                    "-  /** All */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  All,",
+                    " }",
+                    " ",
+                    " /** The type of share information to include in the listing. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 557,
+                  "oldCount": 36,
+                  "newStart": 525,
+                  "newCount": 6,
+                  "context": "model FilesAndDirectoriesListSegment {",
+                  "lines": [
+                    "   @Xml.unwrapped",
+                    "   @Xml.name(\"File\")",
+                    "   fileItems: FileItem[];",
+                    "-",
+                    "-  /** The symbolic link items. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.unwrapped",
+                    "-  @Xml.name(\"SymLink\")",
+                    "-  symLinkItems?: SymLinkItem[];",
+                    "-",
+                    "-  /** The block device items. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.unwrapped",
+                    "-  @Xml.name(\"BlockDevice\")",
+                    "-  blockDeviceItems?: BlockDeviceItem[];",
+                    "-",
+                    "-  /** The character device items. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.unwrapped",
+                    "-  @Xml.name(\"CharDevice\")",
+                    "-  charDeviceItems?: CharDeviceItem[];",
+                    "-",
+                    "-  /** The FIFO items. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.unwrapped",
+                    "-  @Xml.name(\"Fifo\")",
+                    "-  fifoItems?: FifoItem[];",
+                    "-",
+                    "-  /** The socket items. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.unwrapped",
+                    "-  @Xml.name(\"Socket\")",
+                    "-  socketItems?: SocketItem[];",
+                    " }",
+                    " ",
+                    " /** A listed directory item. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 606,
+                  "oldCount": 11,
+                  "newStart": 544,
+                  "newCount": 6,
+                  "context": "model DirectoryItem {",
+                  "lines": [
+                    " ",
+                    "   /** The permission key. */",
+                    "   @Xml.name(\"PermissionKey\") permissionKey?: string;",
+                    "-",
+                    "-  /** NFS only. The link count of the directory. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"LinkCount\")",
+                    "-  linkCount?: int64;",
+                    " }",
+                    " ",
+                    " /** An encoded string value. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 657,
+                  "oldCount": 21,
+                  "newStart": 590,
+                  "newCount": 6,
+                  "context": "model FileProperty {",
+                  "lines": [
+                    " ",
+                    "   /** The ETag of the file. */",
+                    "   @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;",
+                    "-",
+                    "-  /** NFS only. The owner user identifier (UID) of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"Uid\")",
+                    "-  owner?: string;",
+                    "-",
+                    "-  /** NFS only. The owner group identifier (GID) of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"Gid\")",
+                    "-  group?: string;",
+                    "-",
+                    "-  /** NFS only. The file mode of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"Mode\")",
+                    "-  fileMode?: string;",
+                    " }",
+                    " ",
+                    " /** A listed file item. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 691,
+                  "oldCount": 116,
+                  "newStart": 609,
+                  "newCount": 6,
+                  "context": "model FileItem {",
+                  "lines": [
+                    " ",
+                    "   /** The permission key. */",
+                    "   @Xml.name(\"PermissionKey\") permissionKey?: string;",
+                    "-",
+                    "-  /** NFS only. The link count of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"LinkCount\")",
+                    "-  linkCount?: int64;",
+                    "-",
+                    "-  /** NFS only. The type of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"FileType\")",
+                    "-  fileType?: NfsFileType;",
+                    "-}",
+                    "-",
+                    "-/** A listed symbolic link item. */",
+                    "-@added(Versions.v2026_12_06)",
+                    "-@Xml.name(\"SymLink\")",
+                    "-model SymLinkItem {",
+                    "-  /** The symbolic link name. */",
+                    "-  @Xml.name(\"Name\") name: StringEncoded;",
+                    "-",
+                    "-  /** The file ID. */",
+                    "-  @Xml.name(\"FileId\") fileId?: string;",
+                    "-",
+                    "-  /** File properties. */",
+                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
+                    "-",
+                    "-  /** NFS only. The link count of the symbolic link. */",
+                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
+                    "-",
+                    "-  /** NFS only. The path to the original file, the symbolic link is pointing to. */",
+                    "-  @Xml.name(\"LinkText\") linkText?: string;",
+                    "-}",
+                    "-",
+                    "-/** A listed block device item. */",
+                    "-@added(Versions.v2026_12_06)",
+                    "-@Xml.name(\"BlockDevice\")",
+                    "-model BlockDeviceItem {",
+                    "-  /** The block device name. */",
+                    "-  @Xml.name(\"Name\") name: StringEncoded;",
+                    "-",
+                    "-  /** The file ID. */",
+                    "-  @Xml.name(\"FileId\") fileId?: string;",
+                    "-",
+                    "-  /** File properties. */",
+                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
+                    "-",
+                    "-  /** NFS only. The link count of the block device. */",
+                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
+                    "-",
+                    "-  /** NFS only. The major device number of the block device. */",
+                    "-  @Xml.name(\"DeviceMajor\") deviceMajor?: int64;",
+                    "-",
+                    "-  /** NFS only. The minor device number of the block device. */",
+                    "-  @Xml.name(\"DeviceMinor\") deviceMinor?: int64;",
+                    "-}",
+                    "-",
+                    "-/** A listed character device item. */",
+                    "-@added(Versions.v2026_12_06)",
+                    "-@Xml.name(\"CharDevice\")",
+                    "-model CharDeviceItem {",
+                    "-  /** The character device name. */",
+                    "-  @Xml.name(\"Name\") name: StringEncoded;",
+                    "-",
+                    "-  /** The file ID. */",
+                    "-  @Xml.name(\"FileId\") fileId?: string;",
+                    "-",
+                    "-  /** File properties. */",
+                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
+                    "-",
+                    "-  /** NFS only. The link count of the character device. */",
+                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
+                    "-",
+                    "-  /** NFS only. The major device number of the character device. */",
+                    "-  @Xml.name(\"DeviceMajor\") deviceMajor?: int64;",
+                    "-",
+                    "-  /** NFS only. The minor device number of the character device. */",
+                    "-  @Xml.name(\"DeviceMinor\") deviceMinor?: int64;",
+                    "-}",
+                    "-",
+                    "-/** A listed FIFO item. */",
+                    "-@added(Versions.v2026_12_06)",
+                    "-@Xml.name(\"Fifo\")",
+                    "-model FifoItem {",
+                    "-  /** The FIFO name. */",
+                    "-  @Xml.name(\"Name\") name: StringEncoded;",
+                    "-",
+                    "-  /** The file ID. */",
+                    "-  @Xml.name(\"FileId\") fileId?: string;",
+                    "-",
+                    "-  /** File properties. */",
+                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
+                    "-",
+                    "-  /** NFS only. The link count of the FIFO. */",
+                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
+                    "-}",
+                    "-",
+                    "-/** A listed socket item. */",
+                    "-@added(Versions.v2026_12_06)",
+                    "-@Xml.name(\"Socket\")",
+                    "-model SocketItem {",
+                    "-  /** The socket name. */",
+                    "-  @Xml.name(\"Name\") name: StringEncoded;",
+                    "-",
+                    "-  /** The file ID. */",
+                    "-  @Xml.name(\"FileId\") fileId?: string;",
+                    "-",
+                    "-  /** File properties. */",
+                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
+                    "-",
+                    "-  /** NFS only. The link count of the socket. */",
+                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
+                    " }",
+                    " ",
+                    " /** A listed Azure Storage handle item. */"
+                  ]
+                }
+              ],
+              "linkedFindingIds": [
+                "pr-44742-rest-removal",
+                "pr-44742-sdk-removal"
+              ]
+            }
+          ],
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 284,
+              "endLine": 806,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": [
+        {
+          "id": "pr-44742-rest-removal",
+          "title": "Stable API response and enum surface is removed",
+          "severity": "high",
+          "confidence": "high",
+          "summary": "Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes.",
+          "evidence": [
+            "AutoRest removes enum values and response schemas from a stable API version."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 284,
+              "endLine": 806,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+            }
+          ]
+        }
+      ]
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": [
+        {
+          "id": "pr-44742-sdk-removal",
+          "title": "Generated SDK models, properties, and enum values are removed",
+          "severity": "high",
+          "confidence": "high",
+          "summary": "Regenerated SDKs remove the public NFSv2 models, response properties, and enum values, so existing source code that references them no longer compiles and response handling loses those shapes.",
+          "evidence": [
+            "The generated client surface removes the NFSv2 models, response properties, and enum values together with the stable REST contract."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 284,
+              "endLine": 806,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+            }
+          ]
+        }
+      ]
+    },
+    "azureCompliance": {
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 1,
+        "findingCount": 0
+      },
+      "documents": [
+        {
+          "title": "TypeSpec.Versioning guide",
+          "url": "https://typespec.io/docs/libraries/versioning/guide/",
+          "section": "Current-state modeling",
+          "guidanceExcerpt": "The TypeSpec should represent the current state of the API.",
+          "applicableGuidance": "Delete declarations that should exist in no API version; use @removed only when retaining them for earlier versions.",
+          "evidence": "The removed NFSv2 declarations existed only in the latest unreleased version and should no longer exist in any version.",
+          "sourceReferences": [
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 284,
+              "endLine": 806,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 287,
+              "endLine": 302,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 408,
+              "endLine": 423,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 560,
+              "endLine": 589,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L560-L589"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 609,
+              "endLine": 613,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L609-L613"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 660,
+              "endLine": 674,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L660-L674"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 694,
+              "endLine": 803,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/storage/data-plane/FileStorage"
+  ],
+  "assessmentDuration": {
+    "totalMs": 765738,
+    "note": "Assessment-only timings retained from execution-time-analysis.md. Worktree creation, dependency installation, and other environment setup are excluded. Quality labels distinguish measured, estimated, and derived values.",
+    "breakdown": {
+      "semanticUnderstandingMs": 390000,
+      "semanticUnderstandingQuality": "estimated",
+      "restBreakingMs": 150000,
+      "restBreakingQuality": "estimated",
+      "downstreamBreakingMs": 60000,
+      "downstreamBreakingQuality": "estimated",
+      "complianceMs": 148000,
+      "complianceQuality": "measured",
+      "overheadMs": 18000,
+      "overheadQuality": "derived",
+      "totalMs": 765738,
+      "totalQuality": "measured",
+      "searchRoute": "catalog only"
+    }
+  }
+}

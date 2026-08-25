@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cpSync,
-  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -24,6 +24,12 @@ import {
   resolve,
 } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import {
+  parseTypeSpecDiffHunks,
+  untrackedTypeSpecDiffHunk,
+} from "./typespec-diff-hunks.mjs";
+import { analyzeArtifacts } from "./analyze-artifacts.mjs";
 
 const TYPE_SPEC_FILES = /\.(tsp)$/i;
 const PROJECT_FILES = new Set([
@@ -51,9 +57,46 @@ const EMITTERS = [
     id: "tcgc",
   },
 ];
+const ARTIFACT_CACHE_VERSION = 1;
 
 function elapsedMs(startedAt) {
   return Math.round(Number(process.hrtime.bigint() - startedAt) / 1_000_000);
+}
+
+export function artifactCacheKey({
+  projectTree,
+  lockHash,
+  node,
+  emitter,
+  config,
+}) {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        version: ARTIFACT_CACHE_VERSION,
+        projectTree,
+        lockHash,
+        node,
+        emitter,
+        config,
+      }),
+    )
+    .digest("hex");
+}
+
+export function restoreArtifactCache(cachePath, outputPath) {
+  const cachedArtifacts = join(cachePath, "artifacts");
+  if (!existsSync(cachedArtifacts)) return false;
+  rmSync(outputPath, { recursive: true, force: true });
+  cpSync(cachedArtifacts, outputPath, { recursive: true });
+  return true;
+}
+
+export function storeArtifactCache(cachePath, outputPath) {
+  const cachedArtifacts = join(cachePath, "artifacts");
+  mkdirSync(cachePath, { recursive: true });
+  rmSync(cachedArtifacts, { recursive: true, force: true });
+  cpSync(outputPath, cachedArtifacts, { recursive: true });
 }
 
 function progress(message) {
@@ -82,6 +125,7 @@ function run(command, args, options = {}) {
     cwd: options.cwd,
     env: options.env,
     encoding: "utf8",
+    input: options.input,
     shell: process.platform === "win32" && /\.(cmd|bat)$/i.test(command),
   });
   if (!options.allowFailure && result.status !== 0) {
@@ -142,19 +186,38 @@ export function parseArgs(argv) {
   const args = {
     repo: ".",
     output: ".typespec-assessment",
+    artifactCache: join(
+      canonicalTempDirectory(),
+      "typespec-assessment-artifact-cache",
+    ),
+    checkoutCache: undefined,
+    rawArtifactDiffs: false,
     skipCompile: false,
-    skipValidation: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === "--skip-compile") {
       args.skipCompile = true;
-    } else if (value === "--skip-validation") {
-      args.skipValidation = true;
-    } else if (["--repo", "--output", "--base"].includes(value)) {
+    } else if (value === "--raw-artifact-diffs") {
+      args.rawArtifactDiffs = true;
+    } else if (
+      [
+        "--repo",
+        "--output",
+        "--base",
+        "--artifact-cache",
+        "--checkout-cache",
+      ].includes(value)
+    ) {
       const next = argv[index + 1];
       if (!next) throw new Error(`${value} requires a value`);
-      args[value.slice(2)] = next;
+      const key =
+        value === "--artifact-cache"
+          ? "artifactCache"
+          : value === "--checkout-cache"
+            ? "checkoutCache"
+            : value.slice(2);
+      args[key] = next;
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${value}`);
@@ -229,23 +292,37 @@ function isTypeSpecRelated(path) {
   return TYPE_SPEC_FILES.test(path) || PROJECT_FILES.has(basename(path));
 }
 
-function baselineFileExists(repoRoot, baseCommit, path, cache) {
-  if (!baseCommit) return false;
-  const normalized = relative(repoRoot, path).replaceAll("\\", "/");
-  const key = `${baseCommit}:${normalized}`;
-  if (!cache.has(key)) {
-    cache.set(
-      key,
-      git(repoRoot, ["cat-file", "-e", key], { allowFailure: true }).status ===
-        0,
-    );
-  }
-  return cache.get(key);
-}
-
 export function discoverProjectRoots(repoRoot, changedFiles, baseCommit) {
   const roots = new Set();
-  const baselineFiles = new Map();
+  const candidates = new Set();
+  for (const changedFile of changedFiles.filter(isTypeSpecRelated)) {
+    let current = resolve(repoRoot, dirname(changedFile));
+    while (current.startsWith(repoRoot)) {
+      for (const name of ["tspconfig.yaml", "tspconfig.yml", "main.tsp"]) {
+        candidates.add(
+          relative(repoRoot, join(current, name)).replaceAll("\\", "/"),
+        );
+      }
+      if (current === repoRoot) break;
+      current = dirname(current);
+    }
+  }
+  const candidatePaths = [...candidates].sort();
+  const baselineFiles = new Set();
+  if (baseCommit && candidatePaths.length > 0) {
+    const result = git(repoRoot, ["cat-file", "--batch-check"], {
+      input: candidatePaths
+        .map((path) => `${baseCommit}:${path}`)
+        .join("\n")
+        .concat("\n"),
+    });
+    result.stdout.split(/\r?\n/).forEach((line, index) => {
+      if (line.includes(" blob ")) baselineFiles.add(candidatePaths[index]);
+    });
+  }
+  function baselineFileExists(path) {
+    return baselineFiles.has(relative(repoRoot, path).replaceAll("\\", "/"));
+  }
   for (const changedFile of changedFiles.filter(isTypeSpecRelated)) {
     let current = resolve(repoRoot, dirname(changedFile));
     if (PROJECT_FILES.has(basename(changedFile)))
@@ -256,24 +333,9 @@ export function discoverProjectRoots(repoRoot, changedFiles, baseCommit) {
           existsSync(join(current, "tspconfig.yml"))) &&
         existsSync(join(current, "main.tsp"));
       const baseProject =
-        (baselineFileExists(
-          repoRoot,
-          baseCommit,
-          join(current, "tspconfig.yaml"),
-          baselineFiles,
-        ) ||
-          baselineFileExists(
-            repoRoot,
-            baseCommit,
-            join(current, "tspconfig.yml"),
-            baselineFiles,
-          )) &&
-        baselineFileExists(
-          repoRoot,
-          baseCommit,
-          join(current, "main.tsp"),
-          baselineFiles,
-        );
+        (baselineFileExists(join(current, "tspconfig.yaml")) ||
+          baselineFileExists(join(current, "tspconfig.yml"))) &&
+        baselineFileExists(join(current, "main.tsp"));
       if (headProject || baseProject) {
         roots.add((relative(repoRoot, current) || ".").replaceAll("\\", "/"));
         break;
@@ -367,27 +429,31 @@ export function untrackedReferences(
   changedFiles,
   headCommit,
   remoteUrl,
+  untrackedFiles = untrackedTypeSpecFiles(repoRoot, changedFiles),
 ) {
-  return changedFiles
-    .filter((path) => path.endsWith(".tsp"))
-    .filter(
-      (path) =>
-        git(repoRoot, ["ls-files", "--error-unmatch", path], {
-          allowFailure: true,
-        }).status !== 0,
-    )
-    .map((path) => {
-      const lines = readFileSync(join(repoRoot, path), "utf8").split(
-        /\r?\n/,
-      ).length;
-      return {
-        path,
-        revision: "head",
-        startLine: 1,
-        endLine: lines,
-        link: sourceLink(path, "head", headCommit, remoteUrl, 1, lines),
-      };
-    });
+  return untrackedFiles.map((path) => {
+    const lines = readFileSync(join(repoRoot, path), "utf8").split(
+      /\r?\n/,
+    ).length;
+    return {
+      path,
+      revision: "head",
+      startLine: 1,
+      endLine: lines,
+      link: sourceLink(path, "head", headCommit, remoteUrl, 1, lines),
+    };
+  });
+}
+
+function untrackedTypeSpecFiles(repoRoot, changedFiles) {
+  const typeSpecFiles = changedFiles.filter((path) => path.endsWith(".tsp"));
+  if (typeSpecFiles.length === 0) return [];
+  const tracked = new Set(
+    gitText(repoRoot, ["ls-files", "--", ...typeSpecFiles])
+      .split(/\r?\n/)
+      .filter(Boolean),
+  );
+  return typeSpecFiles.filter((path) => !tracked.has(path));
 }
 
 function safeProjectId(projectRoot) {
@@ -692,53 +758,6 @@ export function findTspCommand(repoRoot, projectRoot) {
   };
 }
 
-export function findTypeSpecValidationCommand(
-  repoRoot,
-  nodeCommand = process.execPath,
-) {
-  const script = join(
-    repoRoot,
-    "eng",
-    "tools",
-    "typespec-validation",
-    "cmd",
-    "tsv.js",
-  );
-  if (!existsSync(script)) return undefined;
-  return { command: nodeCommand, prefix: [script] };
-}
-
-export function ensureNodeWithNpm(
-  tempRoot,
-  npmExecPath = process.env.npm_execpath,
-) {
-  const bundledNpm = join(
-    dirname(process.execPath),
-    "node_modules",
-    "npm",
-    "bin",
-    "npm-cli.js",
-  );
-  if (existsSync(bundledNpm)) return process.execPath;
-  if (!npmExecPath || !existsSync(npmExecPath)) {
-    throw new Error(
-      `Node runtime ${process.execPath} does not bundle npm and npm_execpath is unavailable.`,
-    );
-  }
-
-  const runtimeRoot = join(tempRoot, "node-runtime");
-  const runtimeNode = join(runtimeRoot, basename(process.execPath));
-  const runtimeNpm = join(runtimeRoot, "node_modules", "npm");
-  mkdirSync(dirname(runtimeNpm), { recursive: true });
-  copyFileSync(process.execPath, runtimeNode);
-  symlinkSync(
-    resolve(dirname(npmExecPath), ".."),
-    runtimeNpm,
-    process.platform === "win32" ? "junction" : "dir",
-  );
-  return runtimeNode;
-}
-
 export function summarizeCompilerFailure(logText, logPath) {
   const cleanLines = logText
     .replace(/\u001b\[[0-9;]*m/g, "")
@@ -762,79 +781,6 @@ export function summarizeCompilerFailure(logText, logPath) {
   return `${diagnostics[0] ?? "TypeSpec compilation failed"} (${errorCount} error${errorCount === 1 ? "" : "s"}; log: ${logPath})`;
 }
 
-export function summarizeValidationFailure(logText, logPath) {
-  const cleanLines = logText
-    .replace(/\u001b\[[0-9;]*m/g, "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const diagnostic =
-    cleanLines.find(
-      (line) =>
-        /\b(error|warning|failed|invalid|missing|must)\b/i.test(line) &&
-        !/^Rule .+ failed$/i.test(line),
-    ) ?? "TypeSpec Validation failed";
-  return `${diagnostic} (log: ${logPath})`;
-}
-
-async function runTypeSpecValidation({
-  repoRoot,
-  checkoutRoot,
-  projectRoot,
-  outputRoot,
-  nodeCommand,
-}) {
-  const projectId = safeProjectId(projectRoot);
-  const logPath = join(outputRoot, "validation-logs", `${projectId}-head.log`);
-  mkdirSync(dirname(logPath), { recursive: true });
-  const relativeLog = relative(outputRoot, logPath).replaceAll("\\", "/");
-  const validationCommand = findTypeSpecValidationCommand(
-    repoRoot,
-    nodeCommand,
-  );
-  if (!validationCommand) {
-    const failureSummary = `Repository TypeSpec Validation CLI was not found at eng/tools/typespec-validation/cmd/tsv.js (log: ${relativeLog})`;
-    writeFileSync(logPath, `${failureSummary}\n`);
-    return {
-      tool: "TypeSpecValidation",
-      status: "unavailable",
-      exitCode: null,
-      durationMs: 0,
-      log: relativeLog,
-      failureSummary,
-    };
-  }
-
-  linkDependencies(repoRoot, checkoutRoot);
-  const startedAt = process.hrtime.bigint();
-  const result = await timedProgress(
-    `${projectRoot} TypeSpec Validation`,
-    async () =>
-      runAsync(
-        validationCommand.command,
-        [...validationCommand.prefix, resolve(checkoutRoot, projectRoot)],
-        { cwd: checkoutRoot, allowFailure: true },
-      ),
-  );
-  const durationMs = elapsedMs(startedAt);
-  const logText = `${result.stdout ?? ""}${result.stderr ?? ""}`;
-  writeFileSync(logPath, logText);
-  const validation = {
-    tool: "TypeSpecValidation",
-    status: result.status === 0 ? "succeeded" : "failed",
-    exitCode: result.status,
-    durationMs,
-    log: relativeLog,
-  };
-  if (result.status !== 0) {
-    validation.failureSummary = summarizeValidationFailure(
-      logText,
-      relativeLog,
-    );
-  }
-  return validation;
-}
-
 async function compileProject({
   repoRoot,
   checkoutRoot,
@@ -842,6 +788,7 @@ async function compileProject({
   side,
   outputRoot,
   tempRoot,
+  artifactCacheRoot,
 }) {
   const absoluteProject = resolve(checkoutRoot, projectRoot);
   if (!existsSync(absoluteProject)) return { side, status: "missing" };
@@ -855,64 +802,109 @@ async function compileProject({
 
   const projectId = safeProjectId(projectRoot);
   const command = findTspCommand(repoRoot, resolve(repoRoot, projectRoot));
-  const results = [];
-  for (const emitter of EMITTERS) {
-    const emitterId = emitter.id;
-    const emitterOutput = join(
-      outputRoot,
-      "artifacts",
-      projectId,
-      side,
-      emitterId,
-    );
-    const configPath = join(tempRoot, `${projectId}-${side}-${emitterId}.yaml`);
-    const logPath = join(
-      outputRoot,
-      "compile-logs",
-      `${projectId}-${side}-${emitterId}.log`,
-    );
-    mkdirSync(emitterOutput, { recursive: true });
-    mkdirSync(dirname(logPath), { recursive: true });
-    writeEmitterConfig(configPath, originalConfig, emitter.name, emitterOutput);
-    const startedAt = process.hrtime.bigint();
-    const result = await timedProgress(
-      `${side} ${projectRoot} ${emitterId} compilation`,
-      () =>
-        runAsync(
-          command.command,
-          [
-            ...command.prefix,
-            "compile",
-            absoluteProject,
-            "--config",
-            configPath,
-          ],
-          { cwd: repoRoot, allowFailure: true },
-        ),
-    );
-    const durationMs = elapsedMs(startedAt);
-    const relativeLog = relative(outputRoot, logPath).replaceAll("\\", "/");
-    const logText = `${result.stdout ?? ""}${result.stderr ?? ""}`;
-    writeFileSync(logPath, logText);
-    const emitterResult = {
-      emitter: emitterId,
-      status: result.status === 0 ? "succeeded" : "failed",
-      exitCode: result.status,
-      durationMs,
-      outputDirectory: relative(outputRoot, emitterOutput).replaceAll(
-        "\\",
-        "/",
-      ),
-      log: relativeLog,
-    };
-    if (result.status !== 0) {
-      emitterResult.failureSummary = summarizeCompilerFailure(
-        logText,
-        relativeLog,
+  const cacheInputRoot = sparseRoots([projectRoot])[0];
+  const treeish =
+    cacheInputRoot === "." ? "HEAD^{tree}" : `HEAD:${cacheInputRoot}`;
+  const projectTree = gitText(checkoutRoot, ["rev-parse", treeish]);
+  const lockHash = createHash("sha256")
+    .update(readFileSync(join(repoRoot, "package-lock.json")))
+    .digest("hex");
+  const results = await Promise.all(
+    EMITTERS.map(async (emitter) => {
+      const emitterId = emitter.id;
+      const emitterOutput = join(
+        outputRoot,
+        "artifacts",
+        projectId,
+        side,
+        emitterId,
       );
-    }
-    results.push(emitterResult);
-  }
+      const configPath = join(
+        tempRoot,
+        `${projectId}-${side}-${emitterId}.yaml`,
+      );
+      const logPath = join(
+        outputRoot,
+        "compile-logs",
+        `${projectId}-${side}-${emitterId}.log`,
+      );
+      mkdirSync(emitterOutput, { recursive: true });
+      mkdirSync(dirname(logPath), { recursive: true });
+      writeEmitterConfig(
+        configPath,
+        originalConfig,
+        emitter.name,
+        emitterOutput,
+      );
+      const cacheKey = artifactCacheKey({
+        projectTree,
+        lockHash,
+        node: process.version,
+        emitter: emitter.name,
+        config: readFileSync(originalConfig, "utf8"),
+      });
+      const cachePath = join(artifactCacheRoot, projectId, emitterId, cacheKey);
+      if (restoreArtifactCache(cachePath, emitterOutput)) {
+        const relativeLog = relative(outputRoot, logPath).replaceAll("\\", "/");
+        writeFileSync(logPath, `Reused artifact cache ${cacheKey}.\n`);
+        return {
+          emitter: emitterId,
+          status: "succeeded",
+          exitCode: 0,
+          durationMs: 0,
+          cached: true,
+          cacheKey,
+          outputDirectory: relative(outputRoot, emitterOutput).replaceAll(
+            "\\",
+            "/",
+          ),
+          log: relativeLog,
+        };
+      }
+      const startedAt = process.hrtime.bigint();
+      const result = await timedProgress(
+        `${side} ${projectRoot} ${emitterId} compilation`,
+        () =>
+          runAsync(
+            command.command,
+            [
+              ...command.prefix,
+              "compile",
+              absoluteProject,
+              "--config",
+              configPath,
+            ],
+            { cwd: repoRoot, allowFailure: true },
+          ),
+      );
+      const durationMs = elapsedMs(startedAt);
+      const relativeLog = relative(outputRoot, logPath).replaceAll("\\", "/");
+      const logText = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+      writeFileSync(logPath, logText);
+      const emitterResult = {
+        emitter: emitterId,
+        status: result.status === 0 ? "succeeded" : "failed",
+        exitCode: result.status,
+        durationMs,
+        cached: false,
+        cacheKey,
+        outputDirectory: relative(outputRoot, emitterOutput).replaceAll(
+          "\\",
+          "/",
+        ),
+        log: relativeLog,
+      };
+      if (result.status !== 0) {
+        emitterResult.failureSummary = summarizeCompilerFailure(
+          logText,
+          relativeLog,
+        );
+      } else {
+        storeArtifactCache(cachePath, emitterOutput);
+      }
+      return emitterResult;
+    }),
+  );
   return {
     side,
     status: results.every((item) => item.status === "succeeded")
@@ -990,6 +982,50 @@ function sparseRoots(projectRoots) {
   ].sort();
 }
 
+export function prepareSparseCheckout({
+  repoRoot,
+  checkoutRoot,
+  commit,
+  projectRoots,
+  inputKey,
+  previousInputKey,
+}) {
+  if (
+    inputKey &&
+    previousInputKey === inputKey &&
+    existsSync(join(checkoutRoot, ".git")) &&
+    git(checkoutRoot, ["status", "--porcelain"], {
+      allowFailure: true,
+    }).stdout.trim() === ""
+  ) {
+    return { reused: true };
+  }
+  if (!existsSync(join(checkoutRoot, ".git"))) {
+    git(repoRoot, ["worktree", "prune"]);
+    git(repoRoot, [
+      "worktree",
+      "add",
+      "--detach",
+      "--no-checkout",
+      checkoutRoot,
+      commit,
+    ]);
+    git(checkoutRoot, ["sparse-checkout", "init", "--cone"]);
+  } else {
+    git(checkoutRoot, ["reset", "--hard", "--quiet"]);
+    git(checkoutRoot, ["clean", "-fd", "--quiet"]);
+  }
+  git(checkoutRoot, [
+    "sparse-checkout",
+    "set",
+    "--cone",
+    "--",
+    ...sparseRoots(projectRoots),
+  ]);
+  git(checkoutRoot, ["checkout", "--detach", "--force", commit]);
+  return { reused: false };
+}
+
 function overlayWorkingTree(repoRoot, checkoutRoot, tempRoot, projectRoots) {
   const roots = sparseRoots(projectRoots);
   const patch = git(repoRoot, ["diff", "--binary", "HEAD", "--", ...roots], {
@@ -1038,41 +1074,151 @@ function overlayWorkingTree(repoRoot, checkoutRoot, tempRoot, projectRoots) {
 
 export async function prepareAssessment(options) {
   const assessmentStartedAt = process.hrtime.bigint();
+  const phaseDurations = {};
+  const checkoutReuse = { base: false, head: false };
+  async function measuredPhase(key, label, operation) {
+    const startedAt = process.hrtime.bigint();
+    try {
+      return await timedProgress(label, operation);
+    } finally {
+      phaseDurations[key] = elapsedMs(startedAt);
+    }
+  }
+  function measuredSync(key, operation) {
+    const startedAt = process.hrtime.bigint();
+    try {
+      return operation();
+    } finally {
+      phaseDurations[key] = elapsedMs(startedAt);
+    }
+  }
   const repoRoot = resolve(
     gitText(resolve(options.repo), ["rev-parse", "--show-toplevel"]),
   );
   const outputRoot = isAbsolute(options.output)
     ? options.output
     : resolve(repoRoot, options.output);
-  const { baseRef, baseCommit } = await timedProgress(
+  const configuredArtifactCache =
+    options.artifactCache ??
+    join(canonicalTempDirectory(), "typespec-assessment-artifact-cache");
+  const artifactCacheRoot = isAbsolute(configuredArtifactCache)
+    ? configuredArtifactCache
+    : resolve(repoRoot, configuredArtifactCache);
+  const repositoryCacheId = createHash("sha256")
+    .update(repoRoot.toLowerCase())
+    .digest("hex")
+    .slice(0, 16);
+  const configuredCheckoutCache =
+    options.checkoutCache ??
+    join(
+      canonicalTempDirectory(),
+      "typespec-assessment-checkouts",
+      repositoryCacheId,
+    );
+  const checkoutCacheRoot = isAbsolute(configuredCheckoutCache)
+    ? configuredCheckoutCache
+    : resolve(repoRoot, configuredCheckoutCache);
+  const checkoutStatePath = join(checkoutCacheRoot, "state.json");
+  const checkoutState = existsSync(checkoutStatePath)
+    ? JSON.parse(readFileSync(checkoutStatePath, "utf8"))
+    : {};
+  const { baseRef, baseCommit } = await measuredPhase(
+    "baselineResolutionMs",
     "baseline resolution",
     async () => resolveBaseline(repoRoot, options.base),
   );
-  const headCommit = gitText(repoRoot, ["rev-parse", "HEAD"]);
-  const remoteUrl = git(
-    repoRoot,
-    ["config", "--get", `remote.${baseRef.split("/")[0]}.url`],
-    { allowFailure: true },
-  ).stdout.trim();
-  const outputRelative = relative(repoRoot, outputRoot).replaceAll("\\", "/");
-  const changedFiles = listChangedFiles(repoRoot, baseCommit).filter(
-    (path) =>
-      outputRelative.startsWith("..") ||
-      (path !== outputRelative && !path.startsWith(`${outputRelative}/`)),
-  );
-  const projectRoots = discoverProjectRoots(repoRoot, changedFiles, baseCommit);
+  const sourceEvidence = measuredSync("sourceDiscoveryMs", () => {
+    const headCommit = gitText(repoRoot, ["rev-parse", "HEAD"]);
+    const remoteUrl = git(
+      repoRoot,
+      ["config", "--get", `remote.${baseRef.split("/")[0]}.url`],
+      { allowFailure: true },
+    ).stdout.trim();
+    const excludedRelatives = [
+      outputRoot,
+      artifactCacheRoot,
+      checkoutCacheRoot,
+      ...(options.excludePaths ?? []),
+    ]
+      .map((path) => relative(repoRoot, path).replaceAll("\\", "/"))
+      .filter((path) => !path.startsWith(".."));
+    const changedFiles = listChangedFiles(repoRoot, baseCommit).filter(
+      (path) =>
+        !excludedRelatives.some(
+          (excluded) => path === excluded || path.startsWith(`${excluded}/`),
+        ),
+    );
+    const projectRoots = discoverProjectRoots(
+      repoRoot,
+      changedFiles,
+      baseCommit,
+    );
+    const sourceDiff = git(
+      repoRoot,
+      ["diff", "--unified=0", "--no-color", baseCommit, "--", "*.tsp"],
+      { allowFailure: true },
+    ).stdout;
+    const untrackedFiles = untrackedTypeSpecFiles(repoRoot, changedFiles);
+    const sourceReferences = [
+      ...parseSourceHunks(
+        sourceDiff,
+        "head",
+        baseCommit,
+        remoteUrl,
+        headCommit,
+      ),
+      ...untrackedReferences(
+        repoRoot,
+        changedFiles,
+        headCommit,
+        remoteUrl,
+        untrackedFiles,
+      ),
+    ];
+    const displaySourceDiff = git(
+      repoRoot,
+      ["diff", "--unified=3", "--no-color", baseCommit, "--", "*.tsp"],
+      { allowFailure: true },
+    ).stdout;
+    const typeSpecDiffs = [
+      ...parseTypeSpecDiffHunks(displaySourceDiff),
+      ...untrackedFiles.map((path) =>
+        untrackedTypeSpecDiffHunk(
+          path,
+          readFileSync(join(repoRoot, path), "utf8"),
+        ),
+      ),
+    ];
+    const inputRoots = sparseRoots(projectRoots);
+    const localInputHash = createHash("sha256").update(
+      git(repoRoot, ["diff", "--binary", "HEAD", "--", ...inputRoots], {
+        allowFailure: true,
+      }).stdout,
+    );
+    for (const path of untrackedFiles.sort()) {
+      localInputHash.update(path);
+      localInputHash.update(readFileSync(join(repoRoot, path)));
+    }
+    return {
+      changedFiles,
+      headCommit,
+      projectRoots,
+      sourceReferences,
+      typeSpecDiffs,
+      localInputHash: localInputHash.digest("hex"),
+    };
+  });
+  const {
+    changedFiles,
+    headCommit,
+    projectRoots,
+    sourceReferences,
+    typeSpecDiffs,
+    localInputHash,
+  } = sourceEvidence;
   progress(
     `discovered ${projectRoots.length} affected TypeSpec project(s) from ${changedFiles.length} changed file(s)`,
   );
-  const sourceDiff = git(
-    repoRoot,
-    ["diff", "--unified=0", "--no-color", baseCommit, "--", "*.tsp"],
-    { allowFailure: true },
-  ).stdout;
-  const sourceReferences = [
-    ...parseSourceHunks(sourceDiff, "head", baseCommit, remoteUrl, headCommit),
-    ...untrackedReferences(repoRoot, changedFiles, headCommit, remoteUrl),
-  ];
 
   rmSync(outputRoot, { recursive: true, force: true });
   mkdirSync(outputRoot, { recursive: true });
@@ -1080,55 +1226,62 @@ export async function prepareAssessment(options) {
   const tempRoot = mkdtempSync(
     join(canonicalTempDirectory(), "typespec-assessment-"),
   );
-  const baseCheckout = join(tempRoot, "base");
-  const headCheckout = join(tempRoot, "head");
-  const validationNodeCommand =
-    options.skipCompile || options.skipValidation
-      ? process.execPath
-      : ensureNodeWithNpm(tempRoot);
+  const baseCheckout = join(checkoutCacheRoot, "base");
+  const headCheckout = join(checkoutCacheRoot, "head");
   const projects = [];
   try {
     if (!options.skipCompile && projectRoots.length > 0) {
-      preflightToolchain(repoRoot);
-      await timedProgress("sparse assessment checkouts", async () => {
-        git(repoRoot, [
-          "worktree",
-          "add",
-          "--detach",
-          "--no-checkout",
-          baseCheckout,
-          baseCommit,
-        ]);
-        git(baseCheckout, ["sparse-checkout", "init", "--cone"]);
-        git(baseCheckout, [
-          "sparse-checkout",
-          "set",
-          "--cone",
-          "--",
-          ...sparseRoots(projectRoots),
-        ]);
-        git(baseCheckout, ["checkout", "--detach", baseCommit]);
-        git(repoRoot, [
-          "worktree",
-          "add",
-          "--detach",
-          "--no-checkout",
-          headCheckout,
-          headCommit,
-        ]);
-        git(headCheckout, ["sparse-checkout", "init", "--cone"]);
-        git(headCheckout, [
-          "sparse-checkout",
-          "set",
-          "--cone",
-          "--",
-          ...sparseRoots(projectRoots),
-        ]);
-        git(headCheckout, ["checkout", "--detach", headCommit]);
-        overlayWorkingTree(repoRoot, headCheckout, tempRoot, projectRoots);
-      });
+      measuredSync("toolchainPreflightMs", () => preflightToolchain(repoRoot));
+      await measuredPhase(
+        "sparseCheckoutsMs",
+        "sparse assessment checkouts",
+        async () => {
+          const rootsKey = sparseRoots(projectRoots).join("\n");
+          const baseInputKey = createHash("sha256")
+            .update(`${baseCommit}\n${rootsKey}`)
+            .digest("hex");
+          const headInputKey = createHash("sha256")
+            .update(`${headCommit}\n${localInputHash}\n${rootsKey}`)
+            .digest("hex");
+          const basePreparation = prepareSparseCheckout({
+            repoRoot,
+            checkoutRoot: baseCheckout,
+            commit: baseCommit,
+            projectRoots,
+            inputKey: baseInputKey,
+            previousInputKey: checkoutState.baseInputKey,
+          });
+          const headPreparation = prepareSparseCheckout({
+            repoRoot,
+            checkoutRoot: headCheckout,
+            commit: headCommit,
+            projectRoots,
+            inputKey: headInputKey,
+            previousInputKey: checkoutState.headInputKey,
+          });
+          if (!headPreparation.reused) {
+            overlayWorkingTree(repoRoot, headCheckout, tempRoot, projectRoots);
+          }
+          mkdirSync(checkoutCacheRoot, { recursive: true });
+          writeFileSync(
+            checkoutStatePath,
+            `${JSON.stringify(
+              {
+                baseInputKey,
+                headInputKey,
+              },
+              null,
+              2,
+            )}\n`,
+          );
+          checkoutReuse.base = basePreparation.reused;
+          checkoutReuse.head = headPreparation.reused;
+        },
+      );
     }
+    const projectProcessingStartedAt = process.hrtime.bigint();
     for (const projectRoot of projectRoots) {
+      const projectStartedAt = process.hrtime.bigint();
       const project = {
         path: projectRoot,
         compilations: [],
@@ -1144,6 +1297,7 @@ export async function prepareAssessment(options) {
               side: "base",
               outputRoot,
               tempRoot,
+              artifactCacheRoot,
             }),
             compileProject({
               repoRoot,
@@ -1152,86 +1306,84 @@ export async function prepareAssessment(options) {
               side: "head",
               outputRoot,
               tempRoot,
+              artifactCacheRoot,
             }),
           ])),
         );
-        project.artifactDiffs = await timedProgress(
-          `${projectRoot} artifact diffs`,
-          async () => createArtifactDiffs(outputRoot, projectRoot),
-        );
-        project.validation = options.skipValidation
-          ? {
-              tool: "TypeSpecValidation",
-              status: "skipped",
-              durationMs: 0,
-              reason: "Skipped by explicit --skip-validation request.",
-            }
-          : await runTypeSpecValidation({
-              repoRoot,
-              checkoutRoot: headCheckout,
-              projectRoot,
-              outputRoot,
-              nodeCommand: validationNodeCommand,
-            });
+        if (options.rawArtifactDiffs) {
+          project.artifactDiffs = await timedProgress(
+            `${projectRoot} artifact diffs`,
+            async () => createArtifactDiffs(outputRoot, projectRoot),
+          );
+        }
       }
+      project.durationMs = elapsedMs(projectStartedAt);
       projects.push(project);
     }
+    phaseDurations.projectProcessingMs = elapsedMs(projectProcessingStartedAt);
   } finally {
-    if (existsSync(baseCheckout)) {
-      git(repoRoot, ["worktree", "remove", "--force", baseCheckout], {
-        allowFailure: true,
-      });
-    }
-    if (existsSync(headCheckout)) {
-      git(repoRoot, ["worktree", "remove", "--force", headCheckout], {
-        allowFailure: true,
-      });
-    }
+    const cleanupStartedAt = process.hrtime.bigint();
     rmSync(tempRoot, { recursive: true, force: true });
+    phaseDurations.cleanupMs = elapsedMs(cleanupStartedAt);
   }
 
+  const worktreeStatus = git(repoRoot, ["status", "--porcelain"], {
+    allowFailure: true,
+  })
+    .stdout.split(/\r?\n/)
+    .filter(Boolean);
   const evidence = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
-    durationMs: elapsedMs(assessmentStartedAt),
+    durationMs: 0,
+    phaseDurations,
     repositoryRoot: repoRoot,
     baseline: { ref: baseRef, commit: baseCommit },
     head: {
       commit: headCommit,
-      hasWorkingTreeChanges:
-        git(repoRoot, ["status", "--porcelain"], {
-          allowFailure: true,
-        }).stdout.trim().length > 0,
+      hasWorkingTreeChanges: worktreeStatus.length > 0,
+      changeScope: {
+        staged: worktreeStatus.some(
+          (line) => line[0] !== " " && line[0] !== "?",
+        ),
+        unstaged: worktreeStatus.some(
+          (line) => line[1] !== " " && line[1] !== "?",
+        ),
+        untracked: worktreeStatus.some((line) => line.startsWith("??")),
+      },
     },
     changedFiles,
     sourceReferences,
+    typeSpecDiffs,
     projects,
+    artifactCache: {
+      root: artifactCacheRoot,
+      hits: projects
+        .flatMap((project) => project.compilations)
+        .flatMap((compilation) => compilation.emitters ?? [])
+        .filter((emitter) => emitter.cached).length,
+      misses: projects
+        .flatMap((project) => project.compilations)
+        .flatMap((compilation) => compilation.emitters ?? [])
+        .filter((emitter) => emitter.cached === false).length,
+    },
+    checkoutCache: {
+      root: checkoutCacheRoot,
+      persistent: true,
+      reused: checkoutReuse,
+    },
     complianceAssessment: {
-      method:
-        "repository-validation-and-authoritative-document-pattern-assessment",
-      repositoryValidation:
-        "Each affected head project is validated with the repository-native TypeSpecValidation CLI before documentation assessment.",
+      method: "authoritative-document-pattern-assessment",
       agenticSearchProcedure:
-        ".github/skills/azure-typespec-author/references/agentic-search.md",
+        ".github/skills/azure-typespec-assessment/references/agentic-search.md",
       referenceCatalog:
-        ".github/skills/azure-typespec-author/references/reference-document-links.md",
+        ".github/skills/azure-typespec-assessment/references/reference-document-links.md",
       instructions:
-        "Run the shared agentic search procedure, retain matching fetched-content excerpts, and compare each documented pattern with the exact changed declaration.",
+        "Run the assessment skill's local agentic search procedure, retain matching fetched-content excerpts, and compare each documented pattern directly with the exact changed TypeSpec declaration.",
     },
     compileSkipped: options.skipCompile,
-    validationSkipped: options.skipValidation,
-    errors: projects.flatMap((project) => [
-      ...(project.validation &&
-      ["failed", "unavailable"].includes(project.validation.status)
-        ? [
-            {
-              project: project.path,
-              side: "head",
-              message: project.validation.failureSummary,
-            },
-          ]
-        : []),
-      ...project.compilations
+    errors: projects.flatMap((project) =>
+      project.compilations
         .filter((compilation) => compilation.status === "failed")
         .map((compilation) => ({
           project: project.path,
@@ -1241,11 +1393,18 @@ export async function prepareAssessment(options) {
             .map((emitter) => `${emitter.emitter}: ${emitter.failureSummary}`)
             .join("; "),
         })),
-    ]),
+    ),
   };
+  const analysis = analyzeArtifacts(evidence, outputRoot);
+  phaseDurations.deterministicAnalysisMs = analysis.durationMs;
+  evidence.durationMs = elapsedMs(assessmentStartedAt);
   writeFileSync(
     join(outputRoot, "evidence.json"),
     `${JSON.stringify(evidence, null, 2)}\n`,
+  );
+  writeFileSync(
+    join(outputRoot, "analysis.json"),
+    `${JSON.stringify(analysis, null, 2)}\n`,
   );
   progress(
     `assessment completed in ${(evidence.durationMs / 1000).toFixed(1)}s with ${evidence.errors.length} blocking error(s)`,

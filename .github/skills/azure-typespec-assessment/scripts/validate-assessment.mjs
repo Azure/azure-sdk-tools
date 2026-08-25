@@ -19,13 +19,16 @@ const REQUIRED_HEADINGS = [
   "## ☁️ Azure Compliance",
   "## 📎 Appendix",
 ];
+const CHANGE_KIND_MARKERS = {
+  added: "➕ Added",
+  modified: "✏️ Modified",
+  removed: "➖ Removed",
+};
+const INTERNAL_GENERATOR_TERMS =
+  /\bTCGC\b|cross-language definition IDs?|\bisUnionAsEnum\b|\bisFixed\b/i;
 
 function assert(condition, message, errors) {
   if (!condition) errors.push(message);
-}
-
-function countOccurrences(value, pattern) {
-  return value.split(pattern).length - 1;
 }
 
 function validateSourceReferences(items, label, errors) {
@@ -62,9 +65,36 @@ function validateSourceReferences(items, label, errors) {
   }
 }
 
-function validateOperations(items, errors) {
+function validateOperations(
+  items,
+  impactFindingIds,
+  linkedImpactFindingIds,
+  errors,
+) {
   for (const [itemIndex, item] of items.entries()) {
     const itemLabel = `semanticUnderstanding.items[${itemIndex}]`;
+    const semanticNarrative = [
+      item.intent,
+      ...(item.transformationChain ?? []),
+      item.restRepresentation?.summary,
+      ...(item.changes ?? []).flatMap((change) => [
+        change.summary,
+        change.effect,
+        change.typeSpecCause,
+        ...(change.aspects ?? []).flatMap((aspect) => [
+          aspect.field,
+          aspect.before,
+          aspect.after,
+        ]),
+      ]),
+    ]
+      .filter((value) => typeof value === "string")
+      .join(" ");
+    assert(
+      !INTERNAL_GENERATOR_TERMS.test(semanticNarrative),
+      `${itemLabel} must explain TypeSpec and REST behavior without internal generator terminology`,
+      errors,
+    );
     assert(
       typeof item.id === "string" && item.id.length > 0,
       `${itemLabel}.id is required`,
@@ -198,6 +228,201 @@ function validateOperations(items, errors) {
       }
       validateSourceReferences([operation], label, errors);
     }
+    const operationIds = new Set(
+      (operations ?? []).map((operation) => operation.operationId),
+    );
+    const coveredOperationIds = [];
+    assert(
+      Array.isArray(item.changes) && item.changes.length > 0,
+      `${itemLabel}.changes must be a non-empty array`,
+      errors,
+    );
+    for (const [changeIndex, change] of (item.changes ?? []).entries()) {
+      const label = `${itemLabel}.changes[${changeIndex}]`;
+      assert(
+        ["added", "modified", "removed"].includes(change.kind),
+        `${label}.kind is invalid`,
+        errors,
+      );
+      for (const field of ["summary", "effect", "typeSpecCause"]) {
+        assert(
+          typeof change[field] === "string" && change[field].length > 0,
+          `${label}.${field} is required`,
+          errors,
+        );
+      }
+      assert(
+        Array.isArray(change.operationIds) && change.operationIds.length > 0,
+        `${label}.operationIds must be a non-empty array`,
+        errors,
+      );
+      assert(
+        new Set(change.operationIds ?? []).size ===
+          (change.operationIds ?? []).length,
+        `${label}.operationIds must be unique`,
+        errors,
+      );
+      for (const operationId of change.operationIds ?? []) {
+        assert(
+          operationIds.has(operationId),
+          `${label}.operationIds contains unknown operation ${operationId}`,
+          errors,
+        );
+        coveredOperationIds.push(operationId);
+      }
+      assert(
+        Array.isArray(change.apiVersions) && change.apiVersions.length > 0,
+        `${label}.apiVersions must be a non-empty array`,
+        errors,
+      );
+      const coveredVersions = new Set(
+        (operations ?? [])
+          .filter((operation) =>
+            (change.operationIds ?? []).includes(operation.operationId),
+          )
+          .flatMap((operation) => operation.apiVersions),
+      );
+      for (const apiVersion of change.apiVersions ?? []) {
+        assert(
+          coveredVersions.has(apiVersion),
+          `${label}.apiVersions contains unknown version ${apiVersion}`,
+          errors,
+        );
+      }
+      assert(
+        Array.isArray(change.aspects) && change.aspects.length > 0,
+        `${label}.aspects must be a non-empty array`,
+        errors,
+      );
+      for (const [aspectIndex, aspect] of (change.aspects ?? []).entries()) {
+        const aspectLabel = `${label}.aspects[${aspectIndex}]`;
+        assert(
+          typeof aspect.field === "string" && aspect.field.length > 0,
+          `${aspectLabel}.field is required`,
+          errors,
+        );
+        assert(
+          aspect.before === null ||
+            (typeof aspect.before === "string" && aspect.before.length > 0),
+          `${aspectLabel}.before must be null or a non-empty string`,
+          errors,
+        );
+        assert(
+          aspect.after === null ||
+            (typeof aspect.after === "string" && aspect.after.length > 0),
+          `${aspectLabel}.after must be null or a non-empty string`,
+          errors,
+        );
+        if (change.kind === "added") {
+          assert(
+            aspect.before === null && typeof aspect.after === "string",
+            `${aspectLabel} must contain only after for an added change`,
+            errors,
+          );
+        } else if (change.kind === "removed") {
+          assert(
+            typeof aspect.before === "string" && aspect.after === null,
+            `${aspectLabel} must contain only before for removed`,
+            errors,
+          );
+        } else {
+          assert(
+            typeof aspect.before === "string" ||
+              typeof aspect.after === "string",
+            `${aspectLabel} must contain before or after for modified`,
+            errors,
+          );
+        }
+      }
+      assert(
+        Array.isArray(change.typeSpecDiffs) && change.typeSpecDiffs.length > 0,
+        `${label}.typeSpecDiffs must be a non-empty array`,
+        errors,
+      );
+      for (const [hunkIndex, hunk] of (change.typeSpecDiffs ?? []).entries()) {
+        const hunkLabel = `${label}.typeSpecDiffs[${hunkIndex}]`;
+        assert(
+          typeof hunk.path === "string" && hunk.path.endsWith(".tsp"),
+          `${hunkLabel}.path must be a .tsp file`,
+          errors,
+        );
+        for (const field of ["oldStart", "oldCount", "newStart", "newCount"]) {
+          assert(
+            Number.isInteger(hunk[field]) && hunk[field] >= 0,
+            `${hunkLabel}.${field} is invalid`,
+            errors,
+          );
+        }
+        if (change.kind === "added") {
+          const hasAddedDeclaration = (change.typeSpecDiffs ?? []).some(
+            (hunk) =>
+              hunk.lines.some((line, index) => {
+                if (!/^\+\s*@added\(/.test(line)) return false;
+                return hunk.lines
+                  .slice(index + 1, index + 10)
+                  .some((candidate) =>
+                    /^\+\s*(?:(?:model|interface|enum|union|scalar|alias|op)\s+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*\s+is\b)/.test(
+                      candidate,
+                    ),
+                  );
+              }),
+          );
+          const hasAddedVersionLineage =
+            /version-lineage/.test(item.id) &&
+            (change.typeSpecDiffs ?? []).some((candidateHunk) =>
+              candidateHunk.lines.some((line) =>
+                /^\+\s*v\d{4}_\d{2}_\d{2}/.test(line),
+              ),
+            );
+          assert(
+            hasAddedDeclaration || hasAddedVersionLineage,
+            `${label} must show @added with its added operation or model declaration`,
+            errors,
+          );
+        }
+        assert(
+          Array.isArray(hunk.lines) &&
+            hunk.lines.length > 0 &&
+            hunk.lines.every(
+              (line) =>
+                typeof line === "string" &&
+                (/^[ +\-]/.test(line) ||
+                  line === "\\ No newline at end of file"),
+            ) &&
+            hunk.lines.some((line) => /^[+-]/.test(line)),
+          `${hunkLabel}.lines must contain Git diff lines and at least one change`,
+          errors,
+        );
+      }
+      assert(
+        Array.isArray(change.linkedFindingIds),
+        `${label}.linkedFindingIds must be an array`,
+        errors,
+      );
+      assert(
+        new Set(change.linkedFindingIds ?? []).size ===
+          (change.linkedFindingIds ?? []).length,
+        `${label}.linkedFindingIds must be unique`,
+        errors,
+      );
+      for (const findingId of change.linkedFindingIds ?? []) {
+        assert(
+          impactFindingIds.has(findingId),
+          `${label}.linkedFindingIds contains unknown impact finding ${findingId}`,
+          errors,
+        );
+        linkedImpactFindingIds.add(findingId);
+      }
+      validateSourceReferences([change], label, errors);
+    }
+    for (const operationId of operationIds) {
+      assert(
+        coveredOperationIds.filter((value) => value === operationId).length ===
+          1,
+        `${itemLabel} must cover operation ${operationId} exactly once`,
+        errors,
+      );
+    }
   }
 }
 
@@ -238,6 +463,20 @@ function validateBreakingFindings(findings, label, errors) {
       `${itemLabel}.evidence is required`,
       errors,
     );
+    const findingNarrative = [
+      finding.title,
+      finding.summary,
+      ...(Array.isArray(finding.evidence)
+        ? finding.evidence
+        : [finding.evidence]),
+    ]
+      .filter((value) => typeof value === "string")
+      .join(" ");
+    assert(
+      !INTERNAL_GENERATOR_TERMS.test(findingNarrative),
+      `${itemLabel} must describe public API or SDK behavior without internal generator terminology`,
+      errors,
+    );
   }
 }
 
@@ -273,6 +512,9 @@ function validateCompliance(compliance, errors) {
     errors,
   );
   const findingIds = new Set();
+  const findingDocumentUrls = new Set(
+    (compliance?.findings ?? []).map((finding) => finding.documentationUrl),
+  );
   const documentUrls = new Set(
     (compliance?.documents ?? []).map((document) => document.url),
   );
@@ -314,6 +556,69 @@ function validateCompliance(compliance, errors) {
       `${label}.evidence is required`,
       errors,
     );
+    if (findingDocumentUrls.has(document.url)) {
+      assert(
+        ["available", "not-present"].includes(document.expectedCodeStatus),
+        `${label}.expectedCodeStatus must be available or not-present`,
+        errors,
+      );
+      if (document.expectedCodeStatus === "available") {
+        assert(
+          Array.isArray(document.expectedCodeSnippets) &&
+            document.expectedCodeSnippets.length > 0 &&
+            document.expectedCodeSnippets.length <= 2,
+          `${label}.expectedCodeSnippets must contain one or two documented snippets`,
+          errors,
+        );
+        for (const [snippetIndex, snippet] of (
+          document.expectedCodeSnippets ?? []
+        ).entries()) {
+          const snippetLabel = `${label}.expectedCodeSnippets[${snippetIndex}]`;
+          assert(
+            snippet.language === "tsp",
+            `${snippetLabel}.language must be tsp`,
+            errors,
+          );
+          assert(
+            snippet.url === document.url,
+            `${snippetLabel}.url must match its compliance document`,
+            errors,
+          );
+          assert(
+            snippet.section === document.section,
+            `${snippetLabel}.section must match its compliance document`,
+            errors,
+          );
+          assert(
+            typeof snippet.caption === "string" && snippet.caption.length > 0,
+            `${snippetLabel}.caption is required`,
+            errors,
+          );
+          assert(
+            Array.isArray(snippet.lines) &&
+              snippet.lines.length > 0 &&
+              snippet.lines.length <= 12 &&
+              snippet.lines.every((line) => typeof line === "string"),
+            `${snippetLabel}.lines must contain at most 12 documented lines`,
+            errors,
+          );
+        }
+      }
+      if (document.expectedCodeStatus === "not-present") {
+        assert(
+          document.expectedCodeSnippets === undefined ||
+            document.expectedCodeSnippets.length === 0,
+          `${label}.expectedCodeSnippets must be empty when no example is present`,
+          errors,
+        );
+        assert(
+          typeof document.expectedCodeReason === "string" &&
+            document.expectedCodeReason.length > 0,
+          `${label}.expectedCodeReason is required when no example is present`,
+          errors,
+        );
+      }
+    }
   }
   for (const [index, finding] of (compliance?.findings ?? []).entries()) {
     const label = `azureCompliance.findings[${index}]`;
@@ -357,6 +662,58 @@ function validateCompliance(compliance, errors) {
       `${label}.evidence is required`,
       errors,
     );
+    assert(
+      Array.isArray(finding.codeSnippets) &&
+        finding.codeSnippets.length > 0 &&
+        finding.codeSnippets.length <= 2,
+      `${label}.codeSnippets must contain one or two focused snippets`,
+      errors,
+    );
+    if (Array.isArray(finding.codeSnippets)) {
+      for (const [snippetIndex, snippet] of (
+        finding.codeSnippets ?? []
+      ).entries()) {
+        const snippetLabel = `${label}.codeSnippets[${snippetIndex}]`;
+        assert(
+          typeof snippet.path === "string" && snippet.path.endsWith(".tsp"),
+          `${snippetLabel}.path must be a .tsp file`,
+          errors,
+        );
+        assert(
+          Number.isInteger(snippet.startLine) && snippet.startLine > 0,
+          `${snippetLabel}.startLine is invalid`,
+          errors,
+        );
+        assert(
+          Number.isInteger(snippet.endLine) &&
+            snippet.endLine >= snippet.startLine,
+          `${snippetLabel}.endLine is invalid`,
+          errors,
+        );
+        assert(
+          Array.isArray(snippet.lines) &&
+            snippet.lines.length === snippet.endLine - snippet.startLine + 1 &&
+            snippet.lines.every((line) => typeof line === "string"),
+          `${snippetLabel}.lines must cover the declared line range`,
+          errors,
+        );
+        assert(
+          snippet.lines.length <= 12,
+          `${snippetLabel} must contain at most 12 focused lines`,
+          errors,
+        );
+        assert(
+          (finding.sourceReferences ?? []).some(
+            (reference) =>
+              reference.path === snippet.path &&
+              reference.startLine <= snippet.startLine &&
+              reference.endLine >= snippet.endLine,
+          ),
+          `${snippetLabel} must be covered by a finding source reference`,
+          errors,
+        );
+      }
+    }
   }
   if (["passed", "failed"].includes(compliance?.status)) {
     assert(
@@ -404,62 +761,31 @@ function validateCompliance(compliance, errors) {
   }
 }
 
-function validateRepositoryValidation(document, errors) {
-  const validations = document?.assessmentEvidence?.repositoryValidation;
-  if (validations === undefined) return;
-  assert(
-    Array.isArray(validations) && validations.length > 0,
-    "assessmentEvidence.repositoryValidation cannot be empty",
-    errors,
-  );
-  for (const [index, validation] of (validations ?? []).entries()) {
-    const label = `assessmentEvidence.repositoryValidation[${index}]`;
-    assert(
-      typeof validation.project === "string" && validation.project.length > 0,
-      `${label}.project is required`,
-      errors,
-    );
-    assert(
-      validation.tool === "TypeSpecValidation",
-      `${label}.tool must be TypeSpecValidation`,
-      errors,
-    );
-    assert(
-      ["succeeded", "failed", "skipped"].includes(validation.status),
-      `${label}.status must be succeeded, failed, or skipped`,
-      errors,
-    );
-    assert(
-      Number.isInteger(validation.durationMs) && validation.durationMs >= 0,
-      `${label}.durationMs is invalid`,
-      errors,
-    );
-    if (validation.status === "skipped") {
-      assert(
-        typeof validation.reason === "string" && validation.reason.length > 0,
-        `${label}.reason is required when validation is skipped`,
-        errors,
-      );
-    } else {
-      assert(
-        typeof validation.log === "string" && validation.log.length > 0,
-        `${label}.log is required`,
-        errors,
-      );
-    }
-    if (validation.status === "failed") {
-      assert(
-        Array.isArray(document.errors) && document.errors.length > 0,
-        `${label} failed validation must be represented by a blocking assessment error`,
-        errors,
-      );
-    }
-  }
-}
-
 export function validateAssessment(document, markdown) {
   const errors = [];
-  assert(document?.schemaVersion === 1, "schemaVersion must be 1", errors);
+  assert(document?.schemaVersion === 2, "schemaVersion must be 2", errors);
+  assert(
+    typeof document?.baseline?.commit === "string" &&
+      document.baseline.commit.length > 0,
+    "baseline.commit is required",
+    errors,
+  );
+  assert(
+    typeof document?.head?.commit === "string" &&
+      document.head.commit.length > 0,
+    "head.commit is required",
+    errors,
+  );
+  if (!document?.pr && document?.head?.hasWorkingTreeChanges) {
+    assert(
+      document.head.changeScope &&
+        ["staged", "unstaged", "untracked"].every(
+          (field) => typeof document.head.changeScope[field] === "boolean",
+        ),
+      "local working-tree assessments require staged, unstaged, and untracked changeScope flags",
+      errors,
+    );
+  }
   assert(
     ["high", "medium", "low"].includes(document?.overallConfidence),
     "overallConfidence must be high, medium, or low",
@@ -518,6 +844,63 @@ export function validateAssessment(document, markdown) {
         errors,
       );
     }
+    const breakdown = document.assessmentDuration.breakdown;
+    if (breakdown !== undefined) {
+      const durationFields = [
+        "semanticUnderstandingMs",
+        "restBreakingMs",
+        "downstreamBreakingMs",
+        "complianceMs",
+        "overheadMs",
+        "totalMs",
+      ];
+      for (const field of durationFields) {
+        assert(
+          Number.isInteger(breakdown[field]) && breakdown[field] >= 0,
+          `assessmentDuration.breakdown.${field} is invalid`,
+          errors,
+        );
+      }
+      const qualityFields = [
+        "semanticUnderstandingQuality",
+        "restBreakingQuality",
+        "downstreamBreakingQuality",
+        "complianceQuality",
+        "overheadQuality",
+        "totalQuality",
+      ];
+      for (const field of qualityFields) {
+        assert(
+          ["measured", "estimated", "derived", "estimated/measured"].includes(
+            breakdown[field],
+          ),
+          `assessmentDuration.breakdown.${field} is invalid`,
+          errors,
+        );
+      }
+      const componentTotal =
+        breakdown.semanticUnderstandingMs +
+        breakdown.restBreakingMs +
+        breakdown.downstreamBreakingMs +
+        breakdown.complianceMs +
+        breakdown.overheadMs;
+      assert(
+        Math.abs(componentTotal - breakdown.totalMs) < 1000,
+        "assessmentDuration.breakdown.totalMs must match the rounded phase durations",
+        errors,
+      );
+      assert(
+        breakdown.totalMs === document.assessmentDuration.totalMs,
+        "assessmentDuration.breakdown.totalMs must match assessmentDuration.totalMs",
+        errors,
+      );
+      assert(
+        typeof breakdown.searchRoute === "string" &&
+          breakdown.searchRoute.length > 0,
+        "assessmentDuration.breakdown.searchRoute is required",
+        errors,
+      );
+    }
   }
   const dimensions = document?.dimensions;
   assert(
@@ -544,12 +927,39 @@ export function validateAssessment(document, markdown) {
     "restCompatibleDownstreamBreakingChanges.findings must be an array",
     errors,
   );
+  assert(
+    !Array.isArray(rest) ||
+      rest.length === 0 ||
+      (Array.isArray(downstream) && downstream.length > 0),
+    "REST breaking changes require a downstream breaking finding",
+    errors,
+  );
   validateSourceReferences(
     semantic ?? [],
     "semanticUnderstanding.items",
     errors,
   );
-  validateOperations(semantic ?? [], errors);
+  const impactFindingIds = new Set(
+    [
+      ...(rest ?? []),
+      ...(downstream ?? []),
+      ...(dimensions?.azureCompliance?.findings ?? []),
+    ].map((finding) => finding.id),
+  );
+  const linkedImpactFindingIds = new Set();
+  validateOperations(
+    semantic ?? [],
+    impactFindingIds,
+    linkedImpactFindingIds,
+    errors,
+  );
+  for (const findingId of impactFindingIds) {
+    assert(
+      linkedImpactFindingIds.has(findingId),
+      `impact finding ${findingId} must be linked from a semantic change`,
+      errors,
+    );
+  }
   validateSourceReferences(rest ?? [], "restBreakingChanges.findings", errors);
   validateBreakingFindings(rest ?? [], "restBreakingChanges.findings", errors);
   validateSourceReferences(
@@ -563,7 +973,6 @@ export function validateAssessment(document, markdown) {
     errors,
   );
   validateCompliance(dimensions?.azureCompliance, errors);
-  validateRepositoryValidation(document, errors);
   if (markdown !== undefined) {
     assert(
       markdown.includes(
@@ -600,13 +1009,60 @@ export function validateAssessment(document, markdown) {
       errors,
     );
     assert(
-      markdown.includes("### Change Overview"),
-      "assessment.md is missing Semantic Understanding change overview",
+      markdown.includes("```diff"),
+      "assessment.md is missing TypeSpec diff blocks",
       errors,
     );
     assert(
-      markdown.includes("### Operation Details"),
-      "assessment.md is missing Semantic Understanding operation details",
+      markdown.includes("| Change | Aspect | Before | After |") &&
+        markdown.includes("```diff\n--- ") &&
+        markdown.includes("\n+++ "),
+      "assessment.md must summarize behavior in one table before TypeSpec source diffs",
+      errors,
+    );
+    assert(
+      !markdown.includes("**TypeSpec diff"),
+      "assessment.md must not add a redundant TypeSpec diff label",
+      errors,
+    );
+    assert(
+      !markdown.includes("**Behavior change**"),
+      "assessment.md must not render a separate Behavior change heading",
+      errors,
+    );
+    assert(
+      !markdown.includes("**Effect:**") &&
+        !markdown.includes("**TypeSpec cause:**"),
+      "assessment.md must not render generic effect or prose-only TypeSpec cause lines",
+      errors,
+    );
+    assert(
+      (markdown.match(/\*\*TypeSpec change:\*\*/g) ?? []).length ===
+        (semantic ?? []).reduce(
+          (total, item) => total + (item.changes?.length ?? 0),
+          0,
+        ),
+      "assessment.md must briefly explain every structured TypeSpec change",
+      errors,
+    );
+    assert(
+      !markdown.includes("Details on Demand"),
+      "assessment.md must not use a Details on Demand section",
+      errors,
+    );
+    assert(
+      (markdown.match(/Using assessment\.json for/g) ?? []).length === 1 &&
+        markdown.includes(
+          "show the complete REST representation for every affected operation",
+        ),
+      "assessment.md must contain one prompt for all affected operations",
+      errors,
+    );
+    assert(
+      !markdown.includes("**HTTP path:**") &&
+        !markdown.includes("**Request payload:**") &&
+        !markdown.includes("**Response payloads:**"),
+      "assessment.md must not include exhaustive REST operation cards",
       errors,
     );
     for (let index = 1; index < REQUIRED_HEADINGS.length; index += 1) {
@@ -640,21 +1096,25 @@ export function validateAssessment(document, markdown) {
         errors,
       );
     }
-    const operationCounts = new Map();
-    for (const operation of (semantic ?? []).flatMap(
-      (item) => item.restRepresentation.operations,
-    )) {
-      operationCounts.set(
-        operation.operationId,
-        (operationCounts.get(operation.operationId) ?? 0) + 1,
-      );
-    }
-    for (const [operationId, expectedCount] of operationCounts) {
-      assert(
-        countOccurrences(markdown, `\`${operationId}\``) === expectedCount,
-        `assessment.md must include ${operationId} ${expectedCount} time(s) in Semantic Understanding`,
-        errors,
-      );
+    for (const item of semantic ?? []) {
+      for (const change of item.changes ?? []) {
+        assert(
+          markdown.includes(CHANGE_KIND_MARKERS[change.kind]),
+          `assessment.md is missing the ${change.kind} change icon`,
+          errors,
+        );
+        for (const findingId of change.linkedFindingIds ?? []) {
+          const findingAnchor = findingId
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
+          assert(
+            markdown.includes(`#finding-${findingAnchor}`),
+            `assessment.md is missing impact link for ${findingId}`,
+            errors,
+          );
+        }
+      }
     }
     if (errors.length === 0) {
       assert(

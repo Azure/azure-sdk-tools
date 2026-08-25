@@ -1,0 +1,1030 @@
+#!/usr/bin/env node
+
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import {
+  canonicalTempDirectory,
+  parseArgs,
+  prepareAssessment,
+} from "./prepare-assessment.mjs";
+import { analyzeArtifacts } from "./analyze-artifacts.mjs";
+import { prepareComplianceEvidence } from "./prepare-compliance-evidence.mjs";
+import { extractVersionedMembers } from "./source-index.mjs";
+
+function elapsedMs(startedAt) {
+  return Math.round(Number(process.hrtime.bigint() - startedAt) / 1_000_000);
+}
+
+function analysisArgs(argv) {
+  const prepareValues = [];
+  let documentCache;
+  let evidenceDirectory;
+  let sourceAssessment;
+  let modelInputBudgetBytes = 250 * 1024;
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === "--document-cache") {
+      documentCache = argv[index + 1];
+      index += 1;
+    } else if (argv[index] === "--model-input-budget-bytes") {
+      const value = Number(argv[index + 1]);
+      if (!Number.isSafeInteger(value) || value <= 0) {
+        throw new Error(
+          "--model-input-budget-bytes requires a positive integer",
+        );
+      }
+      modelInputBudgetBytes = value;
+      index += 1;
+    } else if (argv[index] === "--evidence-directory") {
+      evidenceDirectory = argv[index + 1];
+      if (!evidenceDirectory) {
+        throw new Error("--evidence-directory requires a value");
+      }
+      index += 1;
+    } else if (argv[index] === "--source-assessment") {
+      sourceAssessment = argv[index + 1];
+      if (!sourceAssessment) {
+        throw new Error("--source-assessment requires a value");
+      }
+      index += 1;
+    } else {
+      prepareValues.push(argv[index]);
+    }
+  }
+  return {
+    prepare: parseArgs(prepareValues),
+    documentCache:
+      documentCache ??
+      join(canonicalTempDirectory(), "typespec-assessment-document-cache"),
+    modelInputBudgetBytes,
+    evidenceDirectory,
+    sourceAssessment,
+  };
+}
+
+function hydrateHistoricalSourceEvidence(evidence, assessmentPath) {
+  if (!assessmentPath) {
+    return { ...evidence, typeSpecDiffs: evidence.typeSpecDiffs ?? [] };
+  }
+  const assessment = JSON.parse(readFileSync(resolve(assessmentPath), "utf8"));
+  const semanticItems =
+    assessment.dimensions?.semanticUnderstanding?.items ?? [];
+  const changes = semanticItems.flatMap((item) => item.changes ?? []);
+  const complianceFindings =
+    assessment.dimensions?.azureCompliance?.findings ?? [];
+  const complianceSnippets = complianceFindings.flatMap(
+    (finding) => finding.codeSnippets ?? [],
+  );
+  const typeSpecDiffs = [
+    ...new Map(
+      [
+        ...changes.flatMap((change) => change.typeSpecDiffs ?? []),
+        ...complianceSnippets.map((snippet) => ({
+          path: snippet.path,
+          oldStart: snippet.startLine,
+          oldCount: 0,
+          newStart: snippet.startLine,
+          newCount: snippet.lines.length,
+          context: "",
+          lines: snippet.lines.map((line) => `+${line}`),
+          supplemental: true,
+        })),
+      ].map((hunk) => [
+        `${hunk.path}:${hunk.newStart}:${hunk.newCount}:${hunk.lines.join("\n")}`,
+        hunk,
+      ]),
+    ).values(),
+  ];
+  const sourceReferences = [
+    ...new Map(
+      [
+        ...(evidence.sourceReferences ?? []),
+        ...semanticItems.flatMap((item) => item.sourceReferences ?? []),
+        ...changes.flatMap((change) => change.sourceReferences ?? []),
+        ...complianceFindings.flatMap(
+          (finding) => finding.sourceReferences ?? [],
+        ),
+      ].map((reference) => [
+        `${reference.path}:${reference.revision}:${reference.startLine}:${reference.endLine}`,
+        reference,
+      ]),
+    ).values(),
+  ];
+  return { ...evidence, typeSpecDiffs, sourceReferences };
+}
+
+export function mergeHistoricalComplianceDocuments(
+  complianceEvidence,
+  assessmentPath,
+) {
+  if (!assessmentPath) return complianceEvidence;
+  const assessment = JSON.parse(readFileSync(resolve(assessmentPath), "utf8"));
+  const historicalDocuments =
+    assessment.dimensions?.azureCompliance?.documents ?? [];
+  const documents = new Map(
+    (complianceEvidence.documents ?? []).map((document) => [
+      document.url,
+      document,
+    ]),
+  );
+  for (const document of historicalDocuments) {
+    if (!document.url || !document.guidanceExcerpt) continue;
+    const current = documents.get(document.url);
+    documents.set(document.url, {
+      category: current?.category ?? "Retained authoritative evidence",
+      title: document.title,
+      url: document.url,
+      routingScore: current?.routingScore ?? 0,
+      fetchedAt: current?.fetchedAt,
+      contentHash: current?.contentHash,
+      cache: "retained-assessment",
+      section: document.section,
+      matchingExcerpt: document.guidanceExcerpt,
+      candidateCodeBlocks: (document.expectedCodeSnippets ?? []).map(
+        (snippet) => snippet.lines.join("\n"),
+      ),
+    });
+  }
+  return {
+    ...complianceEvidence,
+    documents: [...documents.values()],
+  };
+}
+
+function operationChangeRecord(change) {
+  const operation = change.after ?? change.before;
+  const compactChanges = compactAspectChanges(change);
+  return {
+    id: `${change.kind}-${operation.key
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`,
+    kind: change.kind,
+    operationKey: operation.key,
+    operationId: operation.operationId,
+    apiVersion: operation.apiVersion,
+    changedAspects: Object.keys(compactChanges.aspects),
+    aspectChanges: compactChanges.aspects,
+    reviewRequired: true,
+  };
+}
+
+function operationFamily(operationId) {
+  return operationId?.split("_", 1)[0] ?? "unknown";
+}
+
+const operationComparisonFields = [
+  "operationId",
+  "method",
+  "path",
+  "parameters",
+  "request",
+  "responses",
+  "lro",
+  "paging",
+];
+
+function changedOperationAspects(before, after) {
+  return operationComparisonFields.filter(
+    (field) =>
+      JSON.stringify(comparableOperationField(field, before[field])) !==
+      JSON.stringify(comparableOperationField(field, after[field])),
+  );
+}
+
+function normalizeContractReferences(value, key) {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeContractReferences(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([entryKey]) => entryKey !== "sourceArtifact")
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([entryKey, entryValue]) => [
+          entryKey,
+          normalizeContractReferences(entryValue, entryKey),
+        ]),
+    );
+  }
+  if (key === "reference" && typeof value === "string") {
+    const fragment = value.indexOf("#");
+    return fragment >= 0 ? value.slice(fragment) : value.split(/[\\/]/).at(-1);
+  }
+  return value;
+}
+
+function comparableOperationField(field, value) {
+  if (field !== "parameters") {
+    return normalizeContractReferences(value);
+  }
+  return normalizeContractReferences(
+    (value ?? []).map((parameter) => {
+      if (parameter.name.toLowerCase() !== "api-version") return parameter;
+      const comparable = structuredClone(parameter);
+      delete comparable.default;
+      if (comparable.contract) {
+        delete comparable.contract.enum;
+        delete comparable.contract.default;
+      }
+      return comparable;
+    }),
+  );
+}
+
+function latestVersionPredecessor(operation, baseline) {
+  return baseline
+    .filter(
+      (candidate) =>
+        candidate.method === operation.method &&
+        candidate.path === operation.path &&
+        candidate.apiVersion.localeCompare(operation.apiVersion, "en") < 0,
+    )
+    .sort((left, right) =>
+      right.apiVersion.localeCompare(left.apiVersion, "en"),
+    )[0];
+}
+
+function summarizeRequest(request) {
+  if (!request) return null;
+  return {
+    required: request.required,
+    schemas: request.content?.map((content) => content.schema).filter(Boolean),
+  };
+}
+
+function summarizeResponses(responses) {
+  return responses.map((response) => ({
+    status: response.status,
+    schemas: response.content?.map((content) => content.schema).filter(Boolean),
+    headers: response.headers?.map((header) => header.name),
+  }));
+}
+
+function summarizeParameters(parameters) {
+  return parameters.map((parameter) => ({
+    in: parameter.in,
+    name: parameter.name,
+    required: parameter.required,
+    type: parameter.type,
+  }));
+}
+
+function compactAspectChanges(change) {
+  const aspectChanges = {};
+  for (const aspect of change.aspects ?? []) {
+    const field = typeof aspect === "string" ? aspect : aspect.field;
+    let before = change.before?.[field];
+    let after = change.after?.[field];
+    if (field === "request") {
+      before = summarizeRequest(before);
+      after = summarizeRequest(after);
+    } else if (field === "responses") {
+      before = summarizeResponses(before ?? []);
+      after = summarizeResponses(after ?? []);
+    } else if (field === "parameters") {
+      before = summarizeParameters(before ?? []);
+      after = summarizeParameters(after ?? []);
+    }
+    aspectChanges[field] = { before, after };
+  }
+  return {
+    operationId: change.after?.operationId ?? change.before?.operationId,
+    aspects: aspectChanges,
+  };
+}
+
+function compactRestCandidate(candidate, index) {
+  const evidence = candidate.evidence ?? {};
+  let compactEvidence = evidence;
+  if (candidate.rule === "parameter-contract-changed") {
+    compactEvidence = {
+      operation: evidence.operation,
+      parameters: (evidence.parameters ?? []).map((parameter) => ({
+        before: summarizeParameters([parameter.before])[0],
+        after: summarizeParameters([parameter.after])[0],
+      })),
+    };
+  } else if (candidate.rule === "request-contract-changed") {
+    compactEvidence = {
+      operation: evidence.operation,
+      before: summarizeRequest(evidence.before),
+      after: summarizeRequest(evidence.after),
+    };
+  } else if (candidate.rule === "response-contract-changed") {
+    compactEvidence = {
+      operation: evidence.operation,
+      before: summarizeResponses(evidence.before ?? []),
+      after: summarizeResponses(evidence.after ?? []),
+    };
+  }
+  const operation = compactEvidence.operation ?? `candidate-${index + 1}`;
+  return {
+    id: `rest-${index + 1}-${candidate.rule}-${String(operation)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`,
+    rule: candidate.rule,
+    severity: candidate.severity,
+    summary: candidate.summary,
+    evidence: compactEvidence,
+    reviewRequired: candidate.reviewRequired,
+  };
+}
+
+function relevantOperationChanges(changes, baseline) {
+  return changes.flatMap((change) => {
+    if (change.kind !== "added") return [change];
+    const predecessor = latestVersionPredecessor(change.after, baseline);
+    if (!predecessor) return [change];
+    const aspects = changedOperationAspects(predecessor, change.after);
+    if (aspects.length === 0) return [];
+    return [
+      {
+        ...change,
+        kind: "version-modified",
+        before: predecessor,
+        aspects,
+      },
+    ];
+  });
+}
+
+function groupOperationManifest(changes, baseline) {
+  const groups = new Map();
+  for (const change of relevantOperationChanges(changes, baseline)) {
+    if (change.kind === "modified") continue;
+    const operation = change.after ?? change.before;
+    const family = operationFamily(operation.operationId);
+    const key = `${change.kind}:${operation.apiVersion}:${family}`;
+    const group = groups.get(key) ?? {
+      id: key.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      kind: change.kind,
+      apiVersion: operation.apiVersion,
+      family,
+      operationIds: [],
+      changedAspects: new Set(),
+      changes: [],
+    };
+    group.operationIds.push(operation.operationId);
+    for (const aspect of change.aspects ?? []) {
+      group.changedAspects.add(
+        typeof aspect === "string" ? aspect : aspect.field,
+      );
+    }
+    if (change.kind === "version-modified") {
+      group.changes.push(compactAspectChanges(change));
+    }
+    groups.set(key, group);
+  }
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      operationIds: [...new Set(group.operationIds)].sort(),
+      changedAspects:
+        group.changedAspects.size > 0
+          ? [...group.changedAspects].sort()
+          : undefined,
+      changes: group.changes.length > 0 ? group.changes : undefined,
+    }))
+    .sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function singularFamily(family) {
+  const normalized = family.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (normalized.endsWith("ies")) return `${normalized.slice(0, -3)}y`;
+  if (normalized.endsWith("sses")) return normalized.slice(0, -2);
+  return normalized.endsWith("s") ? normalized.slice(0, -1) : normalized;
+}
+
+function normalizedOwner(owner) {
+  return owner
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .replace(
+      /(propertiesformat|properties|listresult|result|request|response)$/,
+      "",
+    );
+}
+
+function linkOperationGroupsToSource(projects, sourceFiles) {
+  const members = sourceFiles.flatMap((file) =>
+    file.versionedMembers.map((member) => ({ path: file.path, ...member })),
+  );
+  return projects.map((project) => ({
+    ...project,
+    rest: {
+      ...project.rest,
+      operationGroups: project.rest.operationGroups.map((group) => {
+        const family = singularFamily(group.family);
+        const memberLinks = members
+          .filter((member) => {
+            const owner = normalizedOwner(member.owner ?? member.symbol);
+            return (
+              member.version.replace(/^v/, "").replaceAll("_", "-") ===
+                group.apiVersion &&
+              owner &&
+              (owner.startsWith(family) || family.startsWith(owner))
+            );
+          })
+          .map(({ path, owner, symbol }) => ({
+            path,
+            owner: owner ?? symbol,
+          }));
+        const operationFileLinks = sourceFiles
+          .filter((file) => {
+            const stem = file.path
+              .split("/")
+              .at(-1)
+              .replace(/\.tsp$/i, "")
+              .toLowerCase();
+            return (
+              !["client", "main", "models", "back-compatible"].includes(stem) &&
+              (stem.startsWith(family) || family.startsWith(stem))
+            );
+          })
+          .map((file) => ({ path: file.path }));
+        const linksByPath = new Map();
+        for (const link of [...memberLinks, ...operationFileLinks]) {
+          const owners = linksByPath.get(link.path) ?? new Set();
+          if (link.owner) owners.add(link.owner);
+          linksByPath.set(link.path, owners);
+        }
+        const sourceLinks = [...linksByPath]
+          .map(([path, owners]) => ({
+            path,
+            owners: owners.size > 0 ? [...owners].sort() : undefined,
+          }))
+          .sort((left, right) => left.path.localeCompare(right.path));
+        return {
+          ...group,
+          sourceLinks: sourceLinks.length > 0 ? sourceLinks : undefined,
+        };
+      }),
+    },
+  }));
+}
+
+function sourceDownstreamCandidates(sourceFiles, projectPath, typeSpecDiffs) {
+  const pagingDecorators = sourceFiles.flatMap((file) => {
+    if (
+      projectPath !== "." &&
+      file.path !== projectPath &&
+      !file.path.startsWith(`${projectPath.replaceAll("\\", "/")}/`)
+    ) {
+      return [];
+    }
+    return file.decorators
+      .filter(
+        (decorator) =>
+          decorator.change === "added" &&
+          ["@list", "@pageItems", "@nextLink"].includes(decorator.symbol),
+      )
+      .map((decorator) => ({
+        path: file.path,
+        symbol: decorator.symbol,
+        count: decorator.count,
+      }));
+  });
+  const candidates = [];
+  if (pagingDecorators.length > 0) {
+    candidates.push({
+      id: "source-paging-metadata-added",
+      rule: "paging-metadata-added",
+      severity: "medium",
+      summary:
+        "Added paging metadata can change generated SDK return and iteration shapes while preserving the REST wire contract.",
+      evidence: pagingDecorators,
+      reviewRequired: true,
+    });
+  }
+  const projectFiles = sourceFiles.filter(
+    (file) =>
+      projectPath === "." ||
+      file.path === projectPath ||
+      file.path.startsWith(`${projectPath.replaceAll("\\", "/")}/`),
+  );
+  const changedSource = typeSpecDiffs
+    .filter(
+      (hunk) =>
+        projectPath === "." ||
+        hunk.path === projectPath ||
+        hunk.path.startsWith(`${projectPath.replaceAll("\\", "/")}/`),
+    )
+    .flatMap((hunk) => hunk.lines.map((line) => line.slice(1)))
+    .join("\n");
+  const declarations = projectFiles.flatMap((file) =>
+    file.declarations.map((declaration) => ({
+      path: file.path,
+      ...declaration,
+    })),
+  );
+  if (
+    /flattenProperty/.test(changedSource) &&
+    /flattenProperty\(["']!javascript["']\)/.test(changedSource)
+  ) {
+    candidates.push({
+      id: "source-javascript-flattening-scope-changed",
+      rule: "client-property-flattening-changed",
+      severity: "high",
+      summary:
+        "Changing flattenProperty to exclude JavaScript can change generated JavaScript construction and property access from flattened to nested.",
+      evidence: projectFiles
+        .filter((file) =>
+          file.changes.some((change) =>
+            change.lines.some((line) => line.includes("flattenProperty")),
+          ),
+        )
+        .map((file) => ({ path: file.path })),
+      reviewRequired: true,
+    });
+  }
+  if (
+    /@@clientLocation/.test(changedSource) &&
+    /!csharp,!go/.test(changedSource)
+  ) {
+    candidates.push({
+      id: "source-go-client-location-changed",
+      rule: "client-location-changed",
+      severity: "high",
+      summary:
+        "Expanding a clientLocation exclusion from C# to C# and Go can move existing Go methods between generated clients.",
+      evidence: projectFiles
+        .filter((file) =>
+          file.changes.some((change) =>
+            change.lines.some((line) => line.includes("@@clientLocation")),
+          ),
+        )
+        .map((file) => ({ path: file.path })),
+      reviewRequired: true,
+    });
+  }
+  const removedEnums = new Set(
+    declarations
+      .filter(
+        (declaration) =>
+          declaration.kind === "enum" && declaration.change === "removed",
+      )
+      .map((declaration) => declaration.symbol),
+  );
+  const openedEnums = declarations.filter(
+    (declaration) =>
+      declaration.kind === "union" &&
+      declaration.change === "added" &&
+      removedEnums.has(declaration.symbol),
+  );
+  if (openedEnums.length > 0) {
+    candidates.push({
+      id: "source-enum-replaced-by-open-union",
+      rule: "sdk-enum-shape-changed",
+      severity: "high",
+      summary:
+        "Replacing an enum with a string-backed union can change generated enum shape and member identities while preserving wire values.",
+      evidence: openedEnums.map(({ path, symbol }) => ({ path, symbol })),
+      reviewRequired: true,
+    });
+  }
+  if (
+    /@Azure\.Core\.useFinalStateVia/.test(changedSource) &&
+    /x-ms-long-running-operation|@pollingOperation/.test(changedSource)
+  ) {
+    candidates.push({
+      id: "source-lro-metadata-representation-changed",
+      rule: "sdk-lro-recognition-changed",
+      severity: "high",
+      summary:
+        "Replacing raw OpenAPI or polling metadata with TypeSpec LRO metadata can change whether generated SDK methods are recognized as long-running.",
+      evidence: projectFiles
+        .filter((file) =>
+          file.changes.some((change) =>
+            change.lines.some((line) =>
+              /useFinalStateVia|x-ms-long-running-operation|@pollingOperation/.test(
+                line,
+              ),
+            ),
+          ),
+        )
+        .map((file) => ({ path: file.path })),
+      reviewRequired: true,
+    });
+  }
+  return candidates;
+}
+
+const sourceLineLimitPerFile = 200;
+
+function compactSourceHunk(hunk, limit) {
+  const significantLines = hunk.lines.flatMap((rawLine, index) => {
+    if (!/^[+-]/.test(rawLine)) return [];
+    const line = rawLine.slice(1).trim();
+    if (
+      !line ||
+      line.startsWith("//") ||
+      line.startsWith("/**") ||
+      line.startsWith("*") ||
+      line.startsWith("import ") ||
+      line.startsWith("using ") ||
+      ["{", "}", "};"].includes(line) ||
+      !/^(?:#suppress\b|@|model\b|interface\b|union\b|enum\b|alias\b|op\b|namespace\b|scalar\b|[A-Za-z_]\w*\??\s*:)/.test(
+        line,
+      )
+    ) {
+      return [];
+    }
+    const declaration = /^(?:model|interface|union|enum|alias|op)\b/.test(line);
+    const followsCompliancePattern =
+      declaration &&
+      /customAzureResource|parentResource|RoutedOperations|arm-custom-resource/.test(
+        hunk.lines
+          .slice(Math.max(0, index - 8), index)
+          .map((nearbyLine) => nearbyLine.slice(1))
+          .join("\n"),
+      );
+    const priority = followsCompliancePattern
+      ? 5
+      : /#suppress\b|Legacy\.|customAzureResource|parentResource|RoutedOperations|@route\b/.test(
+            line,
+          )
+        ? 4
+        : declaration
+          ? 3
+          : /@added\b/.test(line)
+            ? 2
+            : 1;
+    return [{ index, line, priority }];
+  });
+  const uniqueSignificantLines = [
+    ...new Map(significantLines.map((entry) => [entry.line, entry])).values(),
+  ];
+  const selectedLines = [...uniqueSignificantLines]
+    .sort(
+      (left, right) =>
+        right.priority - left.priority || left.index - right.index,
+    )
+    .slice(0, limit)
+    .sort((left, right) => left.index - right.index)
+    .map((entry) => entry.line);
+  return {
+    id: `${hunk.path}:${hunk.newStart}:${hunk.oldStart}`,
+    path: hunk.path,
+    oldStart: hunk.oldStart,
+    newStart: hunk.newStart,
+    lines: selectedLines,
+    omittedLineCount: Math.max(0, uniqueSignificantLines.length - limit),
+  };
+}
+
+function compactSourceFiles(sourceIndex, typeSpecDiffs) {
+  const files = new Map();
+  const hunkCounts = new Map();
+  for (const hunk of typeSpecDiffs) {
+    hunkCounts.set(hunk.path, (hunkCounts.get(hunk.path) ?? 0) + 1);
+  }
+  for (const member of extractVersionedMembers(typeSpecDiffs)) {
+    const file = files.get(member.path) ?? {
+      path: member.path,
+      declarations: [],
+      decoratorCounts: new Map(),
+      versionedMembers: [],
+      changes: [],
+    };
+    file.versionedMembers.push({
+      owner: member.owner,
+      symbol: member.symbol,
+      version: member.version,
+    });
+    files.set(member.path, file);
+  }
+  for (const entry of sourceIndex) {
+    const file = files.get(entry.path) ?? {
+      path: entry.path,
+      declarations: [],
+      decoratorCounts: new Map(),
+      versionedMembers: [],
+      changes: [],
+    };
+    if (entry.kind === "decorator") {
+      const key = `${entry.change}:${entry.symbol}`;
+      const decorator = file.decoratorCounts.get(key) ?? {
+        symbol: entry.symbol,
+        change: entry.change,
+        count: 0,
+      };
+      decorator.count += 1;
+      file.decoratorCounts.set(key, decorator);
+    } else {
+      file.declarations.push({
+        symbol: entry.symbol,
+        kind: entry.kind,
+        change: entry.change,
+        revision: entry.revision,
+        line: entry.line,
+      });
+    }
+    files.set(entry.path, file);
+  }
+  for (const hunk of typeSpecDiffs) {
+    const file = files.get(hunk.path) ?? {
+      path: hunk.path,
+      declarations: [],
+      decoratorCounts: new Map(),
+      versionedMembers: [],
+      changes: [],
+    };
+    file.changes.push(
+      compactSourceHunk(
+        hunk,
+        Math.max(
+          1,
+          Math.floor(sourceLineLimitPerFile / (hunkCounts.get(hunk.path) ?? 1)),
+        ),
+      ),
+    );
+    files.set(hunk.path, file);
+  }
+  return [...files.values()]
+    .map((file) => ({
+      path: file.path,
+      declarations: file.declarations,
+      versionedMembers: file.versionedMembers,
+      decorators: [...file.decoratorCounts.values()].sort((left, right) =>
+        `${left.change}:${left.symbol}`.localeCompare(
+          `${right.change}:${right.symbol}`,
+        ),
+      ),
+      changes: file.changes.filter(
+        (change) => change.lines.length > 0 || change.omittedLineCount > 0,
+      ),
+    }))
+    .filter(
+      (file) =>
+        file.declarations.length > 0 ||
+        file.versionedMembers.length > 0 ||
+        file.decorators.length > 0 ||
+        file.changes.length > 0,
+    )
+    .sort((left, right) => left.path.localeCompare(right.path));
+}
+
+export function compactAnalysisProject(project) {
+  const detailedChanges = project.rest.changes
+    .filter((change) => change.kind === "modified")
+    .map((change) => ({
+      ...change,
+      aspects: changedOperationAspects(change.before, change.after),
+    }))
+    .filter((change) => change.aspects.length > 0);
+  const operationGroups = groupOperationManifest(
+    project.rest.changes,
+    project.rest.baseline,
+  );
+  const detailedOperationKeys = new Set(
+    detailedChanges.flatMap((change) => [
+      change.before?.key,
+      change.after?.key,
+    ]),
+  );
+  return {
+    path: project.path,
+    rest: {
+      operationChanges: detailedChanges.map(operationChangeRecord),
+      operationGroups,
+      breakingCandidates: project.rest.restBreakingCandidates
+        .filter(
+          (candidate) =>
+            candidate.rule === "operation-removed" ||
+            !candidate.evidence?.operation ||
+            detailedOperationKeys.has(candidate.evidence.operation),
+        )
+        .map(compactRestCandidate),
+      counts: {
+        baselineOperations: project.rest.baseline.length,
+        headOperations: project.rest.head.length,
+        changedOperations: project.rest.changes.length,
+        modelRelevantOperations:
+          detailedChanges.length +
+          operationGroups.reduce(
+            (count, group) => count + group.operationIds.length,
+            0,
+          ),
+      },
+    },
+    downstream: {
+      candidates: project.downstream.candidates,
+      candidateCount: project.downstream.candidates.length,
+    },
+  };
+}
+
+export function buildAssessmentDraft({
+  evidence,
+  analysis,
+  complianceEvidence,
+  totalMs,
+}) {
+  const sourceFiles = compactSourceFiles(
+    analysis.sourceIndex,
+    evidence.typeSpecDiffs,
+  );
+  const projects = linkOperationGroupsToSource(
+    analysis.projects.map((project) => compactAnalysisProject(project)),
+    sourceFiles,
+  ).map((project) => {
+    const sourceCandidates = sourceDownstreamCandidates(
+      sourceFiles,
+      project.path,
+      evidence.typeSpecDiffs,
+    );
+    return {
+      ...project,
+      downstream: {
+        ...project.downstream,
+        candidates: [...project.downstream.candidates, ...sourceCandidates],
+        candidateCount:
+          project.downstream.candidateCount + sourceCandidates.length,
+      },
+    };
+  });
+  return {
+    schemaVersion: 1,
+    comparison: {
+      kind: evidence.head.hasWorkingTreeChanges
+        ? "local-working-tree"
+        : "committed-range",
+      baseline: evidence.baseline,
+      head: evidence.head,
+      includedChanges: evidence.head.changeScope,
+    },
+    baseline: evidence.baseline,
+    head: evidence.head,
+    changedFiles: evidence.changedFiles.filter(
+      (path) =>
+        path.endsWith(".tsp") ||
+        path.endsWith("tspconfig.yaml") ||
+        path.endsWith("package.json"),
+    ),
+    sourceFiles,
+    projects,
+    complianceEvidence,
+    artifactCache: evidence.artifactCache,
+    checkoutCache: evidence.checkoutCache,
+    errors: evidence.errors,
+    assessmentDuration: {
+      preparationMs: evidence.durationMs,
+      deterministicAnalysisMs:
+        evidence.phaseDurations?.deterministicAnalysisMs ?? analysis.durationMs,
+      documentationEvidenceMs: complianceEvidence.durationMs,
+      totalMs,
+    },
+    modelTasks: [
+      "Group deterministic changes into semantic intents.",
+      "Review REST and downstream candidates and author only supported final findings.",
+      "Compare compliance excerpts with exact TypeSpec declarations and decide applicability.",
+      "Set final confidence and concise service-behavior explanations.",
+    ],
+  };
+}
+
+export function applyModelInputBudget(draft, budgetBytes) {
+  const measuredDraft = {
+    ...draft,
+    modelInput: {
+      serialization: "minified-json",
+      bytes: 0,
+      estimatedTokens: 0,
+      budgetBytes,
+    },
+  };
+  let bytes = 0;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    measuredDraft.modelInput.bytes = bytes;
+    measuredDraft.modelInput.estimatedTokens = Math.ceil(bytes / 4);
+    bytes = Buffer.byteLength(JSON.stringify(measuredDraft));
+  }
+  measuredDraft.modelInput.bytes = bytes;
+  measuredDraft.modelInput.estimatedTokens = Math.ceil(bytes / 4);
+  const finalBytes = Buffer.byteLength(JSON.stringify(measuredDraft));
+  measuredDraft.modelInput.bytes = finalBytes;
+  measuredDraft.modelInput.estimatedTokens = Math.ceil(finalBytes / 4);
+  if (finalBytes > budgetBytes) {
+    throw new Error(
+      `Model input is ${finalBytes} bytes, exceeding the ${budgetBytes}-byte budget`,
+    );
+  }
+  return measuredDraft;
+}
+
+export async function runAssessmentAnalysis(options) {
+  const startedAt = process.hrtime.bigint();
+  const documentCache =
+    options.documentCache ??
+    join(canonicalTempDirectory(), "typespec-assessment-document-cache");
+  let evidence;
+  let analysis;
+  let outputRoot;
+  if (options.evidenceDirectory) {
+    const evidenceRoot = resolve(options.evidenceDirectory);
+    evidence = hydrateHistoricalSourceEvidence(
+      JSON.parse(readFileSync(join(evidenceRoot, "evidence.json"), "utf8")),
+      options.sourceAssessment,
+    );
+    outputRoot = resolve(options.prepare.output);
+    mkdirSync(outputRoot, { recursive: true });
+    analysis = analyzeArtifacts(evidence, evidenceRoot);
+    rmSync(join(outputRoot, "analysis.json"), { force: true });
+    writeFileSync(
+      join(outputRoot, "analysis-metadata.json"),
+      `${JSON.stringify(
+        {
+          schemaVersion: analysis.schemaVersion,
+          generatedAt: analysis.generatedAt,
+          durationMs: analysis.durationMs,
+          sourceIndexCount: analysis.sourceIndex.length,
+          projects: analysis.projects.map((project) => ({
+            path: project.path,
+            baselineOperations: project.rest.baseline.length,
+            headOperations: project.rest.head.length,
+            changedOperations: project.rest.changes.length,
+            restBreakingCandidates: project.rest.restBreakingCandidates.length,
+            downstreamCandidates: project.downstream.candidates.length,
+          })),
+          fullAnalysisPersistence: "in-memory-only",
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    evidence = {
+      ...evidence,
+      repositoryRoot: evidenceRoot,
+      durationMs: elapsedMs(startedAt),
+      phaseDurations: {
+        ...(evidence.phaseDurations ?? {}),
+        deterministicAnalysisMs: analysis.durationMs,
+      },
+    };
+  } else {
+    evidence = await prepareAssessment({
+      ...options.prepare,
+      excludePaths: [
+        ...(options.prepare.excludePaths ?? []),
+        resolve(documentCache),
+      ],
+    });
+    outputRoot = resolve(evidence.repositoryRoot, options.prepare.output);
+    analysis = JSON.parse(
+      readFileSync(join(outputRoot, "analysis.json"), "utf8"),
+    );
+  }
+  const catalogPath = new URL(
+    "../references/reference-document-links.md",
+    import.meta.url,
+  );
+  const preparedComplianceEvidence = await prepareComplianceEvidence({
+    evidence,
+    catalogText: readFileSync(catalogPath, "utf8"),
+    cacheRoot: resolve(documentCache),
+  });
+  const complianceEvidence = mergeHistoricalComplianceDocuments(
+    preparedComplianceEvidence,
+    options.sourceAssessment,
+  );
+  writeFileSync(
+    join(outputRoot, "compliance-evidence.json"),
+    `${JSON.stringify(complianceEvidence, null, 2)}\n`,
+  );
+  const draft = applyModelInputBudget(
+    buildAssessmentDraft({
+      evidence,
+      analysis,
+      complianceEvidence,
+      totalMs: elapsedMs(startedAt),
+    }),
+    options.modelInputBudgetBytes ?? 250 * 1024,
+  );
+  writeFileSync(
+    join(outputRoot, "assessment-draft.json"),
+    `${JSON.stringify(draft, null, 2)}\n`,
+  );
+  writeFileSync(join(outputRoot, "model-input.json"), JSON.stringify(draft));
+  return draft;
+}
+
+async function main() {
+  const options = analysisArgs(process.argv.slice(2));
+  const draft = await runAssessmentAnalysis(options);
+  process.stdout.write(
+    `Prepared deterministic assessment draft for ${draft.projects.length} TypeSpec project(s) in ${(draft.assessmentDuration.totalMs / 1000).toFixed(1)}s.\n`,
+  );
+}
+
+const isMain =
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch((error) => {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  });
+}

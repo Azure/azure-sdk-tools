@@ -105,47 +105,38 @@ namespace APIViewWeb
 
             if (filterAndSortParams.Details != null && filterAndSortParams.Details.Count() > 0)
             {
-                queryStringBuilder.Append(" AND (");
-
                 var approvalFilters = filterAndSortParams.Details.Where(x => x == "Approved" || x == "Pending").ToList();
                 var apiRevisionTypeFilters = filterAndSortParams.Details.Where(x => x == "Manual" || x == "Automatic" || x == "PullRequest").ToList();
+                var detailClauses = new List<string>();
 
                 if (approvalFilters.Count() == 2)
                 {
-                    queryStringBuilder.Append($"c.IsApproved = true OR c.IsApproved = false");
+                    detailClauses.Add("(c.IsApproved = true OR c.IsApproved = false)");
                 }
                 else if (approvalFilters.Contains("Approved"))
                 {
-                    queryStringBuilder.Append($"c.IsApproved = true");
+                    detailClauses.Add("c.IsApproved = true");
                 }
                 else if (approvalFilters.Contains("Pending"))
                 {
-                    queryStringBuilder.Append($"c.IsApproved = false");
+                    detailClauses.Add("c.IsApproved = false");
                 }
 
-                if (approvalFilters.Count > 0 && apiRevisionTypeFilters.Count() > 0)
-                    queryStringBuilder.Append(" AND ");
-
-                foreach (var item in apiRevisionTypeFilters)
+                if (apiRevisionTypeFilters.Count > 0)
                 {
-                    switch (item)
-                    {
-                        case "Manual":
-                            queryStringBuilder.Append($"c.APIRevisionType = 'Manual'");
-                            break;
-                        case "Automatic":
-                            queryStringBuilder.Append($"c.APIRevisionType = 'Automatic'");
-                            break;
-                        case "PullRequest":
-                            queryStringBuilder.Append($"c.APIRevisionType = 'PullRequest'");
-                            break;
-                    }
-                    if (item != apiRevisionTypeFilters.Last())
-                    {
-                        queryStringBuilder.Append(" OR ");
-                    }
+                    var apiRevisionTypeClauses = apiRevisionTypeFilters.Select(item => $"c.APIRevisionType = '{item}'");
+                    detailClauses.Add($"({string.Join(" OR ", apiRevisionTypeClauses)})");
                 }
-                queryStringBuilder.Append(")");
+
+                if (filterAndSortParams.Details.Contains("Released"))
+                {
+                    detailClauses.Add("c.IsReleased = true");
+                }
+
+                if (detailClauses.Count > 0)
+                {
+                    queryStringBuilder.Append($" AND ({string.Join(" AND ", detailClauses)})");
+                }
             }
 
             int totalCount = 0;

@@ -56,6 +56,7 @@ public class Main {
                 selectedRenderer = Renderer.fromValue(args[0].substring(RENDERER_OPTION_PREFIX.length()));
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
+                printUsage();
                 System.exit(-1);
             }
         }

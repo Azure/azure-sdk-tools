@@ -1,7 +1,7 @@
 # SDK Release Pipeline Update Plan
 
 ## Motivation
-API Review Hub must be integrated into the release process so approval and release state are tracked by the new system, while maintaining compatability with APIView during the transition phase. When APIView is retired, the new new pipeline must continue to "just work".
+API Review Hub must be integrated into the release process so approval and release state are tracked by the new system, while maintaining compatibility with APIView during the transition phase. When APIView is retired, the new pipeline must continue to "just work".
 
 ## Current State
 The current release pipeline depends heavily on `Create-APIReview.ps1`. This script combines three independent responsibilities:
@@ -121,20 +121,20 @@ Required step template:
 
 Responsibility:
 
-- Use the explicitly supplied language and resolve the published package name, package version, and API hash from each explicitly supplied package-info file.
+- Use the explicitly supplied language and resolve the published package name, package version, and optional API hash from each explicitly supplied package-info file.
 - Invoke `azsdk package mark-released` independently for every package-info file under the pipeline service connection `ADO to ARH Service Connection`.
 - Consume the established `PackageMarkReleasedResponse` contract without independently calling or interpreting either backend.
 - Preserve a dedicated `Skip.MarkPackageReleased` break-glass mechanism in the step template, authorized using the same user allowlist pattern as `Skip.CreateApiReview`.
 - Do not honor `Skip.CreateApiReview`, `Skip.CheckPackageApproval`, a shared master skip variable, language-specific tooling, or local configuration as a reason to bypass or override this step.
-- Emit the ARH and APIView results returned by the command and propagate its nonzero exit when either update fails.
+- Emit the ARH and APIView results returned by the command and propagate its exit code. The command succeeds when either backend succeeds and fails only when neither backend succeeds.
 
 Inputs should include:
 
 - Language, supplied once for the script invocation because package-info files do not standardly contain it.
 - Package-info file paths, with each file representing one published package to mark.
-- Each package-info file must contain the published package `Name`, `Version`, and `ApiHash` required by the CLI.
+- Each package-info file must contain the published package `Name` and `Version`. During the transition, `ApiHash` is optional and is passed to the CLI when present.
 
-Unlike the transitional approval check, mark-released requires `ApiHash`; a missing value must fail before invoking the CLI for that package. The script must process only explicitly supplied package-info files, attempt every valid package independently, and fail the invocation if any package cannot be marked successfully.
+When `ApiHash` is absent, the script must invoke the CLI without `--api-hash`; the CLI then skips ARH and attempts APIView. The script must process only explicitly supplied package-info files, attempt every valid package independently, and fail the invocation if the CLI reports that no backend marked any package successfully.
 
 Non-responsibilities:
 
@@ -167,7 +167,7 @@ Non-responsibilities:
 
 - Implement `Mark-PackageReleased.ps1`.
 - Implement `mark-package-released.yml` as the release-stage pipeline entry point for the script.
-- Accept an explicit language and package-info file paths, then resolve each package's published `Name`, `Version`, and required `ApiHash` from its file.
+- Accept an explicit language and package-info file paths, then resolve each package's published `Name`, `Version`, and optional `ApiHash` from its file.
 - Invoke `azsdk package mark-released` independently for every package-info file and aggregate failures only after every valid package has been attempted.
 - Treat the CLI's ARH and APIView results and exit code as authoritative.
 - Make the command's partial-failure details visible so remediation is clear.
@@ -196,20 +196,20 @@ Non-responsibilities:
 - Treat a missing package-info `ApiHash` as an omitted optional CLI input, not a script or CI failure, during the transition.
 - Permit approval-status and mark-released bypasses only through their respective `Skip.CheckPackageApproval` and `Skip.MarkPackageReleased` variables; do not provide a shared switch that disables more than one operation.
 - Include package name, version, and hash in diagnostic output without exposing tokens.
-- Propagate nonzero exits for authentication, transport, malformed response, unapproved status, CLI failure, and backend update failures.
+- Propagate nonzero exits for authentication, transport, malformed response, unapproved status, and CLI failure, including when no release backend succeeds.
 
 ## Compatibility and Risks
 
-- **Artifact determinism:** Approval and mark-released must use the exact API hash associated with the package being published. The hash must travel with that package's package-info file so the gate does not correlate separate artifact sets at runtime.
+- **Artifact determinism:** When an API hash is available, approval and mark-released must use the exact hash associated with the package being published. The hash must travel with that package's package-info file so the gate does not correlate separate artifact sets at runtime.
 - **Onboarding dependency:** ARH-enabled repositories must run `create-apireview-hub-artifacts-{lang}` during their build stage and persist each resulting hash in the matching package-info file.
 - **Future enforcement:** API hash is optional only during the APIView-to-ARH transition. It becomes required once ARH onboarding is complete and APIView fallback is removed.
-- **CLI availability:** Pipeline agents that run approval or release completion must provide AZSdkCli 0.6.35 or later for the required `azsdk package get-approval-status` and `azsdk package mark-released` commands.
+- **CLI availability:** Pipeline agents that run approval or release completion must provide AZSdkCli 0.6.37 or later for the required `azsdk package get-approval-status` and `azsdk package mark-released` commands and the documented missing-hash and partial-success behavior.
 - **Behavior preservation:** The creation-only script must retain source-only upload because not every language pipeline produces a review token file.
 - **CLI command removal:** Any out-of-repository consumers of the two APIView revision commands would break. Repository search found no callers, but release notes should identify the removal.
 - **Dual-backend consistency:** The CLI owns approval reconciliation across APIView and ARH; scripts should not second-guess it.
 - **Gate integrity:** Outside the template-specific authorized bypass, language-specific tooling or configuration must not suppress the approval check or override its result. The pipeline must fail whenever the centralized CLI decision is unapproved or the check cannot complete successfully.
 - **Break-glass isolation:** `Skip.CreateApiReview`, `Skip.CheckPackageApproval`, and `Skip.MarkPackageReleased` must each affect only their named operation and never serve as aliases for a shared master bypass.
-- **Partial release updates:** `azsdk package mark-released` attempts ARH and APIView independently and preserves each result in `PackageMarkReleasedResponse`. The script must surface those results unchanged; command retries require both backend operations to be idempotent because the command invokes both on each run.
+- **Partial release updates:** With an API hash, `azsdk package mark-released` attempts ARH and APIView independently and preserves each result in `PackageMarkReleasedResponse`; without a hash, it skips ARH and attempts APIView. The command succeeds when either attempted backend succeeds and fails only when neither succeeds. The script must surface those results unchanged. Hash-bearing retries require both backend operations to be idempotent because the command invokes both on each retry.
 - **Multi-package runs:** Approval and mark-released script invocations may process multiple explicit package-info files, but each package must be handled independently and retain its own `ApiHash`; one package's metadata or result must never be reused for another.
 - **Stage placement:** Revision creation runs only in the Build stage. Approval status remains at each language pipeline's existing approval-check location and is not added to release. Mark-released runs only in the release stage.
 - **Transition lifetime:** The APIView revision script is intentionally temporary and should not accumulate ARH behavior.
@@ -224,8 +224,8 @@ Non-responsibilities:
 5. Confirm ARH-enabled repositories copy each matching `apiMdSha256` into that package's package-info `ApiHash` and preserve it through the existing approval-check location.
 6. Confirm a missing package-info `ApiHash` does not fail the script before the CLI runs, and that the script propagates a successful CLI result produced through APIView fallback.
 7. Verify each language pipeline invokes the shared template at its existing approval-check location and under its existing conditions, only an authorized `Skip.CheckPackageApproval` setting skips it, and the template is not invoked during release.
-8. Validate that `Mark-PackageReleased.ps1` reads each explicit package-info file, passes its complete input set to `azsdk package mark-released`, and propagates its successful response.
-9. Simulate each one-backend failure response and verify the script surfaces both backend results and returns failure without implementing its own backend calls or policy.
+8. Validate that `Mark-PackageReleased.ps1` reads each explicit package-info file, passes its name, version, language, and optional hash to `azsdk package mark-released`, and propagates its response.
+9. Simulate each one-backend failure response and verify the script surfaces both backend results and succeeds when the other backend succeeds; verify it returns failure only when neither backend succeeds.
 10. Verify only an authorized `Skip.MarkPackageReleased` setting skips mark-released, and that no break-glass variable disables any other operation.
 11. Run a multi-package pipeline and verify every explicit package-info file is evaluated once with its own name, version, and optional hash, and that any package failure fails the invocation.
 12. Confirm mark-released runs only in the release stage.

@@ -26,6 +26,14 @@
 
 No action required from the assessed dimensions.
 
+## ☁️ Azure Compliance
+
+**Status:** `passed`
+
+### Compliance Findings
+
+No compliance mismatches found.
+
 ## 🧠 Semantic Understanding
 
 <a id="intent-1-align-the-new-device-registry-previews-with-arm-"></a>
@@ -72,14 +80,6 @@ None detected.
 
 None detected.
 
-## ☁️ Azure Compliance
-
-**Status:** `passed`
-
-### Compliance Findings
-
-No compliance mismatches found.
-
 ## 📎 Appendix
 
 ### Assessment Errors
@@ -90,7 +90,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [ARM common types version rule - Models and Enums](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/) | . Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining child resources 7. Defining custom resource actions 8. Customizing operations with traits 9. Versioning 10. Complete Example 11. Advanced Topics ARM Service 1. Installing Tools 2. Defining the Service 3. Defining | The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84) |
+| Matched | ARM common types version rule - Models and Enums | . Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining child resources 7. Defining custom resource actions 8. Customizing operations with traits 9. Versioning 10. Complete Example 11. Advanced Topics ARM Service 1. Installing Tools 2. Defining the Service 3. Defining | The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern. | main.tsp:L75-L84 |
 
 ### Tooling Used
 

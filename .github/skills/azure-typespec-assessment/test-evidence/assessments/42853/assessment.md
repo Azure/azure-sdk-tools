@@ -29,6 +29,64 @@
 | high | Downstream | Generated SDK method moves between clients | The REST contracts are unchanged, but extending four client-location customizations to Go can move bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint between generated clients. Existing Go code that constructs the former clients or invokes these methods through them can stop compiling. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) | n/a |
 | medium | Compliance | Client customizations are not located in client.tsp | The added client-location customizations are in back-compatible.tsp instead of the documented client.tsp file alongside main.tsp. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) | [The stable 2026-02-01 promotion follows the retained stable-after-preview guidance by replacing the preview version enum member, but the three added @@clientLocation customizations do not follow the retained client customization location guidance because they are in back-compatible.tsp rather than client.tsp alongside main.tsp.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
 
+## ☁️ Azure Compliance
+
+**Status:** `failed`
+
+### Compliance Findings
+
+<a id="finding-client-customizations-outside-client-tsp"></a>
+### Client customizations are not located in client.tsp
+
+**Severity:** medium
+
+**Gap:** The added client-location customizations are in back-compatible.tsp instead of the documented client.tsp file alongside main.tsp.
+
+**TypeSpec source:** [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112)
+
+<details>
+<summary><strong>Expected</strong></summary>
+
+The stable 2026-02-01 promotion follows the retained stable-after-preview guidance by replacing the preview version enum member, but the three added @@clientLocation customizations do not follow the retained client customization location guidance because they are in back-compatible.tsp rather than client.tsp alongside main.tsp.
+
+**Guidance:** [Clients — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/)
+
+**Documented TypeSpec example**
+
+```tsp
+import "@azure-tools/typespec-client-generator-core";
+using Azure.ClientGenerator.Core;
+
+@@clientLocation(Feeds.feed, PetStore);
+@@clientLocation(Pets.pet, PetStore);
+```
+
+</details>
+
+<details>
+<summary><strong>Actual</strong></summary>
+
+Expected: client customizations should always be in client.tsp alongside main.tsp. Actual: three @@clientLocation customizations were added to back-compatible.tsp.
+
+**[back-compatible.tsp:L67-L78](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L78)**
+
+```tsp
+
+@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,
+  Microsoft.RecoveryServices,
+  "!csharp,!go"
+);
+@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,
+  Microsoft.RecoveryServices,
+  "!csharp,!go"
+);
+@@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,
+  Microsoft.RecoveryServices,
+  "!csharp,!go"
+```
+
+</details>
+
 ## 🧠 Semantic Understanding
 
 <a id="intent-1-publish-the-inherited-recovery-services-backup-s"></a>
@@ -128,62 +186,6 @@ None detected.
 - **TypeSpec source:** [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112)
 
 
-## ☁️ Azure Compliance
-
-**Status:** `failed`
-
-### Compliance Findings
-
-<a id="finding-client-customizations-outside-client-tsp"></a>
-### Client customizations are not located in client.tsp
-
-**Severity:** medium
-
-**Gap:** The added client-location customizations are in back-compatible.tsp instead of the documented client.tsp file alongside main.tsp.
-
-<details>
-<summary><strong>Expected</strong></summary>
-
-The stable 2026-02-01 promotion follows the retained stable-after-preview guidance by replacing the preview version enum member, but the three added @@clientLocation customizations do not follow the retained client customization location guidance because they are in back-compatible.tsp rather than client.tsp alongside main.tsp.
-
-**Guidance:** [Clients — Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/)
-
-**Documented TypeSpec example**
-
-```tsp
-import "@azure-tools/typespec-client-generator-core";
-using Azure.ClientGenerator.Core;
-
-@@clientLocation(Feeds.feed, PetStore);
-@@clientLocation(Pets.pet, PetStore);
-```
-
-</details>
-
-<details>
-<summary><strong>Actual</strong></summary>
-
-Expected: client customizations should always be in client.tsp alongside main.tsp. Actual: three @@clientLocation customizations were added to back-compatible.tsp.
-
-**[back-compatible.tsp:L67-L78](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L78)**
-
-```tsp
-
-@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,
-  Microsoft.RecoveryServices,
-  "!csharp,!go"
-);
-@@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,
-  Microsoft.RecoveryServices,
-  "!csharp,!go"
-);
-@@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,
-  Microsoft.RecoveryServices,
-  "!csharp,!go"
-```
-
-</details>
-
 ## 📎 Appendix
 
 ### Assessment Errors
@@ -194,8 +196,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Adding a Stable Version when the Last Version was Preview - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) | For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum. | The stable 2026-02-01 promotion follows the retained stable-after-preview guidance by replacing the preview version enum member, but the three added @@clientLocation customizations do not follow the retained client customization location guidance because they are in back-compatible.tsp rather than client.tsp alongside main.tsp. | [main.tsp:L62-L71](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71), [main.tsp:L66-L70](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L66-L70), [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) |
-| Mismatch | [Clients - Retained authoritative evidence](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | Expected: client customizations should always be in client.tsp alongside main.tsp. Actual: three @@clientLocation customizations were added to back-compatible.tsp. | [back-compatible.tsp:L67-L112](https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112) |
+| Matched | Adding a Stable Version when the Last Version was Preview - Retained authoritative evidence | For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum. | The stable 2026-02-01 promotion follows the retained stable-after-preview guidance by replacing the preview version enum member, but the three added @@clientLocation customizations do not follow the retained client customization location guidance because they are in back-compatible.tsp rather than client.tsp alongside main.tsp. | main.tsp:L62-L71, main.tsp:L66-L70, back-compatible.tsp:L67-L112 |
+| Mismatch | Clients - Retained authoritative evidence | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | Expected: client customizations should always be in client.tsp alongside main.tsp. Actual: three @@clientLocation customizations were added to back-compatible.tsp. | back-compatible.tsp:L67-L112 |
 
 ### Tooling Used
 

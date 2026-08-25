@@ -67,6 +67,15 @@ function sourceLinks(references) {
     .join(", ");
 }
 
+function sourceLabels(references) {
+  return (references ?? [])
+    .map(
+      (reference) =>
+        `${escapeHtml(basename(reference.path))}:L${reference.startLine}-L${reference.endLine}`,
+    )
+    .join(", ");
+}
+
 function findingGroups(assessment) {
   return [
     [
@@ -747,6 +756,7 @@ function renderComplianceFinding(assessment, finding) {
 <summary><span class="severity severity-${finding.severity}">${escapeHtml(finding.severity)}</span><h3>${escapeHtml(finding.title)}</h3></summary>
 <div class="finding-body">
 <p><strong>Gap:</strong> ${escapeHtml(finding.summary)}</p>
+<p class="sources"><strong>TypeSpec source:</strong> ${sourceLinks(finding.sourceReferences)}</p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -791,7 +801,7 @@ function renderAppendix(assessment) {
       )
         ? "Mismatch"
         : "Matched";
-      return `<tr><td>${result}</td><td><a href="${escapeHtml(document.url)}">${escapeHtml(document.title)} — ${escapeHtml(document.section)}</a></td><td>${escapeHtml(document.guidanceExcerpt)}</td><td>${escapeHtml(document.evidence)}</td><td>${sourceLinks(document.sourceReferences)}</td></tr>`;
+      return `<tr><td>${result}</td><td>${escapeHtml(document.title)} — ${escapeHtml(document.section)}</td><td>${escapeHtml(document.guidanceExcerpt)}</td><td>${escapeHtml(document.evidence)}</td><td>${sourceLabels(document.sourceReferences)}</td></tr>`;
     })
     .join("");
   return `<details class="appendix-details">
@@ -848,17 +858,17 @@ export function renderAssessmentHtml(assessment) {
 <div class="hero-meta">Overall confidence: <strong class="status-${confidence}">${escapeHtml(titleCase(confidence))}</strong> · Baseline <code>${escapeHtml(assessment.baseline?.ref ?? assessment.baseline?.commit)}</code> → Head <code>${escapeHtml(assessment.head?.commit)}</code></div>
 <div class="metrics">
 <div class="metric safety-metric"><strong class="status-${safety.toLowerCase()}">${metricIcon(riskStatus(safety))}${escapeHtml(safety)}</strong><span class="metric-title">Overall code safety</span></div>
+<a class="metric" href="#azure-compliance"><strong>${metricIcon(complianceMetricStatus)}${compliance.findings.length}</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">${compliance.findings.length} finding${compliance.findings.length === 1 ? "" : "s"}</span></a>
 <a class="metric" href="#semantic-intents"><strong>${metricIcon("info")}${assessment.dimensions.semanticUnderstanding.items.length}</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">${operationCount(assessment)} operations<br>${counts.added} Added, ${counts.modified} Modified, ${counts.removed} Removed</span></a>
 <a class="metric" href="#rest-breaking"><strong>${metricIcon(restFindings.length === 0 ? "good" : "danger")}${restFindings.length}</strong><span class="metric-title">REST breaking changes</span></a>
 <a class="metric" href="#downstream-breaking"><strong>${metricIcon(downstreamFindings.length === 0 ? "good" : "danger")}${downstreamFindings.length}</strong><span class="metric-title">Downstream breaking changes</span></a>
-<a class="metric" href="#azure-compliance"><strong>${metricIcon(complianceMetricStatus)}${compliance.findings.length}</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">${compliance.findings.length} finding${compliance.findings.length === 1 ? "" : "s"}</span></a>
 </div></div></header>
-<nav><div class="container"><a href="#semantic-intents">Semantic intents</a><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#appendix">Appendix</a></div></nav>
+<nav><div class="container"><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#appendix">Appendix</a></div></nav>
 <main class="container">
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status ${escapeHtml(compliance.status)}">${escapeHtml(compliance.status)}</span></h2>${renderFindingCategory(compliance.findings, compliance.status === "passed" ? "Azure compliance passed with no mismatches." : (compliance.reason ?? "No compliance findings recorded."), (finding) => renderComplianceFinding(assessment, finding))}</section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">${assessment.dimensions.semanticUnderstanding.items.length}</span></h2>${renderSemanticUnderstanding(assessment)}</section>
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">${restFindings.length}</span></h2>${renderFindingCategory(restFindings, "No REST breaking changes detected.")}</section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">${downstreamFindings.length}</span></h2>${renderFindingCategory(downstreamFindings, "No downstream breaking changes detected.", (finding) => renderFinding(finding, renderFindingSourceDiff(assessment, finding)))}</section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status ${escapeHtml(compliance.status)}">${escapeHtml(compliance.status)}</span></h2>${renderFindingCategory(compliance.findings, compliance.status === "passed" ? "Azure compliance passed with no mismatches." : (compliance.reason ?? "No compliance findings recorded."), (finding) => renderComplianceFinding(assessment, finding))}</section>
 <section id="appendix">${renderAppendix(assessment)}</section>
 </main>
 </body>

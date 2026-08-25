@@ -49,6 +49,14 @@ function sourceLinks(references, limit = Number.POSITIVE_INFINITY) {
   return links.join(", ") || "None.";
 }
 
+function sourceLabels(references, limit = Number.POSITIVE_INFINITY) {
+  const visible = (references ?? []).slice(0, limit);
+  const labels = visible.map(sourceLabel);
+  const remaining = (references?.length ?? 0) - visible.length;
+  if (remaining > 0) labels.push(`+${remaining} more`);
+  return labels.join(", ") || "None.";
+}
+
 function allFindings(assessment) {
   const dimensions = assessment.dimensions;
   return [
@@ -303,6 +311,8 @@ ${snippet.lines.join("\n")}
 
 **Gap:** ${finding.summary}
 
+**TypeSpec source:** ${sourceLinks(finding.sourceReferences)}
+
 <details>
 <summary><strong>Expected</strong></summary>
 
@@ -382,7 +392,7 @@ function renderGuidanceEvidence(assessment) {
 ${compliance.documents
   .map(
     (document) =>
-      `| ${documentResult(document, compliance.findings)} | [${tableText(document.title)} - ${tableText(document.section)}](${document.url}) | ${tableText(document.guidanceExcerpt)} | ${tableText(document.evidence)} | ${sourceLinks(document.sourceReferences, 3)} |`,
+      `| ${documentResult(document, compliance.findings)} | ${tableText(document.title)} - ${tableText(document.section)} | ${tableText(document.guidanceExcerpt)} | ${tableText(document.evidence)} | ${sourceLabels(document.sourceReferences, 3)} |`,
   )
   .join("\n")}`;
   return documents;
@@ -735,12 +745,12 @@ export function renderAssessment(assessment) {
     renderHeader(assessment),
     renderExecutiveSummary(assessment),
     renderActionRequired(assessment),
+    renderCompliance(assessment),
     "## 🧠 Semantic Understanding\n",
     renderKeyChanges(assessment),
     "",
     renderRestRepresentationPrompt(assessment),
     renderCompatibility(assessment),
-    renderCompliance(assessment),
     renderAppendix(assessment),
   ].join("\n");
 }

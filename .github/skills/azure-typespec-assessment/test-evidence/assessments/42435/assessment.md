@@ -28,6 +28,14 @@
 | --- | --- | --- | --- | --- | --- |
 | medium | Downstream | Generated SDK result becomes pageable | Marking the existing operation with @list preserves its wire route and payload but can change generated SDK methods from returning one response object to exposing pageable iteration, breaking callers that depend on the previous return shape. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) | n/a |
 
+## ☁️ Azure Compliance
+
+**Status:** `passed`
+
+### Compliance Findings
+
+No compliance mismatches found.
+
 ## 🧠 Semantic Understanding
 
 <a id="intent-1-mark-batch-outbound-rule-results-as-paged"></a>
@@ -77,14 +85,6 @@ None detected.
 - **TypeSpec source:** [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84)
 
 
-## ☁️ Azure Compliance
-
-**Status:** `passed`
-
-### Compliance Findings
-
-No compliance mismatches found.
-
 ## 📎 Appendix
 
 ### Assessment Errors
@@ -95,7 +95,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [TypeSpec pagination - Paging](https://typespec.io/docs/standard-library/pagination/) | y 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E] SemanticTokenKind [E] UsageFlags Functions [F] $encodedName [F] Numeric [F] addService [F] addVisibilityModifiers [F] applyCodeFix [F] applyCodeFixes [F] assertType [F] checkFormatTypeSpec [F] clearVisibilityModifiersForClass [F] compile [F] compilerAssert [F] createAddDecoratorCodeFi | The official TypeSpec pagination guidance applies @list to operations whose response represents a page. The changed source does exactly that, and the bounded operation evidence identifies value as the item collection and nextLink as the continuation URL. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
+| Matched | TypeSpec pagination - Paging | y 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E] SemanticTokenKind [E] UsageFlags Functions [F] $encodedName [F] Numeric [F] addService [F] addVisibilityModifiers [F] applyCodeFix [F] applyCodeFixes [F] assertType [F] checkFormatTypeSpec [F] clearVisibilityModifiersForClass [F] compile [F] compilerAssert [F] createAddDecoratorCodeFi | The official TypeSpec pagination guidance applies @list to operations whose response represents a page. The changed source does exactly that, and the bounded operation evidence identifies value as the item collection and nextLink as the continuation URL. | ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89, ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84 |
 
 ### Tooling Used
 

@@ -18,6 +18,8 @@ function input() {
           {
             id: "source-change",
             newStart: 10,
+            sourceLink:
+              "https://github.com/Azure/example/blob/head/spec/main.tsp#L10-L12",
             lines: [
               "@added(Versions.v2)",
               "get is ArmResourceRead<NewWidget>;",
@@ -228,8 +230,69 @@ test("fast compliance uses the full report comparison structure", () => {
   assert.match(html, /class="comparison-details actual-details"/);
   assert.match(html, /<summary>Expected<\/summary>/);
   assert.match(html, /<summary>Actual<\/summary>/);
+  assert.match(
+    html,
+    /<strong>TypeSpec source:<\/strong> <a href="https:\/\/github\.com\/Azure\/example\/blob\/head\/spec\/main\.tsp#L10-L12">spec\/main\.tsp:10<\/a>/,
+  );
   assert.match(html, /The response uses NewWidget/);
   assert.match(html, /The released response must remain Widget/);
   assert.match(html, /diff-line remove/);
   assert.match(html, /diff-line add/);
+  assert.ok(
+    html.indexOf('<section id="compliance">') <
+      html.indexOf('<section id="rest">'),
+  );
+});
+
+test("fast compliance requires an exact source change link", () => {
+  const modelInput = input();
+  const documentationUrl = "https://example.com/guidance";
+  modelInput.complianceEvidence.documents = [{ url: documentationUrl }];
+  const value = judgment();
+  value.restCandidates[0].decision = "reject";
+  value.restCandidates[0].rationale = "The candidate is not breaking.";
+  for (const field of [
+    "title",
+    "severity",
+    "confidence",
+    "actual",
+    "expected",
+    "evidence",
+    "affectedOperationIds",
+    "sourceChangeIds",
+    "sourcePaths",
+  ]) {
+    delete value.restCandidates[0][field];
+  }
+  value.compliance = {
+    status: "failed",
+    rationale: "The changed declaration differs from guidance.",
+    findings: [
+      {
+        id: "compliance-change",
+        title: "Compliance change",
+        severity: "medium",
+        confidence: "high",
+        actual: "The declaration differs.",
+        expected: "The declaration follows guidance.",
+        evidence: ["The changed source differs from the fetched guidance."],
+        affectedOperationIds: [],
+        sourceChangeIds: [],
+        sourcePaths: ["spec/main.tsp"],
+        documentationUrl,
+      },
+    ],
+  };
+  assert.throws(
+    () => validateFastJudgment(value, modelInput),
+    /must link to an exact changed TypeSpec source location/,
+  );
+
+  value.compliance.findings[0].sourceChangeIds = ["source-change"];
+  value.compliance.findings[0].sourcePaths = [];
+  delete modelInput.sourceFiles[0].changes[0].sourceLink;
+  assert.throws(
+    () => validateFastJudgment(value, modelInput),
+    /must provide a TypeSpec source link for every referenced change/,
+  );
 });

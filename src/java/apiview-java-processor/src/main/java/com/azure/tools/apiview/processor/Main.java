@@ -7,6 +7,7 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ApiViewProperties;
 import com.azure.tools.apiview.processor.model.Language;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
+import com.azure.tools.apiview.processor.model.MarkdownRenderer;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,25 +33,30 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class Main {
+    private static final String MARKDOWN_FLAG = "--markdown";
 
     // expected argument order:
-    // [inputFiles] <outputDirectory>
+    // [--markdown] [inputFiles] <outputDirectory>
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Expected argument order: [comma-separated sources jarFiles] <outputFile>, e.g. /path/to/jarfile.jar ./temp/");
+        final boolean markdownOutput = args.length == 3 && MARKDOWN_FLAG.equals(args[0]);
+        if ((!markdownOutput && args.length != 2) || (args.length == 3 && !MARKDOWN_FLAG.equals(args[0]))) {
+            System.out.println("Expected argument order: [--markdown] [comma-separated sources jarFiles] "
+                + "<outputDirectory>, e.g. /path/to/jarfile.jar ./temp/");
             System.exit(-1);
         }
 
         long startMillis = System.currentTimeMillis();
-        final String jarFiles = args[0];
+        final int positionalArgumentOffset = markdownOutput ? 1 : 0;
+        final String jarFiles = args[positionalArgumentOffset];
         final String[] jarFilesArray = jarFiles.split(",");
 
-        final File outputDir = new File(args[1]);
+        final File outputDir = new File(args[positionalArgumentOffset + 1]);
 
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
+        System.out.printf("  Output format: %s%n", markdownOutput ? "Markdown without JavaDoc" : "APIView JSON");
 
-        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir, markdownOutput));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
     }
 
@@ -60,6 +66,18 @@ public class Main {
      * gzipped file.
      */
     public static File[] run(File jarFile, File outputDir) {
+        return run(jarFile, outputDir, false);
+    }
+
+    /**
+     * Runs the APIView parser.
+     *
+     * @param jarFile The sources JAR to process.
+     * @param outputDir The output directory.
+     * @param markdownOutput Whether to write Markdown without JavaDoc instead of APIView JSON.
+     * @return The generated output files.
+     */
+    public static File[] run(File jarFile, File outputDir, boolean markdownOutput) {
         System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
         if (!jarFile.exists()) {
@@ -74,10 +92,18 @@ public class Main {
             }
         }
 
-        final String outputFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4) + ".json";
+        final String outputFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4)
+            + (markdownOutput ? ".md" : ".json");
         final Optional<APIListing> apiListing = processFile(jarFile);
 
         if (apiListing.isPresent()) {
+            if (markdownOutput) {
+                File outputFile = new File(outputDir, outputFileName);
+                MarkdownRenderer.write(apiListing.get(), outputFile);
+                System.out.println("  Output written to file: " + outputFile);
+                return new File[] { outputFile };
+            }
+
             File[] files = new File[Constants.GZIP_OUTPUT ? 2 : 1];
             files[0] = new File(outputDir, outputFileName);
             apiListing.get().toFile(files[0], false);

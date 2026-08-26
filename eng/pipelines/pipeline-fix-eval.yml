@@ -6,11 +6,12 @@
 # reads (tools/pipeline-analysis-dashboard):
 #
 #     $web/pipeline-evaluation/<repo>/<YYYY-MM-DD>.json
+#     $web/pipeline-evaluation/dashboard.json
 #
-# One blob per repo per day is what gives the dashboard its trend lines: it lists the
-# "pipeline-evaluation/" prefix and reads N days back, with no database in between. The dashboard
-# derives each run's date from the report's own "until" field, falling back to the date in
-# the blob name.
+# One blob per repo per day preserves the raw evaluation history. The pipeline also rebuilds
+# dashboard.json from that history after every run so the static dashboard needs one data request.
+# Each snapshot entry retains the raw report and its blob key; browser code applies the same parser
+# used for local development.
 #
 # The same files are also published as a pipeline artifact so a run can be inspected
 # without reaching for storage.
@@ -59,6 +60,8 @@ variables:
   # Root of the tree uploaded to the container; its layout IS the blob key layout.
   - name: EvalArtifactDir
     value: $(Build.ArtifactStagingDirectory)/pipeline-fix-eval
+  - name: DashboardHistoryDir
+    value: $(Agent.TempDirectory)/pipeline-fix-eval-history
   - name: MetricsStorageAccount
     value: azuresdkartifacts
   - name: MetricsContainer
@@ -78,8 +81,8 @@ jobs:
         fetchDepth: 1
 
       # Exists before evaluation so the artifact step has a path even on early failure.
-      - script: mkdir -p $(EvalArtifactDir)
-        displayName: 'Create evaluation output directory'
+      - script: mkdir -p $(EvalArtifactDir) $(DashboardHistoryDir)
+        displayName: 'Create evaluation directories'
 
       - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
 
@@ -89,6 +92,29 @@ jobs:
         parameters:
           TokenOwners:
             - ${{ parameters.owner }}
+
+      - task: AzureCLI@2
+        displayName: 'Download evaluation history'
+        condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        retryCountOnTaskFailure: 2
+        inputs:
+          azureSubscription: 'Azure SDK Artifacts'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
+
+            az storage blob download-batch `
+                --account-name '$(MetricsStorageAccount)' `
+                --source '$(MetricsContainer)' `
+                --destination '$(DashboardHistoryDir)' `
+                --pattern '$(MetricsPrefix)/*/*.json' `
+                --auth-mode login `
+                --overwrite true
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to download evaluation history with exit code $LASTEXITCODE"
+            }
 
       - task: AzureCLI@2
         displayName: 'Evaluate each repository'
@@ -105,6 +131,7 @@ jobs:
             -SinceDays ${{ parameters.sinceDays }}
             -JobTimeoutMinutes ${{ parameters.jobTimeoutMinutes }}
             -EvalArtifactDir "$(EvalArtifactDir)"
+            -DashboardHistoryDir "$(DashboardHistoryDir)"
             -MetricsPrefix "$(MetricsPrefix)"
             -AzSdkPath "$(AZSDK)"
         env:
@@ -130,7 +157,8 @@ jobs:
             if ($reports.Count -eq 0) {
                 throw 'No evaluation reports were produced; nothing to upload.'
             }
-            Write-Host "Uploading $($reports.Count) report(s)."
+            $rawReportCount = @($reports | Where-Object { $_.Name -ne 'dashboard.json' }).Count
+            Write-Host "Uploading $rawReportCount report(s) and dashboard snapshot."
 
             # Keep the destination prefix hardcoded so this job cannot write into the container
             # root. The narrowed source preserves <repo>/<date>.json beneath that prefix.

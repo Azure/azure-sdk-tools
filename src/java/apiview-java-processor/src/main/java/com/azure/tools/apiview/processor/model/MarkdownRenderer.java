@@ -76,11 +76,13 @@ public final class MarkdownRenderer {
                 continue;
             }
             if (token.getTokenKind() != TokenKind.COMMENT) {
+                // Inline comments can carry API information, such as an elided initializer or a service-version value.
                 return false;
             }
             hasComment = true;
         }
 
+        // Comment-only lines are APIView presentation metadata, such as grouping labels or empty-type explanations.
         return hasComment;
     }
 

@@ -117,7 +117,7 @@ This lives in `eng/common/knowledge/customizing-client-tsp.md` so that all langu
 
 #### Usage
 
-This document will be referenced by [eng/common/instructions/azsdk-tools/typespec-docs.instructions.md](eng/common/instructions/azsdk-tools/typespec-docs.instructions.md). These instructions are already included in the azure-rest-api-specs repo when the user asks TypeSpec-related questions.
+This document will be referenced by [eng/common/instructions/azsdk-tools/typespec-docs.instructions.md](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/instructions/azsdk-tools/typespec-docs.instructions.md). These instructions are already included in the azure-rest-api-specs repo when the user asks TypeSpec-related questions.
 
 Additionally, it can be referenced by custom prompts or agents when knowledge of how to apply client.tsp customizations is needed.
 

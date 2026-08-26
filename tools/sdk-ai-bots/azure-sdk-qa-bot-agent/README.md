@@ -138,15 +138,14 @@ Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolutio
 ```json
 {
   "mode": "analysis",
-  "tenant_id": "azure_sdk_onboarding",
   "conversation_id": "<a real conversation id from Cosmos>",
   "conversation_type": "teams_channel",
-   "evaluation_time": "2026-01-01T00:00:00+00:00",
-   "issue_url": null
+  "evaluation_time": "2026-01-01T00:00:00+00:00",
 }
 ```
 
-The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledge_base` and may file a real GitHub issue — use a throwaway conversation when iterating.
+The agent derives `tenant_id` from `fetch_conversation`, then calls
+`fetch_chat_trace` / `search_knowledge_base` and may file a real GitHub issue — use a throwaway conversation when iterating.
 
 **2. Debug the feedback loop end-to-end.**
 

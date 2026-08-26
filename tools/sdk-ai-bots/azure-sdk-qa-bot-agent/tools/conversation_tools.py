@@ -43,6 +43,7 @@ class FeedbackMessage(BaseModel):
 class ConversationView(BaseModel):
     conversation_id: str
     conversation_type: str
+    tenant_id: str | None = None
     found: bool
     message_count: int
     truncated: bool = False
@@ -111,9 +112,11 @@ class ConversationTools:
             (msg.message_link for msg in messages if msg.message_link),
             None,
         )
+        tenant_id = next((item.tenant_id for item in items if item.tenant_id), None)
         return ConversationView(
             conversation_id=conversation_id,
             conversation_type=conversation_type,
+            tenant_id=tenant_id,
             found=bool(items),
             message_count=len(items),
             conversation_link=conversation_link,

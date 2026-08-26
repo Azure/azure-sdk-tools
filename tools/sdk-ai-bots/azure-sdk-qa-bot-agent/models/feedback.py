@@ -90,7 +90,6 @@ class ChatbotEvolutionAgentInput(BaseModel):
         flags=re.IGNORECASE,
     )
 
-    tenant_id: str
     conversation_id: str
     conversation_type: ConversationType
     evaluation_time: datetime

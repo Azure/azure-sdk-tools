@@ -22,6 +22,7 @@ async def test_fetch_conversation_preserves_complete_message_content():
     expert_correction = "Complete expert evidence. " * 100
     message = ConversationMessageItem(
         id="expert-message",
+        tenant_id="azure_typespec_authoring",
         sender_role=Role.User,
         sender_id="expert",
         sender_name="SDK Expert",
@@ -44,6 +45,7 @@ async def test_fetch_conversation_preserves_complete_message_content():
     )
 
     assert result.truncated is False
+    assert result.tenant_id == "azure_typespec_authoring"
     assert result.messages[0].content == expert_correction
 
 

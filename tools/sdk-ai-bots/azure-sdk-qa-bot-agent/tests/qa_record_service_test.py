@@ -180,6 +180,7 @@ def test_analysis_input_omits_issue() -> None:
     )
     assert payload.mode == ChatbotEvolutionAgentMode.analysis
     assert payload.issue_url is None
+    assert "tenant_id" not in payload.model_dump()
     assert payload.evaluation_time.tzinfo is not None
     assert payload.evaluation_time.utcoffset() == timedelta(0)
 
@@ -187,7 +188,6 @@ def test_analysis_input_omits_issue() -> None:
 def test_validation_input_requires_issue() -> None:
     with pytest.raises(ValidationError):
         ChatbotEvolutionAgentInput(
-            tenant_id="typespec",
             conversation_id=_CONVERSATION_ID,
             conversation_type=ConversationType.teams_channel,
             evaluation_time=_BASE_TIME,
@@ -198,7 +198,6 @@ def test_validation_input_requires_issue() -> None:
 def test_evolution_input_requires_timezone_aware_evaluation_time() -> None:
     with pytest.raises(ValidationError, match="UTC offset"):
         ChatbotEvolutionAgentInput(
-            tenant_id="typespec",
             conversation_id=_CONVERSATION_ID,
             conversation_type=ConversationType.teams_channel,
             evaluation_time=datetime(2026, 7, 1, 12, 0, 0),

@@ -27,7 +27,6 @@ You receive one JSON message identifying the **conversation (QA thread)**:
 
 - `mode` — `analysis` or `validation`.
 - `conversation_id` / `conversation_type` — conversation coordinates.
-- `tenant_id` — the tenant the thread belongs to.
 - `evaluation_time` — the current UTC time used for inactivity calculations.
 - `issue_url` — present only in `validation` mode.
 
@@ -43,8 +42,10 @@ Follow these steps in order.
 1. **Reconstruct the thread.** Call
    `fetch_conversation(conversation_id, conversation_type)` first. If not
    found, return `processing_failed` with reason
-   `conversation_unavailable`. Each bot message in the transcript carries
-   its `trace_id`.
+   `conversation_unavailable`. If the result has no `tenant_id`, return
+   `processing_failed` with reason `conversation_tenant_unavailable`. Use the
+   returned `tenant_id` for all tenant-scoped tools. Each bot message in the
+   transcript carries its `trace_id`.
 2. **Decide whether the conversation is complete.** It is complete when
    the exchange has concluded and its result is safe to treat as final. It
    remains ongoing when the latest question or follow-up is unanswered, or

@@ -1,5 +1,6 @@
 $issues = `
     gh issue list `
+      --repo "Azure/azure-sdk-pr" `
       --label "product-onboarding" `
       --state open `
       --json number`

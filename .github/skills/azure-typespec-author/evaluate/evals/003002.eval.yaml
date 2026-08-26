@@ -87,15 +87,21 @@ stimuli:
         config:
           pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_create_operation
+        type: "file-matches"
+        name: "file-matches-create-operation"
         config:
           pattern: "createOrUpdate is ArmResourceCreateOrReplaceAsync<"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_update_operation
+        type: "file-matches"
+        name: "file-matches-update-operation"
         config:
           pattern: "update is ArmResourcePatchSync<Employee"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_delete_operation
+        type: "file-matches"
+        name: "file-matches-delete-operation"
         config:
           pattern: "delete is ArmResourceDeleteWithoutOkAsync<Employee>"
           path: "employee.tsp"
@@ -117,18 +123,9 @@ stimuli:
         config:
           path: "employee.tsp"
           pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "createOrUpdate is ArmResourceCreateOrReplaceAsync<"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "update is ArmResourcePatchSync<Employee"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "delete is ArmResourceDeleteWithoutOkAsync<Employee>"
+      - *file_matches_create_operation
+      - *file_matches_update_operation
+      - *file_matches_delete_operation
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

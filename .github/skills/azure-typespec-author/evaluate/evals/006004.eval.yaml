@@ -64,16 +64,19 @@ stimuli:
       pattern: ResourceRead<WidgetSuite>
   - &id004
     type: file-matches
+    name: file-matches-create-operation
     config:
       path: main.tsp
       pattern: LongRunningResourceCreateOrUpdate<WidgetSuite>|ResourceCreateOrReplace<WidgetSuite>|ResourceCreateOrUpdate<WidgetSuite>
   - &id005
     type: file-matches
+    name: file-matches-list-operation
     config:
       path: main.tsp
       pattern: ResourceList<WidgetSuite
   - &id006
     type: file-matches
+    name: file-matches-delete-operation
     config:
       path: main.tsp
       pattern: ResourceDelete<WidgetSuite>|LongRunningResourceDelete<WidgetSuite>

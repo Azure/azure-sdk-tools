@@ -12,6 +12,10 @@ parameters:
     values:
       - live
       - mock
+  - name: Runs
+    displayName: Vally trials per stimulus
+    type: number
+    default: 1
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
@@ -20,6 +24,8 @@ variables:
     value: '--tag mode=no-skill --skill-dir /tmp/no-skills'
   - name: AZSDK_EVAL_MCP_KIND
     value: ${{ parameters.McpKind }}
+  - name: TypeSpecAuthorEvalRuns
+    value: ${{ parameters.Runs }}
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-eval.yml
@@ -33,5 +39,10 @@ extends:
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
-    shardTimeoutInMinutes: 30
-
+    # Keep timeout scaling aligned with the with-skill benchmark.
+    ${{ if eq(parameters.Runs, 1) }}:
+      shardTimeoutInMinutes: 50
+    ${{ elseif eq(parameters.Runs, 2) }}:
+      shardTimeoutInMinutes: 80
+    ${{ else }}:
+      shardTimeoutInMinutes: 120

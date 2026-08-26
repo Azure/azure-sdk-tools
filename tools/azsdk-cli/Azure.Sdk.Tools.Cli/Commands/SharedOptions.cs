@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Tools.Config;
+using Azure.Sdk.Tools.Cli.Tools.ProductOnboarding;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -36,6 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SampleGeneratorTool),
             typeof(SampleTranslatorTool),
             typeof(ReleasePlanTool),
+            typeof(ProductOnboardingTool),
             typeof(PackageReleaseStatusTool),
             typeof(SpecWorkflowTool),
             typeof(SdkBuildTool),

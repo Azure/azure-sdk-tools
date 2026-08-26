@@ -79,7 +79,8 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
           path: "employee.tsp"
@@ -97,10 +98,7 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+      - *file_matches
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

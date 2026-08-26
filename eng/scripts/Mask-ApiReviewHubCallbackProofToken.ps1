@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 
 $callbackProofToken = $env:ARH_CALLBACK_PROOF_TOKEN
 if ([string]::IsNullOrWhiteSpace($callbackProofToken)) {
-  throw 'callbackProofToken is required.'
+  throw 'ARH_CALLBACK_PROOF_TOKEN is required.'
 }
 
 Write-Host "##vso[task.setsecret]$callbackProofToken"

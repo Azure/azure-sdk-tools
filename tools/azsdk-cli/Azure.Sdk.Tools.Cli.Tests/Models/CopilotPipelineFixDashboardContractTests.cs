@@ -12,8 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Models;
 /// The sibling serialization tests pin each enum member to its wire string, which stops a member being
 /// renamed. They do not stop one being *added*, and adding is the failure that actually happened:
 /// <see cref="CopilotFixVerification.CopilotFixNotMerged"/> shipped without the dashboard knowing it, so a
-/// fix the workflow proved but nobody adopted was silently charted as "Fixed but Unknown" - a wrong answer
-/// rather than a missing one, which is the harder kind to notice.
+/// fix the workflow proved but nobody adopted was silently charted incorrectly.
 ///
 /// The lists below mirror the dashboard's own, in
 /// tools/pipeline-analysis-dashboard/lib/metric-sources.js. Adding a member to one of these enums fails
@@ -32,10 +31,8 @@ public class CopilotPipelineFixDashboardContractTests
     // metric-sources.js: FIX_VERIFICATIONS badges.
     private static readonly string[] DashboardVerifications =
     [
-        "Undetermined",
         "CopilotVerifiedFix",
-        "CopilotJudgeVerifiedFix",
-        "CopilotJudgeVerifiedFailure",
+        "CopilotFixOverridden",
         "NotApplicable",
         "CopilotFixNotMerged",
     ];
@@ -64,11 +61,10 @@ public class CopilotPipelineFixDashboardContractTests
     public void CopilotFixTrigger_MembersAreAllRenderedByTheDashboard() =>
         Assert.That(Enum.GetNames<CopilotFixTrigger>(), Is.EquivalentTo(DashboardTriggers), Guidance);
 
-    // The dashboard tells two attempts on one pull request apart by trigger and fix pull request, so a row
-    // that omits the fix pull request must still say which delivery path it came from. `fix_pr_number` is
-    // omitted rather than null for a mention, and the dashboard normalizes that absence back to null.
+    // The dashboard tells workflow attempts apart by fix branch. A mention has no separate branch, but still
+    // carries its trigger so the delivery path remains explicit.
     [Test]
-    public void MentionResult_OmitsFixPrNumberButStillCarriesTrigger()
+    public void MentionResult_OmitsFixBranchButStillCarriesTrigger()
     {
         var json = JsonSerializer.Serialize(new CopilotPipelineFixResult
         {
@@ -82,7 +78,7 @@ public class CopilotPipelineFixDashboardContractTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(row.TryGetProperty("fix_pr_number", out _), Is.False);
+            Assert.That(row.TryGetProperty("fix_branch", out _), Is.False);
             Assert.That(row.GetProperty("trigger").GetString(), Is.EqualTo("CopilotMention"));
         });
     }

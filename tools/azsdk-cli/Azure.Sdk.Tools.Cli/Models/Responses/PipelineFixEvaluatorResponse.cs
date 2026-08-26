@@ -8,10 +8,10 @@ using Azure.Sdk.Tools.Cli.Models.Pipeline;
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
-/// Response for a Copilot pipeline-fix evaluation run: one result per Copilot fix attempt on a merged pull
-/// request where a check that ran on both sides changed state. A pull request can appear more than once -
-/// see CopilotPipelineFixResult for how attempts are told apart. Consumers that need
-/// aggregate counts derive them from <see cref="Results"/>.
+/// Response for a Copilot pipeline-fix evaluation run. A result records either an adopted fix with a check
+/// transition or a workflow branch that was never used. A pull request can appear more than once - see
+/// CopilotPipelineFixResult for how attempts are told apart. Consumers derive aggregate counts from
+/// <see cref="Results"/>.
 /// </summary>
 public class PipelineFixEvaluatorResponse : CommandResponse
 {
@@ -31,20 +31,17 @@ public class PipelineFixEvaluatorResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? Until { get; set; }
 
-    [JsonPropertyName("model_used")]
-    public string ModelUsed { get; set; } = string.Empty;
-
     [JsonPropertyName("results")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<CopilotPipelineFixResult>? Results { get; init; }
 
     private const int PrNumberWidth = 6;
-    private const int FixPrWidth = 6;
+    private const int FixBranchWidth = 48;
     private const int TitleWidth = 40;
     // Width of the longest pipeline-outcome name, CopilotPipelineFixSuccess (25 chars).
     private const int PipelineWidth = 25;
-    // Width of the longest verification name, CopilotJudgeVerifiedFailure (27 chars).
-    private const int VerificationWidth = 27;
+    // Width of the longest verification name, CopilotFixNotMerged (20 chars).
+    private const int VerificationWidth = 20;
 
     protected override string Format()
     {
@@ -56,12 +53,10 @@ public class PipelineFixEvaluatorResponse : CommandResponse
 
         var output = new StringBuilder();
 
-        // The fix pull request is shown because one pull request can have several fix attempts, which would
-        // otherwise be indistinguishable rows repeating the same number.
-        output.AppendLine(Row("PR#", "Fix PR", "PR Title", "Pipeline Outcome", "Fix Survival"));
+        output.AppendLine(Row("PR#", "Fix Branch", "PR Title", "Pipeline Outcome", "Verification"));
         output.AppendLine(Row(
             new string('-', PrNumberWidth),
-            new string('-', FixPrWidth),
+            new string('-', FixBranchWidth),
             new string('-', TitleWidth),
             new string('-', PipelineWidth),
             new string('-', VerificationWidth)));
@@ -70,17 +65,17 @@ public class PipelineFixEvaluatorResponse : CommandResponse
         {
             output.AppendLine(Row(
                 r.PrNumber.ToString(CultureInfo.InvariantCulture),
-                r.FixPrNumber?.ToString(CultureInfo.InvariantCulture) ?? "-",
+                Trim(r.FixBranch, FixBranchWidth) is { Length: > 0 } branch ? branch : "-",
                 Trim(r.PrTitle, TitleWidth),
-                r.PipelineOutcome.ToString(),
+                r.PipelineOutcome?.ToString() ?? "-",
                 r.Verification.ToString()));
         }
 
         return output.ToString();
     }
 
-    private static string Row(string prNumber, string fixPrNumber, string title, string pipeline, string verification) =>
-        $"| {prNumber,-PrNumberWidth} | {fixPrNumber,-FixPrWidth} | {title,-TitleWidth} | {pipeline,-PipelineWidth} | {verification,-VerificationWidth} |";
+    private static string Row(string prNumber, string fixBranch, string title, string pipeline, string verification) =>
+        $"| {prNumber,-PrNumberWidth} | {fixBranch,-FixBranchWidth} | {title,-TitleWidth} | {pipeline,-PipelineWidth} | {verification,-VerificationWidth} |";
 
     private static string Trim(string? value, int width)
     {

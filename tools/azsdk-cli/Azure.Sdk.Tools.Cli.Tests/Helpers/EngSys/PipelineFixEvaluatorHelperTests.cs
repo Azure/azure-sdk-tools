@@ -13,9 +13,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.EngSys;
 /// <summary>
 /// Seam: <see cref="PipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync"/> turns a repository and a
 /// time window into one telemetry row per Copilot pipeline-fix attempt, given <see cref="IGitHubService"/>
-/// and <see cref="IPipelineFixSurvivalJudge"/>. Two delivery paths feed it: an @copilot mention that pushes
-/// commits onto the pull request, and the auto-fix workflow that opens a separate pipeline-fix/ pull
-/// request.
+///. Two delivery paths feed it: an @copilot mention that pushes commits onto the pull request, and the
+/// auto-fix workflow that publishes a separate pipeline-fix/ branch.
 /// </summary>
 [TestFixture]
 public class PipelineFixEvaluatorHelperTests
@@ -23,39 +22,29 @@ public class PipelineFixEvaluatorHelperTests
     private const string Owner = "ReilleyMilne";
     private const string Repo = "azure-sdk-for-python";
     private const string CheckName = "ReilleyMilne.azure-sdk-for-python - pullrequest (Analyze Analyze)";
-    private const string FixBranchPrefix = "pipeline-fix/";
-
-    // Real shapes captured from ReilleyMilne/azure-sdk-for-python#36, the auto-fix pull request opened for #35.
     private const int OriginalPrNumber = 35;
-    private const int FixPrNumber = 36;
     private const string FailingSha = "f8eedcaef0bed15bc45b7b620d28461958311c95";
     private const string FixHeadSha = "e7f1ea3de721a53bd3e0c0f83173e2b83455ac75";
     private const string FixBranchRef =
-        "pipeline-fix/pr-35-f8eedcaef0bed15bc45b7b620d28461958311c95/run-30861672656/pipeline-fix/fix-analyze-pr35-68fe750a7ab81983";
+        "pipeline-fix/pr-35-f8eedcaef0bed15bc45b7b620d28461958311c95/run-30861672656";
 
     private static readonly DateTimeOffset Since = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset Until = new(2026, 8, 4, 0, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset Merged = new(2026, 8, 3, 12, 0, 0, TimeSpan.Zero);
 
     private Mock<IGitHubService> gitHubService;
-    private Mock<IPipelineFixSurvivalJudge> survivalJudge;
     private PipelineFixEvaluatorHelper helper;
 
     [SetUp]
     public void SetUp()
     {
         gitHubService = new Mock<IGitHubService>(MockBehavior.Loose);
-        survivalJudge = new Mock<IPipelineFixSurvivalJudge>(MockBehavior.Loose);
         helper = new PipelineFixEvaluatorHelper(
             gitHubService.Object,
-            survivalJudge.Object,
             new TestLogger<PipelineFixEvaluatorHelper>());
 
         gitHubService
             .Setup(g => g.GetMergedPullRequestsByTimeFrameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<PullRequest>());
-        gitHubService
-            .Setup(g => g.GetPullRequestsByHeadPrefixAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<PullRequest>());
         gitHubService
             .Setup(g => g.GetPullRequestIssueCommentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
@@ -66,25 +55,20 @@ public class PipelineFixEvaluatorHelperTests
         gitHubService
             .Setup(g => g.GetCommitCheckRunsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<PrCheckRun>());
+        gitHubService
+            .Setup(g => g.GetCommitFilesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<GitHubCommitFile>());
 
-        // The recovered path routes through the survival judge; a verified fix is the default so a test only
-        // arranges the judge when the survival verdict itself is what it is checking.
-        survivalJudge
-            .Setup(j => j.EvaluateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<PullRequestCommit>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((CopilotFixVerification.CopilotVerifiedFix, (PipelineFixEvaluationJudgeVerdict?)null));
     }
 
     #region EvaluatePipelineFixesAsync (top level)
 
     [Test]
-    public async Task EvaluatePipelineFixesAsync_NoMergedPullRequests_ReturnsEmptyWithoutSearchingFixPullRequests()
+    public async Task EvaluatePipelineFixesAsync_NoMergedPullRequests_ReturnsEmpty()
     {
         var results = await RunAsync();
 
         Assert.That(results, Is.Empty);
-        gitHubService.Verify(
-            g => g.GetPullRequestsByHeadPrefixAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     // One pull request that blows up mid-evaluation must not sink the whole run.
@@ -112,23 +96,6 @@ public class PipelineFixEvaluatorHelperTests
         var results = await RunAsync();
 
         Assert.That(results.Select(r => r.PrNumber), Is.EqualTo(new[] { 20, 50 }));
-    }
-
-    // The fix pull request can be opened after the reporting window closes, so the search for it starts from
-    // the earliest merged pull request's creation date rather than the window start.
-    [Test]
-    public async Task EvaluatePipelineFixesAsync_SearchesFixPullRequestsFromEarliestMergedCreation()
-    {
-        var earliest = new DateTimeOffset(2026, 7, 20, 0, 0, 0, TimeSpan.Zero);
-        GivenMergedPrs(
-            MergedPr(10, createdAt: new DateTimeOffset(2026, 7, 25, 0, 0, 0, TimeSpan.Zero)),
-            MergedPr(20, createdAt: earliest));
-
-        await RunAsync();
-
-        gitHubService.Verify(
-            g => g.GetPullRequestsByHeadPrefixAsync(Owner, Repo, FixBranchPrefix, earliest, It.IsAny<CancellationToken>()),
-            Times.Once);
     }
 
     #endregion
@@ -163,6 +130,20 @@ public class PipelineFixEvaluatorHelperTests
         var results = await RunAsync();
 
         Assert.That(results, Is.Empty);
+    }
+
+    [Test]
+    public async Task MentionFix_CopilotMentionWithMissingAuthor_IsNotTreatedAsBot()
+    {
+        GivenMergedPrs(MergedPr(10));
+        GivenComments(10, CommentWithoutUser("@copilot please fix"));
+        GivenCommits(10, CopilotCommit(Sha(2), Sha(1)));
+        GivenChecks(Sha(1), Check(CheckName, "FAILURE"));
+        GivenChecks(Sha(2), Check(CheckName, "SUCCESS"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Trigger, Is.EqualTo(CopilotFixTrigger.CopilotMention));
     }
 
     [Test]
@@ -265,7 +246,7 @@ public class PipelineFixEvaluatorHelperTests
         {
             Assert.That(row.PrNumber, Is.EqualTo(10));
             Assert.That(row.Trigger, Is.EqualTo(CopilotFixTrigger.CopilotMention));
-            Assert.That(row.FixPrNumber, Is.Null);
+            Assert.That(row.FixBranch, Is.Null);
             Assert.That(row.ChecksFixed, Is.EqualTo(new[] { CheckName }));
             Assert.That(row.ChecksBroken, Is.Empty);
             Assert.That(row.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixSuccess));
@@ -275,8 +256,7 @@ public class PipelineFixEvaluatorHelperTests
         });
     }
 
-    // A regression means the attempt failed regardless of what else it fixed, and there is no fix left whose
-    // survival is worth judging.
+    // A regression means the attempt failed regardless of what else it fixed.
     [Test]
     public async Task MentionFix_CopilotCommitBreaksAPassingCheck_ProducesFailureRowWithoutJudging()
     {
@@ -294,9 +274,6 @@ public class PipelineFixEvaluatorHelperTests
             Assert.That(row.ChecksBroken, Is.EqualTo(new[] { CheckName }));
             Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.NotApplicable));
         });
-        survivalJudge.Verify(
-            j => j.EvaluateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<PullRequestCommit>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     // A pass -> fail flip on a check that is itself still red on the commit that merged is a known failure the
@@ -308,8 +285,8 @@ public class PipelineFixEvaluatorHelperTests
         const string RustCheck = "SDK Validation - Rust";
         const string ApiDocCheck = "Swagger ApiDocPreview";
 
-        // The Copilot commit is the head that merged, so its own red check is a failure the team shipped with.
-        GivenMergedPrs(MergedPr(10, headSha: Sha(2)));
+        // The merge commit has the same check result as the Copilot source head.
+        GivenMergedPrs(MergedPr(10, headSha: Sha(98), mergeCommitSha: Sha(2)));
         GivenComments(10, Comment("@copilot please fix", "human-dev"));
         GivenCommits(10, CopilotCommit(Sha(2), Sha(1)));
         GivenChecks(Sha(1), Check(RustCheck, "FAILURE"), Check(ApiDocCheck, "SUCCESS"));
@@ -330,12 +307,12 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task MentionFix_BrokenCheckGreenOnMergedHead_StillCountsAsFailure()
     {
-        GivenMergedPrs(MergedPr(10, headSha: Sha(3)));
+        GivenMergedPrs(MergedPr(10, headSha: Sha(3), mergeCommitSha: Sha(99)));
         GivenComments(10, Comment("@copilot please fix", "human-dev"));
         GivenCommits(10, CopilotCommit(Sha(2), Sha(1)), HumanCommit(Sha(3), Sha(2)));
         GivenChecks(Sha(1), Check(CheckName, "SUCCESS"));
         GivenChecks(Sha(2), Check(CheckName, "FAILURE"));
-        GivenChecks(Sha(3), Check(CheckName, "SUCCESS"));
+        GivenChecks(Sha(99), Check(CheckName, "SUCCESS"));
 
         var row = (await RunAsync()).Single();
 
@@ -381,10 +358,8 @@ public class PipelineFixEvaluatorHelperTests
         Assert.That(row.AnalysisCommentPresent, Is.True);
     }
 
-    // Only human commits that genuinely landed after the fix are weighed against it: a merge commit pulls in
-    // main and a later Copilot commit is not a human override, so both are excluded from what the judge sees.
     [Test]
-    public async Task MentionFix_SurvivingHumanCommit_PassedToJudgeExcludingMergeAndCopilotCommits()
+    public async Task MentionFix_HumanCommitAfterFix_RemainsCheckBasedSuccess()
     {
         GivenMergedPrs(MergedPr(10));
         GivenComments(10, Comment("@copilot please fix", "human-dev"));
@@ -396,21 +371,41 @@ public class PipelineFixEvaluatorHelperTests
         GivenChecks(Sha(1), Check(CheckName, "FAILURE"));
         GivenChecks(Sha(2), Check(CheckName, "SUCCESS"));
 
-        IReadOnlyList<PullRequestCommit>? landings = null;
-        survivalJudge
-            .Setup(j => j.EvaluateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<PullRequestCommit>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, string, int, IReadOnlyList<string>, IReadOnlyList<PullRequestCommit>, string?, CancellationToken>(
-                (_, _, _, _, human, _, _) => landings = human)
-            .ReturnsAsync((CopilotFixVerification.CopilotJudgeVerifiedFix, JudgeVerdict()));
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotVerifiedFix));
+    }
+
+    [Test]
+    public async Task MentionFix_HumanCommitTouchesSameChangedLine_IsOverridden()
+    {
+        GivenMergedPrs(MergedPr(10));
+        GivenComments(10, Comment("@copilot please fix", "human-dev"));
+        GivenCommits(10, CopilotCommit(Sha(2), Sha(1)), HumanCommit(Sha(3), Sha(2)));
+        GivenChecks(Sha(1), Check(CheckName, "FAILURE"));
+        GivenChecks(Sha(2), Check(CheckName, "SUCCESS"));
+        GivenCommitFiles(Sha(2), CommitFile("src/demo.py", "@@ -10,1 +10,1 @@\n-old\n+copilot"));
+        GivenCommitFiles(Sha(3), CommitFile("src/demo.py", "@@ -10,1 +10,1 @@\n-copilot\n+human"));
 
         var row = (await RunAsync()).Single();
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(landings!.Select(c => c.Sha), Is.EqualTo(new[] { Sha(3) }));
-            Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotJudgeVerifiedFix));
-            Assert.That(row.JudgeVerdict, Is.Not.Null);
-        });
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixOverridden));
+    }
+
+    [Test]
+    public async Task MentionFix_HumanCommitTouchesDifferentLine_RemainsVerified()
+    {
+        GivenMergedPrs(MergedPr(10));
+        GivenComments(10, Comment("@copilot please fix", "human-dev"));
+        GivenCommits(10, CopilotCommit(Sha(2), Sha(1)), HumanCommit(Sha(3), Sha(2)));
+        GivenChecks(Sha(1), Check(CheckName, "FAILURE"));
+        GivenChecks(Sha(2), Check(CheckName, "SUCCESS"));
+        GivenCommitFiles(Sha(2), CommitFile("src/demo.py", "@@ -10,1 +10,1 @@\n-old\n+copilot"));
+        GivenCommitFiles(Sha(3), CommitFile("src/demo.py", "@@ -30,1 +30,1 @@\n-old\n+human"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotVerifiedFix));
     }
 
     #endregion
@@ -420,8 +415,10 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task WorkflowFix_FixBranchResolvesToMergedOriginal_ProducesWorkflowRow()
     {
-        GivenMergedPrs(MergedPr(OriginalPrNumber, title: "Demo: end-to-end pipeline analysis"));
-        GivenFixPrs(FixPr(mergedAt: Merged));
+        GivenMergedPrs(MergedPr(OriginalPrNumber, title: "Demo: end-to-end pipeline analysis", headSha: FixHeadSha));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        GivenCommits(OriginalPrNumber, HumanCommit(FixHeadSha, FailingSha));
         GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
         GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
 
@@ -430,7 +427,7 @@ public class PipelineFixEvaluatorHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(row.PrNumber, Is.EqualTo(OriginalPrNumber));
-            Assert.That(row.FixPrNumber, Is.EqualTo(FixPrNumber));
+            Assert.That(row.FixBranch, Is.EqualTo(FixBranchRef));
             Assert.That(row.Trigger, Is.EqualTo(CopilotFixTrigger.GitHubActionsWorkflow));
             Assert.That(row.ChecksFixed, Is.EqualTo(new[] { CheckName }));
             Assert.That(row.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixSuccess));
@@ -440,26 +437,87 @@ public class PipelineFixEvaluatorHelperTests
         });
     }
 
-    // The workflow fixed the pipeline on its own pull request, but that pull request was never merged into
-    // the original, so the fix was proven but not adopted.
     [Test]
-    public async Task WorkflowFix_FixPullRequestNotMerged_VerificationIsFixNotMerged()
+    public async Task WorkflowFix_FixedCheckAbsentAtMergedHead_RemainsVerified()
+    {
+        GivenMergedPrs(MergedPr(OriginalPrNumber, headSha: Sha(98), mergeCommitSha: Sha(3)));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        GivenCommits(OriginalPrNumber, HumanCommit(FixHeadSha, FailingSha), MergeCommit(Sha(3), FixHeadSha, Sha(99)));
+        GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
+        GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
+        GivenChecks(Sha(3));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotVerifiedFix));
+    }
+
+    [Test]
+    public async Task WorkflowFix_FixedCheckFailingAtMergedHead_IsOverridden()
+    {
+        GivenMergedPrs(MergedPr(OriginalPrNumber, headSha: Sha(98), mergeCommitSha: Sha(3)));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        GivenCommits(OriginalPrNumber, HumanCommit(FixHeadSha, FailingSha), MergeCommit(Sha(3), FixHeadSha, Sha(99)));
+        GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
+        GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
+        GivenChecks(Sha(3), Check(CheckName, "FAILURE"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixOverridden));
+    }
+
+    // The workflow published a branch, but it never entered the original pull request, so its pipeline
+    // behavior is not evaluated.
+    [Test]
+    public async Task WorkflowFix_BranchNotAdopted_VerificationIsFixNotMerged()
     {
         GivenMergedPrs(MergedPr(OriginalPrNumber));
-        GivenFixPrs(FixPr(mergedAt: null));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
         GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
         GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
 
         var row = (await RunAsync()).Single();
 
-        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixNotMerged));
+        Assert.Multiple(() =>
+        {
+            Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixNotMerged));
+            Assert.That(row.PipelineOutcome, Is.Null);
+            Assert.That(row.ChecksFixed, Is.Empty);
+            Assert.That(row.ChecksBroken, Is.Empty);
+        });
+        gitHubService.Verify(
+            g => g.GetCommitCheckRunsAsync(Owner, Repo, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task WorkflowFix_EquivalentPatchAppliedWithNewSha_RemainsVerified()
+    {
+        GivenMergedPrs(MergedPr(OriginalPrNumber, headSha: Sha(3)));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        GivenCommits(OriginalPrNumber, HumanCommit(Sha(3), FailingSha));
+        GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
+        GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
+        GivenChecks(Sha(3));
+        const string patch = "@@ -1 +0,0 @@\n-Intentional pipeline failure marker";
+        GivenCommitFiles(FixHeadSha, CommitFile("sdk/core/azure-core/ci-fail-marker.txt", patch, "removed"));
+        GivenCommitFiles(Sha(3), CommitFile("sdk/core/azure-core/ci-fail-marker.txt", patch, "removed"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotVerifiedFix));
     }
 
     [Test]
     public async Task WorkflowFix_OriginalPullRequestNotAmongMerged_ProducesNoRow()
     {
         GivenMergedPrs(MergedPr(999));
-        GivenFixPrs(FixPr(mergedAt: Merged));
+        GivenComments(999, WorkflowComment());
         GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
         GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
 
@@ -468,25 +526,67 @@ public class PipelineFixEvaluatorHelperTests
         Assert.That(results, Is.Empty);
     }
 
-    // After a fix pull request is retargeted, its live checks re-run against the new base and no longer
-    // reflect the result that gated the fix. The bot records the gating checks in a comment keyed to the fix
-    // head SHA; that record must win over the live checks.
     [Test]
-    public async Task WorkflowFix_EvidenceCommentForHead_PreferredOverLiveChecks()
+    public async Task WorkflowFix_DeletedBranch_DoesNotSuppressLaterAttempt()
+    {
+        var deletedBranch = $"pipeline-fix/pr-{OriginalPrNumber}-{FailingSha}/run-1";
+        var comment = Comment(
+            "[Pilot] PR Pipeline Failure Analysis\n"
+            + $"https://github.com/{Owner}/{Repo}/compare/user%2Ffeature...{deletedBranch}\n"
+            + $"https://github.com/{Owner}/{Repo}/compare/user%2Ffeature...{FixBranchRef}",
+            "github-actions[bot]");
+        GivenMergedPrs(MergedPr(OriginalPrNumber, mergeCommitSha: FixHeadSha));
+        GivenComments(OriginalPrNumber, comment);
+        gitHubService
+            .Setup(g => g.GetBranchHeadShaAsync(Owner, Repo, deletedBranch, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NotFoundException("branch deleted", System.Net.HttpStatusCode.NotFound));
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        GivenCommits(OriginalPrNumber, HumanCommit(FixHeadSha, FailingSha));
+        GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
+        GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.FixBranch, Is.EqualTo(FixBranchRef));
+    }
+
+    [Test]
+    public async Task WorkflowFix_TruncatedCommitList_ProducesNoClassification()
     {
         GivenMergedPrs(MergedPr(OriginalPrNumber));
-        GivenFixPrs(FixPr(mergedAt: null));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        var commits = Enumerable.Range(1, 250)
+            .Select(index => HumanCommit(Sha(index + 100), index == 1 ? FailingSha : Sha(index + 99)))
+            .ToArray();
+        GivenCommits(OriginalPrNumber, commits);
+
+        var results = await RunAsync();
+
+        Assert.That(results, Is.Empty);
+        gitHubService.Verify(
+            g => g.GetCommitCheckRunsAsync(Owner, Repo, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task WorkflowFix_HumanCommitTouchesFixLineButDoesNotApplyPatch_IsNotMerged()
+    {
+        GivenMergedPrs(MergedPr(OriginalPrNumber));
+        GivenComments(OriginalPrNumber, WorkflowComment());
+        GivenBranchHead(FixBranchRef, FixHeadSha);
+        GivenCommits(OriginalPrNumber, HumanCommit(Sha(3), FailingSha));
         GivenChecks(FailingSha, Check(CheckName, "FAILURE"));
-        // Live checks on the retargeted head show the check red; if these were used, no fix would register.
-        GivenChecks(FixHeadSha, Check(CheckName, "FAILURE"));
-        GivenComments(FixPrNumber, Comment(EvidenceComment(FixHeadSha), "github-actions[bot]"));
+        GivenChecks(FixHeadSha, Check(CheckName, "SUCCESS"));
+        GivenCommitFiles(FixHeadSha, CommitFile("src/demo.py", "@@ -10,1 +10,1 @@\n-old\n+copilot"));
+        GivenCommitFiles(Sha(3), CommitFile("src/demo.py", "@@ -10,1 +10,1 @@\n-copilot\n+human"));
 
         var row = (await RunAsync()).Single();
 
         Assert.Multiple(() =>
         {
-            Assert.That(row.ChecksFixed, Is.EqualTo(new[] { CheckName }));
-            Assert.That(row.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixSuccess));
+            Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixNotMerged));
+            Assert.That(row.PipelineOutcome, Is.Null);
         });
     }
 
@@ -495,17 +595,17 @@ public class PipelineFixEvaluatorHelperTests
     #region Arrange helpers
 
     private Task<List<CopilotPipelineFixResult>> RunAsync() =>
-        helper.EvaluatePipelineFixesAsync(Owner, Repo, Since, Until, model: null, CancellationToken.None);
+        helper.EvaluatePipelineFixesAsync(Owner, Repo, Since, Until, CancellationToken.None);
 
     private void GivenMergedPrs(params PullRequest[] prs) =>
         gitHubService
             .Setup(g => g.GetMergedPullRequestsByTimeFrameAsync(Owner, Repo, Since, Until, It.IsAny<CancellationToken>()))
             .ReturnsAsync(prs);
 
-    private void GivenFixPrs(params PullRequest[] prs) =>
+    private void GivenBranchHead(string branch, string sha) =>
         gitHubService
-            .Setup(g => g.GetPullRequestsByHeadPrefixAsync(Owner, Repo, FixBranchPrefix, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(prs);
+            .Setup(g => g.GetBranchHeadShaAsync(Owner, Repo, branch, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sha);
 
     private void GivenComments(int prNumber, params IssueComment[] comments) =>
         gitHubService
@@ -522,6 +622,11 @@ public class PipelineFixEvaluatorHelperTests
             .Setup(g => g.GetCommitCheckRunsAsync(Owner, Repo, sha, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checks);
 
+    private void GivenCommitFiles(string sha, params GitHubCommitFile[] files) =>
+        gitHubService
+            .Setup(g => g.GetCommitFilesAsync(Owner, Repo, sha, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(files);
+
     // A complete @copilot mention fix that turns CheckName from red to green, using per-PR distinct SHAs.
     private void GivenMentionSuccess(int prNumber)
     {
@@ -533,38 +638,30 @@ public class PipelineFixEvaluatorHelperTests
         GivenChecks(after, Check(CheckName, "SUCCESS"));
     }
 
-    private static PullRequest MergedPr(int number, string? title = null, DateTimeOffset? createdAt = null, string? headSha = null) =>
-        Pr(number, title: title ?? $"PR {number}", mergedAt: Merged, headRef: "user/feature", headSha: headSha, createdAt: createdAt ?? Since);
-
-    private static PullRequest FixPr(DateTimeOffset? mergedAt) =>
-        Pr(FixPrNumber, title: "[pipeline-fix] Fix Analyze stage failure", mergedAt: mergedAt, headRef: FixBranchRef, headSha: FixHeadSha, createdAt: Merged);
+    private static PullRequest MergedPr(
+        int number,
+        string? title = null,
+        DateTimeOffset? createdAt = null,
+        string? headSha = null,
+        string? mergeCommitSha = null) =>
+        Pr(
+            number,
+            title: title ?? $"PR {number}",
+            mergedAt: Merged,
+            headRef: "user/feature",
+            headSha: headSha,
+            mergeCommitSha: mergeCommitSha,
+            createdAt: createdAt ?? Since);
 
     private static PrCheckRun Check(string name, string conclusion) =>
         new() { Name = name, Conclusion = conclusion, Type = "CheckRun" };
 
-    private static PipelineFixEvaluationJudgeVerdict JudgeVerdict() =>
-        new()
-        {
-            CopilotContributionSurvived = true,
-            CopilotFixAddressedPipelineFailure = true,
-            HumanChangesWereIrrelevantToFix = true,
-            Reasoning = "test verdict",
-        };
+    private static IssueComment WorkflowComment() => Comment(
+        $"[Pilot] PR Pipeline Failure Analysis\n\n**Automated fix:** [Fix found, view and apply fix](https://github.com/{Owner}/{Repo}/compare/user%2Ffeature...{FixBranchRef})",
+        "github-actions[bot]");
 
-    // The evidence comment the auto-fix workflow posts, tagged with its hidden marker and the fix head SHA,
-    // with the gating check rendered as a markdown table row exactly as the bot writes it.
-    private static string EvidenceComment(string headSha) =>
-        $"""
-        <!-- pipeline-analysis-ci-evidence -->
-        ### CI results before retargeting
-
-        Commit `{headSha}`, checked while this pull request targeted `main`.
-
-        | Status | Check | Reporter | Time |
-        | --- | --- | --- | --- |
-        | ✅ success | [{CheckName}](https://dev.azure.com/reilleymilne-test2/_build/results?buildId=63) | Azure Pipelines | 2026-08-03T23:25 |
-        | ⚠️ action_required | [Verify Links](https://github.com/ReilleyMilne/azure-sdk-for-python/actions) | GitHub Actions | 2026-08-03T23:23 |
-        """;
+    private static GitHubCommitFile CommitFile(string filename, string patch, string status = "modified") =>
+        new(filename, 1, 1, 2, status, null, null, null, Sha(999), patch, null);
 
     private static string Sha(int seed) => seed.ToString("x", System.Globalization.CultureInfo.InvariantCulture).PadLeft(40, '0');
 
@@ -574,17 +671,21 @@ public class PipelineFixEvaluatorHelperTests
         DateTimeOffset? mergedAt = null,
         string? headRef = null,
         string? headSha = null,
+        string? mergeCommitSha = null,
         DateTimeOffset createdAt = default)
     {
         var head = new GitReference(null, null, headRef, headRef, headSha, null, null);
         return new PullRequest(
             0L, null, null, null, null, null, null, null, number, ItemState.Closed, title, null,
             createdAt, default, null, mergedAt, head, null, null, null, null, false, null, null, null,
-            null, 0, 0, 0, 0, 0, null, false, null, null, null, null, null);
+            mergeCommitSha, 0, 0, 0, 0, 0, null, false, null, null, null, null, null);
     }
 
     private static IssueComment Comment(string body, string login) =>
         new(0L, null, null, null, body, default, null, UserFor(login), null, AuthorAssociation.Contributor);
+
+    private static IssueComment CommentWithoutUser(string body) =>
+        new(0L, null, null, null, body, default, null, null, null, AuthorAssociation.Contributor);
 
     /// A commit that passes the evaluator's IsCopilotAuthored gate: Copilot as author, GitHub as committer,
     /// and a verified signature.

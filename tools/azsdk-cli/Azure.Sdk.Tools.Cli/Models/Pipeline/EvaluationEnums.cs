@@ -6,8 +6,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Pipeline;
 
 
 /// <summary>
-/// How Copilot came to make the commit. The two paths deliver a fix differently - the workflow opens a
-/// separate pull request, a mention pushes onto the branch in place - so the trigger is what tells a
+/// How Copilot came to make the commit. The two paths deliver a fix differently - the workflow publishes a
+/// separate branch, a mention pushes onto the pull request branch in place - so the trigger is what tells a
 /// reader which delivery path an outcome is a verdict on.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -34,35 +34,23 @@ public enum CopilotPipelineOutcome
 }
 
 /// <summary>
-/// Whether the Copilot fix was carried through to the pull request that merged to main, independent of
-/// whether it fixed the pipeline. For an @copilot mention this is survival of the change through any later
-/// human commits; for the auto-fix workflow it is adoption.
+/// Deterministic verification of a Copilot fix. Mention fixes are verified by their check transition;
+/// workflow fixes are verified by adoption into the original pull request.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CopilotFixVerification
 {
     /// <summary>
-    /// The judge never ran: the Copilot SDK call failed (rate limit, 5xx, dropped connection). This is an
-    /// infrastructure failure on our side, not a verdict about the commit.
-    /// </summary>
-    Undetermined = 0,
-
-    /// <summary>
-    /// The fix reached the merge unmodified: either no human commits landed after an @copilot fix,
-    /// or the auto-fix workflow's fix pull request was merged into the original.
+    /// The mention fixed a failing check without later human overlap, or the workflow branch commit entered the original pull request.
     /// </summary>
     CopilotVerifiedFix,
 
-    /// <summary>Mixed history, but the model judged Copilot's change was not overridden.</summary>
-    CopilotJudgeVerifiedFix,
-
-    /// <summary>Mixed history, and the model judged Copilot's change was overridden.</summary>
-    CopilotJudgeVerifiedFailure,
+    /// <summary>A later human edit touched the Copilot fix, or a fixed check was explicitly failing at merge.</summary>
+    CopilotFixOverridden,
 
     /// <summary>The pipeline never recovered across the commit, so there is no fix whose survival can be judged.</summary>
     NotApplicable,
 
-    /// <summary>The auto-fix workflow's fix pull request fixed the pipeline in isolation but was not merged
-    /// into the original pull request, so the fix was not adopted.</summary>
+    /// <summary>The auto-fix workflow published a branch that was never used in the original pull request.</summary>
     CopilotFixNotMerged,
 }

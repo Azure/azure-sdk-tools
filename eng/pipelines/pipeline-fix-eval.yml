@@ -1,11 +1,34 @@
-# Manual smoke test for GitHub App authentication with Copilot CLI.
+# Nightly evaluation of whether GitHub Copilot's fixes for failing Azure SDK pipelines took
+# the pipeline from failure to success and survived into the merged PR.
+#
+# For each repository the azsdk CLI evaluator is run for a one-day window and its JSON
+# response is written to Azure Blob Storage using the layout the pipeline-analysis-dashboard
+# reads (tools/pipeline-analysis-dashboard):
+#
+#     $web/pipeline-evaluation/<repo>/<YYYY-MM-DD>.json
+#
+# One blob per repo per day is what gives the dashboard its trend lines: it lists the
+# "pipeline-evaluation/" prefix and reads N days back, with no database in between. The dashboard
+# derives each run's date from the report's own "until" field, falling back to the date in
+# the blob name.
+#
+# The same files are also published as a pipeline artifact so a run can be inspected
+# without reaching for storage.
 
 trigger: none
 pr: none
 
+schedules:
+  - cron: "0 8 * * *"
+    displayName: Nightly Copilot pipeline-fix evaluation (08:00 UTC)
+    branches:
+      include:
+        - main
+    always: true
+
 parameters:
   - name: owner
-    displayName: GitHub App installation owner
+    displayName: GitHub repository owner
     type: string
     default: Azure
   - name: repos
@@ -44,8 +67,9 @@ variables:
     value: pipeline-evaluation
 
 jobs:
-  - job: CopilotAuthentication
-    displayName: 'Test Copilot authentication'
+  - job: Evaluate
+    displayName: 'Evaluate Copilot pipeline fixes'
+    timeoutInMinutes: ${{ parameters.jobTimeoutMinutes }}
     pool:
       name: azsdk-pool
       demands: ImageOverride -equals ubuntu-24.04
@@ -127,11 +151,5 @@ jobs:
 
       - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
         parameters:
-          TokenOwners:
-            - ${{ parameters.owner }}
-
-      - script: copilot -p 'Hi respond "yes"' --allow-all-tools
-        displayName: 'Prompt Copilot'
-        env:
-          GH_TOKEN: $(GH_TOKEN)
-          COPILOT_GITHUB_TOKEN: $(GH_TOKEN)
+          ArtifactName: 'pipeline-fix-evaluation'
+          ArtifactPath: '$(EvalArtifactDir)'

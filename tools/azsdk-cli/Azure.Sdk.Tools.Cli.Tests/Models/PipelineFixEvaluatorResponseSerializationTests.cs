@@ -25,14 +25,13 @@ public class PipelineFixEvaluatorResponseSerializationTests
             Repo = "azure-sdk-for-net",
             Since = new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero),
             Until = new DateTimeOffset(2026, 7, 2, 0, 0, 0, TimeSpan.Zero),
-            ModelUsed = "claude-sonnet-4.5",
             Results =
             [
                 new CopilotPipelineFixResult
                 {
                     PrNumber = 123,
                     PrTitle = "Fix flaky pipeline",
-                    FixPrNumber = 124,
+                    FixBranch = "pipeline-fix/pr-123-abc123/run-456",
                     Trigger = CopilotFixTrigger.GitHubActionsWorkflow,
                     ChecksFixed = ["static-analysis"],
                     ChecksBroken = [],
@@ -50,15 +49,8 @@ public class PipelineFixEvaluatorResponseSerializationTests
                     ChecksBroken = [],
                     CopilotCommitShas = ["def456abc123"],
                     PipelineOutcome = CopilotPipelineOutcome.CopilotPipelineFixSuccess,
-                    Verification = CopilotFixVerification.CopilotJudgeVerifiedFix,
+                    Verification = CopilotFixVerification.CopilotVerifiedFix,
                     AnalysisCommentPresent = false,
-                    JudgeVerdict = new PipelineFixEvaluationJudgeVerdict
-                    {
-                        CopilotContributionSurvived = true,
-                        CopilotFixAddressedPipelineFailure = true,
-                        HumanChangesWereIrrelevantToFix = false,
-                        Reasoning = "The Copilot hunk is present verbatim in the merged diff.",
-                    },
                 },
             ],
         };
@@ -74,7 +66,7 @@ public class PipelineFixEvaluatorResponseSerializationTests
         var root = SerializeThroughOutputHelper();
         Assert.Multiple(() =>
         {
-            foreach (var key in new[] { "owner", "repo", "since", "until", "model_used", "results" })
+            foreach (var key in new[] { "owner", "repo", "since", "until", "results" })
             {
                 Assert.That(root.TryGetProperty(key, out _), Is.True, $"wrapper key '{key}' missing");
             }
@@ -92,7 +84,7 @@ public class PipelineFixEvaluatorResponseSerializationTests
         {
             foreach (var key in new[]
             {
-                "pr_number", "pr_title", "fix_pr_number", "trigger", "checks_fixed", "checks_broken",
+                "pr_number", "pr_title", "fix_branch", "trigger", "checks_fixed", "checks_broken",
                 "copilot_commit_shas", "pipeline_outcome", "verification", "analysis_comment_present",
             })
             {
@@ -107,14 +99,11 @@ public class PipelineFixEvaluatorResponseSerializationTests
             Assert.That(result.GetProperty("verification").GetString(), Is.EqualTo("CopilotVerifiedFix"));
             Assert.That(result.GetProperty("trigger").ValueKind, Is.EqualTo(JsonValueKind.String));
             Assert.That(result.GetProperty("trigger").GetString(), Is.EqualTo("GitHubActionsWorkflow"));
-            // A result the judge never graded must not carry an empty verdict object.
-            Assert.That(result.TryGetProperty("judge_verdict", out _), Is.False);
         });
     }
 
-    // A pull request can be fixed more than once, so pr_number is not a unique key. Consumers must be able
-    // to tell two attempts on the same pull request apart, which is what fix_pr_number is for; an @copilot
-    // mention has no second pull request and must omit it rather than report a misleading zero.
+    // A pull request can be fixed more than once, so pr_number is not a unique key. The workflow branch
+    // identifies each attempt; an @copilot mention has no separate branch and must omit it.
     [Test]
     public void Response_IdentifiesAttemptsSharingAPullRequest()
     {
@@ -124,27 +113,29 @@ public class PipelineFixEvaluatorResponseSerializationTests
         Assert.Multiple(() =>
         {
             Assert.That(workflowResult.GetProperty("trigger").GetString(), Is.EqualTo("GitHubActionsWorkflow"));
-            Assert.That(workflowResult.GetProperty("fix_pr_number").GetInt32(), Is.EqualTo(124));
+            Assert.That(workflowResult.GetProperty("fix_branch").GetString(), Is.EqualTo("pipeline-fix/pr-123-abc123/run-456"));
             Assert.That(mentionResult.GetProperty("trigger").GetString(), Is.EqualTo("CopilotMention"));
-            Assert.That(mentionResult.TryGetProperty("fix_pr_number", out _), Is.False);
+            Assert.That(mentionResult.TryGetProperty("fix_branch", out _), Is.False);
         });
     }
 
     [Test]
-    public void Response_PinsJudgeVerdictKeys()
+    public void UnusedWorkflowBranch_OmitsPipelineOutcome()
     {
-        var root = SerializeThroughOutputHelper();
-        var verdict = root.GetProperty("results")[1].GetProperty("judge_verdict");
+        var result = JsonSerializer.SerializeToElement(new CopilotPipelineFixResult
+        {
+            PrNumber = 125,
+            FixBranch = "pipeline-fix/pr-125-abc123/run-456",
+            Trigger = CopilotFixTrigger.GitHubActionsWorkflow,
+            CopilotCommitShas = ["abc123def456"],
+            Verification = CopilotFixVerification.CopilotFixNotMerged,
+            AnalysisCommentPresent = true,
+        });
+
         Assert.Multiple(() =>
         {
-            foreach (var key in new[]
-            {
-                "copilot_contribution_survived", "copilot_fix_addressed_pipeline_failure",
-                "human_changes_were_irrelevant_to_fix", "reasoning",
-            })
-            {
-                Assert.That(verdict.TryGetProperty(key, out _), Is.True, $"verdict key '{key}' missing");
-            }
+            Assert.That(result.TryGetProperty("pipeline_outcome", out _), Is.False);
+            Assert.That(result.GetProperty("verification").GetString(), Is.EqualTo("CopilotFixNotMerged"));
         });
     }
 
@@ -163,13 +154,6 @@ public class PipelineFixEvaluatorResponseSerializationTests
                 foreach (var property in result.EnumerateObject())
                 {
                     AssertLowerSnakeCase(property.Name);
-                    if (property.NameEquals("judge_verdict"))
-                    {
-                        foreach (var verdictProperty in property.Value.EnumerateObject())
-                        {
-                            AssertLowerSnakeCase(verdictProperty.Name);
-                        }
-                    }
                 }
             }
         });
@@ -188,7 +172,6 @@ public class PipelineFixEvaluatorResponseSerializationTests
         {
             Owner = "Azure",
             Repo = "azure-sdk-for-net",
-            ModelUsed = "claude-sonnet-4.5",
             Results = [],
         };
 
@@ -206,10 +189,8 @@ public class PipelineFixEvaluatorResponseSerializationTests
         Assert.That(json, Is.EqualTo($"\"{expected}\""));
     }
 
-    [TestCase(CopilotFixVerification.Undetermined, "Undetermined")]
     [TestCase(CopilotFixVerification.CopilotVerifiedFix, "CopilotVerifiedFix")]
-    [TestCase(CopilotFixVerification.CopilotJudgeVerifiedFix, "CopilotJudgeVerifiedFix")]
-    [TestCase(CopilotFixVerification.CopilotJudgeVerifiedFailure, "CopilotJudgeVerifiedFailure")]
+    [TestCase(CopilotFixVerification.CopilotFixOverridden, "CopilotFixOverridden")]
     [TestCase(CopilotFixVerification.NotApplicable, "NotApplicable")]
     [TestCase(CopilotFixVerification.CopilotFixNotMerged, "CopilotFixNotMerged")]
     public void CopilotFixVerification_SerializesToExactWireString(CopilotFixVerification verification, string expected)

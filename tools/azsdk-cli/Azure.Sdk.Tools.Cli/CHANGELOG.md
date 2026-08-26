@@ -4,11 +4,7 @@
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge. We also now accept an option `--until-days` parameter for easier use.
 
 ## 0.6.37 (2026-08-21)
 

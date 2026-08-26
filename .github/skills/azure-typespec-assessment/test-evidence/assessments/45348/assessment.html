@@ -34,30 +34,30 @@
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No downstream breaking changes detected.</p></div></section>
 <section id="azure-compliance"><h2>Azure compliance <span class="compliance-status passed">passed</span></h2><div class="panel"><p class="empty-state good">Azure compliance passed with no mismatches.</p></div></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span>Align the new Device Registry previews with ARM common-types v5 <span class="count">2 operations</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span>Select ARM common types v5 for retained versions <span class="count">2 operations</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.</p>
+<p class="intent-summary">Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> 2 existing operations affected</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>ARM common-types dependency</td>
-<td>The two preview versions reference common-types v6.</td>
-<td>Both preview versions reference common-types v5.</td>
+<td>ARM common types version</td>
+<td>The affected API versions selected common types v6.</td>
+<td>The affected API versions select common types v5.</td>
 <td><div class="table-impacts"><span class="empty">—</span></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Change @armCommonTypesVersion from v6 to v5 on the 2026-11-01-preview and 2026-11-02-preview version members.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84">main.tsp:L75-L84</a></p>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86">main.tsp:L75-L86</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">2</span></h4>
 <details class="operation-details">
 <summary><code>SchemaRegistries_CreateOrReplace</code><span class="operation-path tooltip" data-tooltip="PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}</span><span class="operation-version tooltip" data-tooltip="2026-11-01-preview, 2026-11-02-preview">2026-11-01-preview, 2026-11-02-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.</p></div>
 <div class="diff">
 <div class="diff-file">specification/deviceregistry/DeviceRegistry.Management/main.tsp</div>
 <pre><span class="meta">--- a/specification/deviceregistry/DeviceRegistry.Management/main.tsp</span>
@@ -77,13 +77,13 @@
 <span class="context">   v2026_11_02_preview: &quot;2026-11-02-preview&quot;,</span>
 <span class="omitted"> ... 2 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84">main.tsp:L75-L84</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86">main.tsp:L75-L86</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>Namespaces_CreateOrReplace</code><span class="operation-path tooltip" data-tooltip="PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}</span><span class="operation-version tooltip" data-tooltip="2026-11-01-preview, 2026-11-02-preview">2026-11-01-preview, 2026-11-02-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.</p></div>
 <div class="diff">
 <div class="diff-file">specification/deviceregistry/DeviceRegistry.Management/main.tsp</div>
 <pre><span class="meta">--- a/specification/deviceregistry/DeviceRegistry.Management/main.tsp</span>
@@ -103,7 +103,7 @@
 <span class="context">   v2026_11_02_preview: &quot;2026-11-02-preview&quot;,</span>
 <span class="omitted"> ... 2 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84">main.tsp:L75-L84</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86">main.tsp:L75-L86</a></p>
 </div>
 </details>
 </div>
@@ -121,7 +121,7 @@
 <dl><dt>autorest</dt><dd>base/head succeeded; both preview OpenAPI files switch common-type references from v6 to v5</dd><dt>tcgc</dt><dd>base/head succeeded; client model reflects aligned ARM envelope types</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>13s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>1m 53s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>8s</td><td>measured</td></tr><tr><td>Total</td><td>2m 14s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>3s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>26s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>7s</td><td>measured</td></tr><tr><td>Total</td><td>36s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

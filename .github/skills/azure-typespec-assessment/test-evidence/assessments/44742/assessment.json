@@ -65,6 +65,20 @@
         "startLine": 694,
         "endLine": 803,
         "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 1,
+        "endLine": 1,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L1-L1"
+      },
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "head",
+        "startLine": 1,
+        "endLine": 1,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L1-L1"
       }
     ],
     "emitterRuns": [
@@ -114,59 +128,108 @@
     "semanticUnderstanding": {
       "items": [
         {
-          "id": "remove-directory-special-file-listing-surface",
-          "intent": "Remove 2026-12-06 special-file listing options and response shapes",
+          "id": "version-lineage-remove-special-nfs-items",
+          "intent": "Remove special NFS item contracts from 2026-12-06",
           "transformationChain": [
-            "Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts."
+            "The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values."
           ],
           "changes": [
             {
               "kind": "modified",
-              "summary": "Remove 2026-12-06 special-file listing options and response shapes",
+              "summary": "Remove special NFS item contracts from 2026-12-06",
               "operationIds": [
-                "Directory_ListFilesAndDirectoriesSegment"
+                "Directory_ListFilesAndDirectoriesSegment",
+                "File_Create"
               ],
               "apiVersions": [
                 "2026-12-06"
               ],
               "aspects": [
                 {
-                  "field": "include accepted values",
-                  "before": "included the removed 2026-12-06 special-file values",
-                  "after": "special-file values removed"
-                },
-                {
-                  "field": "200 response special-file collections",
-                  "before": "SymLink, BlockDevice, CharDevice, Fifo, and Socket collections with item models",
-                  "after": "collections and item models removed"
+                  "field": "special NFS request and response surface",
+                  "before": "The 2026-12-06 API included special-file values, item models, XML collections, and related metadata.",
+                  "after": "Those values, models, collections, and metadata are removed from the same API version."
                 }
               ],
-              "effect": "Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts.",
-              "typeSpecCause": "Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts.",
+              "effect": "The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.",
+              "typeSpecCause": "The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.",
               "sourceReferences": [
                 {
                   "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                  "revision": "base",
-                  "startLine": 405,
-                  "endLine": 426,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
+                  "revision": "head",
+                  "startLine": 284,
+                  "endLine": 289,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
                 },
                 {
                   "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                  "revision": "base",
-                  "startLine": 557,
-                  "endLine": 592,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
+                  "revision": "head",
+                  "startLine": 389,
+                  "endLine": 394,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
                 },
                 {
                   "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                  "revision": "base",
-                  "startLine": 691,
-                  "endLine": 806,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
+                  "revision": "head",
+                  "startLine": 525,
+                  "endLine": 530,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "head",
+                  "startLine": 544,
+                  "endLine": 549,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "head",
+                  "startLine": 590,
+                  "endLine": 595,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "head",
+                  "startLine": 609,
+                  "endLine": 614,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
                 }
               ],
               "typeSpecDiffs": [
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 284,
+                  "oldCount": 22,
+                  "newStart": 284,
+                  "newCount": 6,
+                  "context": "union NfsFileType {",
+                  "lines": [
+                    " ",
+                    "   /** SymLink */",
+                    "   SymLink: \"SymLink\",",
+                    "-",
+                    "-  /** BlockDevice */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  BlockDevice: \"BlockDevice\",",
+                    "-",
+                    "-  /** CharacterDevice */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  CharacterDevice: \"CharacterDevice\",",
+                    "-",
+                    "-  /** Socket */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  Socket: \"Socket\",",
+                    "-",
+                    "-  /** Fifo */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  Fifo: \"Fifo\",",
+                    " }",
+                    " ",
+                    " /** The file property semantics. */"
+                  ]
+                },
                 {
                   "path": "specification/storage/data-plane/FileStorage/models.tsp",
                   "oldStart": 405,
@@ -243,6 +306,58 @@
                     " }",
                     " ",
                     " /** A listed directory item. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 606,
+                  "oldCount": 11,
+                  "newStart": 544,
+                  "newCount": 6,
+                  "context": "model DirectoryItem {",
+                  "lines": [
+                    " ",
+                    "   /** The permission key. */",
+                    "   @Xml.name(\"PermissionKey\") permissionKey?: string;",
+                    "-",
+                    "-  /** NFS only. The link count of the directory. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"LinkCount\")",
+                    "-  linkCount?: int64;",
+                    " }",
+                    " ",
+                    " /** An encoded string value. */"
+                  ]
+                },
+                {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "oldStart": 657,
+                  "oldCount": 21,
+                  "newStart": 590,
+                  "newCount": 6,
+                  "context": "model FileProperty {",
+                  "lines": [
+                    " ",
+                    "   /** The ETag of the file. */",
+                    "   @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;",
+                    "-",
+                    "-  /** NFS only. The owner user identifier (UID) of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"Uid\")",
+                    "-  owner?: string;",
+                    "-",
+                    "-  /** NFS only. The owner group identifier (GID) of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"Gid\")",
+                    "-  group?: string;",
+                    "-",
+                    "-  /** NFS only. The file mode of the file. */",
+                    "-  @added(Versions.v2026_12_06)",
+                    "-  @Xml.name(\"Mode\")",
+                    "-  fileMode?: string;",
+                    " }",
+                    " ",
+                    " /** A listed file item. */"
                   ]
                 },
                 {
@@ -375,249 +490,187 @@
               "linkedFindingIds": [
                 "rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list",
                 "rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list",
-                "derived-rest-contract-sdk-impact"
-              ]
-            }
-          ],
-          "restRepresentation": {
-            "summary": "Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts.",
-            "operations": [
-              {
-                "operationId": "Directory_ListFilesAndDirectoriesSegment",
-                "apiVersions": [
-                  "2026-12-06"
-                ],
-                "method": "GET",
-                "path": "/{url}/?restype=directory&comp=list",
-                "signature": "GET /{url}/?restype=directory&comp=list",
-                "parameters": [
-                  "header x-ms-allow-trailing-dot: boolean, optional",
-                  "header x-ms-client-request-id: string, optional",
-                  "header x-ms-file-extended-info: boolean, optional",
-                  "header x-ms-file-request-intent: string, optional",
-                  "header x-ms-version: string, required",
-                  "path url: string(uri), required",
-                  "query include: array<string>, optional",
-                  "query marker: string, optional",
-                  "query maxresults: integer(int32), optional",
-                  "query prefix: string, optional",
-                  "query sharesnapshot: string, optional",
-                  "query timeout: integer(int32), optional"
-                ],
-                "requestPayload": "none",
-                "responsePayloads": [
-                  "200 application/json payload: ListFilesAndDirectoriesSegmentResponse; headers: Date: string(date-time-rfc7231), x-ms-client-request-id: string, x-ms-request-id: string, x-ms-version: string",
-                  "default application/json payload: Error; headers: x-ms-copy-source-error-code: string, x-ms-copy-source-status-code: integer(int32), x-ms-error-code: string"
-                ],
-                "serviceBehavior": "Lists directory entries, including NFS-specific item shapes when requested.",
-                "lro": {
-                  "isLongRunning": false
-                },
-                "paging": {
-                  "isPaged": false
-                },
-                "sourceReferences": [
-                  {
-                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
-                    "startLine": 405,
-                    "endLine": 426,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
-                  },
-                  {
-                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
-                    "startLine": 557,
-                    "endLine": 592,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
-                  },
-                  {
-                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
-                    "startLine": 691,
-                    "endLine": 806,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
-                  }
-                ],
-                "artifactEvidence": {
-                  "revision": "baseline",
-                  "sourceArtifact": "artifacts/specification__storage__data-plane__FileStorage/base/autorest/stable/2026-12-06/json"
-                }
-              },
-              {
-                "operationId": "Directory_ListFilesAndDirectoriesSegment",
-                "apiVersions": [
-                  "2026-12-06"
-                ],
-                "method": "GET",
-                "path": "/{url}/?restype=directory&comp=list",
-                "signature": "GET /{url}/?restype=directory&comp=list",
-                "parameters": [
-                  "header x-ms-allow-trailing-dot: boolean, optional",
-                  "header x-ms-client-request-id: string, optional",
-                  "header x-ms-file-extended-info: boolean, optional",
-                  "header x-ms-file-request-intent: string, optional",
-                  "header x-ms-version: string, required",
-                  "path url: string(uri), required",
-                  "query include: array<string>, optional",
-                  "query marker: string, optional",
-                  "query maxresults: integer(int32), optional",
-                  "query prefix: string, optional",
-                  "query sharesnapshot: string, optional",
-                  "query timeout: integer(int32), optional"
-                ],
-                "requestPayload": "none",
-                "responsePayloads": [
-                  "200 application/json payload: ListFilesAndDirectoriesSegmentResponse; headers: Date: string(date-time-rfc7231), x-ms-client-request-id: string, x-ms-request-id: string, x-ms-version: string",
-                  "default application/json payload: Error; headers: x-ms-copy-source-error-code: string, x-ms-copy-source-status-code: integer(int32), x-ms-error-code: string"
-                ],
-                "serviceBehavior": "Lists directory entries, including NFS-specific item shapes when requested.",
-                "lro": {
-                  "isLongRunning": false
-                },
-                "paging": {
-                  "isPaged": false
-                },
-                "sourceReferences": [
-                  {
-                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
-                    "startLine": 405,
-                    "endLine": 426,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
-                  },
-                  {
-                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
-                    "startLine": 557,
-                    "endLine": 592,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
-                  },
-                  {
-                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
-                    "startLine": 691,
-                    "endLine": 806,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
-                  }
-                ],
-                "artifactEvidence": {
-                  "revision": "head",
-                  "sourceArtifact": "artifacts/specification__storage__data-plane__FileStorage/head/autorest/stable/2026-12-06/json"
-                }
-              }
-            ]
-          },
-          "confidence": "high",
-          "sourceReferences": [
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
-            }
-          ]
-        },
-        {
-          "id": "remove-file-create-fifo-type",
-          "intent": "Remove Fifo from the 2026-12-06 file creation type",
-          "transformationChain": [
-            "File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract."
-          ],
-          "changes": [
-            {
-              "kind": "modified",
-              "summary": "Remove Fifo from the 2026-12-06 file creation type",
-              "operationIds": [
-                "File_Create"
-              ],
-              "apiVersions": [
-                "2026-12-06"
-              ],
-              "aspects": [
-                {
-                  "field": "x-ms-file-file-type accepted values",
-                  "before": "Fifo accepted",
-                  "after": "Fifo removed"
-                }
-              ],
-              "effect": "File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract.",
-              "typeSpecCause": "File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract.",
-              "sourceReferences": [
-                {
-                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                  "revision": "base",
-                  "startLine": 284,
-                  "endLine": 305,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
-                }
-              ],
-              "typeSpecDiffs": [
-                {
-                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                  "oldStart": 284,
-                  "oldCount": 22,
-                  "newStart": 284,
-                  "newCount": 6,
-                  "context": "union NfsFileType {",
-                  "lines": [
-                    " ",
-                    "   /** SymLink */",
-                    "   SymLink: \"SymLink\",",
-                    "-",
-                    "-  /** BlockDevice */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  BlockDevice: \"BlockDevice\",",
-                    "-",
-                    "-  /** CharacterDevice */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  CharacterDevice: \"CharacterDevice\",",
-                    "-",
-                    "-  /** Socket */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  Socket: \"Socket\",",
-                    "-",
-                    "-  /** Fifo */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  Fifo: \"Fifo\",",
-                    " }",
-                    " ",
-                    " /** The file property semantics. */"
-                  ]
-                }
-              ],
-              "linkedFindingIds": [
                 "rest-3-parameter-contract-changed-2026-12-06-put",
-                "derived-rest-contract-sdk-impact"
+                "derived-rest-contract-sdk-impact",
+                "delete-existing-versioned-nfs-surface"
               ]
             }
           ],
           "restRepresentation": {
-            "summary": "File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract.",
+            "summary": "The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.",
             "operations": [
+              {
+                "operationId": "Directory_ListFilesAndDirectoriesSegment",
+                "apiVersions": [
+                  "2026-12-06"
+                ],
+                "method": "GET",
+                "path": "/{filesystem}/{directoryPath}",
+                "signature": "GET /{filesystem}/{directoryPath}",
+                "parameters": [
+                  "header x-ms-allow-trailing-dot: boolean, optional",
+                  "header x-ms-client-request-id: string, optional",
+                  "header x-ms-file-extended-info: boolean, optional",
+                  "header x-ms-file-request-intent: string, optional",
+                  "header x-ms-version: string, required",
+                  "query include: array<string>, optional",
+                  "query marker: string, optional",
+                  "query maxresults: integer(int32), optional",
+                  "query prefix: string, optional",
+                  "query sharesnapshot: string, optional",
+                  "query timeout: integer(int32), optional"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: ListFilesAndDirectoriesSegmentResponse; headers: Date: string(date-time-rfc7231), x-ms-client-request-id: string, x-ms-request-id: string, x-ms-version: string",
+                  "default application/json payload: Error; headers: x-ms-copy-source-error-code: string, x-ms-copy-source-status-code: integer(int32), x-ms-error-code: string"
+                ],
+                "serviceBehavior": "Lists directory entries, including NFS-specific item shapes when requested.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 284,
+                    "endLine": 289,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 389,
+                    "endLine": 394,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 525,
+                    "endLine": 530,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 544,
+                    "endLine": 549,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 590,
+                    "endLine": 595,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 609,
+                    "endLine": 614,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "baseline",
+                  "sourceArtifact": "artifacts/specification__storage__data-plane__FileStorage/base/autorest/stable/2026-12-06/json"
+                }
+              },
+              {
+                "operationId": "Directory_ListFilesAndDirectoriesSegment",
+                "apiVersions": [
+                  "2026-12-06"
+                ],
+                "method": "GET",
+                "path": "/{filesystem}/{directoryPath}",
+                "signature": "GET /{filesystem}/{directoryPath}",
+                "parameters": [
+                  "header x-ms-allow-trailing-dot: boolean, optional",
+                  "header x-ms-client-request-id: string, optional",
+                  "header x-ms-file-extended-info: boolean, optional",
+                  "header x-ms-file-request-intent: string, optional",
+                  "header x-ms-version: string, required",
+                  "query include: array<string>, optional",
+                  "query marker: string, optional",
+                  "query maxresults: integer(int32), optional",
+                  "query prefix: string, optional",
+                  "query sharesnapshot: string, optional",
+                  "query timeout: integer(int32), optional"
+                ],
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 application/json payload: ListFilesAndDirectoriesSegmentResponse; headers: Date: string(date-time-rfc7231), x-ms-client-request-id: string, x-ms-request-id: string, x-ms-version: string",
+                  "default application/json payload: Error; headers: x-ms-copy-source-error-code: string, x-ms-copy-source-status-code: integer(int32), x-ms-error-code: string"
+                ],
+                "serviceBehavior": "Lists directory entries, including NFS-specific item shapes when requested.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "sourceReferences": [
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 284,
+                    "endLine": 289,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 389,
+                    "endLine": 394,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 525,
+                    "endLine": 530,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 544,
+                    "endLine": 549,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 590,
+                    "endLine": 595,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 609,
+                    "endLine": 614,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
+                  }
+                ],
+                "artifactEvidence": {
+                  "revision": "head",
+                  "sourceArtifact": "artifacts/specification__storage__data-plane__FileStorage/head/autorest/stable/2026-12-06/json"
+                }
+              },
               {
                 "operationId": "File_Create",
                 "apiVersions": [
                   "2026-12-06"
                 ],
                 "method": "PUT",
-                "path": "/{url}",
-                "signature": "PUT /{url}",
+                "path": "/",
+                "signature": "PUT /",
                 "parameters": [
                   "body optionalBody: string(binary), optional",
                   "header Content-Length: integer(int64), optional",
@@ -650,7 +703,6 @@
                   "header x-ms-structured-content-length: integer(int64), optional",
                   "header x-ms-type: string, required",
                   "header x-ms-version: string, required",
-                  "path url: string(uri), required",
                   "query timeout: integer(int32), optional"
                 ],
                 "requestPayload": "application/json payload: string(binary), optional",
@@ -668,10 +720,45 @@
                 "sourceReferences": [
                   {
                     "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
+                    "revision": "head",
                     "startLine": 284,
-                    "endLine": 305,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+                    "endLine": 289,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 389,
+                    "endLine": 394,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 525,
+                    "endLine": 530,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 544,
+                    "endLine": 549,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 590,
+                    "endLine": 595,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 609,
+                    "endLine": 614,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
                   }
                 ],
                 "artifactEvidence": {
@@ -685,8 +772,8 @@
                   "2026-12-06"
                 ],
                 "method": "PUT",
-                "path": "/{url}",
-                "signature": "PUT /{url}",
+                "path": "/",
+                "signature": "PUT /",
                 "parameters": [
                   "body optionalBody: string(binary), optional",
                   "header Content-Length: integer(int64), optional",
@@ -719,7 +806,6 @@
                   "header x-ms-structured-content-length: integer(int64), optional",
                   "header x-ms-type: string, required",
                   "header x-ms-version: string, required",
-                  "path url: string(uri), required",
                   "query timeout: integer(int32), optional"
                 ],
                 "requestPayload": "application/json payload: string(binary), optional",
@@ -737,10 +823,45 @@
                 "sourceReferences": [
                   {
                     "path": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "revision": "base",
+                    "revision": "head",
                     "startLine": 284,
-                    "endLine": 305,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+                    "endLine": 289,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 389,
+                    "endLine": 394,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 525,
+                    "endLine": 530,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 544,
+                    "endLine": 549,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 590,
+                    "endLine": 595,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+                  },
+                  {
+                    "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                    "revision": "head",
+                    "startLine": 609,
+                    "endLine": 614,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
                   }
                 ],
                 "artifactEvidence": {
@@ -754,10 +875,45 @@
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
+              "revision": "head",
               "startLine": 284,
-              "endLine": 305,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 389,
+              "endLine": 394,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 525,
+              "endLine": 530,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 544,
+              "endLine": 549,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 590,
+              "endLine": 595,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 609,
+              "endLine": 614,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
             }
           ]
         }
@@ -770,7 +926,7 @@
           "title": "Operation parameter contract changes",
           "severity": "high",
           "confidence": "high",
-          "summary": "The parameter remains an optional array of strings, but the exact source removes accepted include enum values for the 2026-12-06 special-file entries. Requests using those values are no longer described as valid, so the existing query contract narrows.",
+          "summary": "The compact type remains array<string>, but the source removes special-file include values from the existing API contract.",
           "evidence": [
             "Directory_ListFilesAndDirectoriesSegment changed 1 parameter contract(s).",
             "Compared REST operation: 2026-12-06:GET:?restype=directory&comp=list."
@@ -778,24 +934,45 @@
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
+              "revision": "head",
+              "startLine": 284,
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
+              "revision": "head",
+              "startLine": 389,
+              "endLine": 394,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
+              "revision": "head",
+              "startLine": 525,
+              "endLine": 530,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 544,
+              "endLine": 549,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 590,
+              "endLine": 595,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 609,
+              "endLine": 614,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
             }
           ]
         },
@@ -804,7 +981,7 @@
           "title": "Operation response contract changes",
           "severity": "high",
           "confidence": "high",
-          "summary": "The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking.",
+          "summary": "The top-level schema name is stable, but its XML payload loses five collections and their item models, breaking consumers of existing 2026-12-06 responses.",
           "evidence": [
             "Directory_ListFilesAndDirectoriesSegment changed an existing response contract.",
             "Compared REST operation: 2026-12-06:GET:?restype=directory&comp=list."
@@ -812,24 +989,45 @@
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
+              "revision": "head",
+              "startLine": 284,
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
+              "revision": "head",
+              "startLine": 389,
+              "endLine": 394,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
+              "revision": "head",
+              "startLine": 525,
+              "endLine": 530,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 544,
+              "endLine": 549,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 590,
+              "endLine": 595,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 609,
+              "endLine": 614,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
             }
           ]
         },
@@ -838,7 +1036,7 @@
           "title": "Operation parameter contract changes",
           "severity": "high",
           "confidence": "high",
-          "summary": "The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows.",
+          "summary": "The header remains summarized as string, but previously supported x-ms-file-file-type values are removed.",
           "evidence": [
             "File_Create changed 1 parameter contract(s).",
             "Compared REST operation: 2026-12-06:PUT:/."
@@ -846,10 +1044,45 @@
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
+              "revision": "head",
               "startLine": 284,
-              "endLine": 305,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 389,
+              "endLine": 394,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 525,
+              "endLine": 530,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 544,
+              "endLine": 549,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 590,
+              "endLine": 595,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 609,
+              "endLine": 614,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
             }
           ]
         }
@@ -871,183 +1104,266 @@
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
+              "revision": "head",
               "startLine": 284,
-              "endLine": 305,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+              "endLine": 289,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 389,
+              "endLine": 394,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 525,
+              "endLine": 530,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 544,
+              "endLine": 549,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 590,
+              "endLine": 595,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 609,
+              "endLine": 614,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614"
             }
           ]
         }
       ]
     },
     "azureCompliance": {
-      "status": "passed",
+      "status": "failed",
       "summary": {
-        "patternsAssessed": 3,
-        "findingCount": 0
+        "patternsAssessed": 1,
+        "findingCount": 1
       },
       "documents": [
-        {
-          "title": "Versioning overview",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-          "section": "API Versioning",
-          "guidanceExcerpt": "on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-",
-          "applicableGuidance": "The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.",
-          "evidence": "The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.",
-          "sourceReferences": [
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 284,
-              "endLine": 305,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
-            }
-          ]
-        },
         {
           "title": "Evolving APIs",
           "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
           "section": "API Versioning",
           "guidanceExcerpt": "on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-",
-          "applicableGuidance": "The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.",
-          "evidence": "The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.",
+          "applicableGuidance": "Versioned models, properties, and values are deleted from the existing 2026-12-06 API instead of evolving the surface through TypeSpec versioning.",
+          "evidence": "Five models and their properties are removed together with @added(Versions.v2026_12_06) declarations.",
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
               "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
+              "startLine": 287,
+              "endLine": 302,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
               "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
+              "startLine": 408,
+              "endLine": 423,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
               "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
+              "startLine": 560,
+              "endLine": 589,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L560-L589"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 609,
+              "endLine": 613,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L609-L613"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 660,
+              "endLine": 674,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L660-L674"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 694,
+              "endLine": 803,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 1,
+              "endLine": 1,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L1-L1"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 1,
+              "endLine": 1,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L1-L1"
             },
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",
               "revision": "base",
               "startLine": 284,
-              "endLine": 305,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+              "endLine": 806,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
             }
-          ]
-        },
-        {
-          "title": "Enums",
-          "url": "https://typespec.io/docs/language-basics/enums/",
-          "section": "Models and Enums",
-          "guidanceExcerpt": "Enums | TypeSpec Skip to content TypeSpec Use cases OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Version 1.15.0 is now available! Search... OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Getting started Installation Editor VS Code Extension Visual Studio Extension Guides TypeSpec for REST Getting Started with TypeSpec For REST APIs Operations and Respons",
-          "applicableGuidance": "The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.",
-          "evidence": "The official Azure TypeSpec evolving-APIs guidance shows @added applied to declarations introduced in a later version, and the exact source removes the affected declarations together with their @added annotations rather than leaving newly introduced declarations unversioned. The TypeSpec enum guidance shows explicit serialized values, and the remaining enum members shown in the changed source continue to use explicit string values. The ARM common-types document is not applicable to this data-plane model change.",
-          "sourceReferences": [
+          ],
+          "expectedCodeStatus": "available",
+          "expectedCodeSnippets": [
             {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 405,
-              "endLine": 426,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 557,
-              "endLine": 592,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 691,
-              "endLine": 806,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806"
-            },
-            {
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "revision": "base",
-              "startLine": 284,
-              "endLine": 305,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305"
+              "language": "tsp",
+              "caption": "Documented TypeSpec example",
+              "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "section": "API Versioning",
+              "lines": [
+                "/** Contoso API versions */enum Versions {  /** 2021-10-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v1,",
+                "  /** 2022-11-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v2,}"
+              ]
             }
           ]
         }
       ],
-      "findings": []
+      "findings": [
+        {
+          "id": "delete-existing-versioned-nfs-surface",
+          "title": "Existing versioned API surface is removed",
+          "severity": "high",
+          "summary": "The change deletes 2026-12-06 NFS models, XML properties, and values rather than versioning their removal.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+          "evidence": [
+            "Five models and their properties are removed together with @added(Versions.v2026_12_06) declarations."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 287,
+              "endLine": 302,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 408,
+              "endLine": 423,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 560,
+              "endLine": 589,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L560-L589"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 609,
+              "endLine": 613,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L609-L613"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 660,
+              "endLine": 674,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L660-L674"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 694,
+              "endLine": 803,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 1,
+              "endLine": 1,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L1-L1"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "head",
+              "startLine": 1,
+              "endLine": 1,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L1-L1"
+            },
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "revision": "base",
+              "startLine": 284,
+              "endLine": 806,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+            }
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/storage/data-plane/FileStorage/models.tsp",
+              "startLine": 287,
+              "endLine": 298,
+              "lines": [
+                "",
+                "  /** BlockDevice */",
+                "  @added(Versions.v2026_12_06)",
+                "  BlockDevice: \"BlockDevice\",",
+                "",
+                "  /** CharacterDevice */",
+                "  @added(Versions.v2026_12_06)",
+                "  CharacterDevice: \"CharacterDevice\",",
+                "",
+                "  /** Socket */",
+                "  @added(Versions.v2026_12_06)",
+                "  Socket: \"Socket\","
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "errors": [],
   "assessmentDuration": {
-    "totalMs": 226778,
+    "totalMs": 35304,
     "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
     "phases": {
       "deterministicPreparationMs": 2432,
-      "deterministicAssemblyMs": 261,
-      "judgmentMs": 224078,
-      "renderMs": 7
+      "deterministicAssemblyMs": 11,
+      "judgmentMs": 32847,
+      "renderMs": 14
     },
     "breakdown": {
-      "semanticUnderstandingMs": 142016,
+      "semanticUnderstandingMs": 20817,
       "semanticUnderstandingQuality": "estimated",
-      "restBreakingMs": 22743,
+      "restBreakingMs": 3333,
       "restBreakingQuality": "estimated",
-      "downstreamBreakingMs": 24,
+      "downstreamBreakingMs": 3,
       "downstreamBreakingQuality": "estimated",
-      "complianceMs": 60183,
+      "complianceMs": 9582,
       "complianceQuality": "estimated/measured",
-      "overheadMs": 1812,
+      "overheadMs": 1569,
       "overheadQuality": "measured",
-      "totalMs": 226778,
+      "totalMs": 35304,
       "totalQuality": "measured",
       "searchRoute": "bounded official document evidence"
     }

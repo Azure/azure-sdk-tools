@@ -15,7 +15,7 @@
 <header class="hero"><div class="container">
 <div class="eyebrow">TypeSpec Assessment</div>
 <h1><a href="https://github.com/Azure/azure-rest-api-specs/pull/45536" style="color:inherit">PR #45536 — Preserve Java Consumption enum names</a></h1>
-<div class="hero-meta">Overall confidence: <strong class="status-high">High</strong> · Baseline <code>b7170cade07f615426eb153b7035ecf8a1cab4e4</code> → Head <code>1395797d6112cb083837b3772083bafe0a91460c</code></div>
+<div class="hero-meta">Overall confidence: <strong class="status-medium">Medium</strong> · Baseline <code>b7170cade07f615426eb153b7035ecf8a1cab4e4</code> → Head <code>1395797d6112cb083837b3772083bafe0a91460c</code></div>
 <div class="metrics">
 <div class="metric safety-metric"><strong class="status-medium"><span class="metric-icon metric-warn" role="img" aria-label="Review" title="Review">⚠</span>Medium</strong><span class="metric-title">Overall code safety</span></div>
 <a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">REST breaking changes</span></a>
@@ -32,32 +32,32 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No downstream breaking changes detected.</p></div></section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status not-assessed">not-assessed</span></h2><div class="panel"><p class="empty-state good">The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.</p></div></section>
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status not-assessed">not-assessed</span></h2><div class="panel"><p class="empty-state good">The bounded documentation contains general enum guidance but no fetched authoritative guidance for @@clientName or Java-specific enum naming.</p></div></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span>Preserve released Java names for six enum members <span class="count">5 operations</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span>Rename six generated Java enum members <span class="count">5 operations</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">Six Java-scoped @@clientName directives preserve released constants on Metrictype, Datagrain, and LookBackPeriod. The five listed operations are included because their generated Java signatures consume those enums; their HTTP contracts and serialized enum values do not change.</p>
+<p class="intent-summary">Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> 5 existing operations affected</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>Generated Java enum members</td>
-<td>The affected members rely on newly derived Java names.</td>
-<td>Explicit Java-only names preserve the six released enum constants.</td>
+<td>Java enum member names</td>
+<td>Java used default generated member identifiers.</td>
+<td>Java uses ACTUALCOST, AMORTIZEDCOST, USAGE, DAILY, MONTHLY, and LAST7DAYS.</td>
 <td><div class="table-impacts"><span class="empty">—</span></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Add six Java-scoped @@clientName directives to existing members of Metrictype, Datagrain, and LookBackPeriod.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a></p>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542">client.tsp:L532-L542</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">5</span></h4>
 <details class="operation-details">
 <summary><code>ReservationRecommendationDetails_Get</code><span class="operation-path tooltip" data-tooltip="GET /{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails">GET /{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails</span><span class="operation-version tooltip" data-tooltip="2024-08-01, 2026-06-01">2024-08-01, 2026-06-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Java callers of the five consuming operations retain the released enum constants. Other languages, REST payloads, and serialized values are unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p></div>
 <div class="diff">
 <div class="diff-file">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div>
 <pre><span class="meta">--- a/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</span>
@@ -75,13 +75,13 @@
 <span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
 <span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542">client.tsp:L532-L542</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>ReservationsSummaries_List</code><span class="operation-path tooltip" data-tooltip="GET /{resourceScope}/providers/Microsoft.Consumption/reservationSummaries">GET /{resourceScope}/providers/Microsoft.Consumption/reservationSummaries</span><span class="operation-version tooltip" data-tooltip="2024-08-01, 2026-06-01">2024-08-01, 2026-06-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /{resourceScope}/providers/Microsoft.Consumption/reservationSummaries</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Java callers of the five consuming operations retain the released enum constants. Other languages, REST payloads, and serialized values are unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p></div>
 <div class="diff">
 <div class="diff-file">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div>
 <pre><span class="meta">--- a/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</span>
@@ -99,13 +99,13 @@
 <span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
 <span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542">client.tsp:L532-L542</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>ReservationsSummaries_ListByReservationOrder</code><span class="operation-path tooltip" data-tooltip="GET /providers/Microsoft.Capacity/reservationorders/{reservationOrderId}/providers/Microsoft.Consumption/reservationSummaries">GET /providers/Microsoft.Capacity/reservationorders/{reservationOrderId}/providers/Microsoft.Consumption/reservationSummaries</span><span class="operation-version tooltip" data-tooltip="2024-08-01, 2026-06-01">2024-08-01, 2026-06-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /providers/Microsoft.Capacity/reservationorders/{reservationOrderId}/providers/Microsoft.Consumption/reservationSummaries</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Java callers of the five consuming operations retain the released enum constants. Other languages, REST payloads, and serialized values are unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p></div>
 <div class="diff">
 <div class="diff-file">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div>
 <pre><span class="meta">--- a/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</span>
@@ -123,13 +123,13 @@
 <span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
 <span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542">client.tsp:L532-L542</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>ReservationsSummaries_ListByReservationOrderAndReservation</code><span class="operation-path tooltip" data-tooltip="GET /providers/Microsoft.Capacity/reservationorders/{reservationOrderId}/reservations/{reservationId}/providers/Microsoft.Consumption/reservationSummaries">GET /providers/Microsoft.Capacity/reservationorders/{reservationOrderId}/reservations/{reservationId}/providers/Microsoft.Consumption/reservationSummaries</span><span class="operation-version tooltip" data-tooltip="2024-08-01, 2026-06-01">2024-08-01, 2026-06-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /providers/Microsoft.Capacity/reservationorders/{reservationOrderId}/reservations/{reservationId}/providers/Microsoft.Consumption/reservationSummaries</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Java callers of the five consuming operations retain the released enum constants. Other languages, REST payloads, and serialized values are unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p></div>
 <div class="diff">
 <div class="diff-file">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div>
 <pre><span class="meta">--- a/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</span>
@@ -147,13 +147,13 @@
 <span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
 <span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542">client.tsp:L532-L542</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>UsageDetails_List</code><span class="operation-path tooltip" data-tooltip="GET /{scope}/providers/Microsoft.Consumption/usageDetails">GET /{scope}/providers/Microsoft.Consumption/usageDetails</span><span class="operation-version tooltip" data-tooltip="2024-08-01, 2026-06-01">2024-08-01, 2026-06-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /{scope}/providers/Microsoft.Consumption/usageDetails</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Java callers of the five consuming operations retain the released enum constants. Other languages, REST payloads, and serialized values are unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.</p></div>
 <div class="diff">
 <div class="diff-file">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div>
 <pre><span class="meta">--- a/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</span>
@@ -171,7 +171,7 @@
 <span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
 <span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542">client.tsp:L535-L542</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542">client.tsp:L532-L542</a></p>
 </div>
 </details>
 </div>
@@ -189,7 +189,7 @@
 <dl><dt>autorest</dt><dd>Preserved base/head AutoRest outputs have no diff for either 2024-08-01 or 2026-06-01.</dd><dt>tcgc</dt><dd>The preserved generic TCGC diff changes only crossLanguageVersion; Java-scoped names are not represented by this generic output.</dd><dt>compilation</dt><dd>No compilation was run during this reassessment; preserved successful base/head artifacts were used.</dd><dt>canonicalComparison</dt><dd>Materially consistent across semantic intent, REST findings, downstream findings, compliance, and overall conclusion. The fresh report corrects the canonical affected-operation inventory from three to five and records validation as skipped per the preserved no-validation evidence.</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>2m 41s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>10m 5s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>1s</td><td>measured</td></tr><tr><td>Total</td><td>12m 48s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>5s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>20s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>1s</td><td>measured</td></tr><tr><td>Total</td><td>26s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

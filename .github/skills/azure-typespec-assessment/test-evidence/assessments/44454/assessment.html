@@ -32,11 +32,11 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No downstream breaking changes detected.</p></div></section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-compliance-client-customization-file">
-<summary><span class="severity severity-medium">medium</span><h3>@@clientLocation customizations are outside client.tsp</h3></summary>
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-elastic-client-customizations-wrong-file">
+<summary><span class="severity severity-medium">medium</span><h3>Client customizations are outside client.tsp</h3></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> Expected: the Clients documentation says customizations should always be made in client.tsp alongside main.tsp. Actual: five @@clientLocation decorators, which the decorator reference defines as changing operation location in the client, are added in back-compatible.tsp. Gap: these client customizations use a nonstandard customization file instead of client.tsp.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">back-compatible.tsp:L108-L113</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">back-compatible.tsp:L108-L113</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
+<p><strong>Gap:</strong> The five @@clientLocation customizations are in back-compatible.tsp instead of the documented client.tsp file.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102">back-compatible.tsp:L97-L102</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">back-compatible.tsp:L108-L113</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127">back-compatible.tsp:L122-L127</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e8420e45fdaf12e2c72417d379c454f1fc8ce1e6/specification/elastic/Elastic.Management/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -55,45 +55,45 @@
 <details class="comparison-details actual-details">
 <summary>Actual</summary>
 <div class="comparison-body">
-<p>Clients, Customizations: &quot;Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.&quot;; @Azure.ClientGenerator.Core.clientLocation: &quot;Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.&quot;; The changed source records five added @@clientLocation decorators in specification/elastic/Elastic.Management/back-compatible.tsp.</p>
+<p>The only changed source is specification/elastic/Elastic.Management/back-compatible.tsp.</p>
 <div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
-<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">specification/elastic/Elastic.Management/back-compatible.tsp:L108-L113</a></div>
-<pre><span class="context"><span class="line-number">108</span>  &quot;!csharp,!java,!python&quot;</span>
-<span class="context"><span class="line-number">109</span>);</span>
-<span class="context"><span class="line-number">110</span>@@clientLocation(</span>
-<span class="context"><span class="line-number">111</span>  ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
-<span class="context"><span class="line-number">112</span>  &quot;CreateAndAssociateIPFilter&quot;,</span>
-<span class="context"><span class="line-number">113</span>  &quot;python&quot;</span></pre>
+<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102">specification/elastic/Elastic.Management/back-compatible.tsp:L97-L102</a></div>
+<pre><span class="context"><span class="line-number">97</span>  &quot;!csharp,!python&quot;</span>
+<span class="context"><span class="line-number">98</span>);</span>
+<span class="context"><span class="line-number">99</span>@@clientLocation(</span>
+<span class="context"><span class="line-number">100</span>  ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
+<span class="context"><span class="line-number">101</span>  &quot;ListAssociatedTrafficFilters&quot;,</span>
+<span class="context"><span class="line-number">102</span>  &quot;python&quot;</span></pre>
 </div></div>
 </div>
 </details>
 </div>
 </details></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Restore released Python PascalCase operation-group names for three operations <span class="count">3 operations</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Assign Elastic operations to explicit generated clients <span class="count">3 operations</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">Three existing operations receive Python-only PascalCase client locations while Python is excluded from their shared camelCase locations. Their REST contracts are unchanged; generated Python operation-group names return to ListAssociatedTrafficFilters, CreateAndAssociateIPFilter, and CreateAndAssociatePLFilter.</p>
+<p class="intent-summary">Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> 3 existing operations affected</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>Python operation-group location</td>
-<td>The operations use shared camelCase client locations in generated Python.</td>
-<td>Python uses the released PascalCase client locations while other languages retain their existing locations.</td>
-<td><div class="table-impacts"><a class="impact severity-medium" href="#finding-compliance-client-customization-file">@@clientLocation customizations are outside client.tsp</a></div></td>
+<td>generated client location</td>
+<td>The affected operations used default client placement.</td>
+<td>Five operations use explicit clientLocation customizations.</td>
+<td><div class="table-impacts"><a class="impact severity-medium" href="#finding-elastic-client-customizations-wrong-file">Client customizations are outside client.tsp</a></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Exclude Python from three shared @@clientLocation rules and add three Python-only PascalCase rules.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">back-compatible.tsp:L108-L113</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">back-compatible.tsp:L108-L113</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">3</span></h4>
 <details class="operation-details">
 <summary><code>ElasticMonitors_ListAssociatedTrafficFilters</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters</span><span class="operation-version tooltip" data-tooltip="2024-03-01">2024-03-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated Python clients preserve the released operation-group names for the three listed operations; no HTTP method, path, parameter, request, or response changes.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p></div>
 <div class="diff">
 <div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
@@ -131,13 +131,13 @@
 <span class="context"> @@clientName(</span>
 <span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>ElasticMonitors_CreateAndAssociateIPFilter</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter</span><span class="operation-version tooltip" data-tooltip="2024-03-01">2024-03-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated Python clients preserve the released operation-group names for the three listed operations; no HTTP method, path, parameter, request, or response changes.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p></div>
 <div class="diff">
 <div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
@@ -175,13 +175,13 @@
 <span class="context"> @@clientName(</span>
 <span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>ElasticMonitors_CreateAndAssociatePLFilter</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter</span><span class="operation-version tooltip" data-tooltip="2024-03-01">2024-03-01</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated Python clients preserve the released operation-group names for the three listed operations; no HTTP method, path, parameter, request, or response changes.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p></div>
 <div class="diff">
 <div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
@@ -219,7 +219,7 @@
 <span class="context"> @@clientName(</span>
 <span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
 </div>
 </details>
 </div>
@@ -237,7 +237,7 @@
 <dl><dt>autorest</dt><dd>base/head succeeded with no wire artifact diff</dd><dt>tcgc</dt><dd>base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>27s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>3m 12s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>3m 39s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>3s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>19s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>22s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

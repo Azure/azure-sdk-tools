@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 45536,
   "title": "Preserve Java Consumption enum names",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/45536",
@@ -30,6 +30,20 @@
         "startLine": 535,
         "endLine": 542,
         "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+      },
+      {
+        "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+        "revision": "base",
+        "startLine": 1,
+        "endLine": 1,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b7170cade07f615426eb153b7035ecf8a1cab4e4/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L1-L1"
+      },
+      {
+        "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+        "revision": "head",
+        "startLine": 1,
+        "endLine": 1,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L1-L1"
       }
     ],
     "emitterRuns": [
@@ -81,15 +95,15 @@
     "semanticUnderstanding": {
       "items": [
         {
-          "id": "intent-java-enum-member-names",
-          "intent": "Preserve released Java names for six enum members",
+          "id": "rename-java-consumption-enum-values",
+          "intent": "Rename six generated Java enum members",
           "transformationChain": [
-            "Six Java-scoped @@clientName directives preserve released constants on Metrictype, Datagrain, and LookBackPeriod. The five listed operations are included because their generated Java signatures consume those enums; their HTTP contracts and serialized enum values do not change."
+            "Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged."
           ],
           "changes": [
             {
               "kind": "modified",
-              "summary": "Set Java-specific names for selected enum members",
+              "summary": "Rename six generated Java enum members",
               "operationIds": [
                 "ReservationRecommendationDetails_Get",
                 "ReservationsSummaries_List",
@@ -103,27 +117,20 @@
               ],
               "aspects": [
                 {
-                  "field": "Generated Java enum members",
-                  "before": "The affected members rely on newly derived Java names.",
-                  "after": "Explicit Java-only names preserve the six released enum constants."
+                  "field": "Java enum member names",
+                  "before": "Java used default generated member identifiers.",
+                  "after": "Java uses ACTUALCOST, AMORTIZEDCOST, USAGE, DAILY, MONTHLY, and LAST7DAYS."
                 }
               ],
-              "effect": "Java callers of the five consuming operations retain the released enum constants. Other languages, REST payloads, and serialized values are unchanged.",
-              "typeSpecCause": "Add six Java-scoped @@clientName directives to existing members of Metrictype, Datagrain, and LookBackPeriod.",
+              "effect": "Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.",
+              "typeSpecCause": "Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.",
               "sourceReferences": [
                 {
                   "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
                   "revision": "head",
-                  "startLine": 535,
+                  "startLine": 532,
                   "endLine": 542,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-                },
-                {
-                  "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-                  "revision": "head",
-                  "startLine": 535,
-                  "endLine": 542,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
                 }
               ],
               "typeSpecDiffs": [
@@ -153,7 +160,7 @@
             }
           ],
           "restRepresentation": {
-            "summary": "Six Java-scoped @@clientName directives preserve released constants on Metrictype, Datagrain, and LookBackPeriod. The five listed operations are included because their generated Java signatures consume those enums; their HTTP contracts and serialized enum values do not change.",
+            "summary": "Six @@clientName applications assign uppercase Java identifiers to metric type, data grain, and look-back-period members. Serialized values and all REST operation contracts remain unchanged.",
             "operations": [
               {
                 "operationId": "ReservationRecommendationDetails_Get",
@@ -191,9 +198,9 @@
                   {
                     "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
                     "revision": "head",
-                    "startLine": 535,
+                    "startLine": 532,
                     "endLine": 542,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
                   }
                 ]
               },
@@ -231,9 +238,9 @@
                   {
                     "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
                     "revision": "head",
-                    "startLine": 535,
+                    "startLine": 532,
                     "endLine": 542,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
                   }
                 ]
               },
@@ -271,9 +278,9 @@
                   {
                     "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
                     "revision": "head",
-                    "startLine": 535,
+                    "startLine": 532,
                     "endLine": 542,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
                   }
                 ]
               },
@@ -312,9 +319,9 @@
                   {
                     "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
                     "revision": "head",
-                    "startLine": 535,
+                    "startLine": 532,
                     "endLine": 542,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
                   }
                 ]
               },
@@ -354,29 +361,22 @@
                   {
                     "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
                     "revision": "head",
-                    "startLine": 535,
+                    "startLine": 532,
                     "endLine": 542,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
                   }
                 ]
               }
             ]
           },
-          "confidence": "high",
+          "confidence": "medium",
           "sourceReferences": [
             {
               "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
               "revision": "head",
-              "startLine": 535,
+              "startLine": 532,
               "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            },
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L542"
             }
           ]
         }
@@ -391,133 +391,36 @@
     "azureCompliance": {
       "status": "not-assessed",
       "summary": {
-        "patternsAssessed": 4,
+        "patternsAssessed": 0,
         "findingCount": 0
       },
-      "documents": [
-        {
-          "title": "Enums",
-          "url": "https://typespec.io/docs/language-basics/enums/",
-          "section": "Models and Enums",
-          "guidanceExcerpt": "Enums | TypeSpec Skip to content TypeSpec Use cases OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Version 1.15.0 is now available! Search... OpenAPI Data Validation Tooling support Docs Videos Playground Blog Community Getting started Installation Editor VS Code Extension Visual Studio Extension Guides TypeSpec for REST Getting Started with TypeSpec For REST APIs Operations and Respons",
-          "applicableGuidance": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "evidence": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "sourceReferences": [
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            },
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            }
-          ]
-        },
-        {
-          "title": "Azure.Core no-enum rule",
-          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/",
-          "section": "Models and Enums",
-          "guidanceExcerpt": "no-enum | TypeSpec Azure Skip to content TypeSpec Azure Docs Playground TypeSpec Core Docs Can I Use (Azure Client) Benchmarks Search... Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining c",
-          "applicableGuidance": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "evidence": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "sourceReferences": [
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            },
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            }
-          ]
-        },
-        {
-          "title": "Models",
-          "url": "https://typespec.io/docs/language-basics/models/",
-          "section": "Models and Enums",
-          "guidanceExcerpt": "figuration Tracing FAQ 📐 Language Basics Overview Built-in types Identifiers Imports Namespaces Decorators Directives Documentation Scalars Models Operations Interfaces Templates Enums Functions Unions Intersections Type Literals Aliases Values Type Relations Access Modifiers Visibility 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E",
-          "applicableGuidance": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "evidence": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "sourceReferences": [
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            },
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            }
-          ]
-        },
-        {
-          "title": "Scalars",
-          "url": "https://typespec.io/docs/language-basics/scalars/",
-          "section": "Models and Enums",
-          "guidanceExcerpt": "figuration Tracing FAQ 📐 Language Basics Overview Built-in types Identifiers Imports Namespaces Decorators Directives Documentation Scalars Models Operations Interfaces Templates Enums Functions Unions Intersections Type Literals Aliases Values Type Relations Access Modifiers Visibility 📘 Standard Library Built-in Decorators Built-in Data types Js api Classes [C] UnserializableValueError [C] UnsupportedScalarConstructorError Enumerations [E] IdentifierKind [E] ListenerFlow [E] ModifierFlags [E",
-          "applicableGuidance": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "evidence": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment.",
-          "sourceReferences": [
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            },
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "revision": "head",
-              "startLine": 535,
-              "endLine": 542,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
-            }
-          ]
-        }
-      ],
+      "documents": [],
       "findings": [],
-      "reason": "The fetched official enum documentation describes enum declarations and the Azure.Core no-enum rule, but the changed source adds only Java-specific @@clientName directives to existing enum members. The fetched material contains no directly applicable guidance for that decorator or for language-specific enum-member naming, so it cannot support a passed or failed compliance judgment."
+      "reason": "The bounded documentation contains general enum guidance but no fetched authoritative guidance for @@clientName or Java-specific enum naming."
     }
   },
   "errors": [],
   "assessmentDuration": {
-    "totalMs": 768253,
+    "totalMs": 26409,
     "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
     "phases": {
       "deterministicPreparationMs": 1227,
-      "deterministicAssemblyMs": 229,
-      "judgmentMs": 766790,
-      "renderMs": 7
+      "deterministicAssemblyMs": 6,
+      "judgmentMs": 25171,
+      "renderMs": 5
     },
     "breakdown": {
-      "semanticUnderstandingMs": 161498,
+      "semanticUnderstandingMs": 5301,
       "semanticUnderstandingQuality": "estimated",
-      "restBreakingMs": 291,
+      "restBreakingMs": 9,
       "restBreakingQuality": "estimated",
-      "downstreamBreakingMs": 291,
+      "downstreamBreakingMs": 9,
       "downstreamBreakingQuality": "estimated",
-      "complianceMs": 605127,
+      "complianceMs": 20269,
       "complianceQuality": "estimated/measured",
-      "overheadMs": 1046,
+      "overheadMs": 821,
       "overheadQuality": "measured",
-      "totalMs": 768253,
+      "totalMs": 26409,
       "totalQuality": "measured",
       "searchRoute": "bounded official document evidence"
     }

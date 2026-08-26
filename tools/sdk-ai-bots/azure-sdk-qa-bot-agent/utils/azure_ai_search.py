@@ -43,6 +43,17 @@ _HIERARCHY_EXPANSION_TOP = 20
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
+NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
+
+
+def _combine_source_filters(source_filters: dict[str, str]) -> str:
+    """Combine source filters and exclude generated Wiki pages."""
+    clauses = [f"({value})" for value in source_filters.values() if value]
+    combined = f"({' or '.join(clauses)})" if clauses else ""
+    if not combined:
+        return NON_WIKI_FILTER
+    return f"{combined} and {NON_WIKI_FILTER}"
+
 
 class SearchClient:
     """Search wrapper using Azure AI Search SDK clients."""
@@ -86,14 +97,14 @@ class SearchClient:
         """
         # Combine per-source filters into a single filter_add_on with OR
         # so the KB client performs one retrieval pass instead of N.
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _combine_source_filters(source_filters)
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
                 knowledge_source_name=self._knowledge_source_name,
                 include_references=True,
                 include_reference_source_data=True,
-                filter_add_on=combined_filter or None,
+                filter_add_on=combined_filter,
             )
         ]
 
@@ -150,11 +161,11 @@ class SearchClient:
         ]
 
         # Combine per-source filters into a single OData expression with OR
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _combine_source_filters(source_filters)
 
         results = await self._search_client.search(
             search_text=query,
-            filter=combined_filter or None,
+            filter=combined_filter,
             query_type=QueryType.SEMANTIC,
             top=k,
             select=select_fields,
@@ -336,6 +347,7 @@ def _build_hierarchy_filter(
     filters = [
         f"title eq '{_escape_odata(title)}'",
         f"context_id eq '{_escape_odata(context_id)}'",
+        NON_WIKI_FILTER,
     ]
 
     if header3:

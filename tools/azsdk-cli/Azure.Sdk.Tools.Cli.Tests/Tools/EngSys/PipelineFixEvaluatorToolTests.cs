@@ -11,11 +11,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.EngSys;
 public class PipelineFixEvaluatorToolTests
 {
     [Test]
-    public async Task EvaluatePipelineFixes_WithUntilDays_UsesExactUtcWindow()
+    public async Task EvaluatePipelineFixes_WithUntil_UsesExactUtcWindow()
     {
         var helper = new Mock<IPipelineFixEvaluatorHelper>();
-        var untilDays = new DateTimeOffset(2026, 8, 18, 8, 30, 0, TimeSpan.FromHours(-7));
-        var expectedUntil = untilDays.ToUniversalTime();
+        var until = new DateTimeOffset(2026, 8, 18, 8, 30, 0, TimeSpan.FromHours(-7));
+        var expectedUntil = until.ToUniversalTime();
         var expectedSince = expectedUntil.AddDays(-1);
         helper
             .Setup(x => x.EvaluatePipelineFixesAsync(
@@ -33,7 +33,7 @@ public class PipelineFixEvaluatorToolTests
             "Azure",
             "azure-sdk-for-python",
             1,
-            untilDays);
+            until);
 
         Assert.That(response.ResponseError, Is.Null);
         Assert.That(response.Since, Is.EqualTo(expectedSince));

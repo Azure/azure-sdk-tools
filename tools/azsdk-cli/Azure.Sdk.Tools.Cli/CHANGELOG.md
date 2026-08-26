@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge. We also now accept an option `--until-days` parameter for easier use.
+- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
 
 ## 0.6.37 (2026-08-21)
 

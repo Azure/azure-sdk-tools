@@ -408,6 +408,27 @@ public class PipelineFixEvaluatorHelperTests
         Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotVerifiedFix));
     }
 
+    [Test]
+    public async Task MentionFix_MultipleHumanCommitsTouchFixFile_IsConservativelyOverridden()
+    {
+        GivenMergedPrs(MergedPr(10));
+        GivenComments(10, Comment("@copilot please fix", "human-dev"));
+        GivenCommits(
+            10,
+            CopilotCommit(Sha(2), Sha(1)),
+            HumanCommit(Sha(3), Sha(2)),
+            HumanCommit(Sha(4), Sha(3)));
+        GivenChecks(Sha(1), Check(CheckName, "FAILURE"));
+        GivenChecks(Sha(2), Check(CheckName, "SUCCESS"));
+        GivenCommitFiles(Sha(2), CommitFile("src/demo.py", "@@ -10,1 +10,1 @@\n-old\n+copilot"));
+        GivenCommitFiles(Sha(3), CommitFile("src/demo.py", "@@ -1,0 +1,1 @@\n+inserted above"));
+        GivenCommitFiles(Sha(4), CommitFile("src/demo.py", "@@ -11,1 +11,1 @@\n-copilot\n+human"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.That(row.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixOverridden));
+    }
+
     #endregion
 
     #region auto-fix workflow path

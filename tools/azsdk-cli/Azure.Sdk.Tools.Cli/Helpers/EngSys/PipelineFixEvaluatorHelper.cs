@@ -359,11 +359,28 @@ public class PipelineFixEvaluatorHelper(
         }
 
         var copilotFiles = await GetCommitFilesAsync(owner, repo, copilotCommitShas, ct);
-        var humanFiles = await GetCommitFilesAsync(owner, repo, humanCommits.Select(commit => commit.Sha), ct);
+        List<IReadOnlyList<GitHubCommitFile>> humanFilesByCommit = [];
+        foreach (var commit in humanCommits)
+        {
+            humanFilesByCommit.Add(await gitHubService.GetCommitFilesAsync(owner, repo, commit.Sha, ct));
+        }
 
         foreach (var copilotFile in copilotFiles)
         {
-            foreach (var humanFile in humanFiles.Where(file => FileNamesOverlap(copilotFile, file)))
+            var matchingHumanCommits = humanFilesByCommit
+                .Select(files => files.Where(file => FileNamesOverlap(copilotFile, file)).ToList())
+                .Where(files => files.Count > 0)
+                .ToList();
+
+            // Patch line numbers are relative to each commit's parent. Once more than one later commit
+            // changes this file, an earlier insertion or deletion may shift a later edit out of Copilot's
+            // coordinate space, so the edits cannot be proven disjoint.
+            if (matchingHumanCommits.Count > 1)
+            {
+                return true;
+            }
+
+            foreach (var humanFile in matchingHumanCommits.SelectMany(files => files))
             {
                 var copilotLines = ChangedLines(copilotFile.Patch, useNewSide: true);
                 var humanLines = ChangedLines(humanFile.Patch, useNewSide: false);

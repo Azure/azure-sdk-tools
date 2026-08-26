@@ -105,7 +105,7 @@ foreach ($repository in $repositories) {
         $evaluationArguments = @(
             'eng', 'evaluate', $Owner, $repository,
             '--since-days', 1,
-            '--until-days', $evaluationUntil.ToString('o'),
+            '--until', $evaluationUntil.ToString('o'),
             '--output', 'json'
         )
 

@@ -35,30 +35,30 @@ public class PipelineFixEvaluatorTool(
         DefaultValueFactory = _ => DefaultSinceDays,
     };
 
-    private readonly Option<DateTimeOffset?> untilDaysOpt = new("--until-days")
+    private readonly Option<DateTimeOffset?> untilOpt = new("--until")
     {
-        Description = "End of the evaluation window in UTC (defaults to the current time)",
+        Description = "End of the evaluation window as an ISO-8601 timestamp (defaults to the current time)",
         Required = false,
     };
 
     protected override Command GetCommand() =>
         new Command("evaluate", "Evaluate whether Copilot's pipeline-failure fixes changed failing checks to passing over the last N days")
-        { ownerArg, repoArg, sinceDaysOpt, untilDaysOpt };
+        { ownerArg, repoArg, sinceDaysOpt, untilOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var owner = parseResult.GetValue(ownerArg)!;
         var repo = parseResult.GetValue(repoArg)!;
         var sinceDays = parseResult.GetValue(sinceDaysOpt);
-        var untilDays = parseResult.GetValue(untilDaysOpt);
-        return await EvaluatePipelineFixes(owner, repo, sinceDays, untilDays, ct);
+        var until = parseResult.GetValue(untilOpt);
+        return await EvaluatePipelineFixes(owner, repo, sinceDays, until, ct);
     }
 
     public async Task<PipelineFixEvaluatorResponse> EvaluatePipelineFixes(
         [Description("GitHub repository owner (e.g. Azure)")] string owner,
         [Description("GitHub repository name (e.g. azure-sdk-for-python)")] string repo,
         [Description("Look back this many days for merged PRs (default 1)")] int sinceDays = DefaultSinceDays,
-        [Description("End of the evaluation window in UTC (defaults to the current time)")] DateTimeOffset? untilDays = null,
+        [Description("End of the evaluation window as an ISO-8601 timestamp (defaults to the current time)")] DateTimeOffset? until = null,
         CancellationToken ct = default)
     {
         try
@@ -74,17 +74,17 @@ public class PipelineFixEvaluatorTool(
             logger.LogDebug("Evaluating Copilot pipeline fixes in {Owner}/{Repo} for merged PRs over the last {SinceDays} days", owner, repo, sinceDays);
 
             // Read the clock once so the window reported back is exactly the window that was queried.
-            var until = (untilDays ?? DateTimeOffset.UtcNow).ToUniversalTime();
-            var since = until.AddDays(-sinceDays);
+            var windowEnd = (until ?? DateTimeOffset.UtcNow).ToUniversalTime();
+            var since = windowEnd.AddDays(-sinceDays);
 
-            var results = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(owner, repo, since, until, ct);
+            var results = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(owner, repo, since, windowEnd, ct);
 
             return new PipelineFixEvaluatorResponse
             {
                 Owner = owner,
                 Repo = repo,
                 Since = since,
-                Until = until,
+                Until = windowEnd,
                 Results = results,
             };
         }

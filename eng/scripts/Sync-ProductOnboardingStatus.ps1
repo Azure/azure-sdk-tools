@@ -31,6 +31,9 @@ param(
    [string] $Submitter
 )
 
+Set-StrictMode -Version 4
+$ErrorActionPreference = 'Stop'
+
 [Console]::Error.WriteLine("Syncing product onboarding status:" `
    + "`n`tProduct ID:        '$ProductID'" `
    + "`n`tProduct Name:      '$ProductName'" `

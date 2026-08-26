@@ -2,11 +2,12 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: '1.0'
 type: capability
+area: "dataplane"
 environment: azsdk-mcp
 config:
   runs: 1
   timeout: 660s
-  model: claude-opus-4.6
+  model: gpt-5.6-sol
   executor: copilot-sdk
 stimuli:
 - name: 006009-dp-version-property-renamed-trigger
@@ -33,7 +34,7 @@ stimuli:
     type: tool-calls
     config:
       required:
-      - edit
+      - "^(edit|apply_patch|bash|powershell)$"
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:
@@ -61,11 +62,13 @@ stimuli:
       pattern: v2023_06_01_Preview
   - &id004
     type: file-matches
+    name: file-matches-renamed-property
     config:
       path: main.tsp
       pattern: '@renamedFrom\(Versions\.v2023_06_01_Preview,\s*"color"\)'
   - &id005
     type: file-matches
+    name: file-matches-widget-color-property
     config:
       path: main.tsp
       pattern: widgetColor
@@ -74,7 +77,7 @@ stimuli:
     config:
       prompt: The color property should be renamed to widgetColor and decorated with @renamedFrom(Versions.v2023_06_01_Preview, "color"). A new version v2023_06_01_Preview should be added to the Versions
         enum.
-      model: claude-opus-4.6
+      model: gpt-5.6-sol
       scoring: scale_1_10
       threshold: 0.77
   constraints:
@@ -90,7 +93,7 @@ stimuli:
   - type: tool-calls
     config:
       required:
-      - edit
+      - "^(edit|apply_patch|bash|powershell)$"
   - *id003
   - *id004
   - *id005
@@ -100,9 +103,9 @@ stimuli:
     max_tokens: 100000
 scoring:
   weights:
-    tool-calls: 1
-    skill-invocation: 1
-    run-command: 1
-    file-matches: 3
-    prompt: 2
-  threshold: 0.95
+    tool-calls: 0.125
+    skill-invocation: 0.125
+    run-command: 0.125
+    file-matches: 0.375
+    prompt: 0.25
+  threshold: 0.9425

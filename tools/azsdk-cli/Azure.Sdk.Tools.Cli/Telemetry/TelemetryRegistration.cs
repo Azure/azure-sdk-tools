@@ -45,7 +45,6 @@ internal static class TelemetryRegistration
             .WithTracing(builder =>
             {
                 builder.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
-                    .AddHttpClientInstrumentation()
                     .AddProcessor(new TelemetryProcessor());
 
                 // Not necessary for CLI mode but should be harmless since we won't run asp.net

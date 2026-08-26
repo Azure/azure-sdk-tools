@@ -4,22 +4,13 @@
 
 ## 3.1 Retrieve knowledge
 
-Select and execute the appropriate step based on the case identified in Step 2:
+Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
 
-- **Case 3 (API Version Evolution):** Execute **Step B** — use reference documentation via agentic search.
-- **Other cases:** Execute **Step A** — use `azsdk_typespec_retrieve_knowledge` for AI-guided guidance.
+1. **Case found in the reference doc → Agentic Search.** Run [agentic search](agentic-search.md) — you **MUST** call `web_fetch` on the matching URLs and follow their steps. Synthesize the extracted content into a concrete plan. Do **not** call the MCP tool.
 
-### Step A: Retrieve AI-Guided Knowledge (All cases except Case 3)
-
-Call `azsdk_typespec_retrieve_knowledge` with:
-- `request`: the user's request (verbatim)
-- `typeSpecProjectRootPath`: the project root path
-
-Extract the `context` field from the tool response. This provides AI-generated authoring guidance based on the TypeSpec project.
-
-### Step B: Fetch Reference Documentation (Case 3 — API Version Evolution)
-
-Run [agentic search](agentic-search.md) using URLs from [reference-document-links.md](reference-document-links.md) relevant to your case (identified in Step 2). Extract specific guidance for your scenario.
+2. **Case not found in the reference doc → MCP Tool.** Call `azsdk_typespec_retrieve_knowledge` with:
+   - `request`: user request (verbatim)
+   - `typeSpecProjectRootPath`: project root path
 
 ## 3.2 Generate Authoring Plan
 
@@ -27,17 +18,15 @@ synthesize the result into a concrete plan derived from the retrieved context in
 
 Document your final plan with references to supporting documents, and ensure the plan follows the retrieved context above.
 
-> **Fallback**: If agentic search fails (all URLs unreachable or timeout exceeded), proceed with the MCP tool result alone. Do not block the workflow on unreachable external documentation.
-
 ---
 
 ## 3.2 Case-Specific Authoring Plan
 
-### Case 3 — API Version Evolution (ARM / Data-plane)
+### Case 3 — API Versioning
 
-**Tools:** Use agentic search (Step 3.1.B). Reference docs: [Resource modeling guide](https://azure.github.io/typespec-azure/docs/howtos/resource-manager/01-resource-modeling/), [Resource lifecycle patterns](https://azure.github.io/typespec-azure/docs/howtos/resource-manager/02-resource-lifecycle/).
+> API Versioning **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case.
 
-1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
+1. Create the new version's `examples/<new-version>/` folder by copying the latest retained version's `examples/` into it, and update `api-version` in each `.json` file.
 2. Update `readme.md`.
 
 > These steps apply to both ARM and data-plane services. The same versioning decorators (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`) apply regardless of service type.

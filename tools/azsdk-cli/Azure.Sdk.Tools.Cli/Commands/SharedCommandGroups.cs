@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -55,6 +58,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
            Description: "Manage release plans in Azure DevOps"
        );
 
+        public static readonly CommandGroup ProductOnboarding = new(
+           Verb: "product-onboarding",
+           Description: "Manage product onboarding status in Azure DevOps"
+       );
+
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
             Description: "Set up and work with TypeSpec projects",
@@ -85,6 +93,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly CommandGroup APIView = new(
             Verb: "apiview",
             Description: "Interact with APIView services and functionality",
+            Options: []
+        );
+
+        public static readonly CommandGroup ApiReviewHub = new(
+            Verb: "api-review",
+            Description: "Interact with API Review Hub services and functionality",
+            Aliases: [],
             Options: []
         );
 

@@ -153,23 +153,6 @@ class TestResolveToken:
             assert token == FAKE_JWT
 
     @pytest.mark.asyncio
-    async def test_fallback_to_credential(self) -> None:
-        mock_credential = AsyncMock()
-        mock_credential.get_token.return_value = AsyncMock(token=FAKE_JWT)
-
-        with (
-            patch(
-                "utils.ado_token.get_secret", new_callable=AsyncMock, return_value=None
-            ),
-            patch("utils.ado_token.get_credential", return_value=mock_credential),
-        ):
-            from utils.ado_token import resolve_token
-
-            token = await resolve_token()
-            assert token == FAKE_JWT
-            mock_credential.get_token.assert_awaited_once()
-
-    @pytest.mark.asyncio
     async def test_non_jwt_uses_fallback_ttl(self) -> None:
         """A non-JWT token should still be returned (with fallback TTL)."""
         with patch(

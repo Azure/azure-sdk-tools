@@ -9,15 +9,6 @@ compatibility: "azure-sdk-mcp server with azure-sdk-mcp:azsdk_typespec_retrieve_
 
 # Azure TypeSpec Author
 
-## MCP Tools
-
-| Tool                                                   | Purpose                                                   |
-| ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for authoring plan (General Authoring only) |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
-
-**Prerequisite:** `azure-sdk-mcp` server must be running.
-
 # When to invoke the azure-typespec-author skill
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. **This skill MUST be used regardless of how simple the task appears** — there are no "simple" TypeSpec edits. Even trivial-seeming changes (adding a single enum value, one property, one operation) require the full workflow because versioning decorators, validation, and compliance checks are mandatory.
@@ -30,7 +21,17 @@ This includes but is not limited to:
 - Defining or updating operationId, spread models, or extension resources
 - Converting Swagger to TypeSpec (post-conversion edits)
 
-## Constraints
+## MCP Tools
+
+| Tool                                                   | Purpose                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------- |
+| `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for authoring plan (General Authoring only) |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate a grounded authoring plan for requests **not** covered by the eight cases in [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search (`web_fetch`) instead. |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
+
+**Prerequisite:** `azure-sdk-mcp` server must be running.
+
+## Rules
 
 - **Do NOT skip this skill for "simple" tasks** — there are no simple TypeSpec edits. A single property addition can require `@added` decorators, version gating, and validation. Always invoke this skill.
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
@@ -69,7 +70,9 @@ Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties 
 
 ### Step 5: Validate
 
-See [validation.md](references/validation.md). Run 5.1 (TypeSpec validation) and 5.2 (`tsp compile .`) always; 5.3 (example verification) for API version evolution only.
+See [validation.md](references/validation.md). Always run 5.1 general validation (5.1.1 TypeSpec validation and 5.1.2 `tsp compile .`); run 5.2 case-specific validation whenever its case matches.
+
+**Output the validation results as a checklist.** Report one line per check, each marked ✅ (pass) or ❌ (fail) with a short note. Fix every ❌ and re-run until all checks pass. For API Versioning (Case 3) the checklist **must** cover every §5.2 Case 3 check — including: the new version's `examples/` folder exists; no example folder remains for a version absent from the `Versions` enum; no decorator references a version absent from the enum; every carried-over feature is present with its decorators rebased onto the new version (not reverted); every excluded feature is fully removed.
 
 ### Step 6: Output Reference Links
 

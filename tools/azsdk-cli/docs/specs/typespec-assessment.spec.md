@@ -32,7 +32,7 @@ The purpose of `azure-typespec-assessment` skill is to:
 ## Goals
 
 - Assess only TypeSpec changes in the user-selected specification.
-- Assess five dimensions: REST breaking changes, downstream breaking changes, TypeSpec Azure guideline conformance, semantic intents, and document quality and agent friendliness.
+- Assess five dimensions: REST breaking changes, downstream breaking changes, Azure compliance, semantic intents, and document quality.
 - Include committed, staged, unstaged, and relevant untracked changes.
 - Ground every conclusion in changed TypeSpec source and reproducible evidence.
 - Support remediation through the TypeSpec authoring skill and a future breaking-change mitigation skill.
@@ -51,19 +51,17 @@ The purpose of `azure-typespec-assessment` skill is to:
 
 **User:** Assess the current TypeSpec changes in the `Microsoft.ServiceNetworking/ServiceNetworking` specification.
 
-**Agent:** Which commit should I compare the current TypeSpec changes against? The default is the latest commit id from `origin/main`.
+**Agent:** Which branch should I compare the current TypeSpec changes against? The default is `origin/main`.
 
 **User:** Use `origin/main`.
 
-**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, TypeSpec Azure guidelines, semantic intents, and document quality and agent friendliness. It includes source-linked findings and impact explanations.
+**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, Azure compliance, semantic intents, and document quality. It includes source-linked findings and impact explanations. Here is the report [assessment.html]().
 
-**User:** Fix the breaking changes and TypeSpec Azure guideline issues.
+**User:** Fix the breaking changes and compliance issues.
 
 **Agent:** I will apply the approved fixes through the breaking-change mitigation and TypeSpec authoring skills, validate the updated TypeSpec, and reassess it against the same baseline.
 
 ![TypeSpec assessment user workflow](typespec-assessment-workflow.png)
-
-The reviewer's scenario workflow will be added in a future iteration after the reviewer experience is finalized.
 
 ---
 
@@ -80,7 +78,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 1. REST Breaking Changes
 
-**Tooling:** `@azure-tools/typespec-autorest`, later switch to`@azure-tools/typespec-breaking-change`.
+**Tooling:** `@typespec/compiler`, `@azure-tools/typespec-autorest`, later switch to`@azure-tools/typespec-breaking-change`.
 
 **Deterministic analysis:** Compare normalized baseline and current wire contracts for route, parameter, request, response, serialization, requiredness, enum, and API-version changes.
 
@@ -88,38 +86,37 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 2. Downstream Breaking Changes
 
-**Tooling:** `@azure-tools/typespec-client-generator-core`.
+**Tooling:** `@typespec/compiler`, `@azure-tools/typespec-client-generator-core`.
 
 **Deterministic analysis:** Compare generic client metadata and customization decorators for hierarchy, method location, signatures, naming, flattening, access, usage, reachability, paging, and LRO changes.
 
 **AI judgment:** Decide whether each candidate causes public or runtime SDK impact, including REST-compatible breaks, and explain the cross-language risk.
 
-#### 3. Azure Guidelines
+#### 3. Azure Compliance
 
-**Tooling**: `web_fetch`, later integrate with [TypeSpec suppression reporting tool](https://github.com/Azure/azure-rest-api-specs/tree/main/eng/tools/typespec-suppressions).
+**Tooling:** `@typespec/compiler`, `web_fetch`.
 
-**Deterministic analysis:** Capture changed declarations and retain fetched guidance from TypeSpec Azure website with its URL, section, excerpt, example, and content identity. The suppression reporting tool detects new or changed inline `#suppress` directives and `tspconfig.yaml` linter disables relative to the baseline so they can be included in the assessment.
+**Deterministic analysis:** Capture changed declarations and retain fetched guidance with its URL, section, excerpt, example, and content identity.
 
 **AI judgment:** Select applicable authoritative guidance and classify each declaration as passed, failed, not applicable, or not assessed.
 
-> **Note:** If broader guideline assessment is needed in the future, we can explore a separate skill whose guidance is maintained by the appropriate owners. It could cover TypeSpec Azure guidance, API Review Board REST guidelines, ARM guidelines, and SDK guidelines.
-
 #### 4. Semantic Intents
 
-**Tooling:** Git diff, `@azure-tools/typespec-autorest`, later try to reuse the http diff detected in `@azure-tools/typespec-breaking-change`.
+**Tooling:** Git diff, `@azure-tools/typespec-autorest`, later switch to `@typespec/http` (wip [PR](https://github.com/microsoft/typespec/pull/11489)).
 
 **Deterministic analysis:** Collect source hunks, changed declarations, versioned members, affected operations, REST signatures, paging/LRO metadata, and bounded review units.
 
 **AI judgment:** Correlate related edits into the author's higher-level intent and summarize the resulting API behavior without inventing unsupported effects.
 
-#### 5. Document Quality and Agent Friendliness
+#### 5. Document Quality
 
-**Planned tooling:** Git diff, repository examples.
+**Planned tooling:** `@typespec/compiler`, Git diff, `source-index.mjs`, repository examples, and emitted AutoRest/client metadata.
 
 **Deterministic analysis:** Collect changed comments, descriptions, examples, documentation diagnostics, and their associated API surface.
 
-**AI judgment:** Assess whether the documentation is accurate, complete, understandable, consistent with emitted behavior, and useful to both human consumers and coding agents.
+**AI judgment:** Assess whether the documentation is accurate, complete, understandable, consistent with emitted behavior, and useful to consumers.
 
+This dimension is planned and not implemented on the current branch.
 
 ### Remediation Integration
 
@@ -138,3 +135,4 @@ The breaking-change mitigation skill does not exist on the current branch. The i
 ## Architecture
 
 ![alt text](image.png)
+

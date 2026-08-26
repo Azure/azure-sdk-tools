@@ -33,37 +33,48 @@ param botIdentityName string
 @description('Name of the Function App hosting convertActivity.')
 param functionAppName string
 
-@description('When false, deploy the workflow with an empty definition (no triggers or actions). This lets `azd provision` create the workflow resource — with its identity, connections, and parameters — before the Function App container image is pushed. ARM validates the real definition against the running Function App runtime (to resolve `convertActivity`), which returns 503 until the container is live, so the full definition is applied afterwards by hooks/function-postdeploy.ts via an ARM PATCH.')
+@description('When false, deploy the workflow with an empty definition (no triggers or actions). This lets `azd provision` create the workflow resource before the Function App container image is pushed. The Function App postdeploy hook applies the full definition after the runtime is available.')
 param includeWorkflowDefinition bool = false
 
-@description('When false, skip PUT on the Teams `Microsoft.Web/connections` resource. Once the Teams connection has been authorized interactively (OAuth consent — status "Connected"), re-issuing the PUT can invalidate or reset the bound access token. hooks/preprovision.ts probes the connection status and, if already Connected, sets this to false via `azd env set CREATE_TEAMS_CONNECTION false` so provision leaves the authorized connection untouched. Default true so the first provision creates the connection shell.')
+@description('Enable the workflow only when the Teams API connection has completed OAuth consent.')
+param workflowEnabled bool = false
+
+@description('When false, skip PUT on the Teams `Microsoft.Web/connections` resource. Once the Teams connection has been authorized interactively (OAuth consent — status "Connected"), re-issuing the PUT can invalidate or reset the bound access token. hooks/logic-app-preprovision.ts probes the connection status and, if already Connected, sets this to false via `azd env set CREATE_TEAMS_CONNECTION false` so provision leaves the authorized connection untouched. Default true so the first provision creates the connection shell.')
 param createTeamsConnection bool = true
 
-// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep.
+// Resource-name overrides — see the shared-resources layer.
 @description('Name of the Logic Apps integration account.')
-param integrationAccountName string = 'azuresdkqabot-ia-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param integrationAccountNameOverride string = ''
 
 @description('Name of the Teams managed API connection.')
-param teamsConnectionName string = 'teams-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param teamsConnectionNameOverride string = ''
 
 @description('Name of the Azure Blob managed API connection.')
-param azureBlobConnectionName string = 'azureblob-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param azureBlobConnectionNameOverride string = ''
 
 @description('Name of the Cosmos DB (documentdb) managed API connection.')
-param documentDbConnectionName string = 'documentdb-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param documentDbConnectionNameOverride string = ''
 
 @description('Name of the Logic App workflow.')
-param logicAppWorkflowName string = 'azuresdkqabot-logicapp-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param logicAppWorkflowNameOverride string = ''
 
 @description('Name of the metric alert on the Logic App workflow.')
-param logicAppAlertName string = 'azuresdkqabot-logicapp-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param logicAppAlertNameOverride string = ''
 
-@description('Name of the action group receiving Logic App failure alerts. Created by qaBotSharedResources/sharedResources.bicep and passed through from main.bicep.')
+@description('Name of the action group receiving Logic App failure alerts. Created by the shared-resources layer.')
 param actionGroupName string = 'qabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
+var integrationAccountName = !empty(integrationAccountNameOverride) ? integrationAccountNameOverride : 'azuresdkqabot-ia-${suffix}'
+var teamsConnectionName = !empty(teamsConnectionNameOverride) ? teamsConnectionNameOverride : 'teams-${suffix}'
+var azureBlobConnectionName = !empty(azureBlobConnectionNameOverride) ? azureBlobConnectionNameOverride : 'azureblob-${suffix}'
+var documentDbConnectionName = !empty(documentDbConnectionNameOverride) ? documentDbConnectionNameOverride : 'documentdb-${suffix}'
+var logicAppWorkflowName = !empty(logicAppWorkflowNameOverride) ? logicAppWorkflowNameOverride : 'azuresdkqabot-logicapp-${suffix}'
+var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOverride : 'azuresdkqabot-logicapp-alert-${suffix}'
 
 
 // Resource IDs the workflow authenticates with via managed identity. Computed
-// from names so the same module resolves correctly in any subscription / RG.
+// from names so the layer resolves correctly in any subscription / RG.
 var serverIdentityResourceId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', managedIdentityName)
 var botIdentityResourceId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', botIdentityName)
 var blobIdentityResourceId = serverIdentityResourceId
@@ -103,7 +114,7 @@ var emptyWorkflowDefinition = {
 var workflowParameters = {
   '$connections': {
     value: {
-      '${blobConnection.name}': {
+      azureblob: {
         connectionId: blobConnection.id
         connectionName: blobConnection.name
         connectionProperties: {
@@ -114,7 +125,7 @@ var workflowParameters = {
         }
         id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/azureblob'
       }
-      '${documentDbConnection.name}': {
+      documentdb: {
         connectionId: documentDbConnection.id
         connectionName: documentDbConnection.name
         connectionProperties: {
@@ -125,7 +136,7 @@ var workflowParameters = {
         }
         id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/documentdb'
       }
-      '${teamsConnectionName}': {
+      teams: {
         connectionId: teamsConnectionResourceId
         connectionName: teamsConnectionName
         connectionProperties: {}
@@ -179,7 +190,7 @@ resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {
 // bound token lives in ARM state that is NOT part of `parameterValues`, but
 // re-issuing this PUT can still reset the auth binding. So this resource is
 // created only when `createTeamsConnection` is true — the default for the
-// first provision. hooks/preprovision.ts detects a Connected connection and
+// first provision. hooks/logic-app-preprovision.ts detects a Connected connection and
 // sets CREATE_TEAMS_CONNECTION=false so subsequent provisions leave the
 // authorized connection untouched.
 resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = if (createTeamsConnection) {
@@ -237,7 +248,7 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
     }
   }
   properties: {
-    state: 'Enabled'
+    state: workflowEnabled ? 'Enabled' : 'Disabled'
     integrationAccount: {
       id: integrationAccount.id
     }
@@ -250,7 +261,7 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
     // On the first provision (before `azd deploy function-app` pushes the
     // Function App container image), we deploy an empty definition so ARM
     // does not try to validate `convertActivity` against a cold host. The
-    // real definition is applied afterwards by hooks/function-postdeploy.ts.
+    // real definition is applied afterwards by the Function App postdeploy hook.
     definition: includeWorkflowDefinition ? json(workflowDefinitionText) : emptyWorkflowDefinition
     parameters: includeWorkflowDefinition ? workflowParameters : {}
   }
@@ -294,3 +305,10 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
     }
   }
 }
+
+output INTEGRATION_ACCOUNT_NAME string = integrationAccountName
+output TEAMS_CONNECTION_NAME string = teamsConnectionName
+output AZURE_BLOB_CONNECTION_NAME string = azureBlobConnectionName
+output DOCUMENT_DB_CONNECTION_NAME string = documentDbConnectionName
+output LOGIC_APP_WORKFLOW_NAME string = logicAppWorkflowName
+output LOGIC_APP_ALERT_NAME string = logicAppAlertName

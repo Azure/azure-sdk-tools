@@ -1,6 +1,6 @@
 # CD pipeline — frontend (Teams bot).
-# Image-only deploy. Infrastructure is provisioned separately by the
-# provision-all-<env> pipeline.
+# Image-only deploy. Infrastructure is provisioned separately by the frontend
+# provision pipeline or a provision-all-<env> orchestrator.
 #
 # Rollout: deploy to staging slot → smoke test → swap to production.
 

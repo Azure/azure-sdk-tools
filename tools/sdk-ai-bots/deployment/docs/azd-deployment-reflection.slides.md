@@ -96,8 +96,8 @@ Before `azd`, standing this up meant:
  postprovision.ts (global)                              • agent RBAC + env (agent)
    • outputs → env, RBAC, KV seed,                           │
      App Config, Teams env sync                              ▼
-                                                     postdeploy.ts (global)
-                                                       • patchWorkflow (Logic App)
+                                             function-postdeploy.ts
+                                               • patchWorkflow (Logic App)
 ```
 
 Same commands locally and in CI — the pipeline just sets `AZURE_ENV_NAME` + `AZD_SKIP_IMAGE_BUILD=1`.
@@ -184,15 +184,15 @@ A **circular, cross-phase dependency** that no single `azd` phase can satisfy:
 - **Deploy time** (`azd deploy function-app`): the image is finally built and pushed — but by now the
   Logic App has already been declared with an **empty/stale** definition.
 
-**Today's workaround — split it across two phases, glued by a global hook:**
+**Today's workaround — split it across provision and Function App deploy:**
 
 | Phase | Where | What it does |
 | ----- | ----- | ------------ |
 | 1. shell | `main.bicep` | create the workflow with an **empty** definition (passes validation) |
-| 2. patch | global `postdeploy.ts` → `patch-workflow.ts` | `GET` workflow → merge real `workflowDefinition.json` → `PUT` back — **gated on** Function App `/admin/host/status = 200` |
+| 2. patch | `function-postdeploy.ts` → `patch-workflow.ts` | `GET` workflow → merge real `workflowDefinition.json` → `PUT` back — **gated on** Function App `/admin/host/status = 200` |
 
-> The workflow's _real_ definition lives in a **hook that fires from a global phase**, disconnected from
-> the `logic-app` it belongs to — and there is no `logic-app` service in `azure.yaml` at all.
+> The workflow's real definition is applied by the Function App postdeploy hook
+> because runtime function metadata must exist before ARM accepts it.
 
 ---
 
@@ -523,7 +523,7 @@ stack.outputs.add('AZURE_APPCONFIG_ENDPOINT', 'string', appCfg.properties.endpoi
 Repo: `Azure/azure-sdk-tools` → `tools/sdk-ai-bots/deployment/`
 
 - Hooks: `deployment/hooks/`
-- Bicep: `deployment/infra/modules/`
+- Bicep: `deployment/infra/layers/`
 - Env contract: `deployment/infra/environments/environment-suite.yaml`
 - Full journey deck: `deployment/docs/azd-deployment-journey.slides.md`
 - Runbook: `deployment/docs/runbook-deploy.md`

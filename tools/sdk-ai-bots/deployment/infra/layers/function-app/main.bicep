@@ -9,6 +9,9 @@ param containerImage string
 @description('Client ID of the user-assigned managed identity the Function App runs as.')
 param managedIdentityClientId string
 
+@description('Client ID of the frontend bot identity used as the Bot Framework activity recipient.')
+param botId string
+
 @description('Storage account name used by the Functions runtime (identity-based AzureWebJobsStorage).')
 param storageAccountName string
 
@@ -18,15 +21,20 @@ param managedIdentityResourceId string
 @description('Name of the Key Vault the AdoTokenRefresh function writes the ado-token secret to.')
 param keyVaultName string
 
-// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep.
+// Resource-name overrides — see the shared-resources layer.
 @description('Name of the Function App service plan.')
-param functionAppServicePlanName string = 'azuresdkqabot-functionserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param functionAppServicePlanNameOverride string = ''
 
 @description('Name of the Log Analytics workspace backing Function App insights.')
-param functionLogWorkspaceName string = 'azuresdkqabot-function-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param functionLogWorkspaceNameOverride string = ''
 
 @description('Name of the Function App (also used for its Application Insights component).')
-param functionAppName string = 'azuresdkqabot-function-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param functionAppNameOverride string = ''
+
+var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
+var functionAppServicePlanName = !empty(functionAppServicePlanNameOverride) ? functionAppServicePlanNameOverride : 'azuresdkqabot-functionserviceplan-${suffix}'
+var functionLogWorkspaceName = !empty(functionLogWorkspaceNameOverride) ? functionLogWorkspaceNameOverride : 'azuresdkqabot-function-log-${suffix}'
+var functionAppName = !empty(functionAppNameOverride) ? functionAppNameOverride : 'azuresdkqabot-function-${suffix}'
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
   name: functionAppServicePlanName
@@ -105,6 +113,10 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
           value: subscription().subscriptionId
         }
         {
+          name: 'BOT_ID'
+          value: botId
+        }
+        {
           name: 'STORAGE_ACCOUNT_NAME'
           value: storageAccountName
         }
@@ -180,4 +192,5 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
 }
 
 // Output
-output functionAppName string = site.name
+output FUNCTION_APP_NAME string = site.name
+output FUNCTION_CONTAINER_IMAGE string = containerImage

@@ -395,9 +395,7 @@
                           "inputs": "@outputs('Invoke_QA_Bot')?['statusCode']",
                           "runAfter": {
                             "Invoke_QA_Bot": [
-                              "Succeeded",
-                              "TimedOut",
-                              "Failed"
+                              "Succeeded"
                             ]
                           }
                         }

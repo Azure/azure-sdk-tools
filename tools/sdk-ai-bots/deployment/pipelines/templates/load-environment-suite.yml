@@ -76,6 +76,7 @@ steps:
           export_var SERVICE_CONNECTION             ".environments.${ENV}.subscription"
           export_var AZURE_SUBSCRIPTION_ID          ".environments.${ENV}.subscriptionId"
           export_var AZURE_TENANT_ID                ".environments.${ENV}.tenantId"
+          export_var SERVICE_MANAGEMENT_REFERENCE   ".environments.${ENV}.serviceManagementReference"
           export_var AZURE_RESOURCE_GROUP           ".environments.${ENV}.resourceGroupPrefix"
           export_var AZURE_LOCATION                 ".environments.${ENV}.regions[0].name"
           export_var AZURE_AI_LOCATION              ".environments.${ENV}.aiLocation"
@@ -83,11 +84,16 @@ steps:
           export_var COSMOS_DB_LOCATION             ".environments.${ENV}.cosmosDbLocation"
           export_var ACR_NAME                       ".environments.${ENV}.containerRegistryName"
           export_var CONTAINER_REGISTRY_NAME        ".environments.${ENV}.containerRegistryName"
+          export_var CONTAINER_REGISTRY_NAME_OVERRIDE ".environments.${ENV}.containerRegistryName"
           export_var KEY_VAULT_NAME                 ".environments.${ENV}.keyVaultName"
+          export_var KEY_VAULT_NAME_OVERRIDE        ".environments.${ENV}.keyVaultName"
           export_var APP_CONFIG_NAME                ".environments.${ENV}.appConfigName"
+          export_var APP_CONFIG_NAME_OVERRIDE       ".environments.${ENV}.appConfigName"
           export_var FRONTEND_SITE_NAME             ".environments.${ENV}.frontendSiteName"
           export_var AGENT_SERVER_SITE_NAME         ".environments.${ENV}.agentServerSiteName"
+          export_var AGENT_SERVER_SITE_NAME_OVERRIDE ".environments.${ENV}.agentServerSiteName"
           export_var FUNCTION_APP_NAME              ".environments.${ENV}.functionAppName"
+          export_var FUNCTION_APP_NAME_OVERRIDE     ".environments.${ENV}.functionAppName"
           export_image_repository FRONTEND_IMAGE_REPOSITORY frontend
           export_image_repository AGENT_SERVER_IMAGE_REPOSITORY agent-server
           export_image_repository FUNCTION_IMAGE_REPOSITORY function-app
@@ -101,7 +107,8 @@ steps:
           export_var ROLLOUT_STRATEGY               ".environments.${ENV}.rolloutStrategy"
 
           # Environment-specific values override the common mappings above.
-          # Keys are the exact environment variables consumed by main.bicepparam.
+          # Keys are environment variables consumed by the layer parameter adapters.
+          OVERRIDE_INPUT_KEYS=' MANAGED_IDENTITY_NAME ACTION_GROUP_NAME KEY_VAULT_NAME APP_CONFIG_NAME SEARCH_SERVICE_NAME CONTAINER_REGISTRY_NAME STORAGE_ACCOUNT_NAME COSMOS_DB_ACCOUNT_NAME AI_RESOURCE_NAME AI_PROJECT_NAME AGENT_SERVER_SITE_NAME FUNCTION_APP_NAME INTEGRATION_ACCOUNT_NAME TEAMS_CONNECTION_NAME AZURE_BLOB_CONNECTION_NAME DOCUMENT_DB_CONNECTION_NAME LOGIC_APP_WORKFLOW_NAME LOGIC_APP_ALERT_NAME '
           while IFS=$'\t' read -r name val; do
             [ -z "$name" ] && continue
             if [[ "$val" == REPLACE_WITH_* ]]; then
@@ -109,5 +116,8 @@ steps:
               exit 1
             fi
             set_var "$name" "$val"
+            if [[ "$OVERRIDE_INPUT_KEYS" == *" $name "* ]]; then
+              set_var "${name}_OVERRIDE" "$val"
+            fi
           done < <(yq -r ".environments.${ENV}.bicepOverrides // {} | to_entries[] | [.key, (.value | tostring)] | @tsv" "$SUITE")
       displayName: 'Load environment-suite (${{ parameters.environment }})'

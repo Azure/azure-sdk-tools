@@ -18,8 +18,8 @@ provision:
       teamsAppId: TEAMS_APP_ID
 
   # NOTE: Azure resource provisioning (App Service, bot identity, bot service)
-  # is owned by azd (../deployment/infra/main.bicep). Run `azd provision` first;
-  # its postprovision hook (../deployment/hooks/lib/sync-teams-env.ts) generates
+  # is owned by the azd frontend layer (../deployment/infra/layers/frontend).
+  # Run `azd provision` first; the frontend layer's postprovision hook generates
   # env/.env.azd from the azd environment (BOT_AZURE_APP_SERVICE_RESOURCE_ID /
   # BOT_DOMAIN / BOT_ID / BOT_TENANT_ID plus the matching committed base env).
   # azd decides which logical environment (dev / preview / prod) those values

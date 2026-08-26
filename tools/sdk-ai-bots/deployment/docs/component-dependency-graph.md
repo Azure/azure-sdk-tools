@@ -2,7 +2,11 @@
 
 ```mermaid
 graph TD
-    subgraph "Shared Infrastructure (Layer 1)"
+    subgraph "Foundation"
+        RG[resource-group]
+    end
+
+    subgraph "Shared Infrastructure"
         SR[shared-resources<br/>ACR, Storage, Cosmos, Key Vault,<br/>App Config, Search, Log Analytics]
     end
 
@@ -34,6 +38,7 @@ graph TD
         KS[knowledge-sync<br/>scheduled ADO job]
     end
 
+    RG --> SR
     SR --> AGP
     SR --> FE_ID
     FE_ID --> BE
@@ -53,15 +58,16 @@ graph TD
 
 ## Deploy order
 
-Encoded by `dependsOn` in `infra/main.bicep`:
+Encoded by `infra.layers[].dependsOn` in `azure.yaml`:
 
-1. `shared-resources` — every other layer references its outputs.
-2. `agent-platform` — depends on managed identity + storage from layer 1.
-3. `frontend identity` — the agent-server site attaches this MI.
-4. `agent-server` — needs `agent.outputs.aiResourceName`, `aiProjectName`, and
+1. `resource-group` — creates the deployment scope.
+2. `shared-resources` — every workload layer references its outputs.
+3. `agent` — depends on managed identity + storage from shared resources.
+4. `frontend` — the agent-server site attaches this MI.
+5. `agent-server` — needs the agent and frontend outputs.
     the frontend MI.
-5. `function-app` — independent of agent-server; shares shared-resources.
-6. `logic-app` — last; references both agent-server and function-app outputs.
+6. `function-app` — independent of agent-server; shares shared-resources.
+7. `logic-app` — last; references both agent-server and function-app outputs.
 
 After provisioning, `azd deploy` runs application-code services in this
 order (driven by the `services:` block in `azure.yaml`):

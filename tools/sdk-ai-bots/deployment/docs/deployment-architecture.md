@@ -9,7 +9,7 @@ graph LR
     GH -->|trigger / manual| ORCH[Orchestrator pipeline<br/>deploy-all-&lt;env&gt;.yml]
     ORCH -->|stage 1| PROV[Provision pipeline<br/>azd provision]
     PROV -->|reads| ES[environment-suite.yaml]
-    PROV -->|applies| INFRA[main.bicep + modules]
+    PROV -->|applies| INFRA[azd Bicep layers]
     INFRA -->|creates| RG[(Resource Group)]
 
     ORCH -->|stage 2..N| CD[Component CD Pipelines<br/>frontend / agent-server / function-app / agent]
@@ -26,17 +26,19 @@ graph LR
 
 ## Layers
 
-`main.bicep` composes the infrastructure from these Bicep modules, wired
-together by `dependsOn`. `azd provision` always applies the full graph.
+`azure.yaml` composes the infrastructure from these Bicep layers, wired
+together by `dependsOn`. `azd provision` applies the full graph, while
+`azd provision <layer>` targets one layer.
 
-| #   | Layer             | Bicep module                                         |
-| --- | ----------------- | ---------------------------------------------------- |
-| 1   | shared-resources  | `modules/qaBotSharedResources/sharedResources.bicep` |
-| 2   | agent-platform    | `modules/qaBotAgent/component.bicep`                 |
-| 3   | frontend identity | `modules/qaBotFrontend/userAssignedIdentity.bicep`   |
-| 4   | agent-server      | `modules/qaBotAgentServer/serverfarm.bicep`          |
-| 5   | function-app      | `modules/qaBotFunctionApp/serverfarm.bicep`          |
-| 6   | logic-app         | `modules/qaBotLogicApp/logicAppResources.bicep`      |
+| #   | Layer             | Bicep entry point                    |
+| --- | ----------------- | ------------------------------------ |
+| 1   | resource-group    | `layers/resource-group/main.bicep`   |
+| 2   | shared-resources  | `layers/shared-resources/main.bicep` |
+| 3   | agent             | `layers/agent/main.bicep`            |
+| 4   | frontend          | `layers/frontend/main.bicep`         |
+| 5   | agent-server      | `layers/agent-server/main.bicep`     |
+| 6   | function-app      | `layers/function-app/main.bicep`     |
+| 7   | logic-app         | `layers/logic-app/main.bicep`        |
 
 ## Rollout pattern matrix
 

@@ -1,0 +1,30 @@
+name: tools - sdk-ai-bots-frontend - provision
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: operation
+      type: string
+      default: preview
+      values: [preview, apply]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+              parameters:
+                  layer: frontend
+                  dependencyLayers: resource-group,shared-resources
+                  environment: ${{ parameters.environment }}
+                  operation: ${{ parameters.operation }}

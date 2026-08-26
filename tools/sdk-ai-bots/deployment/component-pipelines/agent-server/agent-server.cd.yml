@@ -1,6 +1,6 @@
 # CD pipeline — agent-server (FastAPI server in the production App Service).
 # Image-only deploy. Infrastructure is provisioned separately by the
-# provision-all-<env> pipeline.
+# agent-server provision pipeline or a provision-all-<env> orchestrator.
 
 name: tools - sdk-ai-bots-agent-server - cd
 

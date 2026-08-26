@@ -2,14 +2,11 @@
  * function-app — postdeploy hook
  *
  * Runs after `azd deploy function-app`. Confirms the Function App resource
- * is Running.
- *
- * The Logic App workflow update was previously triggered from here, but is
- * now a separate concern owned by `azd deploy logic-app` (see azure.yaml
- * `logic-app` service and hooks/logic-app-deploy.ts).
+ * is Running, then applies the complete Logic App workflow definition.
  */
 
 import { execSync } from "child_process";
+import { patchWorkflow } from "./lib/patch-workflow.js";
 
 const FUNCTION_APP_NAME = process.env.SERVICE_FUNCTION_APP_NAME ?? process.env.FUNCTION_APP_NAME ?? "";
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
@@ -35,6 +32,8 @@ function run(cmd: string): string {
   if (state !== "Running") {
     throw new Error(`Expected Running, got '${state}'.`);
   }
+
+  await patchWorkflow({ logPrefix: "[function-app:postdeploy]" });
 })().catch((err) => {
   console.error(`[function-app:postdeploy] FAILED: ${err.message}`);
   process.exit(1);

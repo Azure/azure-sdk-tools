@@ -34,16 +34,21 @@ parameters:
 
 ## Component → pipeline map
 
-Infrastructure is provisioned centrally per environment by the
-`pipelines/orchestrators/provision-all-{dev,preview,prod}.yml` pipelines. The
-component pipelines below are image-only (CI builds, CD deploys).
+Infrastructure can be provisioned centrally per environment by the
+`pipelines/orchestrators/provision-all-{dev,preview,prod}.yml` pipelines or one
+layer at a time through the component provision pipelines. Layer pipelines
+default to `preview`; select `apply` when queuing to provision that layer.
 
-| Component      | CI                      | CD                                  |
-| -------------- | ----------------------- | ----------------------------------- |
-| frontend       | `frontend.ci.yml`       | `frontend.cd.yml`                   |
-| function-app   | `function-app.ci.yml`   | `function-app.cd.yml`               |
-| agent          | `agent.ci.yml`          | `agent.cd.yml`                      |
-| knowledge-sync | `knowledge-sync.ci.yml` | `knowledge-sync.cd.yml` (scheduled) |
+| Layer/component  | Provision                       | CI                      | CD                                  |
+| ---------------- | ------------------------------- | ----------------------- | ----------------------------------- |
+| resource-group   | `resource-group.provision.yml`  | n/a                     | n/a                                 |
+| shared-resources | `shared-resources.provision.yml`| n/a                     | n/a                                 |
+| agent             | `agent.provision.yml`           | `agent.ci.yml`          | `agent.cd.yml`                      |
+| frontend          | `frontend.provision.yml`        | `frontend.ci.yml`       | `frontend.cd.yml`                   |
+| agent-server      | `agent-server.provision.yml`    | built by agent CI       | `agent-server.cd.yml`               |
+| function-app      | `function-app.provision.yml`    | `function-app.ci.yml`   | `function-app.cd.yml`               |
+| logic-app         | `logic-app.provision.yml`       | n/a                     | n/a                                 |
+| knowledge-sync    | shared-resources                | `knowledge-sync.ci.yml` | `knowledge-sync.cd.yml` (scheduled) |
 
 ## Existing pipelines (phase 1 coexistence)
 

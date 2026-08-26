@@ -20,9 +20,25 @@ export type SignInAudience =
   | "AzureADMultipleOrgs"
   | "AzureADandPersonalMicrosoftAccount";
 
+export function getBotSignInAudience(
+  azureTenantId: string | undefined,
+  teamsTenantId: string | undefined,
+): SignInAudience {
+  const azureTenant = azureTenantId?.trim().toLowerCase();
+  const teamsTenant = teamsTenantId?.trim().toLowerCase();
+
+  return azureTenant && teamsTenant && azureTenant !== teamsTenant
+    ? "AzureADMultipleOrgs"
+    : "AzureADMyOrg";
+}
+
 export interface EnsureEntraAppOptions {
   displayName: string;
   signInAudience?: SignInAudience;
+  /** Validate and reuse this appId instead of discovering by display name. */
+  existingAppId?: string;
+  /** Ensure the application's home-tenant service principal exists. */
+  ensureServicePrincipal?: boolean;
   /** Set false for read-only discovery, such as azd preview preparation. */
   allowCreate?: boolean;
   /**
@@ -61,10 +77,61 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
   const {
     displayName,
     signInAudience = "AzureADMyOrg",
+    existingAppId,
+    ensureServicePrincipal = false,
     allowCreate = true,
     serviceManagementReference,
     ownedDisplayNameContains,
   } = opts;
+
+  const finalize = (appId: string): string => {
+    const currentAudience = run(
+      `az ad app show --id "${appId}" --query signInAudience --output tsv`,
+    );
+    if (currentAudience !== signInAudience) {
+      if (!allowCreate) {
+        throw new Error(
+          `App registration '${appId}' has signInAudience '${currentAudience}', ` +
+            `expected '${signInAudience}'. Preview is read-only and will not update it.`,
+        );
+      }
+      log(`  updating sign-in audience: ${currentAudience} → ${signInAudience}`);
+      run(
+        `az ad app update --id "${appId}" --set signInAudience="${signInAudience}"`,
+      );
+    } else {
+      log(`  ✓ sign-in audience is ${signInAudience}`);
+    }
+
+    if (ensureServicePrincipal) {
+      try {
+        const principalId = run(`az ad sp show --id "${appId}" --query id --output tsv`);
+        log(`  ✓ service principal exists (${principalId})`);
+      } catch {
+        if (!allowCreate) {
+          throw new Error(
+            `App registration '${appId}' has no home-tenant service principal. ` +
+              `Preview is read-only and will not create it.`,
+          );
+        }
+        log(`  creating home-tenant service principal for ${appId}`);
+        run(`az ad sp create --id "${appId}" --output none`);
+      }
+    }
+    return appId;
+  };
+
+  if (existingAppId) {
+    log(`Validating configured app registration ${existingAppId}`);
+    try {
+      run(`az ad app show --id "${existingAppId}" --query appId --output tsv`);
+    } catch {
+      throw new Error(
+        `Configured app registration '${existingAppId}' does not exist in the signed-in tenant.`,
+      );
+    }
+    return finalize(existingAppId);
+  }
 
   log(`Looking up existing app registration '${displayName}'`);
   const existing = run(
@@ -72,7 +139,7 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
   );
   if (existing) {
     log(`  ✓ found existing appId=${existing}`);
-    return existing;
+    return finalize(existing);
   }
 
   if (ownedDisplayNameContains) {
@@ -93,7 +160,7 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
     if (matches.length === 1) {
       const m = matches[0];
       log(`  ✓ reusing owned appId=${m.appId} (displayName='${m.displayName}')`);
-      return m.appId;
+      return finalize(m.appId);
     }
     if (matches.length > 1) {
       const list = matches.map((m) => `    - ${m.displayName} (${m.appId})`).join("\n");
@@ -143,7 +210,87 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
     throw new Error(`az ad app create returned no appId for '${displayName}'`);
   }
   log(`  ✓ created appId=${appId}`);
-  return appId;
+  return finalize(appId);
+}
+
+export interface EnsureManagedIdentityFederatedCredentialOptions {
+  appId: string;
+  managedIdentityPrincipalId: string;
+  tenantId: string;
+  name?: string;
+  audience?: string;
+}
+
+interface FederatedIdentityCredential {
+  id: string;
+  name: string;
+  issuer: string;
+  subject: string;
+  audiences: string[];
+}
+
+/** Ensure an app trusts a UAMI as its secretless client assertion. */
+export function ensureManagedIdentityFederatedCredential(
+  opts: EnsureManagedIdentityFederatedCredentialOptions,
+): void {
+  const {
+    appId,
+    managedIdentityPrincipalId,
+    tenantId,
+    name = "frontend-uami",
+    audience = "api://AzureADTokenExchange",
+  } = opts;
+  const issuer = `https://login.microsoftonline.com/${tenantId}/v2.0`;
+  const appObjectId = run(`az ad app show --id "${appId}" --query id --output tsv`);
+  const credentials = JSON.parse(
+    run(`az ad app federated-credential list --id "${appObjectId}" --output json`) || "[]",
+  ) as FederatedIdentityCredential[];
+  const existing = credentials.find((credential) => credential.name === name);
+  const current =
+    existing?.issuer === issuer &&
+    existing.subject === managedIdentityPrincipalId &&
+    existing.audiences?.length === 1 &&
+    existing.audiences[0] === audience;
+
+  if (current) {
+    log(`  ✓ federated credential '${name}' already trusts UAMI ${managedIdentityPrincipalId}`);
+    return;
+  }
+
+  if (existing) {
+    log(`  replacing drifted federated credential '${name}'`);
+    run(
+      `az ad app federated-credential delete --id "${appObjectId}" ` +
+        `--federated-credential-id "${existing.id}"`,
+    );
+  } else {
+    log(`  creating federated credential '${name}'`);
+  }
+
+  const parametersPath = path.join(os.tmpdir(), `fic-${randomUUID()}.json`);
+  fs.writeFileSync(
+    parametersPath,
+    JSON.stringify({
+      name,
+      issuer,
+      subject: managedIdentityPrincipalId,
+      description: "Allow the frontend UAMI to authenticate as the Teams bot application.",
+      audiences: [audience],
+    }),
+  );
+  try {
+    run(
+      `az ad app federated-credential create --id "${appObjectId}" ` +
+        `--parameters "${parametersPath}" --output none`,
+    );
+  } finally {
+    try {
+      fs.unlinkSync(parametersPath);
+    } catch {
+      /* best-effort cleanup */
+    }
+  }
+  log(`  ✓ federated credential '${name}' trusts UAMI ${managedIdentityPrincipalId}`);
 }
 
 /** Microsoft Azure CLI public client — pre-authorized so `az account
@@ -208,8 +355,8 @@ export interface EnsureServerAppAuthorizationOptions {
   appRoleValue?: string;
   /** Client appIds to pre-authorize on the delegated scope. Azure CLI is always included. */
   preAuthorizeClientIds?: string[];
-  /** Managed-identity service-principal objectId to grant the application app-role. */
-  managedIdentityPrincipalId?: string;
+  /** Managed-identity service-principal objectIds to grant the application app-role. */
+  managedIdentityPrincipalIds?: string[];
 }
 
 /** Run an `az rest` call against Microsoft Graph, passing any body via a temp file. */
@@ -256,7 +403,7 @@ export function ensureServerAppAuthorization(opts: EnsureServerAppAuthorizationO
     delegatedScopeValue = "access_as_user",
     appRoleValue = "access_as_application",
     preAuthorizeClientIds = [],
-    managedIdentityPrincipalId,
+    managedIdentityPrincipalIds = [],
   } = opts;
 
   const graphApp = `https://graph.microsoft.com/v1.0/applications(appId='${appId}')`;
@@ -386,8 +533,8 @@ export function ensureServerAppAuthorization(opts: EnsureServerAppAuthorizationO
     log(`  ✓ application app-role '${appRoleValue}' already exposed (${role.id})`);
   }
 
-  // 6. Grant the managed identity the application app-role ------------------
-  if (managedIdentityPrincipalId) {
+  // 6. Grant each managed identity the application app-role -----------------
+  for (const managedIdentityPrincipalId of new Set(managedIdentityPrincipalIds.filter(Boolean))) {
     let assigned: string[] = [];
     try {
       assigned = JSON.parse(

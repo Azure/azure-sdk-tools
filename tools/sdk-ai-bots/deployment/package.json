@@ -5,9 +5,11 @@
   "private": true,
   "scripts": {
     "preprovision": "tsx hooks/preprovision.ts",
+    "preprovision:logic-app": "tsx hooks/logic-app-preprovision.ts",
+    "postprovision:agent": "tsx hooks/agent-postprovision.ts",
+    "postprovision:frontend": "tsx hooks/frontend-postprovision.ts",
     "postprovision": "tsx hooks/postprovision.ts",
     "predeploy": "tsx hooks/predeploy.ts",
-    "postdeploy": "tsx hooks/postdeploy.ts",
     "predown": "tsx hooks/predown.ts",
     "postdown": "tsx hooks/postdown.ts",
     "check-quotas": "tsx scripts/check-quotas.ts",

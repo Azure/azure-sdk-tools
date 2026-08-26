@@ -157,7 +157,7 @@ The slot and its targeting environment variable were removed.
 
 **Resolution — conditional-create + preprovision probe:**
 
-- Added `createTeamsConnection` param to `qaBotLogicApp/logicAppResources.bicep`; wrapped `teamsConnection` in `if (createTeamsConnection)`.
+- Added `createTeamsConnection` to `layers/logic-app/main.bicep`; wrapped `teamsConnection` in `if (createTeamsConnection)`.
 - Workflow `$connections` block computes the connection resourceId manually (symbolic ref would fail when the condition is false).
 - `preprovision.ts` → `ensureTeamsConnectionFlag()` probes the live resource: `status == "Connected"` → set `CREATE_TEAMS_CONNECTION=false`; else `true`.
 
@@ -197,13 +197,13 @@ The `repinAcrPullIdentity()` postdeploy workaround was removed after the agent-s
 **Resolution:** two-phase workflow:
 
 1. `main.bicep` creates the workflow **shell** with an empty definition.
-2. Global `postdeploy.ts` → `lib/patch-workflow.ts`:
+2. `function-postdeploy.ts` → `lib/patch-workflow.ts`:
     - `GET` the workflow.
     - Mutate `properties.definition` / `properties.parameters` from `workflowDefinition.json`.
     - `PUT` it back (Logic Apps don’t accept `PATCH` on `properties`).
     - Gated on Function App `/admin/host/status = 200`.
 
-- Fires after **any** service deploy (skip with `POSTDEPLOY_SKIP_LOGIC_APP=1`).
+- Fires only after the Function App deploy confirms the runtime is ready.
 
 ---
 
@@ -264,10 +264,9 @@ Each hook had to be authored from scratch against that service's own API dialect
    • uploadBotConfigs → storage                       • health check
    • seedKeyVault / seedAppConfig                            │
    • syncTeamsEnv → env/.env.azd                             ▼
-                                                    postdeploy.ts (global)
-                                                                         • patchWorkflow (Logic App)
-                                                          (RBAC + new Foundry ver)
-                                                       • patchWorkflow (Logic App)
+                                           function-postdeploy.ts
+                                               • patchWorkflow (Logic App)
+                                               (RBAC + new Foundry ver)
 ```
 
 ---
@@ -526,6 +525,6 @@ Every hook we keep is measured against that goal.
 Repo: `Azure/azure-sdk-tools` → `tools/sdk-ai-bots/deployment/`
 
 - Hooks: `deployment/hooks/`
-- Bicep: `deployment/infra/modules/`
+- Bicep: `deployment/infra/layers/`
 - Env contract: `deployment/infra/environments/environment-suite.yaml`
 - Runbook: `deployment/docs/runbook-deploy.md`

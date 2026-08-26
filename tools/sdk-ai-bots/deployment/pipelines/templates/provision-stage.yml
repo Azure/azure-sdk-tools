@@ -33,6 +33,9 @@ parameters:
     - name: runProvision
       type: boolean
       default: true
+    - name: bootstrapLayers
+      type: boolean
+      default: false
     - name: showReadinessReminder
       type: boolean
       default: false
@@ -60,14 +63,21 @@ stages:
                                   environment: ${{ parameters.environment }}
                             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 
-                            - ${{ if parameters.runValidateAndPreview }}:
+                            - ${{ if parameters.bootstrapLayers }}:
+                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                    parameters:
+                                        operation: bootstrap
+                                        workingDirectory: ${{ parameters.workingDirectory }}
+
+                            - ${{ if and(not(parameters.bootstrapLayers), parameters.runValidateAndPreview) }}:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                     parameters:
                                         operation: preview
                                         workingDirectory: ${{ parameters.workingDirectory }}
 
-                            - ${{ if parameters.runProvision }}:
+                            - ${{ if and(not(parameters.bootstrapLayers), parameters.runProvision) }}:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                     parameters:
                                         operation: apply

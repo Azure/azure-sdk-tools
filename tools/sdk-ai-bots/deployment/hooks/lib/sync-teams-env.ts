@@ -2,8 +2,8 @@
  * syncTeamsEnv — generate the azd-owned Teams Toolkit environment file
  * (azure-sdk-qa-bot/env/.env.azd) from the current azd environment.
  *
- * Called from hooks/postprovision.ts after `azd provision` has persisted the
- * bicep outputs into the azd environment. azd decides which logical
+ * Called by frontend provisioning and deployment hooks after azd has loaded
+ * the current environment. azd decides which logical
  * environment is being provisioned (AZURE_ENV_NAME = dev / preview / prod);
  * this helper takes the matching committed Teams env file as the static base
  * (display names, GitHub App, storage config, TEAMS_APP_ID, ...) and overlays

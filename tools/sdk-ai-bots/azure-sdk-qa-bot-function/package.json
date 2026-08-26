@@ -8,7 +8,7 @@
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "test": "echo \"No tests yet...\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@azure/arm-search": "^3.3.0",

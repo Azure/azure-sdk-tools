@@ -56,9 +56,9 @@ export type QuotaCheckResult = {
  * Whitelist of quota keys this deployment actually consumes. Everything else
  * returned by the provider usage endpoints is filtered out so the report
  * stays focused. Keep these in sync with:
- *   - Microsoft.Storage:           infra/modules/qaBotSharedResources/sharedResources.bicep (storageAccount)
- *   - Microsoft.Search:            infra/modules/qaBotSharedResources/sharedResources.bicep (searchService SKU)
- *   - Microsoft.CognitiveServices: infra/modules/qaBotAgent/component.bicep (account kind/sku + model deployments)
+ *   - Microsoft.Storage:           infra/layers/shared-resources/main.bicep (storageAccount)
+ *   - Microsoft.Search:            infra/layers/shared-resources/main.bicep (searchService SKU)
+ *   - Microsoft.CognitiveServices: infra/layers/agent/main.bicep (account kind/sku + model deployments)
  */
 const CS_ACCOUNT_KIND = "AIServices"; // Microsoft.CognitiveServices/accounts.kind
 const CS_ACCOUNT_SKU = "S0";

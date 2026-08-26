@@ -6,23 +6,26 @@ param location string
 @description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
 param managedIdentityPrincipalId string
 
-@description('Name of the shared storage account (created by the shared resources module) connected to the Foundry project.')
+@description('Name of the shared storage account connected to the Foundry project.')
 param storageAccountName string
 
-@description('Primary blob service endpoint of the shared storage account (from the shared resources module output).')
+@description('Primary blob service endpoint from the shared-resources layer.')
 param storageBlobEndpoint string
 
 @description('Name of the Log Analytics workspace backing the agent Application Insights.')
-param agentLogWorkspaceName string = 'qabot-agent-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentLogWorkspaceNameOverride string = ''
 
 @description('Name of the Application Insights component for the agent.')
-param agentAppInsightsName string = 'qabot-agent-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentAppInsightsNameOverride string = ''
 
 @description('Name of the Cognitive Services (AIServices) account.')
-param aiResourceName string = 'qabot-ai-resource-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param aiResourceNameOverride string = ''
+
+@description('Restore the AIServices account when a soft-deleted resource with the same name exists.')
+param restoreAiResource bool = false
 
 @description('Name of the Foundry project inside the AIServices account.')
-param aiProjectName string = 'qabot-ai'
+param aiProjectNameOverride string = ''
 
 @description('Name of the shared container registry the hosted agent pulls its image from. The Foundry project managed identity is granted AcrPull on it.')
 param containerRegistryName string
@@ -32,6 +35,12 @@ param developerGroupObjectId string = ''
 
 @description('Principal type for the developer role assignment: User, Group, or ServicePrincipal.')
 param developerPrincipalType string = 'User'
+
+var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
+var agentLogWorkspaceName = !empty(agentLogWorkspaceNameOverride) ? agentLogWorkspaceNameOverride : 'qabot-agent-log-${suffix}'
+var agentAppInsightsName = !empty(agentAppInsightsNameOverride) ? agentAppInsightsNameOverride : 'qabot-agent-${suffix}'
+var aiResourceName = !empty(aiResourceNameOverride) ? aiResourceNameOverride : 'qabot-ai-resource-${suffix}'
+var aiProjectName = !empty(aiProjectNameOverride) ? aiProjectNameOverride : 'qabot-ai'
 
 // Log Analytics workspace backing the agent Application Insights. Created here so
 // the agent layer is self-contained and does not depend on the (now removed)
@@ -63,6 +72,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
   name: aiResourceName
   properties: {
+    restore: restoreAiResource
     apiProperties: {}
     customSubDomainName: aiResourceName
     networkAcls: {
@@ -220,6 +230,7 @@ resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connecti
 resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
   name: aiProjectName
   parent: account
+  dependsOn: [modelDeployments]
   properties: {}
   location: location
   identity: {
@@ -280,8 +291,8 @@ resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
 
 // NOTE: the "Azure AI User" (Foundry User, 53ca6127-db72-4b80-b1b0-d745d6d5456d)
 // grant for qabot-identity on this AI account is NOT declared here. It is created
-// idempotently (create-if-not-exists) by the postprovision hook
-// (hooks/lib/ensure-role-assignment.ts, called from hooks/postprovision.ts).
+// idempotently (create-if-not-exists) by the agent layer's postprovision hook
+// (hooks/agent-postprovision.ts).
 // A native bicep roleAssignments resource uses a deterministic name and fails
 // the whole deployment with RoleAssignmentExists if the same (principal, role,
 // scope) already exists under a different name — e.g. one created out-of-band via
@@ -349,13 +360,13 @@ resource projectAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 // Output
 @description('Azure AI Services (Cognitive Services) account name.')
-output aiResourceName string = account.name
+output AI_RESOURCE_NAME string = account.name
 
 @description('Azure AI project name.')
-output aiProjectName string = project.name
+output AI_PROJECT_NAME string = project.name
 
 @description('Full ARM resource ID of the Azure AI Foundry project (CognitiveServices path).')
-output aiProjectId string = project.id
+output AZURE_AI_PROJECT_ID string = project.id
 
 @description('Azure AI Foundry project REST API endpoint.')
-output aiProjectEndpoint string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'
+output FOUNDRY_PROJECT_ENDPOINT string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'

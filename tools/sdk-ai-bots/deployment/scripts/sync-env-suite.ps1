@@ -10,8 +10,8 @@
     .azure/<env>/.env. This script synchronizes the suite-owned values and
     bicepOverrides into that environment so the same subscription / region /
     RG / image-repository / resource-name values flow into:
-        - azd provision           (via .azure/<env>/.env + main.bicepparam readEnvironmentVariable)
-        - azd provision --preview (the same main.bicepparam path)
+        - azd provision                 (via .azure/<env>/.env + layer parameter adapters)
+        - azd provision <layer> --preview (the same layer adapter path)
         - per-service hooks       (via process env vars)
 
     Teams IDs and any fixed environment-specific Bicep values are copied from
@@ -78,6 +78,7 @@ if (-not ($existingNames -contains $Environment)) {
 $Mapping = @(
     @{ Path = ".environments.$Environment.subscriptionId";       Key = 'AZURE_SUBSCRIPTION_ID' }
     @{ Path = ".environments.$Environment.tenantId";             Key = 'AZURE_TENANT_ID' }
+    @{ Path = ".environments.$Environment.serviceManagementReference"; Key = 'SERVICE_MANAGEMENT_REFERENCE' }
     @{ Path = ".environments.$Environment.resourceGroupPrefix";  Key = 'AZURE_RESOURCE_GROUP' }
     @{ Path = ".environments.$Environment.regions[0].name";      Key = 'AZURE_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }
@@ -85,11 +86,16 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.cosmosDbLocation";     Key = 'COSMOS_DB_LOCATION' }
     @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.agentServerSiteName";  Key = 'AGENT_SERVER_SITE_NAME' }
+    @{ Path = ".environments.$Environment.agentServerSiteName";  Key = 'AGENT_SERVER_SITE_NAME_OVERRIDE' }
     @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME' }
+    @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME_OVERRIDE' }
     @{ Path = ".environments.$Environment.containerRegistryName"; Key = 'ACR_NAME' }
     @{ Path = ".environments.$Environment.containerRegistryName"; Key = 'CONTAINER_REGISTRY_NAME' }
+    @{ Path = ".environments.$Environment.containerRegistryName"; Key = 'CONTAINER_REGISTRY_NAME_OVERRIDE' }
     @{ Path = ".environments.$Environment.keyVaultName";         Key = 'KEY_VAULT_NAME' }
+    @{ Path = ".environments.$Environment.keyVaultName";         Key = 'KEY_VAULT_NAME_OVERRIDE' }
     @{ Path = ".environments.$Environment.appConfigName";        Key = 'APP_CONFIG_NAME' }
+    @{ Path = ".environments.$Environment.appConfigName";        Key = 'APP_CONFIG_NAME_OVERRIDE' }
     # Image repositories are <componentImageName>:<env>. bicepOverrides can
     # replace these derived values for an existing environment.
     @{ Path = ".components.`"function-app`".imageName + `":$Environment`"";  Key = 'FUNCTION_IMAGE_REPOSITORY' }
@@ -138,6 +144,15 @@ if ($teamsChannelIds.Count -eq 0 -or @($teamsChannelIds | Where-Object { [string
 # FRONTEND_IMAGE_REPOSITORY).
 $overridesJson = (& yq -o=json ".environments.$Environment.bicepOverrides // {}" $SuitePath | Out-String).Trim()
 $overrides = $overridesJson | ConvertFrom-Json
+$overrideInputKeys = @(
+    'MANAGED_IDENTITY_NAME', 'ACTION_GROUP_NAME', 'KEY_VAULT_NAME',
+    'APP_CONFIG_NAME', 'SEARCH_SERVICE_NAME', 'CONTAINER_REGISTRY_NAME',
+    'STORAGE_ACCOUNT_NAME', 'COSMOS_DB_ACCOUNT_NAME', 'AI_RESOURCE_NAME',
+    'AI_PROJECT_NAME', 'AGENT_SERVER_SITE_NAME', 'FUNCTION_APP_NAME',
+    'INTEGRATION_ACCOUNT_NAME', 'TEAMS_CONNECTION_NAME',
+    'AZURE_BLOB_CONNECTION_NAME', 'DOCUMENT_DB_CONNECTION_NAME',
+    'LOGIC_APP_WORKFLOW_NAME', 'LOGIC_APP_ALERT_NAME'
+)
 foreach ($property in $overrides.PSObject.Properties) {
     $key = $property.Name
     $value = [string]$property.Value
@@ -151,6 +166,11 @@ foreach ($property in $overrides.PSObject.Properties) {
     }
     & azd env set $key $value | Out-Null
     Write-Host "  $key = $value"
+    if ($key -in $overrideInputKeys) {
+        $overrideKey = "${key}_OVERRIDE"
+        & azd env set $overrideKey $value | Out-Null
+        Write-Host "  $overrideKey = $value"
+    }
 }
 
 if ($failed.Count -gt 0) {

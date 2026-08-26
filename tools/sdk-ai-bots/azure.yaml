@@ -1,5 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
+requiredVersions:
+    azd: '>= 1.30.0'
 name: sdk-ai-bots
 metadata:
     template: sdk-ai-bots@1.0.0
@@ -44,6 +46,11 @@ services:
             image: azure-sdk-qa-bot-agent-server
             tag: ${AGENT_SERVER_IMAGE_TAG}
             remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/agent-server-postdeploy.ts
+                interactive: true
     frontend:
         project: azure-sdk-qa-bot
         host: appservice
@@ -77,20 +84,114 @@ services:
                 interactive: true
 infra:
     provider: bicep
-    path: deployment/infra
-    module: main
+    layers:
+        - provider: bicep
+          path: deployment/infra/layers/resource-group
+          name: resource-group
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/preprovision.ts
+                interactive: true
+        - provider: bicep
+          path: deployment/infra/layers/shared-resources
+          name: shared-resources
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - resource-group
+        - provider: bicep
+          path: deployment/infra/layers/agent
+          name: agent
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/agent-postprovision.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - resource-group
+            - shared-resources
+        - provider: bicep
+          path: deployment/infra/layers/frontend
+          name: frontend
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/frontend-postprovision.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - resource-group
+            - shared-resources
+        - provider: bicep
+          path: deployment/infra/layers/agent-server
+          name: agent-server
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/agent-server-postdeploy.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - shared-resources
+            - agent
+            - frontend
+        - provider: bicep
+          path: deployment/infra/layers/function-app
+          name: function-app
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - shared-resources
+            - frontend
+        - provider: bicep
+          path: deployment/infra/layers/logic-app
+          name: logic-app
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/postprovision.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: npx --yes tsx hooks/logic-app-preprovision.ts
+                interactive: true
+          dependsOn:
+            - shared-resources
+            - frontend
+            - agent-server
+            - function-app
 hooks:
-    postdeploy:
-        shell: sh
-        run: npx --yes tsx deployment/hooks/postdeploy.ts
-        interactive: true
     postdown:
         shell: sh
         run: npx --yes tsx deployment/hooks/postdown.ts
-        interactive: true
-    postprovision:
-        shell: sh
-        run: npx --yes tsx deployment/hooks/postprovision.ts
         interactive: true
     predeploy:
         shell: sh
@@ -99,8 +200,4 @@ hooks:
     predown:
         shell: sh
         run: npx --yes tsx deployment/hooks/predown.ts
-        interactive: true
-    preprovision:
-        shell: sh
-        run: npx --yes tsx deployment/hooks/preprovision.ts
         interactive: true

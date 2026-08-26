@@ -6,8 +6,9 @@
  * (`PatchWorkflowPropertiesNotSupported`) — only top-level tags can be
  * patched. Instead we GET the current resource, mutate its
  * `properties.definition` and `properties.parameters` in place, and PUT it
- * back. That preserves the identity, integration account, state, tags, etc.
- * set up by main.bicep.
+ * back. That preserves the identity, integration account, tags, etc. set up
+ * by main.bicep while setting state from the Teams OAuth status: Enabled when
+ * connected, Disabled otherwise.
  *
  * Callers (function-postdeploy.ts, scripts/deploy-logic-app.ts) populate
  * process.env with the azd env values before invoking.
@@ -27,7 +28,7 @@ export const WORKFLOW_API_VERSION = "2019-05-01";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const WORKFLOW_DEFINITION_JSON_DEFAULT = resolve(
   __dirname,
-  "../../infra/modules/qaBotLogicApp/workflowDefinition.json",
+  "../../infra/layers/logic-app/workflowDefinition.json",
 );
 
 export interface PatchWorkflowOptions {
@@ -35,7 +36,7 @@ export interface PatchWorkflowOptions {
   logPrefix?: string;
   /**
    * Override the workflow definition JSON path. Defaults to the on-disk
-   * template shipped with the module.
+    * template shipped with the Logic App layer.
    */
   workflowDefinitionPath?: string;
   /**
@@ -76,6 +77,27 @@ function tryRun(cmd: string): string | undefined {
     return execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
   } catch {
     return undefined;
+  }
+}
+
+function readTeamsConnectionStatus(
+  subscriptionId: string,
+  resourceGroup: string,
+  connectionName: string,
+): string | undefined {
+  try {
+    return execSync(
+      `az resource show --subscription "${subscriptionId}" --resource-group "${resourceGroup}" ` +
+        `--resource-type Microsoft.Web/connections --name "${connectionName}" ` +
+        `--query "properties.statuses[0].status" -o tsv`,
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    ).trim();
+  } catch (error) {
+    const message = error instanceof Error && "stderr" in error
+      ? String((error as Error & { stderr?: unknown }).stderr ?? error.message)
+      : String(error);
+    if (/ResourceNotFound|could not be found|was not found/i.test(message)) return undefined;
+    throw new Error(`Failed to read Teams connection '${connectionName}': ${message.split("\n")[0]}`);
   }
 }
 
@@ -170,6 +192,19 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   const serverIdentityName = requireEnv("MANAGED_IDENTITY_NAME");
   const botIdentityName = requireEnv("BOT_IDENTITY_NAME");
   const functionAppName = requireEnv("FUNCTION_APP_NAME");
+
+  const teamsConnectionStatus = readTeamsConnectionStatus(
+    subscriptionId,
+    resourceGroup,
+    teamsConnName,
+  );
+  const teamsConnected = teamsConnectionStatus === "Connected";
+  if (!teamsConnected) {
+    log(
+      `Teams connection '${teamsConnName}' is '${teamsConnectionStatus || "not-found"}'. ` +
+        "Deploying the full workflow in Disabled state until OAuth consent is complete.",
+    );
+  }
 
   // Enforce the function-app-first dependency before touching the workflow.
   if (!opts.skipFunctionHostCheck) {
@@ -268,8 +303,8 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
 
   // Logic Apps reject PATCH on any properties field (only tags can be
   // patched). GET the current workflow, mutate definition + parameters, then
-  // PUT it back so the identity / integration account / state / tags set up
-  // by main.bicep survive.
+  // PUT it back so the identity / integration account / tags set up by
+  // main.bicep survive. State is set explicitly from Teams OAuth readiness.
   log(`GET workflow ${workflowName}...`);
   const currentRaw = execSync(`az rest --method GET --url "${workflowUrl}"`, { encoding: "utf8" });
   const current = JSON.parse(currentRaw);
@@ -277,6 +312,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   current.properties = current.properties ?? {};
   current.properties.definition = definition;
   current.properties.parameters = parameters;
+  current.properties.state = teamsConnected ? "Enabled" : "Disabled";
 
   // Fields ARM does not accept on PUT — strip them.
   delete current.properties.provisioningState;
@@ -297,5 +333,5 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     `az rest --method PUT --url "${workflowUrl}" --body @"${bodyPath}" --headers "Content-Type=application/json"`,
     { stdio: "inherit" },
   );
-  log("  ✓ Workflow updated.");
+  log(`  ✓ Workflow updated in ${current.properties.state} state.`);
 }

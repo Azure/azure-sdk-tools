@@ -95,6 +95,7 @@ extends:
                               echo "Deploying into ADE resource group: $(adeResourceGroup)"
                               echo "##vso[task.setvariable variable=AZURE_ENV_NAME]$(environmentName)"
                               echo "##vso[task.setvariable variable=AZURE_RESOURCE_GROUP]$(adeResourceGroup)"
+                                echo "##vso[task.setvariable variable=AZD_SKIP_TEAMS_PROVISION]1"
                           displayName: 'Resolve deploy target'
 
                         - ${{ each svc in split('frontend,function-app,agent', ',') }}:

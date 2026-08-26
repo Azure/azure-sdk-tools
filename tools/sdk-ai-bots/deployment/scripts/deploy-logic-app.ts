@@ -1,6 +1,6 @@
 /**
  * deploy-logic-app — apply the Logic App workflow definition & parameters
- * to an existing environment via ARM PATCH, independently of
+ * to an existing environment via ARM PUT, independently of
  * `azd deploy function-app`.
  *
  * Usage (from the deployment/ folder):
@@ -33,7 +33,7 @@ function parseArgs(argv: string[]): { envName: string | undefined } {
       envName = a.slice("--env=".length);
     } else if (a === "-h" || a === "--help") {
       console.log("Usage: deploy-logic-app [-e <env-name>]");
-      console.log("Applies the Logic App workflow definition to the target azd environment.");
+      console.log("Applies the Logic App workflow definition and enables it when Teams OAuth is connected.");
       process.exit(0);
     }
   }

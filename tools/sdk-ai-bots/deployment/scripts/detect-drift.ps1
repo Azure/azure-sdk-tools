@@ -4,10 +4,9 @@
     Detects drift between deployed Azure resources and the Bicep source.
 
 .DESCRIPTION
-    Runs the configured preprovision hook followed by `azd provision --preview`
-    against the requested environment. This uses main.bicepparam, the same
-    parameter adapter as apply. Fails with exit 1 if any Modify or Delete
-    operation is detected.
+    Runs each layer's preprovision hook followed by `azd provision <layer>
+    --preview` against the requested environment. Fails with exit 1 if any
+    layer reports a Modify or Delete operation.
 #>
 
 [CmdletBinding()]
@@ -36,7 +35,9 @@ if (-not (Test-Path "$ProjectDirectory/azure.yaml")) {
     exit 1
 }
 
-$previewOutputFile = New-TemporaryFile
+$layers = @('resource-group', 'shared-resources', 'agent', 'frontend', 'agent-server', 'function-app', 'logic-app')
+$previewOutputFiles = @()
+$riskyOperations = @()
 $previousLocation = Get-Location
 $previousPreviewMode = $env:AZD_PROVISION_PREVIEW
 try {
@@ -56,34 +57,42 @@ try {
         throw "Unable to select azd environment '$Environment'."
     }
 
-    # azd preview omits hooks, so resolve the same dynamic values as apply.
     $env:AZD_PROVISION_PREVIEW = 'true'
-    & azd hooks run preprovision --environment $Environment --no-prompt
-    if ($LASTEXITCODE -ne 0) {
-        throw "preprovision preparation failed for '$Environment'."
-    }
+    foreach ($layer in $layers) {
+        Write-Host "Previewing provisioning layer '$layer'..."
+        & azd env refresh $Environment --layer $layer --no-prompt
+        if ($LASTEXITCODE -ne 0) {
+            throw "No deployed state is available for layer '$layer'. Layered preview requires existing state so upstream outputs can be hydrated."
+        }
 
-    & azd provision --preview --environment $Environment --no-prompt --output json > $previewOutputFile
-    if ($LASTEXITCODE -ne 0) {
-        throw "azd preview failed for '$Environment'."
+        & azd hooks run preprovision --layer $layer --environment $Environment --no-prompt
+        if ($LASTEXITCODE -ne 0) {
+            throw "preprovision preparation failed for layer '$layer'."
+        }
+
+        $previewOutputFile = New-TemporaryFile
+        $previewOutputFiles += $previewOutputFile
+        & azd provision $layer --preview --environment $Environment --no-prompt --output json > $previewOutputFile
+        if ($LASTEXITCODE -ne 0) {
+            throw "azd preview failed for layer '$layer'."
+        }
+
+        $previewOutput = Get-Content -Raw -Path $previewOutputFile
+        Write-Host $previewOutput
+        $layerOperations = @(& node "$PSScriptRoot/list-risky-preview-operations.mjs" $previewOutputFile)
+        if ($LASTEXITCODE -ne 0) {
+            throw "Unable to inspect azd preview output for layer '$layer'."
+        }
+        $riskyOperations += $layerOperations | ForEach-Object { "${layer}: $_" }
     }
 } catch {
-    Remove-Item -Path $previewOutputFile -Force -ErrorAction SilentlyContinue
     throw
 } finally {
+    $previewOutputFiles | ForEach-Object {
+        Remove-Item -Path $_ -Force -ErrorAction SilentlyContinue
+    }
     $env:AZD_PROVISION_PREVIEW = $previousPreviewMode
     Set-Location $previousLocation
-}
-
-$previewOutput = Get-Content -Raw -Path $previewOutputFile
-Write-Host $previewOutput
-
-$riskyOperations = @(& node "$PSScriptRoot/list-risky-preview-operations.mjs" $previewOutputFile)
-$inspectorExitCode = $LASTEXITCODE
-Remove-Item -Path $previewOutputFile -Force
-if ($inspectorExitCode -ne 0) {
-    Write-Error "Unable to inspect azd preview output."
-    exit 1
 }
 
 if ($riskyOperations.Count -gt 0) {

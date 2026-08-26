@@ -38,6 +38,7 @@ environments:
         subscription: 'Azure SDK Test Resources - TME'
         subscriptionId: '4d042dc6-fe17-4698-a23f-ec6a8d1e98f4'
         tenantId: '70a036f6-8e4d-4615-bad6-149c02e7720d'
+        serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
         resourceGroupPrefix: 'azure-sdk-qa-bot-dev'
         keyVaultName: 'azsdkqabot-kv-dev'
         appConfigName: 'azsdkqabot-config-dev'
@@ -65,7 +66,12 @@ environments:
         aiLocation: 'eastus2'
         cosmosDbLocation: 'eastus2'
         bicepOverrides:
+            BOT_APP_ID: '00ba4f23-555b-4a70-b79d-40415a4d369f'
+            BOT_SERVICE_NAME: 'azsdkqabot-dev-federated'
             SERVER_AUDIENCE: '89cfbcca-e577-41b8-a4fb-bc6178b7260c'
+            # Set to 'true' for one provision only when recovering a soft-deleted
+            # AIServices account, then reset to 'false' after recovery succeeds.
+            AI_RESOURCE_RESTORE: 'false'
         approvalRequired: false
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: true
@@ -78,6 +84,7 @@ environments:
         subscription: 'azuresdkqabot-preview'
         subscriptionId: 'REPLACE_WITH_PREVIEW_SUBSCRIPTION_ID'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
         resourceGroupPrefix: 'rg-azuresdkqabot-preview'
         keyVaultName: 'azsdkqabot-kv-preview'
         appConfigName: 'azsdkqabot-config-preview'
@@ -114,6 +121,7 @@ environments:
         subscription: 'Azure SDK Engineering System'
         subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
         resourceGroupPrefix: 'azure-sdk-qa-bot'
         keyVaultName: 'azuresdkqabot-keyvalut'
         appConfigName: 'azuresdkqabot-config'
@@ -190,7 +198,7 @@ environments:
 # ─────────────────────────────────────────────────────────────────────────────
 # Component contract — names azd / Bicep need to agree on per environment.
 # The pipeline loader and local sync script export these values into the azd
-# environment consumed by main.bicepparam.
+# environment consumed by the layer parameter adapters.
 # ─────────────────────────────────────────────────────────────────────────────
 components:
     frontend:

@@ -1,36 +1,36 @@
 targetScope = 'resourceGroup'
 
 // ── Resource-name overrides ─────────────────────────────────────────────────
-// Every resource this module creates gets a param with a sensible default so
+// Every resource this layer creates gets a parameter with a sensible default so
 // callers (main.bicep, per-env parameters JSON) can point Bicep at existing
 // resources without a rename — e.g. prod's `azure-sdk-qa-bot` RG was manually
 // built and has different naming from the generated dev/preview environments.
 
 @description('Name of the shared user-assigned managed identity.')
-param managedIdentityName string = 'qabot-identity-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param managedIdentityNameOverride string = ''
 
 @description('Name of the shared action group.')
-param actionGroupName string = 'qabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param actionGroupNameOverride string = ''
 
 @description('Name of the shared Key Vault.')
-param keyVaultName string = 'qabot-keyvault-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param keyVaultNameOverride string = ''
 
 @description('Name of the shared App Configuration store.')
-param appConfigName string = 'qabot-config-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param appConfigNameOverride string = ''
 
 @description('Name of the shared Azure AI Search service.')
-param searchServiceName string = 'qabot-search-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param searchServiceNameOverride string = ''
 
 @description('Name of the shared container registry.')
-param containerRegistryName string = 'qabotcontainer${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param containerRegistryNameOverride string = ''
 
 @description('Name of the shared storage account.')
-param storageAccountName string = 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param storageAccountNameOverride string = ''
 
 @description('Name of the shared Cosmos DB account.')
-param cosmosDbAccountName string = 'qabot-db-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param cosmosDbAccountNameOverride string = ''
 
-@description('Azure region for all resources in this module.')
+@description('Azure region for all resources in this layer.')
 param location string = 'westus2'
 
 @description('Azure region for the Cosmos DB account. Defaults to `location`; override when the primary region has AZ capacity constraints.')
@@ -41,6 +41,16 @@ param developerGroupObjectId string = ''
 
 @description('Principal type for the developer role assignments: User, Group, or ServicePrincipal.')
 param developerPrincipalType string = 'User'
+
+var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
+var managedIdentityName = !empty(managedIdentityNameOverride) ? managedIdentityNameOverride : 'qabot-identity-${suffix}'
+var actionGroupName = !empty(actionGroupNameOverride) ? actionGroupNameOverride : 'qabot-alert-${suffix}'
+var keyVaultName = !empty(keyVaultNameOverride) ? keyVaultNameOverride : 'qabot-keyvault-${suffix}'
+var appConfigName = !empty(appConfigNameOverride) ? appConfigNameOverride : 'qabot-config-${suffix}'
+var searchServiceName = !empty(searchServiceNameOverride) ? searchServiceNameOverride : 'qabot-search-${suffix}'
+var containerRegistryName = !empty(containerRegistryNameOverride) ? containerRegistryNameOverride : 'qabotcontainer${suffix}'
+var storageAccountName = !empty(storageAccountNameOverride) ? storageAccountNameOverride : 'qabotstorage${suffix}'
+var cosmosDbAccountName = !empty(cosmosDbAccountNameOverride) ? cosmosDbAccountNameOverride : 'qabot-db-${suffix}'
 
 // User-assigned managed identity for the QA bot app. Its principalId (Entra object ID)
 // is referenced below to grant the app data-plane access to Cosmos DB.
@@ -664,38 +674,36 @@ resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignm
   }
 }
 
-// Output
-output managedIdentityName string = userAssignedIdentity.name
-output storageAccountName string = storageAccount.name
+// Outputs consumed by downstream azd layers and hooks.
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.properties.loginServer
+output CONTAINER_REGISTRY_NAME string = registry.name
+output MANAGED_IDENTITY_NAME string = userAssignedIdentity.name
+output STORAGE_ACCOUNT_NAME string = storageAccount.name
 
 @description('Primary blob service endpoint of the shared storage account.')
-output storageBlobEndpoint string = storageAccount.properties.primaryEndpoints.blob
-@description('Container registry resource name ')
-output containerRegistryName string = registry.name
+output STORAGE_BLOB_ENDPOINT string = storageAccount.properties.primaryEndpoints.blob
 
 @description('Client ID of the user-assigned managed identity (qabot-identity).')
-output managedIdentityClientId string = userAssignedIdentity.properties.clientId
+output MANAGED_IDENTITY_CLIENT_ID string = userAssignedIdentity.properties.clientId
 
 @description('Resource ID of the user-assigned managed identity (qabot-identity).')
-output managedIdentityResourceId string = userAssignedIdentity.id
+output MANAGED_IDENTITY_RESOURCE_ID string = userAssignedIdentity.id
 
 @description('Principal (object) ID of the user-assigned managed identity (qabot-identity).')
-output managedIdentityPrincipalId string = userAssignedIdentity.properties.principalId
-
-@description('Container registry login server')
-output containerRegistryLoginServer string = registry.properties.loginServer
+output MANAGED_IDENTITY_PRINCIPAL_ID string = userAssignedIdentity.properties.principalId
 
 @description('Key Vault name.')
-output keyVaultName string = vault.name
+output KEY_VAULT_NAME string = vault.name
 
 @description('App Configuration store name.')
-output appConfigName string = configurationStore.name
+output APP_CONFIG_NAME string = configurationStore.name
+output AZURE_APPCONFIG_ENDPOINT string = 'https://${configurationStore.name}.azconfig.io'
 
 @description('Azure AI Search service name.')
-output searchServiceName string = searchService.name
+output SEARCH_SERVICE_NAME string = searchService.name
 
 @description('Cosmos DB account name.')
-output cosmosDbAccountName string = databaseAccount.name
+output COSMOSDB_ACCOUNT_NAME string = databaseAccount.name
 
 @description('Shared action group name.')
-output actionGroupName string = actionGroup.name
+output ACTION_GROUP_NAME string = actionGroup.name

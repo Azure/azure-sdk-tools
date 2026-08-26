@@ -19,12 +19,12 @@
  * 3. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
  *    so callers can obtain tokens EasyAuth accepts (service principal,
  *    identifier URI, delegated scope, application app-role, pre-authorized
- *    clients, and the managed-identity app-role assignment).
+ *    clients, and managed-identity app-role assignments).
  * 4. Sanity-check the hosted agent by pinging its /ping endpoint.
  */
 
 import { execSync } from "child_process";
-import { ensureServerAppAuthorization } from "./lib/ensure-entra-app.js";
+import { ensureAgentServerAuthorization } from "./lib/ensure-agent-server-authorization.js";
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
 
@@ -62,32 +62,6 @@ function loadAzdEnv(): void {
   } catch {
     // azd env get-values may fail if no environment is selected; ignore.
   }
-}
-
-/**
- * Ensure the deployed agent server's Entra app registration is authorized.
- * No-op-friendly: skips when SERVER_AUDIENCE is unset (e.g. audience supplied
- * out-of-band), and each underlying step is idempotent.
- */
-function ensureAgentServerAuthorization(): void {
-  loadAzdEnv();
-  const appId = process.env.SERVER_AUDIENCE?.trim();
-  if (!appId) {
-    log("SERVER_AUDIENCE not set — skipping server app authorization.");
-    return;
-  }
-  // The frontend/bot calls the server via its user-assigned managed identity
-  // (DefaultAzureCredential → app-only token), so grant it the app-role.
-  const managedIdentityPrincipalId = process.env.MANAGED_IDENTITY_PRINCIPAL_ID?.trim() || undefined;
-  // Also pre-authorize the bot's client id for the delegated scope when present.
-  // BOT_ID is the bot's MicrosoftAppId (UAMI clientId in UserAssignedMsi mode).
-  // BOT_AUDIENCE is a token audience (Bot Framework Service URL) — not a client id.
-  const botAppId = process.env.BOT_ID?.trim();
-  ensureServerAppAuthorization({
-    appId,
-    managedIdentityPrincipalId,
-    preAuthorizeClientIds: botAppId ? [botAppId] : [],
-  });
 }
 
 /**
@@ -367,7 +341,8 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
 
   await ensureAgentAppConfigEnv();
 
-  ensureAgentServerAuthorization();
+  loadAzdEnv();
+  ensureAgentServerAuthorization(process.env, log);
 
   if (!AGENT_BASE_URL) {
     log("AGENT_BASE_URL not set — skipping ping.");

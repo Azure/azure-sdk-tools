@@ -10,8 +10,10 @@
  *   - Detects local-dev drift between the env-suite and the azd env vars
  *     and tells the developer to run scripts/sync-env-suite.ps1.
  *   - Ensures the Entra ID app registration backing `serverAudience` exists
- *     and exports its clientId as SERVER_AUDIENCE so main.bicepparam picks
- *     it up on the same provision run.
+ *     and exports its clientId as SERVER_AUDIENCE for downstream layers.
+ *   - Ensures the Teams bot app registration exists, using a multitenant
+ *     audience only when Azure and Teams use different tenants, and exports
+ *     its clientId as BOT_APP_ID for the frontend layer.
  */
 
 import { execFileSync, execSync } from "child_process";
@@ -19,13 +21,13 @@ import { readFileSync, existsSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-import { ensureEntraApp } from "./lib/ensure-entra-app.js";
+import { ensureEntraApp, getBotSignInAudience } from "./lib/ensure-entra-app.js";
 import { getEnvSuiteValue, getEnvSuiteValues } from "./lib/env-suite.js";
+import { enforceProvisionGuard } from "./lib/provision-guard.js";
 import { runQuotaCheck } from "./lib/quota-check.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
-const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
 const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
 const RUNNING_IN_PIPELINE = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
 const PREVIEW_MODE = process.env.AZD_PROVISION_PREVIEW === "true";
@@ -102,6 +104,9 @@ function detectLocalDrift(): void {
 
     expected.AZURE_SUBSCRIPTION_ID = read(`.environments.${ENV_NAME}.subscriptionId`);
     expected.AZURE_TENANT_ID = read(`.environments.${ENV_NAME}.tenantId`);
+    expected.SERVICE_MANAGEMENT_REFERENCE = read(
+      `.environments.${ENV_NAME}.serviceManagementReference`,
+    );
     expected.AZURE_RESOURCE_GROUP = read(`.environments.${ENV_NAME}.resourceGroupPrefix`);
     expected.AZURE_LOCATION = read(`.environments.${ENV_NAME}.regions[0].name`);
     expected.AZURE_AI_LOCATION = read(`.environments.${ENV_NAME}.aiLocation`);
@@ -163,15 +168,6 @@ function detectLocalDrift(): void {
   );
 }
 
-function enforceProdGuardrail(): void {
-  if (ENV_NAME === "prod" && !RUNNING_IN_PIPELINE) {
-    throw new Error(
-      "Refusing to provision prod from a non-pipeline context. " +
-        "Set TF_BUILD or GITHUB_ACTIONS if this really is a pipeline run."
-    );
-  }
-}
-
 function validateAuth(): void {
   log("Validating Azure authentication...");
   if (SUBSCRIPTION_ID) log(`  Target subscription: ${SUBSCRIPTION_ID}`);
@@ -215,8 +211,8 @@ function checkResourceQuotas(): void {
 
 /**
  * Ensures the Entra ID app registration that backs `serverAudience` exists,
- * then persists its clientId (appId) as SERVER_AUDIENCE so main.bicepparam
- * picks it up in this same provision run.
+ * then persists its clientId (appId) as SERVER_AUDIENCE so downstream layer
+ * parameter adapters pick it up in the same provision run.
  *
  * No-op when SERVER_AUDIENCE is already set (e.g. pipelines pass it in
  * explicitly via environment-suite.yaml bicepOverrides).
@@ -234,19 +230,76 @@ function ensureServerAudience(): void {
 
   const displayName = `azuresdkqabot-server-${ENV_NAME}`;
   log(`SERVER_AUDIENCE not set — ensuring Entra app registration '${displayName}'`);
-  const appId = ensureEntraApp({
-    displayName,
-    allowCreate: !PREVIEW_MODE,
-    ownedDisplayNameContains: "qabot",
-    serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
-  });
+  let appId: string;
+  try {
+    appId = ensureEntraApp({
+      displayName,
+      allowCreate: !PREVIEW_MODE,
+      ownedDisplayNameContains: "qabot",
+      serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
+    });
+  } catch (error) {
+    if (PREVIEW_MODE && error instanceof Error && error.message.includes("does not exist")) {
+      log("  SERVER_AUDIENCE is not initialized; resource-group preview does not require it.");
+      return;
+    }
+    throw error;
+  }
 
   // Persist for subsequent azd runs (.azure/<env>/.env).
   execSync(`azd env set SERVER_AUDIENCE ${appId}`, { stdio: "inherit" });
-  // Export into the current process so main.bicepparam's readEnvironmentVariable
-  // sees the value on the same `azd provision` invocation.
+  // Export into the current process for this layer and persist it for the
+  // downstream layer parameter adapters.
   process.env.SERVER_AUDIENCE = appId;
   log(`  ✓ SERVER_AUDIENCE=${appId} persisted via azd env set`);
+}
+
+function ensureBotApp(): void {
+  if (!ENV_NAME) {
+    log("  AZURE_ENV_NAME not set — skipping Teams bot app registration.");
+    return;
+  }
+
+  const configuredAppId = process.env.BOT_APP_ID?.trim();
+  const azureTenantId =
+    process.env.AZURE_TENANT_ID?.trim() ||
+    getEnvSuiteValue(ENV_NAME, "tenantId", SUITE_PATH)?.trim();
+  const teamsTenantId = getEnvSuiteValue(ENV_NAME, "teamsAppTenantId", SUITE_PATH)?.trim();
+  const signInAudience = getBotSignInAudience(azureTenantId, teamsTenantId);
+  const displayName = `azuresdkqabot-bot-${ENV_NAME}`;
+  log(
+    configuredAppId
+      ? `Validating BOT_APP_ID ${configuredAppId}`
+      : `BOT_APP_ID not set — ensuring ${signInAudience === "AzureADMultipleOrgs" ? "multitenant" : "single-tenant"} app registration '${displayName}'`,
+  );
+  log(
+    signInAudience === "AzureADMultipleOrgs"
+      ? `  Azure tenant '${azureTenantId}' differs from Teams tenant '${teamsTenantId}' — using AzureADMultipleOrgs`
+      : "  Azure and Teams tenants match (or cannot be compared) — using AzureADMyOrg",
+  );
+  let appId: string;
+  try {
+    appId = ensureEntraApp({
+      displayName,
+      existingAppId: configuredAppId || undefined,
+      signInAudience,
+      ensureServicePrincipal: true,
+      allowCreate: !PREVIEW_MODE,
+      serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
+    });
+  } catch (error) {
+    if (PREVIEW_MODE && error instanceof Error && /does not exist|read-only/i.test(error.message)) {
+      log("  BOT_APP_ID is not initialized; frontend preview requires an applied bot registration.");
+      return;
+    }
+    throw error;
+  }
+
+  if (configuredAppId !== appId) {
+    execSync(`azd env set BOT_APP_ID ${appId}`, { stdio: "inherit" });
+  }
+  process.env.BOT_APP_ID = appId;
+  log(`  ✓ BOT_APP_ID=${appId}`);
 }
 
 /**
@@ -299,120 +352,18 @@ function ensureDeveloperPrincipal(): void {
   log("  ⚠ Could not detect principal ID — developer role assignments will be skipped.");
 }
 
-/**
- * Probe the Teams `Microsoft.Web/connections` resource. When it exists AND its
- * status is "Connected" (OAuth consent already completed), set
- * CREATE_TEAMS_CONNECTION=false so bicep leaves it untouched — re-issuing the
- * PUT on an authorized OAuth connection can invalidate the bound token.
- * Otherwise (missing, not yet Connected, or unknown), set true so the
- * connection shell is created / repaired on this provision.
- *
- * The connection name is either persisted from a previous provision
- * (TEAMS_CONNECTION_NAME output of main.bicep) or, on a very first provision,
- * absent — in which case we default to creating (true).
- */
-function ensureTeamsConnectionFlag(): void {
-  const connectionName = process.env.TEAMS_CONNECTION_NAME?.trim();
-  const rg = RESOURCE_GROUP;
-  if (!connectionName || !rg || !SUBSCRIPTION_ID) {
-    log(
-      "  Teams connection name / RG / subscription not yet known — leaving " +
-        "CREATE_TEAMS_CONNECTION at its default (true; first provision).",
-    );
-    return;
-  }
-  log(`Checking Teams API connection '${connectionName}' status in '${rg}'...`);
-  let status = "";
-  try {
-    status = execSync(
-      `az resource show --resource-type Microsoft.Web/connections ` +
-        `--subscription "${SUBSCRIPTION_ID}" -g "${rg}" -n "${connectionName}" ` +
-        `--query "properties.statuses[0].status" -o tsv 2>/dev/null`,
-      { encoding: "utf8" },
-    ).trim();
-  } catch {
-    // Not found or transient error — fall through to default (create).
-  }
-  if (status === "Connected") {
-    execSync(`azd env set CREATE_TEAMS_CONNECTION false`, { stdio: "inherit" });
-    process.env.CREATE_TEAMS_CONNECTION = "false";
-    log(`  ✓ '${connectionName}' is Connected — CREATE_TEAMS_CONNECTION=false (skip PUT)`);
-    return;
-  }
-  execSync(`azd env set CREATE_TEAMS_CONNECTION true`, { stdio: "inherit" });
-  process.env.CREATE_TEAMS_CONNECTION = "true";
-  log(
-    `  Teams connection status='${status || "not-found"}' — ` +
-      `CREATE_TEAMS_CONNECTION=true (bicep will PUT the shell).`,
-  );
-}
-
-/**
- * Preserve the full Logic App definition on subsequent provisions. The first
- * provision still creates an empty workflow shell because the Function App
- * runtime is not available for ARM validation until after `azd deploy`.
- */
-function ensureLogicAppWorkflowFlag(): void {
-  const includeDefinitionEnv = "INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION";
-  if (!RESOURCE_GROUP || !SUBSCRIPTION_ID) {
-    log(
-      "  Resource group / subscription not yet known — " +
-        `${includeDefinitionEnv}=false (first provision deploys the workflow shell).`,
-    );
-    process.env[includeDefinitionEnv] = "false";
-    return;
-  }
-
-  const configuredWorkflowName = process.env.LOGIC_APP_WORKFLOW_NAME?.trim();
-  let workflowNames: string[] = [];
-  try {
-    const raw = execSync(
-      `az resource list --resource-group "${RESOURCE_GROUP}" ` +
-        `--subscription "${SUBSCRIPTION_ID}" ` +
-        `--resource-type Microsoft.Logic/workflows ` +
-        `--query "[?${configuredWorkflowName
-          ? `name=='${configuredWorkflowName}'`
-          : "starts_with(name, 'azuresdkqabot-logicapp-')"}].name" -o json`,
-      { encoding: "utf8" },
-    );
-    workflowNames = JSON.parse(raw);
-  } catch {
-    // A missing resource group or transient lookup failure is equivalent to a
-    // first provision; Bicep will create the shell and postdeploy fills it.
-  }
-
-  const includeDefinition = workflowNames.length > 0;
-  const value = String(includeDefinition);
-  execSync(`azd env set ${includeDefinitionEnv} ${value}`, { stdio: "inherit" });
-  process.env[includeDefinitionEnv] = value;
-
-  if (includeDefinition) {
-    log(
-      `  ✓ Existing Logic App workflow found (${workflowNames.join(", ")}) — ` +
-        `${includeDefinitionEnv}=true (provision full definition).`,
-    );
-  } else {
-    log(
-      `  No Logic App workflow found in '${RESOURCE_GROUP}' — ` +
-        `${includeDefinitionEnv}=false (provision workflow shell).`,
-    );
-  }
-}
-
 (async () => {
   log(`Starting preprovision for environment '${ENV_NAME}' in '${LOCATION}'`);
-  log(`  Resource group: ${RESOURCE_GROUP || "(not set; will be created by main.bicep)"}`);
 
   checkPrerequisites();
   validateEnvironmentSuite();
   detectLocalDrift();
-  enforceProdGuardrail();
+  enforceProvisionGuard();
   validateAuth();
   checkResourceQuotas();
   ensureServerAudience();
+  ensureBotApp();
   ensureDeveloperPrincipal();
-  ensureTeamsConnectionFlag();
-  ensureLogicAppWorkflowFlag();
 
   log("Preprovision checks passed.");
 })().catch((err) => {

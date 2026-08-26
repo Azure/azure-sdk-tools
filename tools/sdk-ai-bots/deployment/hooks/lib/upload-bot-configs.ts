@@ -4,7 +4,7 @@
  * Called from hooks/postprovision.ts. Reads YAML/JSON files from
  *   deployment/config/<AZURE_ENV_NAME>/
  * and uploads each to the shared storage account's `bot-configs` container
- * (created by qaBotSharedResources/sharedResources.bicep).
+ * (created by the shared-resources layer).
  *
  * Files may reference azd env vars via `${VAR}` placeholders (e.g. the
  * frontend's channel.yaml references `${SERVER_BASE_URL}` for the RAG

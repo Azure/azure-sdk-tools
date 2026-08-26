@@ -9,6 +9,9 @@ param containerImage string
 @description('Client ID of the qabot-identity managed identity; used by DefaultAzureCredential to select the identity.')
 param managedIdentityClientId string
 
+@description('Client ID of the frontend managed identity that calls the agent server.')
+param frontendIdentityClientId string
+
 @description('Client ID (audience) of the Entra app registration that fronts the agent server, used by App Service authentication (Easy Auth).')
 param serverAudience string
 
@@ -36,22 +39,30 @@ param appConfigName string
 @description('Name of the shared action group notified by the metric alerts.')
 param actionGroupName string
 
-// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep for
+// Resource-name overrides — see the shared-resources layer for
 // the rationale (prod's manually-built RG has different naming).
 @description('Name of the agent-server App Service plan.')
-param agentServerAppServicePlanName string = 'azuresdkqabot-appserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentServerAppServicePlanNameOverride string = ''
 
 @description('Name of the Log Analytics workspace backing agent-server Application Insights.')
-param agentServerLogWorkspaceName string = 'azuresdkqabot-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentServerLogWorkspaceNameOverride string = ''
 
 @description('Name of the agent-server web app.')
-param agentServerSiteName string = 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentServerSiteNameOverride string = ''
 
 @description('Name of the Application Insights component paired with the agent server (prod uses a timestamped legacy name).')
-param agentServerAppInsightsName string = 'azuresdkqabot-server202510300250-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentServerAppInsightsNameOverride string = ''
 
 @description('Name of the metric alert on the agent-server site.')
-param agentServerAlertName string = 'azuresdkqabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param agentServerAlertNameOverride string = ''
+
+var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
+var agentServerAppServicePlanName = !empty(agentServerAppServicePlanNameOverride) ? agentServerAppServicePlanNameOverride : 'azuresdkqabot-appserviceplan-${suffix}'
+var agentServerLogWorkspaceName = !empty(agentServerLogWorkspaceNameOverride) ? agentServerLogWorkspaceNameOverride : 'azuresdkqabot-log-${suffix}'
+var agentServerSiteName = !empty(agentServerSiteNameOverride) ? agentServerSiteNameOverride : 'azuresdkqabot-server-${suffix}'
+var agentServerAppInsightsName = !empty(agentServerAppInsightsNameOverride) ? agentServerAppInsightsNameOverride : 'azuresdkqabot-server202510300250-${suffix}'
+var agentServerAlertName = !empty(agentServerAlertNameOverride) ? agentServerAlertNameOverride : 'azuresdkqabot-alert-${suffix}'
+var azureCliClientId = '04b07795-8ddb-461a-bbee-02f9e1bf7b46'
 
 // User-assigned identities attached to the agent-server site.
 var siteUserAssignedIdentities = {
@@ -83,6 +94,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
     sku: {
       name: 'PerGB2018'
     }
+    retentionInDays: 30
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
@@ -94,6 +106,8 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
+    Flow_Type: 'Bluefield'
+    Request_Source: 'rest'
     RetentionInDays: 90
     WorkspaceResourceId: workspace.id
   }
@@ -200,6 +214,15 @@ resource config 'Microsoft.Web/sites/config@2025-05-01' = {
           clientId: serverAudience
           openIdIssuer: '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
         }
+        validation: {
+          defaultAuthorizationPolicy: {
+            allowedApplications: [
+              managedIdentityClientId
+              frontendIdentityClientId
+              azureCliClientId
+            ]
+          }
+        }
         login: {
           loginParameters: []
         }
@@ -252,5 +275,7 @@ resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' 
   }
 }
 
-// Output
-output serverBaseUrl string = 'https://${site.properties.defaultHostName}'
+// Outputs consumed by azd services and hooks.
+output SERVER_BASE_URL string = 'https://${site.properties.defaultHostName}'
+output AGENT_SERVER_SITE_NAME string = site.name
+output AGENT_SERVER_IMAGE string = containerImage

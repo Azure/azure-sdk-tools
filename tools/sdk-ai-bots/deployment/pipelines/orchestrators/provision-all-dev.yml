@@ -11,6 +11,9 @@ name: tools - sdk-ai-bots - provision-all-dev
 trigger: none
 pr: none
 
+parameters:
+    - { name: bootstrapLayers, displayName: 'Bootstrap missing layered state (preview + apply each layer)', type: boolean, default: false }
+
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
@@ -25,5 +28,6 @@ extends:
                   environment: dev
                   runValidateAndPreview: false
                   runProvision: true
+                  bootstrapLayers: ${{ parameters.bootstrapLayers }}
                   showReadinessReminder: false
 

@@ -1,12 +1,8 @@
 # Orchestrator pipeline — full prod provision.
 #
 # Two stages, each gated by the `sdk-ai-bots-prod` ADO environment approval:
-#   1. PreflightProd — azd preview + readiness reminder. Review the preview
-#      output and sign off the operational-readiness checklist before approving.
-#   2. ProvisionProd — applies with `azd provision`. Runs only after the
-#      preflight stage succeeds (stages run sequentially by default).
-#
-# Flow: PreflightProd (approval) → ProvisionProd (approval) → deploy-all-prod
+#   1. PreflightProd — azd preview + readiness reminder.
+#   2. ProvisionProd — applies only after preflight succeeds and a second approval.
 
 name: tools - sdk-ai-bots - provision-all-prod
 
@@ -37,4 +33,3 @@ extends:
                   stageDisplayName: 'Provision (apply)'
                   runValidateAndPreview: false
                   runProvision: true
-

@@ -90,8 +90,8 @@ from the suite. Pin an existing Entra application with
 `bicepOverrides.SERVER_AUDIENCE`; when it is omitted, preprovision creates or
 finds the environment application and persists `SERVER_AUDIENCE` in azd.
 
-`main.bicepparam` is the only adapter from these environment variables to
-`main.bicep`. Both pipeline preview and apply invoke azd through that adapter.
+Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
+needed by that layer. Pipeline preview and apply use the same layer adapters.
 
 The `preprovision` hook detects drift on every `azd provision` and fails fast
 if the azd env is out of sync, pointing you back at this script. Pipelines

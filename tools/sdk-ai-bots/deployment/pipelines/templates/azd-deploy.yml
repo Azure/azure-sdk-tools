@@ -32,5 +32,19 @@ steps:
                 agent-server)    export AGENT_SERVER_IMAGE_TAG="${{ parameters.imageTag }}" ;;
               esac
               npm ci
-              azd env select "$AZURE_ENV_NAME"
+              if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
+                azd env new "$AZURE_ENV_NAME" \
+                  --location "$AZURE_LOCATION" \
+                  --subscription "$AZURE_SUBSCRIPTION_ID" \
+                  --no-prompt
+              fi
+              azd env select "$AZURE_ENV_NAME" --no-prompt
+              if [ "${{ parameters.service }}" = "frontend" ] && [ "${AZD_SKIP_TEAMS_PROVISION:-0}" != "1" ]; then
+                azd env refresh "$AZURE_ENV_NAME" --layer frontend --no-prompt
+              fi
+              if [ "${{ parameters.service }}" = "function-app" ]; then
+                for LAYER in shared-resources frontend agent-server function-app logic-app; do
+                  azd env refresh "$AZURE_ENV_NAME" --layer "$LAYER" --no-prompt
+                done
+              fi
               azd deploy "${{ parameters.service }}" --environment "$AZURE_ENV_NAME" --no-prompt

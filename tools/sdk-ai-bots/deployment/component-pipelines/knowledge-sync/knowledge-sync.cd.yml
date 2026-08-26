@@ -1,5 +1,6 @@
 # "CD" pipeline — knowledge-sync.
-# Infrastructure is provisioned separately by the provision-all-<env> pipeline.
+# Infrastructure is provisioned separately by the shared-resources provision
+# pipeline or a provision-all-<env> orchestrator.
 #
 # The sync stage runs on a daily schedule and refreshes the Search index.
 

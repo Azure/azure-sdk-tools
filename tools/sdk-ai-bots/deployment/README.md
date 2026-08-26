@@ -3,9 +3,9 @@
 This folder is the **single source of truth** for deploying the sdk-ai-bots
 chatbot system to Azure.
 
-> **Status:** provisioning uses one azd path. Pipeline preview and apply both
-> resolve `main.bicep` through `main.bicepparam`; local environments receive
-> the same values through `sync-env-suite.ps1`.
+> **Status:** provisioning uses seven ordered azd layers. Each layer has its own
+> Bicep entry point and receives the same environment values through
+> `sync-env-suite.ps1`.
 
 ## Layout
 
@@ -15,9 +15,7 @@ deployment/
 ├─ azure.yaml                    ← top-level azd manifest
 ├─ package.json                  ← devDeps for hook scripts (tsx, typescript)
 ├─ infra/
-│  ├─ main.bicep                 ← subscription-scope orchestrator
-│  ├─ main.bicepparam            ← shared azd-to-Bicep parameter adapter
-│  ├─ modules/                   ← Bicep modules per layer
+│  ├─ layers/                    ← seven azd provisioning entry points
 │  └─ environments/              ← single source of truth for env metadata
 │     └─ environment-suite.yaml
 ├─ hooks/                        ← azd lifecycle hooks (ts)
@@ -53,6 +51,9 @@ pwsh ./scripts/sync-env-suite.ps1 -Environment dev
 
 # 3. Provision dev
 azd provision --environment dev --no-prompt
+
+# Or update one layer independently
+azd provision agent-server --environment dev --no-prompt
 
 # 4. Deploy the application services (image must already be in ACR)
 AZD_SKIP_IMAGE_BUILD=1 azd deploy frontend     --environment dev --no-prompt

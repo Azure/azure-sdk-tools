@@ -121,7 +121,7 @@ Logic App callers.
 
 ---
 
-## 6. Register the 15 pipelines
+## 6. Register the 22 pipelines
 
 In Azure DevOps → Pipelines → "New pipeline" → "Existing Azure Pipelines
 YAML file", create the following. **Name them exactly** per the repo
@@ -141,6 +141,16 @@ convention (`tools - <tool-name> - <action>`).
 - [ ] `tools - sdk-ai-bots-function-app - cd` → [function-app.cd.yml](../component-pipelines/function-app/function-app.cd.yml)
 - [ ] `tools - sdk-ai-bots-agent - cd` → [agent.cd.yml](../component-pipelines/agent/agent.cd.yml)
 - [ ] `tools - sdk-ai-bots-knowledge-sync - cd` → [knowledge-sync.cd.yml](../component-pipelines/knowledge-sync/knowledge-sync.cd.yml) (scheduled)
+
+### Layer provision (7)
+
+- [ ] `tools - sdk-ai-bots-resource-group - provision` → [resource-group.provision.yml](../component-pipelines/resource-group/resource-group.provision.yml)
+- [ ] `tools - sdk-ai-bots-shared-resources - provision` → [shared-resources.provision.yml](../component-pipelines/shared-resources/shared-resources.provision.yml)
+- [ ] `tools - sdk-ai-bots-agent - provision` → [agent.provision.yml](../component-pipelines/agent/agent.provision.yml)
+- [ ] `tools - sdk-ai-bots-frontend - provision` → [frontend.provision.yml](../component-pipelines/frontend/frontend.provision.yml)
+- [ ] `tools - sdk-ai-bots-agent-server - provision` → [agent-server.provision.yml](../component-pipelines/agent-server/agent-server.provision.yml)
+- [ ] `tools - sdk-ai-bots-function-app - provision` → [function-app.provision.yml](../component-pipelines/function-app/function-app.provision.yml)
+- [ ] `tools - sdk-ai-bots-logic-app - provision` → [logic-app.provision.yml](../component-pipelines/logic-app/logic-app.provision.yml)
 
 ### Provision orchestrators (3)
 
@@ -353,9 +363,10 @@ plane and RBAC below must be created by hand (one-time).
 
 - The ADE environment definition manifest is [infra/environment.yaml](../infra/environment.yaml).
 - It runs the **RG-scoped** entry template [infra/ade/main.bicep](../infra/ade/main.bicep)
-  (ADE owns the resource group; the subscription-scoped [infra/main.bicep](../infra/main.bicep)
-  is used only by azd / `az deployment sub`).
-- `ade/main.bicep` mirrors the layer wiring of `main.bicep`; keep them in sync.
+  (ADE owns the resource group; azd uses the subscription-scoped entry points
+  under [infra/layers](../infra/layers/)).
+- `ade/main.bicep` mirrors the resources and dependency wiring declared by the
+  azd layers; keep them in sync.
 
 ### 16.2 Dedicated sandbox subscription
 
@@ -439,7 +450,7 @@ preview:
 | 3 | 3 ADO Environments with approvers | per ADO project |
 | 4 | Replace `REPLACE_WITH_*` placeholders | per fork |
 | 5 | 3 Entra app registrations (agent EasyAuth audience) | per ADO project |
-| 6 | Register 18 pipelines + authorize cross-repo resources | per ADO project |
+| 6 | Register 22 pipelines + authorize cross-repo resources | per ADO project |
 | 7 | CODEOWNERS, root README, branch protection | per fork |
 | 8 | First `azd provision dev` | per env |
 | 9 | Seed Key Vault secrets | per env |
@@ -474,7 +485,7 @@ them** — exactly like the Logic App workflow reverting to its empty shell.
 
 | Resource | Bicep provisions | Hook re-applies | Hook | Why Bicep can't own it | Recovery after re-provision |
 |---|---|---|---|---|---|
-| **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT | [hooks/lib/patch-workflow.ts](../hooks/lib/patch-workflow.ts) (fired by [hooks/postdeploy.ts](../hooks/postdeploy.ts); also [scripts/deploy-logic-app.ts](../scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy logic-app` (or any `azd deploy` → global postdeploy), or `npm run deploy:logic-app` |
+| **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT; `Disabled` until Teams OAuth is connected, then `Enabled` | [hooks/lib/patch-workflow.ts](../hooks/lib/patch-workflow.ts) (fired by [hooks/function-postdeploy.ts](../hooks/function-postdeploy.ts); also [scripts/deploy-logic-app.ts](../scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy function-app`, or `npm run deploy:logic-app` |
 | **Frontend App Service** container image | Site pinned to mutable `:dev` tag | Repoints site to immutable `dev-N.0.0` via `az webapp config container set` | [hooks/frontend-predeploy.ts](../hooks/frontend-predeploy.ts) | azd doesn't re-provision on deploy, and the immutable tag is auto-incremented against ACR at **deploy** time (unknown at provision); the resolved tag is **not** persisted to a Bicep param | `azd deploy frontend` |
 | **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](../hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
 | **Agent-server production site** container image | Site `linuxFxVersion` from `AGENT_SERVER_IMAGE_REPOSITORY` (defaults to `:dev`) | azd remotely builds `azure-sdk-qa-bot-agent-server`, records `SERVICE_AGENT_SERVER_IMAGE_NAME`, and deploys it directly to the site resolved by `resourceName: ${AGENT_SERVER_SITE_NAME}` | Native azd App Service container deployment | `AGENT_SERVER_IMAGE_TAG` pins pipeline builds; local deploys use azd's generated immutable tag | `azd deploy agent-server` |

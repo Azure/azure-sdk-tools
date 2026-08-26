@@ -1,46 +1,53 @@
 targetScope = 'resourceGroup'
 
-@description('Name of the shared storage account (created by the shared resources module) that the frontend identity needs data-plane access to.')
+@description('Name of the shared storage account that the frontend identity needs data-plane access to.')
 param storageAccountName string
 
-@description('Name of the shared container registry (created by the shared resources module) that hosts the frontend image.')
+@description('Name of the shared container registry that hosts the frontend image.')
 param containerRegistryName string
 
 @description('Frontend container image repository and tag (e.g. `azure-sdk-qa-bot:dev`), pushed to the shared registry by CI / `frontend-predeploy.ts`.')
 param frontendImageRepository string
 
-// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep. In
+// Resource-name overrides — see the shared-resources layer. In
 // prod the frontend identity, Log Analytics workspace, App Service plan, web
 // app, and bot service share the same short name (`azsdkqabot`).
 @description('Base name shared by the frontend managed identity, Log Analytics workspace, App Service plan, web app, and bot service.')
-param frontendBaseName string = 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendBaseNameOverride string = ''
+
+@description('Azure Bot Service registration name. Kept separate from the frontend name because Microsoft App ID is immutable and identity migrations require a new bot handle.')
+param botServiceNameOverride string = ''
 
 @description('Name of the frontend Application Insights component.')
-param frontendAppInsightsName string = 'azsdkqabot-insights-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendAppInsightsNameOverride string = ''
 
 @description('Name of the email-alerts action group.')
-param frontendEmailActionGroupName string = 'azsdkqabot-email-alerts-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendEmailActionGroupNameOverride string = ''
 
 @description('Name of the frontend site diagnostic setting.')
-param frontendDiagnosticSettingName string = 'azsdkqabot-diagnostic-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendDiagnosticSettingNameOverride string = ''
 
 @description('Name of the health-check web test.')
-param frontendHealthTestName string = 'azsdkqabot-health-test-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendHealthTestNameOverride string = ''
 
 @description('Name of the server-errors metric alert.')
-param frontendServerErrorsAlertName string = 'azsdkqabot-server-errors-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendServerErrorsAlertNameOverride string = ''
 
 @description('Name of the health-check-failure metric alert.')
-param frontendHealthCheckAlertName string = 'azsdkqabot-health-check-failure-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendHealthCheckAlertNameOverride string = ''
 
 @description('Name of the delete lock guarding the frontend resource group.')
-param frontendDeleteLockName string = 'azsdkqabot-delete-lock-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+param frontendDeleteLockNameOverride string = ''
 
 @description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — MUST be non-empty or the container crashes on `ConversationHandler` initialization (Table Storage returns 400 InvalidInput for empty names).')
 param azureTableNameForConversation string
 
 @description('OAuth2 scope the frontend requests for calls to the agent server. Format `api://<server-audience>/.default`. Read at startup by config.js validation — MUST be non-empty.')
 param ragServiceScope string
+
+@description('Entra application client ID used by Teams and Azure Bot Service. The app is multitenant only when Azure and Teams use different tenants. The frontend UAMI is federated to this application for secretless authentication.')
+@minLength(1)
+param botAppId string
 
 @description('User-visible display name for the Teams bot (surfaced by the Bot Framework SDK). Per-env value; defaults to the prod name.')
 param teamsBotFullDisplayName string = 'Azure SDK Q&A Bot'
@@ -56,6 +63,17 @@ param githubAppKeyName string = 'azure-sdk-automation'
 
 @description('GitHub owner (org/user) the GitHub App is installed under.')
 param githubAppInstallOwner string = 'Azure'
+
+var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
+var frontendBaseName = !empty(frontendBaseNameOverride) ? frontendBaseNameOverride : 'azsdkqabot-${suffix}'
+var botServiceName = !empty(botServiceNameOverride) ? botServiceNameOverride : '${frontendBaseName}-bot'
+var frontendAppInsightsName = !empty(frontendAppInsightsNameOverride) ? frontendAppInsightsNameOverride : 'azsdkqabot-insights-${suffix}'
+var frontendEmailActionGroupName = !empty(frontendEmailActionGroupNameOverride) ? frontendEmailActionGroupNameOverride : 'azsdkqabot-email-alerts-${suffix}'
+var frontendDiagnosticSettingName = !empty(frontendDiagnosticSettingNameOverride) ? frontendDiagnosticSettingNameOverride : 'azsdkqabot-diagnostic-${suffix}'
+var frontendHealthTestName = !empty(frontendHealthTestNameOverride) ? frontendHealthTestNameOverride : 'azsdkqabot-health-test-${suffix}'
+var frontendServerErrorsAlertName = !empty(frontendServerErrorsAlertNameOverride) ? frontendServerErrorsAlertNameOverride : 'azsdkqabot-server-errors-${suffix}'
+var frontendHealthCheckAlertName = !empty(frontendHealthCheckAlertNameOverride) ? frontendHealthCheckAlertNameOverride : 'azsdkqabot-health-check-failure-${suffix}'
+var frontendDeleteLockName = !empty(frontendDeleteLockNameOverride) ? frontendDeleteLockNameOverride : 'azsdkqabot-delete-lock-${suffix}'
 
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
   name: frontendBaseName
@@ -197,7 +215,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'BOT_ID'
-          value: userAssignedIdentity.properties.clientId
+          value: botAppId
         }
         {
           name: 'BOT_TENANT_ID'
@@ -205,7 +223,11 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'BOT_TYPE'
-          value: 'UserAssignedMsi'
+          value: 'SingleTenant'
+        }
+        {
+          name: 'BOT_MANAGED_IDENTITY_CLIENT_ID'
+          value: userAssignedIdentity.properties.clientId
         }
         {
           name: 'AZURE_CLIENT_ID'
@@ -304,14 +326,13 @@ resource diagnosticSetting 'microsoft.insights/diagnosticSettings@2021-05-01-pre
 }
 
 resource botService 'Microsoft.BotService/botServices@2023-09-15-preview' = {
-  name: frontendBaseName
+  name: botServiceName
   properties: {
     displayName: 'Azure SDK Q&A Bot'
     endpoint: 'https://${site.properties.defaultHostName}/api/messages'
-    msaAppId: userAssignedIdentity.properties.clientId
+    msaAppId: botAppId
     msaAppTenantId: userAssignedIdentity.properties.tenantId
-    msaAppType: 'UserAssignedMSI'
-    msaAppMSIResourceId: userAssignedIdentity.id
+    msaAppType: 'SingleTenant'
   }
   location: 'global'
   sku: {
@@ -447,32 +468,46 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
   }
 }
 
-module azureSdkQaBotModule './azureSdkQaBotModule.bicep' = {
-  name: 'azureSdkQaBotModule'
-  params: {
-    storageAccountName: storageAccountName
-    userAssignedIdentityPropertiesPrincipalId: userAssignedIdentity.properties.principalId
-  }
+resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
+  name: storageAccountName
 }
 
+var storageRoleIds = [
+  '17d1049b-9a84-46fb-8f53-869881c3d3ab'
+  'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+  '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
+]
+
+resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleId in storageRoleIds: {
+  scope: storageAccount
+  name: guid(storageAccount.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId)
+    principalId: userAssignedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}]
+
 // Outputs
-output botIdentityName string = userAssignedIdentity.name
-output botBaseUrl string = 'https://${site.properties.defaultHostName}'
-// UAMI clientId used by the bot process itself (BOT_ID / MicrosoftAppId in
-// UserAssignedMsi mode) and by the server AAD app's pre-authorization list.
-// NOT a valid AAD token audience — AAD refuses to mint tokens for MSI SPs
-// (AADSTS100040), so callers (e.g. the Logic App HTTP action) must NOT use
-// this value as the `audience` for a ManagedServiceIdentity auth block.
-output botClientId string = userAssignedIdentity.properties.clientId
+output BOT_IDENTITY_NAME string = userAssignedIdentity.name
+output BOT_SERVICE_NAME string = botService.name
+output BOT_BASE_URL string = 'https://${site.properties.defaultHostName}'
+// Entra application used by Teams and Azure Bot Service. Its sign-in audience
+// is selected by preprovision from the Azure and Teams tenant IDs.
+output BOT_ID string = botAppId
+// UAMI retained for Azure resource access and used as the federated assertion
+// that authenticates the BOT_ID application without a client secret.
+output BOT_MANAGED_IDENTITY_CLIENT_ID string = userAssignedIdentity.properties.clientId
+output BOT_MANAGED_IDENTITY_PRINCIPAL_ID string = userAssignedIdentity.properties.principalId
 // Token audience callers use when POSTing to the bot's /api/messages. For a
 // bot registered as `msaAppType: UserAssignedMSI`, the Bot Framework
 // CloudAdapter validates incoming JWTs against the Bot Framework Service
 // audience — not the UAMI clientId. Using anything else fails at AAD token
 // acquisition or at the adapter's inbound auth.
-output botAudience string = 'https://api.botframework.com'
+output BOT_AUDIENCE string = 'https://api.botframework.com'
 // Consumed by hooks/lib/sync-teams-env.ts to populate the Teams Toolkit env
 // file (azure-sdk-qa-bot/env/.env.<env>) so `teamsapp` no longer needs its own
 // arm/deploy step — azd owns provisioning and feeds these values to Teams.
-output botSiteResourceId string = site.id
-output botDomain string = site.properties.defaultHostName
-output botTenantId string = userAssignedIdentity.properties.tenantId
+output BOT_AZURE_APP_SERVICE_RESOURCE_ID string = site.id
+output BOT_DOMAIN string = site.properties.defaultHostName
+output BOT_TENANT_ID string = userAssignedIdentity.properties.tenantId

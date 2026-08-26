@@ -14,6 +14,8 @@
 import { execSync } from "child_process";
 import * as path from "path";
 import { getNextVersionTag } from "./lib/acr-tags";
+import { getEnvSuiteValue } from "./lib/env-suite";
+import { syncTeamsEnv } from "./lib/sync-teams-env";
 
 const REGISTRY_NAME = process.env.CONTAINER_REGISTRY_NAME ?? "";
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "dev";
@@ -32,6 +34,19 @@ function log(msg: string): void {
 }
 
 (async () => {
+  if (process.env.AZD_SKIP_TEAMS_PROVISION === "1") {
+    log("AZD_SKIP_TEAMS_PROVISION=1 — skipping Teams environment generation.");
+  } else {
+    syncTeamsEnv({
+      azdEnvName: ENV_NAME,
+      env: process.env,
+      teamsAppId: getEnvSuiteValue(ENV_NAME, "teamsAppId"),
+      teamsAppTenantId: getEnvSuiteValue(ENV_NAME, "teamsAppTenantId"),
+      log,
+    });
+    log("Generated the azd-owned Teams environment file.");
+  }
+
   if (process.env.AZD_SKIP_IMAGE_BUILD === "1") {
     log("AZD_SKIP_IMAGE_BUILD=1 — skipping image build/push.");
     return;

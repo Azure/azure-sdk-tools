@@ -35,20 +35,20 @@ environments:
         # Symbolic subscription reference. The pipeline maps this to a real
         # service-connection name via /eng/pipelines/templates/variables/globals.yml
         # (entry: subscriptionMap.dev → SERVICE_CONNECTION + AZURE_SUBSCRIPTION_ID).
-        subscription: 'Azure SDK Test Resources - TME'
-        subscriptionId: '4d042dc6-fe17-4698-a23f-ec6a8d1e98f4'
-        tenantId: '70a036f6-8e4d-4615-bad6-149c02e7720d'
+        subscription: 'Azure SDK Engineering System'
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
-        resourceGroupPrefix: 'azure-sdk-qa-bot-dev'
-        keyVaultName: 'azsdkqabot-kv-dev'
-        appConfigName: 'azsdkqabot-config-dev'
-        containerRegistryName: 'azsdkqabotacrdev'
+        resourceGroupPrefix: 'azure-sdk-qa-bot-dev-20260826'
+        keyVaultName: 'azsdkqabot-kv-dev260826'
+        appConfigName: 'azsdkqabot-config-dev-20260826'
+        containerRegistryName: 'azsdkqabotacrdev20260826'
         # Site names for CD pipelines. These are passed as bicep params
         # (frontendBaseName / agentServerSiteName / functionAppName) so the
         # deployed resources match — no post-provision discovery required.
-        frontendSiteName: 'azsdkqabot-dev'
-        agentServerSiteName: 'azuresdkqabot-server-dev'
-        functionAppName: 'azuresdkqabot-function-dev'
+        frontendSiteName: 'azsdkqabot-dev-20260826'
+        agentServerSiteName: 'azuresdkqabot-server-dev-20260826'
+        functionAppName: 'azuresdkqabot-function-dev-20260826'
         # Teams Toolkit app registration for this environment. Each env owns a
         # DIFFERENT Teams app (created by `teamsapp provision`); the value is
         # written into azure-sdk-qa-bot/env/.env.azd by the postprovision hook
@@ -66,9 +66,7 @@ environments:
         aiLocation: 'eastus2'
         cosmosDbLocation: 'eastus2'
         bicepOverrides:
-            BOT_APP_ID: '00ba4f23-555b-4a70-b79d-40415a4d369f'
-            BOT_SERVICE_NAME: 'azsdkqabot-dev-federated'
-            SERVER_AUDIENCE: '89cfbcca-e577-41b8-a4fb-bc6178b7260c'
+            BOT_SERVICE_NAME: 'azsdkqabot-dev-20260826-federated'
             # Set to 'true' for one provision only when recovering a soft-deleted
             # AIServices account, then reset to 'false' after recovery succeeds.
             AI_RESOURCE_RESTORE: 'false'

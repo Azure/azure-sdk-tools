@@ -32,6 +32,7 @@ deployment/
 
 - [Master plan](DEPLOYMENT_TRANSFORMATION.md)
 - [Manual setup guide](docs/manual-setup.md) — **start here for a new ADO project / subscription**
+- [Dev deployment checklist](docs/dev-deployment-checklist.md)
 - [Environment-contract](docs/environment-contract.md)
 - [Deploy runbook](docs/runbook-deploy.md)
 - [Rollback runbook](docs/runbook-rollback.md)

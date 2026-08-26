@@ -8,7 +8,7 @@ import { runCommand, runCommandOptions, cleanupSamplesFolder } from './utils.js'
 
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
-import { customizeCodes, formatSdk, lintFix, updateSnippets } from './devToolUtils.js';
+import { customizePackage, formatSdk, lintFix, updateSnippets } from './devToolUtils.js';
 import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 async function packPackage(packageDirectory: string, packageName: string) {
@@ -86,17 +86,15 @@ export async function buildPackage(
   await runCommand(`pnpm`, ['install'], runCommandOptions, false);
   logger.info(`Pnpm install successfully.`);
 
+  await customizePackage(packageDirectory);
+
   if (options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
     await lintFix(packageDirectory);
   }
 
   logger.info(`Start to build package '${name}'.`);
   const modularSDKType = getModularSDKType(packageDirectory);
-  let errorAsWarning = false;
-  if (modularSDKType === ModularSDKType.DataPlane) {
-    await customizeCodes(packageDirectory);
-    errorAsWarning = true;
-  }
+  const errorAsWarning = modularSDKType === ModularSDKType.DataPlane;
   try {
     await runCommand(
       'pnpm',

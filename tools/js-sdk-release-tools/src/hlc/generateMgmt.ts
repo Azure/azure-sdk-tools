@@ -15,7 +15,7 @@ import { getReleaseTool } from './utils/getReleaseTool.js';
 import { addApiViewInfo } from '../utils/addApiViewInfo.js';
 import { defaultChildProcessTimeout } from '../common/utils.js';
 import { sanitizeAdditionalArgs } from '../common/utils.js';
-import { lintFix, updateSnippets } from '../common/devToolUtils.js';
+import { customizePackage, lintFix, updateSnippets } from '../common/devToolUtils.js';
 import { ensurePnpmInstalled } from '../common/rushUtils.js';
 import { ChangelogResult } from '../changelog/v2/ChangelogGenerator.js';
 import { RunMode } from '../common/types.js';
@@ -123,6 +123,8 @@ export async function generateMgmt(options: {
       await ensurePnpmInstalled();
       logger.info(`Start to run command: 'pnpm install'.`);
       execSync('pnpm install', { stdio: 'inherit' });
+
+      await customizePackage(packagePath);
 
       if (options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
         await lintFix(packagePath);

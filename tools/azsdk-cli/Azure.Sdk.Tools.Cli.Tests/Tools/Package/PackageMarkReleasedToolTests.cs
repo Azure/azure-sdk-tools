@@ -34,6 +34,8 @@ public class PackageMarkReleasedToolTests
                 Version = "1.0.0",
                 ReleasedApiHash = "hash",
                 ApprovalStatus = "Approved",
+                ApprovalRecordId = "approval-record-id",
+                AppliedInheritanceRule = "prereleaseToPrerelease",
                 IsReleased = false
             });
         apiViewService = new Mock<IAPIViewService>();
@@ -85,6 +87,8 @@ public class PackageMarkReleasedToolTests
         var apiView = document.RootElement.GetProperty("api_view");
 
         Assert.That(reviewHub.GetProperty("packageVersionId").GetString(), Is.EqualTo("22222222-2222-2222-2222-222222222222"));
+        Assert.That(reviewHub.GetProperty("approvalRecordId").GetString(), Is.EqualTo("approval-record-id"));
+        Assert.That(reviewHub.GetProperty("appliedInheritanceRule").GetString(), Is.EqualTo("prereleaseToPrerelease"));
         Assert.That(reviewHub.TryGetProperty("succeeded", out _), Is.False);
         Assert.That(apiView.GetProperty("revisionId").GetString(), Is.EqualTo("revision456"));
         Assert.That(apiView.TryGetProperty("message", out _), Is.False);

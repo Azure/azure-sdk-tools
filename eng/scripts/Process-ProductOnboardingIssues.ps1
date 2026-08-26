@@ -82,7 +82,7 @@ foreach ($issue_number in $issues) {
     $data_plane = $matches["DataPlane"]
     $data_plane = $data_plane.Trim()
     if ($data_plane -eq "None") {
-        $data_plane = ""
+      $data_plane = ""
     }
   }
 
@@ -90,7 +90,7 @@ foreach ($issue_number in $issues) {
     $mgmt_plane = $matches["MgmtPlane"]
     $mgmt_plane = $mgmt_plane.Trim()
     if ($mgmt_plane -eq "None") {
-        $mgmt_plane = ""
+      $mgmt_plane = ""
     }
   }
 

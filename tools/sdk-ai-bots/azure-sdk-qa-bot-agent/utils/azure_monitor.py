@@ -22,6 +22,7 @@ from datetime import timedelta
 from typing import Any
 
 from azure.monitor.opentelemetry import configure_azure_monitor
+from azure.monitor.query import LogsQueryError, LogsQueryPartialResult, LogsQueryResult
 from azure.monitor.query.aio import LogsQueryClient
 from opentelemetry import metrics as otel_metrics
 from opentelemetry.sdk.metrics.view import View
@@ -191,8 +192,32 @@ union
         logger.exception("App Insights query failed for trace_id=%s", trace_id)
         return []
 
+    if isinstance(result, LogsQueryResult):
+        tables = result.tables
+    elif isinstance(result, LogsQueryPartialResult):
+        logger.warning(
+            "App Insights query returned partial results for trace_id=%s: %s",
+            trace_id,
+            result.partial_error,
+        )
+        tables = result.partial_data
+    elif isinstance(result, LogsQueryError):
+        logger.error(
+            "App Insights query failed for trace_id=%s: %s",
+            trace_id,
+            result.message,
+        )
+        return []
+    else:
+        logger.error(
+            "App Insights query returned an unexpected result for trace_id=%s: %s",
+            trace_id,
+            type(result).__name__,
+        )
+        return []
+
     spans: list[TraceSpan] = []
-    for table in result.tables:
+    for table in tables:
         col_idx = {col: i for i, col in enumerate(table.columns)}
         for row in table.rows:
             spans.append(

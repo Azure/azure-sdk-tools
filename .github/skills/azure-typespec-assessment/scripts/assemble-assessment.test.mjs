@@ -1061,7 +1061,7 @@ test("canonical report directories cannot be overwritten", () => {
     const canonicalOutput = join(
       scriptDirectory,
       "..",
-      "test-evidence",
+      "evals",
       "assessments",
       "123",
     );

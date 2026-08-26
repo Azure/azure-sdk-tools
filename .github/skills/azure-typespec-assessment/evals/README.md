@@ -22,13 +22,13 @@ and legacy evidence:
 From the repository root:
 
 ```powershell
-node .github\skills\azure-typespec-assessment\test-evidence\scripts\run-e2e.mjs
+node .github\skills\azure-typespec-assessment\evals\scripts\run-e2e.mjs
 ```
 
 Run one case or choose a persistent output location:
 
 ```powershell
-node .github\skills\azure-typespec-assessment\test-evidence\scripts\run-e2e.mjs `
+node .github\skills\azure-typespec-assessment\evals\scripts\run-e2e.mjs `
   --case 44988 `
   --output C:\temp\typespec-assessment-e2e
 ```
@@ -44,7 +44,7 @@ finishes.
 Use an existing `azure-rest-api-specs` clone that contains the manifest commits:
 
 ```powershell
-node .github\skills\azure-typespec-assessment\test-evidence\scripts\materialize-workspaces.mjs `
+node .github\skills\azure-typespec-assessment\evals\scripts\materialize-workspaces.mjs `
   --repository C:\workspace\azure-rest-api-specs
 ```
 
@@ -59,11 +59,11 @@ and retains the corresponding HTML.
 
 ## Vally
 
-The skill eval at `..\evals\eval.yaml` covers routing boundaries and uses PR
+The skill eval at `assessment.eval.yaml` covers routing boundaries and uses PR
 44988 as the representative report-generation capability case. The deterministic
 Node E2E test covers all 11 cases without model or network variability:
 
 ```powershell
-node --test .github\skills\azure-typespec-assessment\test-evidence\scripts\run-e2e.test.mjs
+node --test .github\skills\azure-typespec-assessment\evals\scripts\run-e2e.test.mjs
 vally lint .github\skills\azure-typespec-assessment --strict
 ```

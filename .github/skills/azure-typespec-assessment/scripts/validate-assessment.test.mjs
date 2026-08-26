@@ -9,9 +9,9 @@ import test from "node:test";
 import {
   correctHistoricalSemanticChains,
   normalizeAssessmentSourceLinks,
-} from "../test-evidence/scripts/finalize-rerun-assessments.mjs";
-import { buildCompliance } from "../test-evidence/scripts/document-compliance.mjs";
-import { deriveOperationChanges } from "../test-evidence/scripts/operation-changes.mjs";
+} from "../evals/scripts/finalize-rerun-assessments.mjs";
+import { buildCompliance } from "../evals/scripts/document-compliance.mjs";
+import { deriveOperationChanges } from "../evals/scripts/operation-changes.mjs";
 import { deriveCodeSafety } from "./assessment-display.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
@@ -1159,7 +1159,7 @@ test("generated fixture reports are reproducible in a clean checkout", () => {
       [
         fileURLToPath(
           new URL(
-            "../test-evidence/scripts/generate-test-evidence.mjs",
+            "../evals/scripts/generate-test-evidence.mjs",
             import.meta.url,
           ),
         ),
@@ -1171,7 +1171,7 @@ test("generated fixture reports are reproducible in a clean checkout", () => {
     const cases = JSON.parse(
       readFileSync(
         new URL(
-          "../test-evidence/fixtures/recent-pr-cases.json",
+          "../evals/fixtures/recent-pr-cases.json",
           import.meta.url,
         ),
         "utf8",
@@ -1203,7 +1203,7 @@ test("PR 44988 compliance fixture retains both documented mismatches", () => {
   const fixture = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/recent-pr-compliance.json",
+        "../evals/fixtures/recent-pr-compliance.json",
         import.meta.url,
       ),
       "utf8",
@@ -1232,7 +1232,7 @@ test("PR 44988 classifies versioned service gateway LRO changes as downstream br
   const assessment = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/assessments/44988.json",
+        "../evals/fixtures/assessments/44988.json",
         import.meta.url,
       ),
       "utf8",
@@ -1263,7 +1263,7 @@ test("PR 44200 compliance findings retain finding-specific code evidence", () =>
   const fixture = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/recent-pr-compliance.json",
+        "../evals/fixtures/recent-pr-compliance.json",
         import.meta.url,
       ),
       "utf8",
@@ -1298,7 +1298,7 @@ test("compliance fixtures select exact source evidence", () => {
   const fixture = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/recent-pr-compliance.json",
+        "../evals/fixtures/recent-pr-compliance.json",
         import.meta.url,
       ),
       "utf8",

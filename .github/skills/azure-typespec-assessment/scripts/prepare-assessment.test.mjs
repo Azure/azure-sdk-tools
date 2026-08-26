@@ -551,7 +551,7 @@ test("recent PR evidence contains ten source-linked cases", () => {
   const cases = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/recent-pr-cases.json",
+        "../evals/fixtures/recent-pr-cases.json",
         import.meta.url,
       ),
       "utf8",
@@ -585,7 +585,7 @@ test("recent PR evidence includes LRO and paging operation cases", () => {
   const operations = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/recent-pr-operations.json",
+        "../evals/fixtures/recent-pr-operations.json",
         import.meta.url,
       ),
       "utf8",
@@ -612,7 +612,7 @@ test("historical fixtures retain TypeSpec source diffs for every case", () => {
   const fixture = JSON.parse(
     readFileSync(
       new URL(
-        "../test-evidence/fixtures/recent-pr-typespec-diffs.json",
+        "../evals/fixtures/recent-pr-typespec-diffs.json",
         import.meta.url,
       ),
       "utf8",

@@ -77,7 +77,7 @@ stimuli:
       fixture and render its final HTML report to output/assessment.html.
     environment:
       files:
-        - src: ../test-evidence/assessments/44988/assessment.json
+        - src: assessments/44988/assessment.json
           dest: assessment.json
         - src: ../scripts/validate-assessment.mjs
           dest: validate-assessment.mjs

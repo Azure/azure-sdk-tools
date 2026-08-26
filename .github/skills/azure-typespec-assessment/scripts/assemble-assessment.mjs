@@ -19,7 +19,7 @@ const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const CANONICAL_REPORT_ROOT = resolve(
   SCRIPT_DIRECTORY,
   "..",
-  "test-evidence",
+  "evals",
   "assessments",
 );
 

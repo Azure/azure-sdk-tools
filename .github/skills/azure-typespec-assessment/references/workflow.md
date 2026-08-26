@@ -163,6 +163,6 @@ artifacts as “no break.”
 Temporary worktrees are removed automatically. Generated assessment output is not committed unless the user requests it.
 
 For a curated evidence set, run
-`test-evidence/scripts/finalize-rerun-assessments.mjs`. The finalizer validates
+`evals/scripts/finalize-rerun-assessments.mjs`. The finalizer validates
 each structured assessment and retains `assessment.json` and
 `assessment.html`.

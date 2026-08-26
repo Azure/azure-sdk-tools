@@ -50,12 +50,13 @@ public final class MarkdownRenderer {
 
         for (ReviewLine line : reviewLines) {
             List<ReviewToken> tokens = line.getTokens();
-            String renderedLine = renderTokens(tokens);
-
             if (tokens.isEmpty()) {
                 output.add("");
-            } else if (!renderedLine.isEmpty()) {
-                output.add(indent + renderedLine);
+            } else {
+                String renderedLine = renderTokens(tokens);
+                if (!renderedLine.isEmpty()) {
+                    output.add(indent + renderedLine);
+                }
             }
 
             if (!line.getChildren().isEmpty()) {
@@ -73,11 +74,25 @@ public final class MarkdownRenderer {
             }
 
             // Comments are review context, including method groupings, API shape hints, and inline values.
-            if (token.hasPrefixSpace()) {
+            String value = token.getValue();
+            int start = 0;
+            int end = value.length();
+            while (start < end && Character.isWhitespace(value.charAt(start))) {
+                start++;
+            }
+            while (end > start && Character.isWhitespace(value.charAt(end - 1))) {
+                end--;
+            }
+
+            boolean prefixSpace = token.hasPrefixSpace() || start > 0;
+            boolean suffixSpace = token.hasSuffixSpace() || end < value.length();
+            if (prefixSpace && line.length() > 0 && !Character.isWhitespace(line.charAt(line.length() - 1))) {
                 line.append(' ');
             }
-            line.append(token.getValue());
-            if (token.hasSuffixSpace()) {
+
+            line.append(value, start, end);
+
+            if (suffixSpace && line.length() > 0 && !Character.isWhitespace(line.charAt(line.length() - 1))) {
                 line.append(' ');
             }
         }

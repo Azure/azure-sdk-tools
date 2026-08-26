@@ -50,6 +50,8 @@ public class CommandLineOptionsTests {
     public void rejectsUnsupportedOption() {
         assertThrows(IllegalArgumentException.class,
             () -> CommandLineOptions.parse(new String[] { "--format=markdown", "input.jar", "output" }));
+        assertThrows(IllegalArgumentException.class,
+            () -> CommandLineOptions.parse(new String[] { "--format=markdown", "output" }));
     }
 
     @Test

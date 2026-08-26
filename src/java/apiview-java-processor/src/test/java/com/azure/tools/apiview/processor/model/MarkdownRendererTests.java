@@ -73,4 +73,24 @@ public class MarkdownRendererTests {
             "public Widget = new Widget(/* Elided */)",
             "```"), MarkdownRenderer.render(listing));
     }
+
+    @Test
+    public void normalizesWhitespaceAtTokenBoundaries() {
+        APIListing listing = new APIListing();
+        listing.addChildLine()
+            .addToken(TokenKind.ANNOTATION_NAME, "@Example", Spacing.NO_SPACE)
+            .addToken(TokenKind.PUNCTUATION, "(", Spacing.NO_SPACE)
+            .addToken(TokenKind.ANNOTATION_PARAMETER_NAME, "value", Spacing.NO_SPACE)
+            .addToken(TokenKind.PUNCTUATION, " = ")
+            .addToken(TokenKind.ANNOTATION_PARAMETER_VALUE, "left")
+            .addToken(TokenKind.PUNCTUATION, " + ")
+            .addToken(TokenKind.ANNOTATION_PARAMETER_VALUE, "right", Spacing.NO_SPACE)
+            .addToken(TokenKind.PUNCTUATION, ",")
+            .addToken(TokenKind.PUNCTUATION, "}", Spacing.SPACE_BEFORE);
+
+        assertEquals(String.join(System.lineSeparator(),
+            "```java",
+            "@Example(value = left + right, }",
+            "```"), MarkdownRenderer.render(listing));
+    }
 }

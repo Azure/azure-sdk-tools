@@ -21,7 +21,7 @@ final class CommandLineOptions {
         }
 
         boolean hasRendererOption = args[0].startsWith(RENDERER_OPTION_PREFIX);
-        if (args.length == 3 && !hasRendererOption) {
+        if (!hasRendererOption && (args.length == 3 || args[0].startsWith("--"))) {
             throw new IllegalArgumentException("Unsupported option '" + args[0] + "'.");
         }
         if (args.length == 2 && hasRendererOption) {

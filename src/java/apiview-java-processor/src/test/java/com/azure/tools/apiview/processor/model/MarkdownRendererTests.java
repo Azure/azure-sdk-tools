@@ -53,10 +53,10 @@ public class MarkdownRendererTests {
     }
 
     @Test
-    public void removesStandaloneCommentsButPreservesInlineComments() {
+    public void preservesStandaloneAndInlineComments() {
         APIListing listing = new APIListing();
         listing.addChildLine()
-            .addToken(TokenKind.COMMENT, "// This interface does not declare any API.");
+            .addToken(TokenKind.COMMENT, "// Service Methods:");
         listing.addChildLine()
             .addToken(TokenKind.KEYWORD, "public")
             .addToken(TokenKind.TYPE_NAME, "Widget", Spacing.NO_SPACE)
@@ -69,6 +69,7 @@ public class MarkdownRendererTests {
 
         assertEquals(String.join(System.lineSeparator(),
             "```java",
+            "// Service Methods:",
             "public Widget = new Widget(/* Elided */)",
             "```"), MarkdownRenderer.render(listing));
     }

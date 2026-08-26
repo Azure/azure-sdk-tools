@@ -50,10 +50,6 @@ public final class MarkdownRenderer {
 
         for (ReviewLine line : reviewLines) {
             List<ReviewToken> tokens = line.getTokens();
-            if (isStandaloneCommentLine(tokens)) {
-                continue;
-            }
-
             String renderedLine = renderTokens(tokens);
 
             if (tokens.isEmpty()) {
@@ -68,24 +64,6 @@ public final class MarkdownRenderer {
         }
     }
 
-    private static boolean isStandaloneCommentLine(List<ReviewToken> tokens) {
-        boolean hasComment = false;
-
-        for (ReviewToken token : tokens) {
-            if (token.isDocumentation()) {
-                continue;
-            }
-            if (token.getTokenKind() != TokenKind.COMMENT) {
-                // Inline comments can carry API information, such as an elided initializer or a service-version value.
-                return false;
-            }
-            hasComment = true;
-        }
-
-        // Comment-only lines are APIView presentation metadata, such as grouping labels or empty-type explanations.
-        return hasComment;
-    }
-
     private static String renderTokens(List<ReviewToken> tokens) {
         StringBuilder line = new StringBuilder();
 
@@ -94,6 +72,7 @@ public final class MarkdownRenderer {
                 continue;
             }
 
+            // Comments are review context, including method groupings, API shape hints, and inline values.
             if (token.hasPrefixSpace()) {
                 line.append(' ');
             }

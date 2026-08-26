@@ -33,9 +33,9 @@
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-high" id="finding-source-enum-replaced-by-open-union">
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>Generated SDK enum shape changes</h3></div>
-<p>CloudHsmClusterSkuName changes from an enum to a named string-literal union. Although its two wire values are unchanged and the union has no open string arm, the declaration-kind change can alter the generated SDK public type shape and enum-member identities, breaking source code that references the prior enum surface without requiring any REST operation change.</p>
+<p>Generated SDKs can replace the fixed enum type and constants with an extensible string representation, breaking source references to the former enum even though serialization is unchanged.</p>
 <p><strong>Evidence:</strong> Replacing an enum with a string-backed union can change generated enum shape and member identities while preserving wire values.; Changed TypeSpec source: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 <details class="finding-source-diff">
 <summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
 <div class="diff">
@@ -63,40 +63,36 @@
 </article></section>
 <section id="azure-compliance"><h2>Azure compliance <span class="compliance-status passed">passed</span></h2><div class="panel"><p class="empty-state good">Azure compliance passed with no mismatches.</p></div></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Make Cloud HSM cluster SKU names forward-compatible with an open string union <span class="count">5 operations</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Make Cloud HSM SKU names extensible <span class="count">5 operations</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">CloudHsmClusterSkuName changes from a closed enum to an open string union. The known wire values Standard_B1 and Standard B10 remain unchanged, while the string variant allows future service values without changing the REST shape.</p>
+<p class="intent-summary">CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> 5 existing operations affected</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>`sku.name` accepted values</td>
-<td>The closed enum accepts only Standard_B1 and Standard B10.</td>
-<td>The open string union preserves both known values and accepts future string values.</td>
+<td>SKU name extensibility</td>
+<td>CloudHsmClusterSkuName was a closed enum.</td>
+<td>CloudHsmClusterSkuName is an open string-backed union with the same known wire values.</td>
 <td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-enum-replaced-by-open-union">Generated SDK enum shape changes</a></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Replace the suppressed enum with a union that includes string and preserves both named values.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">5</span></h4>
 <details class="operation-details">
 <summary><code>CloudHsmClusters_ListBySubscription</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters">GET /subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters</span><span class="operation-version tooltip" data-tooltip="2025-03-31">2025-03-31</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated SDKs can represent unknown future SKU values instead of treating the model as a closed enum; the two known serialized values and consuming REST operations remain unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p></div>
 <div class="diff">
 <div class="diff-file">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div>
 <pre><span class="meta">--- a/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">+++ b/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">@@ -283,10 +283,14 @@ union IdentityType {</span>
-<span class="context"> /**</span>
-<span class="context">  * Sku name of the Cloud HSM Cluster</span>
-<span class="context">  */</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
-<span class="remove">-enum CloudHsmClusterSkuName {</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="remove">-  Standard_B1,</span>
 <span class="remove">-  `Standard B10`,</span>
 <span class="add">+union CloudHsmClusterSkuName {</span>
@@ -104,25 +100,26 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
+<span class="add">+</span>
+<span class="add">+  /** Standard B10 SKU */</span>
+<span class="add">+  StandardB10: &quot;Standard B10&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>CloudHsmClusters_ListByResourceGroup</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters</span><span class="operation-version tooltip" data-tooltip="2025-03-31">2025-03-31</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated SDKs can represent unknown future SKU values instead of treating the model as a closed enum; the two known serialized values and consuming REST operations remain unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p></div>
 <div class="diff">
 <div class="diff-file">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div>
 <pre><span class="meta">--- a/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">+++ b/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">@@ -283,10 +283,14 @@ union IdentityType {</span>
-<span class="context"> /**</span>
-<span class="context">  * Sku name of the Cloud HSM Cluster</span>
-<span class="context">  */</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
-<span class="remove">-enum CloudHsmClusterSkuName {</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="remove">-  Standard_B1,</span>
 <span class="remove">-  `Standard B10`,</span>
 <span class="add">+union CloudHsmClusterSkuName {</span>
@@ -130,25 +127,26 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
+<span class="add">+</span>
+<span class="add">+  /** Standard B10 SKU */</span>
+<span class="add">+  StandardB10: &quot;Standard B10&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>CloudHsmClusters_Get</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</span><span class="operation-version tooltip" data-tooltip="2025-03-31">2025-03-31</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated SDKs can represent unknown future SKU values instead of treating the model as a closed enum; the two known serialized values and consuming REST operations remain unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p></div>
 <div class="diff">
 <div class="diff-file">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div>
 <pre><span class="meta">--- a/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">+++ b/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">@@ -283,10 +283,14 @@ union IdentityType {</span>
-<span class="context"> /**</span>
-<span class="context">  * Sku name of the Cloud HSM Cluster</span>
-<span class="context">  */</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
-<span class="remove">-enum CloudHsmClusterSkuName {</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="remove">-  Standard_B1,</span>
 <span class="remove">-  `Standard B10`,</span>
 <span class="add">+union CloudHsmClusterSkuName {</span>
@@ -156,25 +154,26 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
+<span class="add">+</span>
+<span class="add">+  /** Standard B10 SKU */</span>
+<span class="add">+  StandardB10: &quot;Standard B10&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>CloudHsmClusters_CreateOrUpdate</code><span class="operation-path tooltip" data-tooltip="PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</span><span class="operation-version tooltip" data-tooltip="2025-03-31">2025-03-31</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated SDKs can represent unknown future SKU values instead of treating the model as a closed enum; the two known serialized values and consuming REST operations remain unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p></div>
 <div class="diff">
 <div class="diff-file">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div>
 <pre><span class="meta">--- a/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">+++ b/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">@@ -283,10 +283,14 @@ union IdentityType {</span>
-<span class="context"> /**</span>
-<span class="context">  * Sku name of the Cloud HSM Cluster</span>
-<span class="context">  */</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
-<span class="remove">-enum CloudHsmClusterSkuName {</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="remove">-  Standard_B1,</span>
 <span class="remove">-  `Standard B10`,</span>
 <span class="add">+union CloudHsmClusterSkuName {</span>
@@ -182,25 +181,26 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
+<span class="add">+</span>
+<span class="add">+  /** Standard B10 SKU */</span>
+<span class="add">+  StandardB10: &quot;Standard B10&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>CloudHsmClusters_Update</code><span class="operation-path tooltip" data-tooltip="PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}">PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</span><span class="operation-version tooltip" data-tooltip="2025-03-31">2025-03-31</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Generated SDKs can represent unknown future SKU values instead of treating the model as a closed enum; the two known serialized values and consuming REST operations remain unchanged.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p>CloudHsmClusterSkuName changes from a closed enum to a string-backed union while preserving Standard_B1 and Standard B10. The REST strings stay unchanged, but future service values can be represented.</p></div>
 <div class="diff">
 <div class="diff-file">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div>
 <pre><span class="meta">--- a/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">+++ b/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</span>
 <span class="meta">@@ -283,10 +283,14 @@ union IdentityType {</span>
-<span class="context"> /**</span>
-<span class="context">  * Sku name of the Cloud HSM Cluster</span>
-<span class="context">  */</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
-<span class="remove">-enum CloudHsmClusterSkuName {</span>
+<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
 <span class="remove">-  Standard_B1,</span>
 <span class="remove">-  `Standard B10`,</span>
 <span class="add">+union CloudHsmClusterSkuName {</span>
@@ -208,9 +208,14 @@
 <span class="add">+</span>
 <span class="add">+  /** Standard_B1 SKU */</span>
 <span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
-<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
+<span class="add">+</span>
+<span class="add">+  /** Standard B10 SKU */</span>
+<span class="add">+  StandardB10: &quot;Standard B10&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293">models.tsp:L286-L293</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296">models.tsp:L283-L296</a></p>
 </div>
 </details>
 </div>
@@ -228,7 +233,7 @@
 <dl><dt>autorest</dt><dd>Preserved baseline/head artifacts succeeded; the only OpenAPI diff changes CloudHsmClusterSkuName x-ms-enum modelAsString from false to true and adds explicit metadata for the same two wire values.</dd><dt>tcgc</dt><dd>Preserved baseline/head artifacts succeeded; CloudHsmClusterSkuName changes from fixed enum metadata to union-as-enum metadata and the Standard B10 member identity changes to StandardB10.</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>27s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>10s</td><td>estimated</td></tr><tr><td>Compliance</td><td>1m 55s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>2m 32s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>5s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>2s</td><td>estimated</td></tr><tr><td>Compliance</td><td>20s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>26s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

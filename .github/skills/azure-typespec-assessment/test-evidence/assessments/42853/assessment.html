@@ -20,8 +20,8 @@
 <div class="metric safety-metric"><strong class="status-low"><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>Low</strong><span class="metric-title">Overall code safety</span></div>
 <a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">REST breaking changes</span></a>
 <a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Downstream breaking changes</span></a>
-<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">1 finding</span></a>
-<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">11 operations<br>7 Added, 4 Modified, 0 Removed</span></a>
+<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>2</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">2 findings</span></a>
+<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>1</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">7 operations<br>0 Added, 7 Modified, 0 Removed</span></a>
 </div></div></header>
 <aside class="preview-notice"><div class="container">
 <h2>Preview Notice</h2>
@@ -33,12 +33,30 @@
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-high" id="finding-source-go-client-location-changed">
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>Generated SDK method moves between clients</h3></div>
-<p>The REST contracts are unchanged, but extending four client-location customizations to Go can move bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint between generated clients. Existing Go code that constructs the former clients or invokes these methods through them can stop compiling.</p>
-<p><strong>Evidence:</strong> All four @@clientLocation rules add Go to the language exclusion.; The four HTTP operation contracts remain unchanged.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
+<p>Moving released Go methods between generated clients can break imports, client construction, and method calls while preserving the HTTP contract.</p>
+<p><strong>Evidence:</strong> Expanding a clientLocation exclusion from C# to C# and Go can move existing Go methods between generated clients.; Changed TypeSpec source: specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L46-L74">main.tsp:L46-L74</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L81">back-compatible.tsp:L67-L81</a></p>
 <details class="finding-source-diff">
 <summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
 <div class="diff">
+<div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp</div>
+<pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp</span>
+<span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp</span>
+<span class="meta">@@ -46,24 +46,29 @@ namespace Microsoft.RecoveryServices;</span>
+<span class="omitted"> ... 17 earlier diff lines omitted ...</span>
+<span class="context">    * The 2026-01-31-preview API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2026_01_31_preview: &quot;2026-01-31-preview&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2026-02-01 API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  v2026_02_01: &quot;2026-02-01&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="context"> interface Operations</span>
+<span class="context">   extends Azure.ResourceManager.Legacy.Operations&lt;Response = ArmResponse&lt;ClientDiscoveryResponse&gt;&gt; {}</span></pre>
+</div><div class="diff">
 <div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div>
 <pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
 <span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
@@ -57,28 +75,48 @@
 <span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
 <span class="context">   Microsoft.RecoveryServices,</span>
 <span class="omitted"> ... 5 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">@@ -107,7 +107,7 @@ using Microsoft.RecoveryServices;</span>
-<span class="context"></span>
-<span class="context"> @@clientLocation(RecoveryPoints.moveRecoveryPoint,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"></span>
-<span class="context"> @@clientLocation(ProtectionContainersOperationGroup.refresh,</span></pre>
 </div>
 </details>
 
 </article></section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-client-customizations-outside-client-tsp">
-<summary><span class="severity severity-medium">medium</span><h3>Client customizations are not located in client.tsp</h3></summary>
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-preview-remains-with-stable-version">
+<summary><span class="severity severity-medium">medium</span><h3>Replaced preview remains in the version enum</h3></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The added client-location customizations are in back-compatible.tsp instead of the documented client.tsp file alongside main.tsp.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
+<p><strong>Gap:</strong> The version enum adds 2026-02-01 while retaining 2026-01-31-preview, contrary to the stable-after-preview guidance.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71">main.tsp:L62-L71</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/519e87e016492a37ce9ea6ac0fdf80d26767f47d/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L66-L70">main.tsp:L66-L70</a></p>
+<details class="comparison-details expected-details">
+<summary>Expected</summary>
+<div class="comparison-body">
+<p>For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</a></p>
+<p class="empty-state">The bounded official document evidence did not contain an example block.</p>
+</div>
+</details>
+<details class="comparison-details actual-details">
+<summary>Actual</summary>
+<div class="comparison-body">
+<p>The same version-enum change contains v2026_01_31_preview and v2026_02_01.</p>
+<div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
+<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp:L62-L71</a></div>
+<pre><span class="context"><span class="line-number">62</span>  /**</span>
+<span class="context"><span class="line-number">63</span>   * The 2026-01-31-preview API version.</span>
+<span class="context"><span class="line-number">64</span>   */</span>
+<span class="context"><span class="line-number">65</span>  v2026_01_31_preview: &quot;2026-01-31-preview&quot;,</span>
+<span class="context"><span class="line-number">66</span></span>
+<span class="context"><span class="line-number">67</span>  /**</span>
+<span class="context"><span class="line-number">68</span>   * The 2026-02-01 API version.</span>
+<span class="context"><span class="line-number">69</span>   */</span>
+<span class="context"><span class="line-number">70</span>  v2026_02_01: &quot;2026-02-01&quot;,</span>
+<span class="context"><span class="line-number">71</span>}</span></pre>
+</div></div>
+</div>
+</details>
+</div>
+</details><details class="finding compliance-finding severity-border-medium" id="finding-client-locations-outside-client-tsp">
+<summary><span class="severity severity-medium">medium</span><h3>Client customizations are outside client.tsp</h3></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The new @@clientLocation customizations are in back-compatible.tsp instead of the documented client.tsp customization file.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L70-L70">back-compatible.tsp:L70-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L74-L74">back-compatible.tsp:L74-L74</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L78-L78">back-compatible.tsp:L78-L78</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L110-L110">back-compatible.tsp:L110-L110</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/519e87e016492a37ce9ea6ac0fdf80d26767f47d/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -97,7 +135,7 @@
 <details class="comparison-details actual-details">
 <summary>Actual</summary>
 <div class="comparison-body">
-<p>Expected: client customizations should always be in client.tsp alongside main.tsp. Actual: three @@clientLocation customizations were added to back-compatible.tsp.</p>
+<p>Three @@clientLocation statements are added in RecoveryServicesBackup/back-compatible.tsp.</p>
 <div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
 <div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L78">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp:L67-L78</a></div>
 <pre><span class="context"><span class="line-number">67</span></span>
@@ -117,148 +155,24 @@
 </details>
 </div>
 </details></section>
-<section id="semantic-intents"><h2>Semantic intents <span class="count">2</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Apply established client placement to four Go operations <span class="count">4 operations</span></span></summary>
+<section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
+<summary><span class="change-number">1</span><span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Add 2026 versions and preserve Go client placement <span class="count">1 model properties</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">The client-location customizations extend the existing language-specific placement behavior to Go for bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint. These four methods can move to different generated Go clients, while their HTTP methods, paths, parameters, payloads, and responses remain unchanged.</p>
-<p class="intent-api-surface"><strong>API surface:</strong> 4 existing operations affected</p>
-<table class="change-table">
-<thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
-<tbody><tr>
-<td><span class="change-badge modified">✏️ Modified</span></td>
-<td>Go client location</td>
-<td>The four methods follow the prior language exclusions and generated Go client placement.</td>
-<td>Go is added to all four client-location exclusions, moving the methods to their established generated Go clients.</td>
-<td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-go-client-location-changed">Generated SDK method moves between clients</a><a class="impact severity-medium" href="#finding-client-customizations-outside-client-tsp">Client customizations are not located in client.tsp</a></div></td>
-</tr></tbody>
-</table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Extend four existing @@clientLocation customizations from !csharp to !csharp,!go.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
-<div class="operation-changes">
-<h4>All affected operations <span class="count">4</span></h4>
-<details class="operation-details">
-<summary><code>BackupResourceStorageConfigsNonCRR_BMSPrepareDataMove</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/prepareDataMove">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/prepareDataMove</span><span class="operation-version tooltip" data-tooltip="2026-02-01">2026-02-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/prepareDataMove</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The client-location customizations extend the existing language-specific placement behavior to Go for bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint. These four methods can move to different generated Go clients, while their HTTP methods, paths, parameters, payloads, and responses remain unchanged.</p></div>
-<div class="diff">
-<div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">@@ -67,15 +67,15 @@ using Microsoft.RecoveryServices;</span>
-<span class="context"></span>
-<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
-<span class="omitted"> ... 6 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
-</div>
-</details><details class="operation-details">
-<summary><code>BackupResourceStorageConfigsNonCRR_BMSTriggerDataMove</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/triggerDataMove">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/triggerDataMove</span><span class="operation-version tooltip" data-tooltip="2026-02-01">2026-02-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/triggerDataMove</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The client-location customizations extend the existing language-specific placement behavior to Go for bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint. These four methods can move to different generated Go clients, while their HTTP methods, paths, parameters, payloads, and responses remain unchanged.</p></div>
-<div class="diff">
-<div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">@@ -67,15 +67,15 @@ using Microsoft.RecoveryServices;</span>
-<span class="omitted"> ... 4 earlier diff lines omitted ...</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="omitted"> ... 2 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
-</div>
-</details><details class="operation-details">
-<summary><code>BackupResourceConfigOperationStatuses_GetOperationStatus</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/operationStatus/{operationId}">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/operationStatus/{operationId}</span><span class="operation-version tooltip" data-tooltip="2026-02-01">2026-02-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/operationStatus/{operationId}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The client-location customizations extend the existing language-specific placement behavior to Go for bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint. These four methods can move to different generated Go clients, while their HTTP methods, paths, parameters, payloads, and responses remain unchanged.</p></div>
-<div class="diff">
-<div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">@@ -67,15 +67,15 @@ using Microsoft.RecoveryServices;</span>
-<span class="omitted"> ... 6 earlier diff lines omitted ...</span>
-<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"></span>
-<span class="context"> @@clientLocation(PrivateEndpointConnectionResources.get,</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
-</div>
-</details><details class="operation-details">
-<summary><code>RecoveryPoints_MoveRecoveryPoint</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/move">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/move</span><span class="operation-version tooltip" data-tooltip="2026-02-01">2026-02-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/move</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The client-location customizations extend the existing language-specific placement behavior to Go for bmsPrepareDataMove, bmsTriggerDataMove, getOperationStatus, and moveRecoveryPoint. These four methods can move to different generated Go clients, while their HTTP methods, paths, parameters, payloads, and responses remain unchanged.</p></div>
-<div class="diff">
-<div class="diff-file">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</span>
-<span class="meta">@@ -107,7 +107,7 @@ using Microsoft.RecoveryServices;</span>
-<span class="context"></span>
-<span class="context"> @@clientLocation(RecoveryPoints.moveRecoveryPoint,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"></span>
-<span class="context"> @@clientLocation(ProtectionContainersOperationGroup.refresh,</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112">back-compatible.tsp:L67-L112</a></p>
-</div>
-</details>
-</div>
-</div>
-</article>
-</details><details class="intent-details" id="change-2">
-<summary><span class="change-number">2</span><span>Publish the inherited Recovery Services Backup surface in stable 2026-02-01 <span class="count">1 model properties</span></span></summary>
-<article class="change-card">
-<div class="change-content">
-<p class="intent-summary">Seven existing Recovery Services Backup operations are published under the new stable 2026-02-01 API version. Their HTTP methods, paths, parameters, requests, responses, LRO behavior, and paging behavior are inherited without change.</p>
+<p class="intent-summary">The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> Three model properties are added. Operations using those models expose the new fields, but the 7-operation version-lineage inventory is not a direct-impact count.</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
-<td><span class="change-badge added">➕ Added</span></td>
-<td>2026-02-01 API-version availability</td>
-<td><span class="empty">—</span></td>
-<td>Seven existing operations are exposed in the new stable API version without a wire-behavior change.</td>
-<td><div class="table-impacts"><span class="empty">—</span></div></td>
+<td><span class="change-badge modified">✏️ Modified</span></td>
+<td>version availability and Go client location</td>
+<td>The 2026 versions were absent and the compatibility client locations did not apply to Go.</td>
+<td>The 2026 preview and stable versions are declared and the three operations use explicit Go client locations.</td>
+<td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-go-client-location-changed">Generated SDK method moves between clients</a><a class="impact severity-medium" href="#finding-preview-remains-with-stable-version">Replaced preview remains in the version enum</a><a class="impact severity-medium" href="#finding-client-locations-outside-client-tsp">Client customizations are outside client.tsp</a></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Add the stable Versions.v2026_02_01 member and make it the current version.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L62-L71">main.tsp:L62-L71</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L66-L70">main.tsp:L66-L70</a></p>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L46-L74">main.tsp:L46-L74</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L81">back-compatible.tsp:L67-L81</a></p>
 <div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader 7-operation API-version lineage is summarized here rather than presented as 7 direct behavioral changes.</p></div>
 </div>
 </article>
@@ -274,7 +188,7 @@
 <dl><dt>autorest</dt><dd>Preserved base/head emitter runs succeeded for both projects; head adds stable 2026-02-01 OpenAPI artifacts without changing any previously emitted API version.</dd><dt>tcgc</dt><dd>Preserved base/head generic TCGC output adds 2026-02-01 and changes the default API version; independent base/head source comparison confirms four @@clientLocation scopes changed from !csharp to !csharp,!go.</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>1m 29s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>5s</td><td>estimated</td></tr><tr><td>Compliance</td><td>1m 42s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>2s</td><td>measured</td></tr><tr><td>Total</td><td>3m 18s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>23s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>1s</td><td>estimated</td></tr><tr><td>Compliance</td><td>28s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>2s</td><td>measured</td></tr><tr><td>Total</td><td>54s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

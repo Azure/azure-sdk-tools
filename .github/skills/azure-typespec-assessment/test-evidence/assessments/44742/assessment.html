@@ -20,8 +20,8 @@
 <div class="metric safety-metric"><strong class="status-low"><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>Low</strong><span class="metric-title">Overall code safety</span></div>
 <a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>3</strong><span class="metric-title">REST breaking changes</span></a>
 <a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Downstream breaking changes</span></a>
-<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">0 findings</span></a>
-<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">4 operations<br>0 Added, 2 Modified, 0 Removed</span></a>
+<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">1 finding</span></a>
+<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>1</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">4 operations<br>0 Added, 2 Modified, 0 Removed</span></a>
 </div></div></header>
 <aside class="preview-notice"><div class="container">
 <h2>Preview Notice</h2>
@@ -32,23 +32,23 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">3</span></h2><article class="finding severity-border-high" id="finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation parameter contract changes</h3></div>
-<p>The parameter remains an optional array of strings, but the exact source removes accepted include enum values for the 2026-12-06 special-file entries. Requests using those values are no longer described as valid, so the existing query contract narrows.</p>
+<p>The compact type remains array&lt;string&gt;, but the source removes special-file include values from the existing API contract.</p>
 <p><strong>Evidence:</strong> Directory_ListFilesAndDirectoriesSegment changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:GET:?restype=directory&amp;comp=list.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">models.tsp:L284-L289</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">models.tsp:L389-L394</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">models.tsp:L525-L530</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">models.tsp:L544-L549</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">models.tsp:L590-L595</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">models.tsp:L609-L614</a></p>
 0
 
 </article><article class="finding severity-border-high" id="finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation response contract changes</h3></div>
-<p>The 200 response keeps its top-level schema name, but the exact source removes the XML-serialized SymLink, BlockDevice, CharDevice, Fifo, and Socket collections and their item models. Removing response properties and schemas from the existing 2026-12-06 contract is breaking.</p>
+<p>The top-level schema name is stable, but its XML payload loses five collections and their item models, breaking consumers of existing 2026-12-06 responses.</p>
 <p><strong>Evidence:</strong> Directory_ListFilesAndDirectoriesSegment changed an existing response contract.; Compared REST operation: 2026-12-06:GET:?restype=directory&amp;comp=list.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">models.tsp:L284-L289</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">models.tsp:L389-L394</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">models.tsp:L525-L530</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">models.tsp:L544-L549</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">models.tsp:L590-L595</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">models.tsp:L609-L614</a></p>
 1
 
 </article><article class="finding severity-border-high" id="finding-rest-3-parameter-contract-changed-2026-12-06-put">
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>Operation parameter contract changes</h3></div>
-<p>The header remains an optional string, but the exact source removes the explicitly serialized Fifo member from NfsFileType. Existing 2026-12-06 requests using Fifo for x-ms-file-file-type are no longer valid, so the accepted wire-value set narrows.</p>
+<p>The header remains summarized as string, but previously supported x-ms-file-file-type values are removed.</p>
 <p><strong>Evidence:</strong> File_Create changed 1 parameter contract(s).; Compared REST operation: 2026-12-06:PUT:/.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">models.tsp:L284-L289</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">models.tsp:L389-L394</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">models.tsp:L525-L530</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">models.tsp:L544-L549</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">models.tsp:L590-L595</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">models.tsp:L609-L614</a></p>
 2
 
 </article></section>
@@ -56,10 +56,29 @@
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>REST contract changes require generated-client updates</h3></div>
 <p>The approved REST contract changes also alter generated client request or response handling and can break callers compiled against the previous contract.</p>
 <p><strong>Evidence:</strong> Approved REST finding: rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list.; Approved REST finding: rest-3-parameter-contract-changed-2026-12-06-put.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">models.tsp:L284-L289</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">models.tsp:L389-L394</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">models.tsp:L525-L530</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">models.tsp:L544-L549</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">models.tsp:L590-L595</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">models.tsp:L609-L614</a></p>
 <details class="finding-source-diff">
 <summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
 <div class="diff">
+<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
+<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
+<span class="meta">@@ -284,22 +284,6 @@ union NfsFileType {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
+<span class="context">   /** SymLink */</span>
+<span class="context">   SymLink: &quot;SymLink&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** BlockDevice */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** CharacterDevice */</span>
+<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Socket */</span>
+<span class="omitted"> ... 9 later diff lines omitted ...</span></pre>
+</div><div class="diff">
 <div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
@@ -101,169 +120,81 @@
 <div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
 <pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
 <span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -691,116 +609,6 @@ model FileItem {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
+<span class="meta">@@ -606,11 +544,6 @@ model DirectoryItem {</span>
+<span class="context"></span>
 <span class="context">   /** The permission key. */</span>
 <span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
 <span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the file. */</span>
+<span class="remove">-  /** NFS only. The link count of the directory. */</span>
 <span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
 <span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
 <span class="remove">-  linkCount?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The type of the file. */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;FileType&quot;)</span>
-<span class="remove">-  fileType?: NfsFileType;</span>
-<span class="omitted"> ... 103 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -284,22 +284,6 @@ union NfsFileType {</span>
-<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
-<span class="context">   /** SymLink */</span>
-<span class="context">   SymLink: &quot;SymLink&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** BlockDevice */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** CharacterDevice */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Socket */</span>
-<span class="omitted"> ... 9 later diff lines omitted ...</span></pre>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="context"> /** An encoded string value. */</span></pre>
 </div>
 </details>
 
 </article></section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status passed">passed</span></h2><div class="panel"><p class="empty-state good">Azure compliance passed with no mismatches.</p></div></section>
-<section id="semantic-intents"><h2>Semantic intents <span class="count">2</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Remove 2026-12-06 special-file listing options and response shapes <span class="count">1 operation</span></span></summary>
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-high" id="finding-delete-existing-versioned-nfs-surface">
+<summary><span class="severity severity-high">high</span><h3>Existing versioned API surface is removed</h3></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The change deletes 2026-12-06 NFS models, XML properties, and values rather than versioning their removal.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302">models.tsp:L287-L302</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423">models.tsp:L408-L423</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L560-L589">models.tsp:L560-L589</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L609-L613">models.tsp:L609-L613</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L660-L674">models.tsp:L660-L674</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803">models.tsp:L694-L803</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L1-L1">models.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L1-L1">models.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806">models.tsp:L284-L806</a></p>
+<details class="comparison-details expected-details">
+<summary>Expected</summary>
+<div class="comparison-body">
+<p>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs — API Versioning</a></p>
+<div class="diff expected-code">
+<div class="diff-file"><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Documented TypeSpec example</a></div>
+<pre><span class="context">/** Contoso API versions */enum Versions {  /** 2021-10-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v1,</span>
+<span class="context">  /** 2022-11-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v2,}</span></pre>
+</div>
+</div>
+</details>
+<details class="comparison-details actual-details">
+<summary>Actual</summary>
+<div class="comparison-body">
+<p>Five models and their properties are removed together with @added(Versions.v2026_12_06) declarations.</p>
+<div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
+<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L298">specification/storage/data-plane/FileStorage/models.tsp:L287-L298</a></div>
+<pre><span class="context"><span class="line-number">287</span></span>
+<span class="context"><span class="line-number">288</span>  /** BlockDevice */</span>
+<span class="context"><span class="line-number">289</span>  @added(Versions.v2026_12_06)</span>
+<span class="context"><span class="line-number">290</span>  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class="context"><span class="line-number">291</span></span>
+<span class="context"><span class="line-number">292</span>  /** CharacterDevice */</span>
+<span class="context"><span class="line-number">293</span>  @added(Versions.v2026_12_06)</span>
+<span class="context"><span class="line-number">294</span>  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class="context"><span class="line-number">295</span></span>
+<span class="context"><span class="line-number">296</span>  /** Socket */</span>
+<span class="context"><span class="line-number">297</span>  @added(Versions.v2026_12_06)</span>
+<span class="context"><span class="line-number">298</span>  Socket: &quot;Socket&quot;,</span></pre>
+</div></div>
+</div>
+</details>
+</div>
+</details></section>
+<section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
+<summary><span class="change-number">1</span><span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Remove special NFS item contracts from 2026-12-06 <span class="count">1 model properties</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts.</p>
-<p class="intent-api-surface"><strong>API surface:</strong> 1 existing operation affected</p>
+<p class="intent-summary">The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p>
+<p class="intent-api-surface"><strong>API surface:</strong> Three model properties are added. Operations using those models expose the new fields, but the 2-operation version-lineage inventory is not a direct-impact count.</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>include accepted values</td>
-<td>included the removed 2026-12-06 special-file values</td>
-<td>special-file values removed</td>
-<td><div class="table-impacts"><a class="impact severity-high" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">Operation parameter contract changes</a><a class="impact severity-high" href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">Operation response contract changes</a><a class="impact severity-high" href="#finding-derived-rest-contract-sdk-impact">REST contract changes require generated-client updates</a></div></td>
-</tr><tr>
-<td><span class="change-badge modified">✏️ Modified</span></td>
-<td>200 response special-file collections</td>
-<td>SymLink, BlockDevice, CharDevice, Fifo, and Socket collections with item models</td>
-<td>collections and item models removed</td>
-<td><div class="table-impacts"><a class="impact severity-high" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">Operation parameter contract changes</a><a class="impact severity-high" href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">Operation response contract changes</a><a class="impact severity-high" href="#finding-derived-rest-contract-sdk-impact">REST contract changes require generated-client updates</a></div></td>
+<td>special NFS request and response surface</td>
+<td>The 2026-12-06 API included special-file values, item models, XML collections, and related metadata.</td>
+<td>Those values, models, collections, and metadata are removed from the same API version.</td>
+<td><div class="table-impacts"><a class="impact severity-high" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">Operation parameter contract changes</a><a class="impact severity-high" href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">Operation response contract changes</a><a class="impact severity-high" href="#finding-rest-3-parameter-contract-changed-2026-12-06-put">Operation parameter contract changes</a><a class="impact severity-high" href="#finding-derived-rest-contract-sdk-impact">REST contract changes require generated-client updates</a><a class="impact severity-high" href="#finding-delete-existing-versioned-nfs-surface">Existing versioned API surface is removed</a></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
-<div class="operation-changes">
-<h4>All affected operations <span class="count">1</span></h4>
-<details class="operation-details">
-<summary><code>Directory_ListFilesAndDirectoriesSegment</code><span class="operation-path tooltip" data-tooltip="GET /{url}/?restype=directory&amp;comp=list">GET /{url}/?restype=directory&amp;comp=list</span><span class="operation-version tooltip" data-tooltip="2026-12-06">2026-12-06</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-change"><strong>REST contract changes</strong><pre><span class="remove">- 200 response special-file collections | SymLink, BlockDevice, CharDevice, Fifo, and Socket collections with item models</span>
-<span class="add">+ 200 response special-file collections | collections and item models removed</span></pre><p>HTTP method and path remain unchanged.</p></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Directory_ListFilesAndDirectoriesSegment no longer accepts the removed special-file include values and its 200 response no longer exposes the SymLink, BlockDevice, CharDevice, Fifo, or Socket collections or their item models. This narrows both the existing 2026-12-06 query and response contracts.</p></div>
-<div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -405,22 +389,6 @@ enum ListFilesIncludeType {</span>
-<span class="context"></span>
-<span class="context">   /** PermissionKey */</span>
-<span class="context">   PermissionKey,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Permissions */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Permissions,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** LinkCount */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  LinkCount,</span>
-<span class="remove">-</span>
-<span class="omitted"> ... 10 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -557,36 +525,6 @@ model FilesAndDirectoriesListSegment {</span>
-<span class="omitted"> ... 5 earlier diff lines omitted ...</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
-<span class="remove">-  symLinkItems?: SymLinkItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The block device items. */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;BlockDevice&quot;)</span>
-<span class="remove">-  blockDeviceItems?: BlockDeviceItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The character device items. */</span>
-<span class="omitted"> ... 19 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L405-L426">models.tsp:L405-L426</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L557-L592">models.tsp:L557-L592</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L691-L806">models.tsp:L691-L806</a></p>
-</div>
-</details>
-</div>
-</div>
-</article>
-</details><details class="intent-details" id="change-2">
-<summary><span class="change-number">2</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Remove Fifo from the 2026-12-06 file creation type <span class="count">1 operation</span></span></summary>
-<article class="change-card">
-<div class="change-content">
-<p class="intent-summary">File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract.</p>
-<p class="intent-api-surface"><strong>API surface:</strong> 1 existing operation affected</p>
-<table class="change-table">
-<thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
-<tbody><tr>
-<td><span class="change-badge modified">✏️ Modified</span></td>
-<td>x-ms-file-file-type accepted values</td>
-<td>Fifo accepted</td>
-<td>Fifo removed</td>
-<td><div class="table-impacts"><a class="impact severity-high" href="#finding-rest-3-parameter-contract-changed-2026-12-06-put">Operation parameter contract changes</a><a class="impact severity-high" href="#finding-derived-rest-contract-sdk-impact">REST contract changes require generated-client updates</a></div></td>
-</tr></tbody>
-</table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
-<div class="operation-changes">
-<h4>All affected operations <span class="count">1</span></h4>
-<details class="operation-details">
-<summary><code>File_Create</code><span class="operation-path tooltip" data-tooltip="PUT /{url}">PUT /{url}</span><span class="operation-version tooltip" data-tooltip="2026-12-06">2026-12-06</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>PUT /{url}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>File_Create no longer accepts the Fifo wire value through the optional x-ms-file-file-type header because that member is removed from NfsFileType. This narrows the existing 2026-12-06 request contract.</p></div>
-<div class="diff">
-<div class="diff-file">specification/storage/data-plane/FileStorage/models.tsp</div>
-<pre><span class="meta">--- a/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">+++ b/specification/storage/data-plane/FileStorage/models.tsp</span>
-<span class="meta">@@ -284,22 +284,6 @@ union NfsFileType {</span>
-<span class="context"></span>
-<span class="context">   /** SymLink */</span>
-<span class="context">   SymLink: &quot;SymLink&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** BlockDevice */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** CharacterDevice */</span>
-<span class="remove version-decorator">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="omitted"> ... 10 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L305">models.tsp:L284-L305</a></p>
-</div>
-</details>
-</div>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">models.tsp:L284-L289</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">models.tsp:L389-L394</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">models.tsp:L525-L530</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">models.tsp:L544-L549</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">models.tsp:L590-L595</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">models.tsp:L609-L614</a></p>
+<div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader 2-operation API-version lineage is summarized here rather than presented as 2 direct behavioral changes.</p></div>
 </div>
 </article>
 </details></section>
@@ -278,7 +209,7 @@
 <dl><dt>autorest</dt><dd>base/head succeeded; OpenAPI removes enum values, properties, and schemas</dd><dt>tcgc</dt><dd>base/head succeeded; client models and properties are removed</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>2m 22s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>23s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>1m 0s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>2s</td><td>measured</td></tr><tr><td>Total</td><td>3m 47s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>21s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>3s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>10s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>2s</td><td>measured</td></tr><tr><td>Total</td><td>35s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

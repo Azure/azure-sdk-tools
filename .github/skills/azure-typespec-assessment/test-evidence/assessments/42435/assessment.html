@@ -33,9 +33,9 @@
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-medium" id="finding-source-paging-metadata-added">
 <div class="finding-heading"><span class="severity severity-medium">medium</span><h3>Generated SDK result becomes pageable</h3></div>
-<p>Marking the existing operation with @list preserves its wire route and payload but can change generated SDK methods from returning one response object to exposing pageable iteration, breaking callers that depend on the previous return shape.</p>
+<p>Generated SDKs can change from returning one response model to exposing pageable iteration and continuation handling while the REST payload remains unchanged.</p>
 <p><strong>Evidence:</strong> Added paging metadata can change generated SDK return and iteration shapes while preserving the REST wire contract.; Changed TypeSpec source: specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89">ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84">ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L81-L87">ManagedNetworkSettingsPropertiesBasicResource.tsp:L81-L87</a></p>
 <details class="finding-source-diff">
 <summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
 <div class="diff">
@@ -56,23 +56,23 @@
 </article></section>
 <section id="azure-compliance"><h2>Azure compliance <span class="compliance-status passed">passed</span></h2><div class="panel"><p class="empty-state good">Azure compliance passed with no mismatches.</p></div></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Mark batch outbound-rule results as paged <span class="count">1 operation</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Expose batch outbound rule results as pageable <span class="count">1 operation</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">Adding @list identifies OutboundRules_Post as a paged operation in all four exposed API versions. The POST route remains the same, while clients can follow the response nextLink with GET requests until no continuation URL remains.</p>
+<p class="intent-summary">Adding @list marks OutboundRules_Post as pageable in all four retained API versions. Its existing value collection and nextLink become the page items and opaque continuation URL without changing the POST route or payload.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> 1 existing operation affected</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>Paging</td>
-<td>Is Paged: false</td>
-<td>Is Paged: true; Item Name: value; Next Link Name: nextLink; Continuation: Issue a GET request to the opaque continuation URL until it is absent.</td>
+<td>paging</td>
+<td>The batch result was exposed as one non-pageable response.</td>
+<td>The value collection is pageable through the opaque nextLink until no continuation remains.</td>
 <td><div class="table-impacts"><a class="impact severity-medium" href="#finding-source-paging-metadata-added">Generated SDK result becomes pageable</a></div></td>
 </tr></tbody>
 </table>
 
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89">ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84">ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84</a></p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L81-L87">ManagedNetworkSettingsPropertiesBasicResource.tsp:L81-L87</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">1</span></h4>
 <details class="operation-details">
@@ -80,7 +80,7 @@
 <div class="operation-body">
 <div class="rest-signature rest-signature-change"><strong>REST API signature changes</strong><pre><span class="remove">- POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules | [2025-10-01-preview] paging = not paged</span>
 <span class="add">+ POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules | [2026-03-01] paging = paged; item=OutboundRuleBasicResource; items-property=value; next-link=nextLink</span></pre></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">Paging:</span> Adding @list identifies OutboundRules_Post as a paged operation in all four exposed API versions. The POST route remains the same, while clients can follow the response nextLink with GET requests until no continuation URL remains. The REST response is unchanged; generated clients now expose OutboundRuleBasicResource values as pageable items and issue GET to the server-provided nextLink and stop when nextLink is absent; no client-controlled page-size parameter is emitted.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">Paging:</span> Adding @list marks OutboundRules_Post as pageable in all four retained API versions. Its existing value collection and nextLink become the page items and opaque continuation URL without changing the POST route or payload. The REST response is unchanged; generated clients now expose OutboundRuleBasicResource values as pageable items and issue GET to the server-provided nextLink and stop when nextLink is absent; no client-controlled page-size parameter is emitted.</p></div>
 <div class="diff">
 <div class="diff-file">specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</div>
 <pre><span class="meta">--- a/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</span>
@@ -94,7 +94,7 @@
 <span class="context">     ManagedNetworkSettingsPropertiesBasicResource,</span>
 <span class="context">     Request = ManagedNetworkSettingsBasicResource,</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84">ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L81-L87">ManagedNetworkSettingsPropertiesBasicResource.tsp:L81-L87</a></p>
 </div>
 </details>
 </div>
@@ -112,7 +112,7 @@
 <dl><dt>autorest</dt><dd>All four emitted API versions add only x-ms-pageable.nextLinkName = nextLink to OutboundRules_Post; method, path, parameters, request, responses, schemas, and LRO metadata are unchanged.</dd><dt>tcgc</dt><dd>The head adds pagingMetadata with GET next-link traversal and page-item segments to the existing LRO method.</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>25s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>27s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>3s</td><td>estimated</td></tr><tr><td>Compliance</td><td>42s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>4s</td><td>measured</td></tr><tr><td>Total</td><td>1m 41s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>11s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>12s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>1s</td><td>estimated</td></tr><tr><td>Compliance</td><td>19s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>3s</td><td>measured</td></tr><tr><td>Total</td><td>46s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

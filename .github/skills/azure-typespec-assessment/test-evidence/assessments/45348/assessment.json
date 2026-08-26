@@ -37,6 +37,20 @@
         "startLine": 83,
         "endLine": 83,
         "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
+      },
+      {
+        "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+        "revision": "base",
+        "startLine": 1,
+        "endLine": 1,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/2991970c5377110244bcf9614be03e5aaf32362f/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L1-L1"
+      },
+      {
+        "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+        "revision": "head",
+        "startLine": 1,
+        "endLine": 1,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L1-L1"
       }
     ],
     "emitterRuns": [
@@ -86,15 +100,15 @@
     "semanticUnderstanding": {
       "items": [
         {
-          "id": "intent-arm-common-types-v5",
-          "intent": "Align the new Device Registry previews with ARM common-types v5",
+          "id": "select-arm-common-types-v5",
+          "intent": "Select ARM common types v5 for retained versions",
           "transformationChain": [
-            "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI."
+            "Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration."
           ],
           "changes": [
             {
               "kind": "modified",
-              "summary": "Use ARM common types version 5 for Device Registry",
+              "summary": "Select ARM common types v5 for retained versions",
               "operationIds": [
                 "SchemaRegistries_CreateOrReplace",
                 "Namespaces_CreateOrReplace"
@@ -105,20 +119,20 @@
               ],
               "aspects": [
                 {
-                  "field": "ARM common-types dependency",
-                  "before": "The two preview versions reference common-types v6.",
-                  "after": "Both preview versions reference common-types v5."
+                  "field": "ARM common types version",
+                  "before": "The affected API versions selected common types v6.",
+                  "after": "The affected API versions select common types v5."
                 }
               ],
-              "effect": "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.",
-              "typeSpecCause": "Change @armCommonTypesVersion from v6 to v5 on the 2026-11-01-preview and 2026-11-02-preview version members.",
+              "effect": "Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.",
+              "typeSpecCause": "Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.",
               "sourceReferences": [
                 {
                   "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
                   "revision": "head",
                   "startLine": 75,
-                  "endLine": 84,
-                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+                  "endLine": 86,
+                  "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86"
                 }
               ],
               "typeSpecDiffs": [
@@ -151,7 +165,7 @@
             }
           ],
           "restRepresentation": {
-            "summary": "The two new Device Registry preview versions use ARM common-types v5 instead of v6, matching the prior API lineage and avoiding cross-version identity, SKU, plan, and requiredness drift in generated OpenAPI.",
+            "summary": "Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.",
             "operations": [
               {
                 "operationId": "SchemaRegistries_CreateOrReplace",
@@ -187,8 +201,8 @@
                     "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
                     "revision": "head",
                     "startLine": 75,
-                    "endLine": 84,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+                    "endLine": 86,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86"
                   }
                 ]
               },
@@ -226,8 +240,8 @@
                     "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
                     "revision": "head",
                     "startLine": 75,
-                    "endLine": 84,
-                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+                    "endLine": 86,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86"
                   }
                 ]
               }
@@ -239,8 +253,8 @@
               "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
               "revision": "head",
               "startLine": 75,
-              "endLine": 84,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+              "endLine": 86,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86"
             }
           ]
         }
@@ -255,7 +269,7 @@
     "azureCompliance": {
       "status": "passed",
       "summary": {
-        "patternsAssessed": 1,
+        "patternsAssessed": 2,
         "findingCount": 0
       },
       "documents": [
@@ -264,15 +278,32 @@
           "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/",
           "section": "Models and Enums",
           "guidanceExcerpt": ". Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining child resources 7. Defining custom resource actions 8. Customizing operations with traits 9. Versioning 10. Complete Example 11. Advanced Topics ARM Service 1. Installing Tools 2. Defining the Service 3. Defining ",
-          "applicableGuidance": "The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern.",
-          "evidence": "The official ARM common types version rule documents @armCommonTypesVersion on an ARM provider namespace and explicitly shows Azure.ResourceManager.CommonTypes.Versions.v5 as a valid selection. The exact changed declaration uses that documented decorator and enum member, so the changed source follows the applicable documented pattern.",
+          "applicableGuidance": "The affected version members use the documented @armCommonTypesVersion decorator with a supported Azure.ResourceManager.CommonTypes version.",
+          "evidence": "The affected version members use the documented @armCommonTypesVersion decorator with a supported Azure.ResourceManager.CommonTypes version.",
           "sourceReferences": [
             {
               "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
               "revision": "head",
               "startLine": 75,
-              "endLine": 84,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+              "endLine": 86,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86"
+            }
+          ]
+        },
+        {
+          "title": "Azure.ResourceManager decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/",
+          "section": "Decorators",
+          "guidanceExcerpt": ". Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource operations 6. Defining child resources 7. Defining custom resource actions 8. Customizing operations with traits 9. Versioning 10. Complete Example 11. Advanced Topics ARM Service 1. Installing Tools 2. Defining the Service 3. Defining ",
+          "applicableGuidance": "The affected version members use the documented @armCommonTypesVersion decorator with a supported Azure.ResourceManager.CommonTypes version.",
+          "evidence": "The affected version members use the documented @armCommonTypesVersion decorator with a supported Azure.ResourceManager.CommonTypes version.",
+          "sourceReferences": [
+            {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "head",
+              "startLine": 75,
+              "endLine": 86,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L86"
             }
           ]
         }
@@ -282,26 +313,26 @@
   },
   "errors": [],
   "assessmentDuration": {
-    "totalMs": 134150,
+    "totalMs": 35947,
     "note": "Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.",
     "phases": {
       "deterministicPreparationMs": 7595,
-      "deterministicAssemblyMs": 993,
-      "judgmentMs": 125554,
-      "renderMs": 8
+      "deterministicAssemblyMs": 7,
+      "judgmentMs": 28341,
+      "renderMs": 4
     },
     "breakdown": {
-      "semanticUnderstandingMs": 13452,
+      "semanticUnderstandingMs": 3036,
       "semanticUnderstandingQuality": "estimated",
-      "restBreakingMs": 36,
+      "restBreakingMs": 8,
       "restBreakingQuality": "estimated",
-      "downstreamBreakingMs": 36,
+      "downstreamBreakingMs": 8,
       "downstreamBreakingQuality": "estimated",
-      "complianceMs": 112506,
+      "complianceMs": 25765,
       "complianceQuality": "estimated/measured",
-      "overheadMs": 8120,
+      "overheadMs": 7130,
       "overheadQuality": "measured",
-      "totalMs": 134150,
+      "totalMs": 35947,
       "totalQuality": "measured",
       "searchRoute": "bounded official document evidence"
     }

@@ -21,7 +21,7 @@
 <a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">REST breaking changes</span></a>
 <a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Downstream breaking changes</span></a>
 <a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>4</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">4 findings</span></a>
-<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">13 operations<br>6 Added, 1 Modified, 0 Removed</span></a>
+<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>2</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">30 operations<br>6 Added, 9 Modified, 0 Removed</span></a>
 </div></div></header>
 <aside class="preview-notice"><div class="container">
 <h2>Preview Notice</h2>
@@ -33,33 +33,96 @@
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-high" id="finding-source-javascript-flattening-scope-changed">
 <div class="finding-heading"><span class="severity severity-high">high</span><h3>Generated SDK model property shape changes</h3></div>
-<p>Excluding JavaScript from an existing property-flattening rule preserves the serialized JSON but can replace flattened constructor arguments and direct property access with nested model access. Existing JavaScript callers can therefore stop compiling or require source changes even though their HTTP requests and responses remain compatible.</p>
+<p>JavaScript construction and member access can change from flattened properties to nested objects, breaking existing callers despite identical JSON serialization.</p>
 <p><strong>Evidence:</strong> Changing flattenProperty to exclude JavaScript can change generated JavaScript construction and property access from flattened to nested.; Changed TypeSpec source: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp.; Changed TypeSpec source: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp.; Changed TypeSpec source: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39">back-compatible.tsp:L30-L39</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203">client.tsp:L194-L203</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L10-L145">main.tsp:L10-L145</a></p>
 <details class="finding-source-diff">
 <summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
 <div class="diff">
 <div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
-<span class="meta">@@ -82,7 +122,7 @@ model AssociationUpdate {</span>
-<span class="context"></span>
-<span class="context">   /** The resource-specific properties for this resource. */</span>
-<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot;</span>
-<span class="remove">-  @Azure.ClientGenerator.Core.Legacy.flattenProperty</span>
-<span class="add">+  @Azure.ClientGenerator.Core.Legacy.flattenProperty(&quot;!javascript&quot;)</span>
-<span class="context">   properties?: AssociationUpdateProperties;</span>
+<span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context"> }</span>
-<span class="context"></span></pre>
+<span class="context"></span>
+<span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
+<span class="add">+@armResourceOperations</span>
+<span class="add">+interface PrivateEndpointConnectionsInterface {</span>
+<span class="add">+  get is ArmResourceRead&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add">+  update is ArmResourceCreateOrReplaceSync&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add">+  listByTrafficController is ArmResourceListByParent&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
+<span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 18 earlier diff lines omitted ...</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="add">+//----------------------- PrivateEndpointConnection -----------------------</span>
+<span class="add">+/** Private Endpoint Connection resource of Traffic Controller. */</span>
+<span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
+<span class="add">+@parentResource(TrafficController)</span>
+<span class="add">+model PrivateEndpointConnection</span>
+<span class="add">+  is ProxyResource&lt;PrivateEndpointConnectionProperties&gt; {</span>
+<span class="add">+  /** Private Endpoint Connection */</span>
+<span class="add">+  @key(&quot;privateEndpointConnectionName&quot;)</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  @path</span>
+<span class="omitted"> ... 113 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</span>
+<span class="meta">@@ -10,24 +10,34 @@ using Microsoft.ServiceNetworking;</span>
+<span class="omitted"> ... 18 earlier diff lines omitted ...</span>
+<span class="context"> );</span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
+<span class="add">+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
+<span class="add">+  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,</span>
+<span class="add">+  &quot;autorest&quot;</span>
+<span class="add">+);</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
+<span class="add">+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
+<span class="add">+  Microsoft.ServiceNetworking.PrivateLinkResource.properties,</span>
+<span class="add">+  &quot;autorest&quot;</span>
+<span class="add">+);</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
+<span class="omitted"> ... 4 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</span>
+<span class="meta">@@ -126,38 +126,85 @@ using Microsoft.ServiceNetworking;</span>
+<span class="omitted"> ... 18 earlier diff lines omitted ...</span>
+<span class="context">   &quot;csharp&quot;</span>
+<span class="context"> );</span>
+<span class="add">+@@alternateType(</span>
+<span class="add">+  TrafficControllerProperties.privateEndpointConnections,</span>
+<span class="add">+  Azure.ResourceManager.Models.SubResource[],</span>
+<span class="add">+  &quot;csharp&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@alternateType(</span>
+<span class="add">+  FrontendAssociation.id,</span>
+<span class="add">+  Azure.Core.armResourceIdentifier,</span>
+<span class="add">+  &quot;csharp&quot;</span>
+<span class="add">+);</span>
+<span class="omitted"> ... 55 later diff lines omitted ...</span></pre>
 </div>
 </details>
 
 </article></section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-compliance-stable-version-retains-replaced-preview">
-<summary><span class="severity severity-medium">medium</span><h3>The replaced preview version is retained when adding the stable version</h3></summary>
+<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-service-networking-preview-retained">
+<summary><span class="severity severity-medium">medium</span><h3>Replaced preview remains in the version enum</h3></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The stable-after-preview guidance says to remove the replaced preview version, but the changed version enum retains v2025_10_01_preview alongside v2026_03_01.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a></p>
+<p><strong>Gap:</strong> The 2026-03-01 stable version is added while 2025-10-01-preview remains, contrary to stable-after-preview guidance.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/0d3ff673b6b63361a7ba06a355d929902e596dac/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a></p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -71,7 +134,7 @@
 <details class="comparison-details actual-details">
 <summary>Actual</summary>
 <div class="comparison-body">
-<p>Guidance: &quot;Remove the replaced preview version from the version enum.&quot;; Changed source at main.tsp:28 contains both v2025_10_01_preview: &quot;2025-10-01-preview&quot; and v2026_03_01: &quot;2026-03-01&quot;.</p>
+<p>The version change declares both v2025_10_01_preview and v2026_03_01.</p>
 <div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
 <div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:L30-L35</a></div>
 <pre><span class="context"><span class="line-number">30</span></span>
@@ -84,11 +147,11 @@
 </div>
 </details>
 </div>
-</details><details class="finding compliance-finding severity-border-medium" id="finding-compliance-private-endpoint-standard-pattern">
-<summary><span class="severity severity-medium">medium</span><h3>Private endpoint resource and operations do not use the standard pattern</h3></summary>
+</details><details class="finding compliance-finding severity-border-medium" id="finding-private-endpoint-custom-interface">
+<summary><span class="severity severity-medium">medium</span><h3>Private endpoint operations bypass the standard interface</h3></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The private endpoint guidance requires PrivateEndpointConnectionResource with the standard PrivateEndpoints interface, but the change adds a custom parented PrivateEndpointConnection model and a custom @armResourceOperations PrivateEndpointConnectionsInterface.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p><strong>Gap:</strong> PrivateEndpointConnectionsInterface is a custom ARM interface instead of using the documented PrivateEndpoints interface.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/0d3ff673b6b63361a7ba06a355d929902e596dac/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a></p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -109,7 +172,7 @@
 <details class="comparison-details actual-details">
 <summary>Actual</summary>
 <div class="comparison-body">
-<p>Guidance: private endpoint providers must declare a private endpoint connection resource type and use the standard PrivateEndpoints interface.; Changed source adds @parentResource(TrafficController) model PrivateEndpointConnection and @armResourceOperations interface PrivateEndpointConnectionsInterface rather than PrivateEndpointConnectionResource and PrivateEndpoints&lt;PrivateEndpointConnection&gt;.</p>
+<p>The change adds PrivateEndpointConnection and a custom @armResourceOperations interface.</p>
 <div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
 <div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L368">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:L357-L368</a></div>
 <pre><span class="context"><span class="line-number">357</span>//----------------------- PrivateEndpointConnection -----------------------</span>
@@ -128,11 +191,11 @@
 </div>
 </details>
 </div>
-</details><details class="finding compliance-finding severity-border-medium" id="finding-compliance-private-link-standard-pattern">
-<summary><span class="severity severity-medium">medium</span><h3>Private link resource and operations do not use the standard pattern</h3></summary>
+</details><details class="finding compliance-finding severity-border-medium" id="finding-private-link-custom-interface">
+<summary><span class="severity severity-medium">medium</span><h3>Private link operations bypass the standard interface</h3></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The private link guidance requires the PrivateLink resource type with the standard PrivateLinks interface, but the change adds PrivateLinkResource as ProxyResource&lt;PrivateLinkResourceProperties&gt; and exposes it through a custom @armResourceOperations PrivateLinkResourcesInterface.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p><strong>Gap:</strong> PrivateLinkResourcesInterface is a custom ARM interface instead of using the documented PrivateLinks interface.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/0d3ff673b6b63361a7ba06a355d929902e596dac/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a></p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -151,30 +214,30 @@
 <details class="comparison-details actual-details">
 <summary>Actual</summary>
 <div class="comparison-body">
-<p>Guidance: private link providers must declare a private link resource type and use the standard PrivateLinks interface.; Changed source adds model PrivateLinkResource is ProxyResource&lt;PrivateLinkResourceProperties&gt; and @armResourceOperations interface PrivateLinkResourcesInterface rather than PrivateLink and PrivateLinks&lt;PrivateLinkResource&gt;.</p>
+<p>The change adds PrivateLinkResource and a custom @armResourceOperations interface.</p>
 <div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
-<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L368">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:L357-L368</a></div>
-<pre><span class="context"><span class="line-number">357</span>//----------------------- PrivateEndpointConnection -----------------------</span>
-<span class="context"><span class="line-number">358</span>/** Private Endpoint Connection resource of Traffic Controller. */</span>
-<span class="context"><span class="line-number">359</span>@added(Versions.v2025_10_01_preview)</span>
-<span class="context"><span class="line-number">360</span>@parentResource(TrafficController)</span>
-<span class="context"><span class="line-number">361</span>model PrivateEndpointConnection</span>
-<span class="context"><span class="line-number">362</span>  is ProxyResource&lt;PrivateEndpointConnectionProperties&gt; {</span>
-<span class="context"><span class="line-number">363</span>  /** Private Endpoint Connection */</span>
-<span class="context"><span class="line-number">364</span>  @key(&quot;privateEndpointConnectionName&quot;)</span>
-<span class="context"><span class="line-number">365</span>  @visibility(Lifecycle.Read)</span>
-<span class="context"><span class="line-number">366</span>  @path</span>
-<span class="context"><span class="line-number">367</span>  @segment(&quot;privateEndpointConnections&quot;)</span>
-<span class="context"><span class="line-number">368</span>  @pattern(&quot;^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$&quot;)</span></pre>
+<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L423-L434">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:L423-L434</a></div>
+<pre><span class="context"><span class="line-number">423</span>  Disconnected: &quot;Disconnected&quot;,</span>
+<span class="context"><span class="line-number">424</span>}</span>
+<span class="context"><span class="line-number">425</span></span>
+<span class="context"><span class="line-number">426</span>//----------------------- PrivateLinkResource -----------------------</span>
+<span class="context"><span class="line-number">427</span>/** A private link resource. */</span>
+<span class="context"><span class="line-number">428</span>@added(Versions.v2025_10_01_preview)</span>
+<span class="context"><span class="line-number">429</span>@parentResource(TrafficController)</span>
+<span class="context"><span class="line-number">430</span>model PrivateLinkResource is ProxyResource&lt;PrivateLinkResourceProperties&gt; {</span>
+<span class="context"><span class="line-number">431</span>  /** Private Link Resource */</span>
+<span class="context"><span class="line-number">432</span>  @key(&quot;privateLinkResourceName&quot;)</span>
+<span class="context"><span class="line-number">433</span>  @visibility(Lifecycle.Read)</span>
+<span class="context"><span class="line-number">434</span>  @path</span></pre>
 </div></div>
 </div>
 </details>
 </div>
-</details><details class="finding compliance-finding severity-border-low" id="finding-compliance-legacy-flattening-on-new-models">
-<summary><span class="severity severity-low">low</span><h3>New models use the legacy property-flattening decorator</h3></summary>
+</details><details class="finding compliance-finding severity-border-low" id="finding-legacy-flattening-added">
+<summary><span class="severity severity-low">low</span><h3>New code relies on legacy property flattening</h3></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The decorator guidance does not recommend Legacy.flattenProperty for green-field services, but the changed client customization applies it to properties of the newly introduced private endpoint and private link models.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a></p>
+<p><strong>Gap:</strong> The change adds Legacy.flattenProperty customizations even though the fetched decorator guidance does not recommend the decorator for greenfield services.</p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39">back-compatible.tsp:L30-L39</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203">client.tsp:L194-L203</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/0d3ff673b6b63361a7ba06a355d929902e596dac/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/0d3ff673b6b63361a7ba06a355d929902e596dac/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L1-L1">client.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L1-L1">client.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/0d3ff673b6b63361a7ba06a355d929902e596dac/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L1-L1">main.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a></p>
 <details class="comparison-details expected-details">
 <summary>Expected</summary>
 <div class="comparison-body">
@@ -186,31 +249,29 @@
 <details class="comparison-details actual-details">
 <summary>Actual</summary>
 <div class="comparison-body">
-<p>Guidance: &quot;This decorator is not recommended to use for green field services.&quot;; Changed source adds @@Azure.ClientGenerator.Core.Legacy.flattenProperty calls in client.tsp for models introduced by the same change as PrivateEndpointConnection and PrivateLinkResource.</p>
+<p>Legacy.flattenProperty is newly added or rescoped in back-compatible.tsp, client.tsp, and main.tsp.</p>
 <div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
-<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L157">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp:L146-L157</a></div>
-<pre><span class="context"><span class="line-number">146</span>@@alternateType(</span>
-<span class="context"><span class="line-number">147</span>  TrafficControllerProperties.privateEndpointConnections,</span>
-<span class="context"><span class="line-number">148</span>  Azure.ResourceManager.Models.SubResource[],</span>
-<span class="context"><span class="line-number">149</span>  &quot;csharp&quot;</span>
-<span class="context"><span class="line-number">150</span>);</span>
-<span class="context"><span class="line-number">151</span>@@alternateType(</span>
-<span class="context"><span class="line-number">152</span>  FrontendAssociation.id,</span>
-<span class="context"><span class="line-number">153</span>  Azure.Core.armResourceIdentifier,</span>
-<span class="context"><span class="line-number">154</span>  &quot;csharp&quot;</span>
-<span class="context"><span class="line-number">155</span>);</span>
-<span class="context"><span class="line-number">156</span>@@alternateType(</span>
-<span class="context"><span class="line-number">157</span>  FrontendAssociationUpdate.id,</span></pre>
+<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp:L30-L39</a></div>
+<pre><span class="context"><span class="line-number">30</span>@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
+<span class="context"><span class="line-number">31</span>  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,</span>
+<span class="context"><span class="line-number">32</span>  &quot;autorest&quot;</span>
+<span class="context"><span class="line-number">33</span>);</span>
+<span class="context"><span class="line-number">34</span>#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
+<span class="context"><span class="line-number">35</span>@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
+<span class="context"><span class="line-number">36</span>  Microsoft.ServiceNetworking.PrivateLinkResource.properties,</span>
+<span class="context"><span class="line-number">37</span>  &quot;autorest&quot;</span>
+<span class="context"><span class="line-number">38</span>);</span>
+<span class="context"><span class="line-number">39</span>#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span></pre>
 </div></div>
 </div>
 </details>
 </div>
 </details></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">2</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Added">➕</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Add private endpoint connection and private link resource management <span class="count">6 operations</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Added">➕</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Add private networking resources and adjust JavaScript model shape <span class="count">6 operations</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">The change introduces the 2025-10-01-preview API version, adds PrivateEndpointConnection and PrivateLinkResource as children of TrafficController, and adds resource-operation interfaces for them. The preview and subsequent 2026-03-01 version expose get, list, update, and delete operations for private endpoint connections and get and list operations for private link resources.</p>
+<p class="intent-summary">TrafficController gains private endpoint connection and private link child resources. Across 2025-10-01-preview and 2026-03-01, the new contracts expose delete, get, list, and update for endpoint connections and get and list for links. Compatibility customizations also exclude JavaScript from selected property flattening without changing JSON.</p>
 <p class="intent-api-surface"><strong>API surface:</strong> 6 new operations</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
@@ -219,11 +280,11 @@
 <td>Operation family</td>
 <td><span class="empty">—</span></td>
 <td>6 REST operations added.</td>
-<td><div class="table-impacts"><a class="impact severity-medium" href="#finding-compliance-stable-version-retains-replaced-preview">The replaced preview version is retained when adding the stable version</a><a class="impact severity-medium" href="#finding-compliance-private-endpoint-standard-pattern">Private endpoint resource and operations do not use the standard pattern</a><a class="impact severity-medium" href="#finding-compliance-private-link-standard-pattern">Private link resource and operations do not use the standard pattern</a><a class="impact severity-low" href="#finding-compliance-legacy-flattening-on-new-models">New models use the legacy property-flattening decorator</a></div></td>
+<td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-javascript-flattening-scope-changed">Generated SDK model property shape changes</a><a class="impact severity-medium" href="#finding-private-endpoint-custom-interface">Private endpoint operations bypass the standard interface</a><a class="impact severity-medium" href="#finding-private-link-custom-interface">Private link operations bypass the standard interface</a><a class="impact severity-low" href="#finding-legacy-flattening-added">New code relies on legacy property flattening</a></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> The change introduces the 2025-10-01-preview API version, adds PrivateEndpointConnection and PrivateLinkResource as children of TrafficController, and adds resource-operation interfaces for them. The preview and subsequent 2026-03-01 version expose get, list, update, and delete operations for private endpoint connections and get and list operations for private link resources.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a></p>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> TrafficController gains private endpoint connection and private link child resources. Across 2025-10-01-preview and 2026-03-01, the new contracts expose delete, get, list, and update for endpoint connections and get and list for links. Compatibility customizations also exclude JavaScript from selected property flattening without changing JSON.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">6</span></h4>
 <details class="operation-details">
@@ -236,6 +297,7 @@
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context"> }</span>
 <span class="context"></span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
@@ -249,8 +311,26 @@
 <span class="add">+</span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
 <span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 131 earlier diff lines omitted ...</span>
+<span class="context">     LroHeaders = Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="context">   &gt;;</span>
+<span class="context">   update is ArmCustomPatchSync&lt;Association, AssociationUpdate&gt;;</span>
+<span class="context">   delete is ArmResourceDeleteWithoutOkAsync&lt;Association&gt;;</span>
+<span class="context">   listByTrafficController is ArmResourceListByParent&lt;Association&gt;;</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface FrontendsInterface {</span>
+<span class="context">   get is ArmResourceRead&lt;Frontend&gt;;</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/invalid-final-state&quot; &quot;MUST CHANGE ON NEXT UPDATE&quot;</span>
+<span class="context">   @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>PrivateEndpointConnectionsInterface_Get</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}</span><span class="operation-version tooltip" data-tooltip="2025-10-01-preview, 2026-03-01">2025-10-01-preview, 2026-03-01</span></summary>
@@ -262,6 +342,7 @@
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context"> }</span>
 <span class="context"></span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
@@ -275,8 +356,27 @@
 <span class="add">+</span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
 <span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 124 earlier diff lines omitted ...</span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface AssociationsInterface {</span>
+<span class="context">   get is ArmResourceRead&lt;Association&gt;;</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/invalid-final-state&quot; &quot;MUST CHANGE ON NEXT UPDATE&quot;</span>
+<span class="context">   @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span>
+<span class="context">   createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="context">     Association,</span>
+<span class="context">     LroHeaders = Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="context">   &gt;;</span>
+<span class="context">   update is ArmCustomPatchSync&lt;Association, AssociationUpdate&gt;;</span>
+<span class="context">   delete is ArmResourceDeleteWithoutOkAsync&lt;Association&gt;;</span>
+<span class="context">   listByTrafficController is ArmResourceListByParent&lt;Association&gt;;</span>
+<span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>PrivateEndpointConnectionsInterface_ListByTrafficController</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections</span><span class="operation-version tooltip" data-tooltip="2025-10-01-preview, 2026-03-01">2025-10-01-preview, 2026-03-01</span></summary>
@@ -288,6 +388,7 @@
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context"> }</span>
 <span class="context"></span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
@@ -301,8 +402,26 @@
 <span class="add">+</span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
 <span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 131 earlier diff lines omitted ...</span>
+<span class="context">     LroHeaders = Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="context">   &gt;;</span>
+<span class="context">   update is ArmCustomPatchSync&lt;Association, AssociationUpdate&gt;;</span>
+<span class="context">   delete is ArmResourceDeleteWithoutOkAsync&lt;Association&gt;;</span>
+<span class="context">   listByTrafficController is ArmResourceListByParent&lt;Association&gt;;</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface FrontendsInterface {</span>
+<span class="context">   get is ArmResourceRead&lt;Frontend&gt;;</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/invalid-final-state&quot; &quot;MUST CHANGE ON NEXT UPDATE&quot;</span>
+<span class="context">   @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>PrivateEndpointConnectionsInterface_Update</code><span class="operation-path tooltip" data-tooltip="PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}</span><span class="operation-version tooltip" data-tooltip="2025-10-01-preview, 2026-03-01">2025-10-01-preview, 2026-03-01</span></summary>
@@ -314,6 +433,7 @@
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
+<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
 <span class="context"> }</span>
 <span class="context"></span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
@@ -327,8 +447,27 @@
 <span class="add">+</span>
 <span class="add version-decorator">+@added(Versions.v2025_10_01_preview)</span>
 <span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 127 earlier diff lines omitted ...</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/invalid-final-state&quot; &quot;MUST CHANGE ON NEXT UPDATE&quot;</span>
+<span class="context">   @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span>
+<span class="context">   createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="context">     Association,</span>
+<span class="context">     LroHeaders = Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="context">   &gt;;</span>
+<span class="context">   update is ArmCustomPatchSync&lt;Association, AssociationUpdate&gt;;</span>
+<span class="context">   delete is ArmResourceDeleteWithoutOkAsync&lt;Association&gt;;</span>
+<span class="context">   listByTrafficController is ArmResourceListByParent&lt;Association&gt;;</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="context"> @armResourceOperations</span>
+<span class="omitted"> ... 4 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>PrivateLinkResourcesInterface_Get</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources/{privateLinkResourceName}">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources/{privateLinkResourceName}</span><span class="operation-version tooltip" data-tooltip="2025-10-01-preview, 2026-03-01">2025-10-01-preview, 2026-03-01</span></summary>
@@ -340,7 +479,7 @@
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
-<span class="omitted"> ... 7 earlier diff lines omitted ...</span>
+<span class="omitted"> ... 8 earlier diff lines omitted ...</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;PrivateEndpointConnection&gt;;</span>
 <span class="add">+  listByTrafficController is ArmResourceListByParent&lt;PrivateEndpointConnection&gt;;</span>
 <span class="add">+}</span>
@@ -353,8 +492,27 @@
 <span class="add">+}</span>
 <span class="add">+</span>
 <span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 124 earlier diff lines omitted ...</span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface AssociationsInterface {</span>
+<span class="context">   get is ArmResourceRead&lt;Association&gt;;</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/invalid-final-state&quot; &quot;MUST CHANGE ON NEXT UPDATE&quot;</span>
+<span class="context">   @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span>
+<span class="context">   createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="context">     Association,</span>
+<span class="context">     LroHeaders = Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="context">   &gt;;</span>
+<span class="context">   update is ArmCustomPatchSync&lt;Association, AssociationUpdate&gt;;</span>
+<span class="context">   delete is ArmResourceDeleteWithoutOkAsync&lt;Association&gt;;</span>
+<span class="context">   listByTrafficController is ArmResourceListByParent&lt;Association&gt;;</span>
+<span class="omitted"> ... 7 later diff lines omitted ...</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 </div>
 </details><details class="operation-details">
 <summary><code>PrivateLinkResourcesInterface_ListByTrafficController</code><span class="operation-path tooltip" data-tooltip="GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources</span><span class="operation-version tooltip" data-tooltip="2025-10-01-preview, 2026-03-01">2025-10-01-preview, 2026-03-01</span></summary>
@@ -366,7 +524,7 @@
 <pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
 <span class="meta">@@ -392,4 +540,20 @@ interface TrafficControllerInterface {</span>
-<span class="omitted"> ... 7 earlier diff lines omitted ...</span>
+<span class="omitted"> ... 8 earlier diff lines omitted ...</span>
 <span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;PrivateEndpointConnection&gt;;</span>
 <span class="add">+  listByTrafficController is ArmResourceListByParent&lt;PrivateEndpointConnection&gt;;</span>
 <span class="add">+}</span>
@@ -379,56 +537,50 @@
 <span class="add">+}</span>
 <span class="add">+</span>
 <span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span></pre>
+</div><div class="diff">
+<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
+<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
+<span class="meta">@@ -292,40 +337,143 @@ union ProvisioningState {</span>
+<span class="omitted"> ... 131 earlier diff lines omitted ...</span>
+<span class="context">     LroHeaders = Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="context">   &gt;;</span>
+<span class="context">   update is ArmCustomPatchSync&lt;Association, AssociationUpdate&gt;;</span>
+<span class="context">   delete is ArmResourceDeleteWithoutOkAsync&lt;Association&gt;;</span>
+<span class="context">   listByTrafficController is ArmResourceListByParent&lt;Association&gt;;</span>
+<span class="context"> }</span>
+<span class="context"></span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface FrontendsInterface {</span>
+<span class="context">   get is ArmResourceRead&lt;Frontend&gt;;</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/invalid-final-state&quot; &quot;MUST CHANGE ON NEXT UPDATE&quot;</span>
+<span class="context">   @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span></pre>
 </div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
+<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L540-L559">main.tsp:L540-L559</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L337-L479">main.tsp:L337-L479</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L10-L43">back-compatible.tsp:L10-L43</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L126-L210">client.tsp:L126-L210</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L128">main.tsp:L122-L128</a></p>
 </div>
 </details>
 </div>
 </div>
 </article>
 </details><details class="intent-details" id="change-2">
-<summary><span class="change-number">2</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Keep AssociationUpdate.properties nested in generated JavaScript <span class="count">1 operation</span></span></summary>
+<summary><span class="change-number">2</span><span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Add the 2025 preview and 2026 stable API versions <span class="count">1 model properties</span></span></summary>
 <article class="change-card">
 <div class="change-content">
-<p class="intent-summary">AssociationUpdate.properties remains the same nested JSON property on the wire, but JavaScript is excluded from the legacy flattening rule. Only Associations_Update consumes this changed SDK model shape.</p>
-<p class="intent-api-surface"><strong>API surface:</strong> 1 existing operation affected</p>
+<p class="intent-summary">The version enum adds 2025-10-01-preview and 2026-03-01. Existing Frontend and TrafficController operations propagate into both versions with unchanged bounded parameter, request, and response contracts.</p>
+<p class="intent-api-surface"><strong>API surface:</strong> Three model properties are added. Operations using those models expose the new fields, but the 9-operation version-lineage inventory is not a direct-impact count.</p>
 <table class="change-table">
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>JavaScript AssociationUpdate model shape</td>
-<td>properties is flattened into AssociationUpdate.</td>
-<td>properties remains a nested object in JavaScript.</td>
-<td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-javascript-flattening-scope-changed">Generated SDK model property shape changes</a></div></td>
+<td>API version availability</td>
+<td>The two API versions were not declared.</td>
+<td>Existing Frontend and TrafficController operations are available in 2025-10-01-preview and 2026-03-01.</td>
+<td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-javascript-flattening-scope-changed">Generated SDK model property shape changes</a><a class="impact severity-medium" href="#finding-service-networking-preview-retained">Replaced preview remains in the version enum</a></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Change the AssociationUpdate.properties flattenProperty scope from all languages to !javascript.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182">client.tsp:L146-L182</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127">main.tsp:L122-L127</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39">back-compatible.tsp:L30-L39</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203">client.tsp:L194-L203</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35">main.tsp:L30-L35</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70">main.tsp:L63-L70</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125">main.tsp:L125-L125</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314">main.tsp:L310-L314</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459">main.tsp:L357-L459</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558">main.tsp:L543-L558</a></p>
-<div class="operation-changes">
-<h4>All affected operations <span class="count">1</span></h4>
-<details class="operation-details">
-<summary><code>Associations_Update</code><span class="operation-path tooltip" data-tooltip="PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}">PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</span><span class="operation-version tooltip" data-tooltip="2025-05-01-preview">2025-05-01-preview</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>AssociationUpdate.properties remains the same nested JSON property on the wire, but JavaScript is excluded from the legacy flattening rule. Only Associations_Update consumes this changed SDK model shape.</p></div>
-<div class="diff">
-<div class="diff-file">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div>
-<pre><span class="meta">--- a/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
-<span class="meta">+++ b/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</span>
-<span class="meta">@@ -82,7 +122,7 @@ model AssociationUpdate {</span>
-<span class="context"></span>
-<span class="context">   /** The resource-specific properties for this resource. */</span>
-<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot;</span>
-<span class="remove">-  @Azure.ClientGenerator.Core.Legacy.flattenProperty</span>
-<span class="add">+  @Azure.ClientGenerator.Core.Legacy.flattenProperty(&quot;!javascript&quot;)</span>
-<span class="context">   properties?: AssociationUpdateProperties;</span>
-<span class="context"> }</span>
-<span class="context"></span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105">main.tsp:L80-L105</a></p>
-</div>
-</details>
-</div>
+<p class="typespec-summary"><strong>TypeSpec change:</strong> The version enum adds 2025-10-01-preview and 2026-03-01. Existing Frontend and TrafficController operations propagate into both versions with unchanged bounded parameter, request, and response contracts.</p>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L10-L145">main.tsp:L10-L145</a></p>
+<div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader 9-operation API-version lineage is summarized here rather than presented as 9 direct behavioral changes.</p></div>
 </div>
 </article>
 </details></section>
@@ -443,7 +595,7 @@
 <dl><dt>autorest</dt><dd>base/head succeeded; added preview 2025-10-01-preview and stable 2026-03-01 contracts were compared</dd><dt>tcgc</dt><dd>base/head succeeded; AssociationUpdate client-shape evidence requires JavaScript-specific review</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>7m 42s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>13s</td><td>estimated</td></tr><tr><td>Compliance</td><td>3m 16s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>11m 12s</td><td>measured</td></tr></tbody></table></div>
+<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>23s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>1s</td><td>estimated</td></tr><tr><td>Compliance</td><td>10s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>34s</td><td>measured</td></tr></tbody></table></div>
 <p><strong>Documentation search:</strong> bounded official document evidence</p>
 <p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
 </div>

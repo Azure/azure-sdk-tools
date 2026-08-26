@@ -1,3 +1,5 @@
+[CmdletBinding()]
+
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
 if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {

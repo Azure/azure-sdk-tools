@@ -33,6 +33,9 @@ param(
 
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+  $PSNativeCommandUseErrorActionPreference = $true
+}
 
 [Console]::Error.WriteLine("Syncing product onboarding status:" `
    + "`n`tProduct ID:        '$ProductID'" `

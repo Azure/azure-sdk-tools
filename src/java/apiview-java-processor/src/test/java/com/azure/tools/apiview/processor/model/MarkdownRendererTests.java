@@ -51,4 +51,25 @@ public class MarkdownRendererTests {
             "public Widget",
             "```"), MarkdownRenderer.render(listing));
     }
+
+    @Test
+    public void removesStandaloneCommentsButPreservesInlineComments() {
+        APIListing listing = new APIListing();
+        listing.addChildLine()
+            .addToken(TokenKind.COMMENT, "// This interface does not declare any API.");
+        listing.addChildLine()
+            .addToken(TokenKind.KEYWORD, "public")
+            .addToken(TokenKind.TYPE_NAME, "Widget", Spacing.NO_SPACE)
+            .addToken(TokenKind.PUNCTUATION, "=", Spacing.SPACE_BEFORE_AND_AFTER)
+            .addToken(TokenKind.KEYWORD, "new")
+            .addToken(TokenKind.TYPE_NAME, "Widget", Spacing.NO_SPACE)
+            .addToken(TokenKind.PUNCTUATION, "(", Spacing.NO_SPACE)
+            .addToken(TokenKind.COMMENT, "/* Elided */", Spacing.NO_SPACE)
+            .addToken(TokenKind.PUNCTUATION, ")", Spacing.NO_SPACE);
+
+        assertEquals(String.join(System.lineSeparator(),
+            "```java",
+            "public Widget = new Widget(/* Elided */)",
+            "```"), MarkdownRenderer.render(listing));
+    }
 }

@@ -50,6 +50,10 @@ public final class MarkdownRenderer {
 
         for (ReviewLine line : reviewLines) {
             List<ReviewToken> tokens = line.getTokens();
+            if (isStandaloneCommentLine(tokens)) {
+                continue;
+            }
+
             String renderedLine = renderTokens(tokens);
 
             if (tokens.isEmpty()) {
@@ -62,6 +66,22 @@ public final class MarkdownRenderer {
                 renderLines(line.getChildren(), indentLevel + 1, output);
             }
         }
+    }
+
+    private static boolean isStandaloneCommentLine(List<ReviewToken> tokens) {
+        boolean hasComment = false;
+
+        for (ReviewToken token : tokens) {
+            if (token.isDocumentation()) {
+                continue;
+            }
+            if (token.getTokenKind() != TokenKind.COMMENT) {
+                return false;
+            }
+            hasComment = true;
+        }
+
+        return hasComment;
     }
 
     private static String renderTokens(List<ReviewToken> tokens) {

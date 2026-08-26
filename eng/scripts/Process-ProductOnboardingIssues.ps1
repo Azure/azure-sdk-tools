@@ -1,5 +1,8 @@
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+  $PSNativeCommandUseErrorActionPreference = $true
+}
 
 # Should there be more than --limit issues at once (unlikely),
 # given that we close them after processing,

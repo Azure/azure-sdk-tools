@@ -71,6 +71,9 @@ parameters:
   - name: CustomReleaseJobs
     type: jobList
     default: []
+  - name: ForceCreate
+    type: boolean
+    default: false
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -245,6 +248,7 @@ extends:
             VerifyChangelog: ${{ parameters.VerifyChangelog }}
             ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
             CustomReleaseJobs: ${{ parameters.CustomReleaseJobs }}
+            ForceCreate: ${{ parameters.ForceCreate }}
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

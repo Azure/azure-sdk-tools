@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models;
+namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
 public class LogAnalysisResponse : CommandResponse
 {

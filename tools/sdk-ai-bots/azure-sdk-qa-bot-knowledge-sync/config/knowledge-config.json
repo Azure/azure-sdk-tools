@@ -33,6 +33,34 @@
     },
     {
       "repository": {
+        "url": "https://github.com/alloy-framework/alloy.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Alloy code generation framework documentation (component model, reactivity, formatting) used by the TypeSpec emitter framework",
+          "path": "/packages/docs/src/content/docs",
+          "folder": "alloy_framework_docs",
+          "fileNameLowerCase": true,
+          "metadata": {
+            "scope": "unbranded"
+          }
+        },
+        {
+          "description": "Alloy framework sample emitter projects for various target languages",
+          "path": "/samples",
+          "folder": "alloy_framework_samples",
+          "ignoredPaths": ["readme.md"],
+          "isGenerated": true,
+          "metadata": {
+            "scope": "unbranded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/typespec-azure.git",
         "branch": "main",
         "authType": "public"
@@ -624,6 +652,24 @@
           "metadata": {
             "scope": "branded"
           }
+        },
+        {
+          "description": "TypeSpec suppressions CLI and CI approval workflow documentation for Azure REST API specs",
+          "path": "/eng/tools/typespec-suppressions/README.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "ARM lease design discussion period, lease.yaml validation, and automation guidance for Azure REST API specs",
+          "path": "/.github/arm-leases/README.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -660,6 +706,69 @@
           "metadata": {
             "scope": "branded"
           }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/microsoft/mcp.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Azure MCP Server README",
+          "path": "/servers/Azure.Mcp.Server/README.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP Server troubleshooting guide",
+          "path": "/servers/Azure.Mcp.Server/TROUBLESHOOTING.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP Server known issues",
+          "path": "/servers/Azure.Mcp.Server/KNOWN-ISSUES.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP Server azmcp command reference",
+          "path": "/servers/Azure.Mcp.Server/docs/azmcp-commands.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "MCP authentication documentation",
+          "path": "/docs/Authentication.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "MCP prompt templates documentation",
+          "path": "/docs/prompt-templates.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "MCP sovereign clouds documentation",
+          "path": "/docs/sovereign-clouds.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP Server support guide",
+          "path": "/servers/Azure.Mcp.Server/SUPPORT.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure MCP Server changelog",
+          "path": "/servers/Azure.Mcp.Server/CHANGELOG.md",
+          "folder": "azure_mcp_server_docs",
+          "relativeByRepoPath": true
         }
       ]
     },

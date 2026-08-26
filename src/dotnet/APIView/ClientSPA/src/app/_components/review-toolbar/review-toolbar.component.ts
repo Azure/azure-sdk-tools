@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { ButtonGroupModule } from 'primeng/buttongroup';
 import { DialogModule } from 'primeng/dialog';
 import { TimeagoModule } from 'ngx-timeago';
-import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged, finalize, Subject, takeUntil } from 'rxjs';
 import { APIRevision } from 'src/app/_models/revision';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -21,6 +21,7 @@ import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getTypeClass, TREE_DIF
 import { DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
   selector: 'app-review-toolbar',
@@ -76,6 +77,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   selectedDiffAPIRevision: any = null;
   diffApiRevisionsSearchValue: string = '';
   diffApiRevisionsFilterValue: string | undefined = '';
+  diffApiRevisionsLoading: boolean = false;
 
   DIFF_API_REVISION_SELECT: string = 'diff-api';
 
@@ -119,7 +121,8 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   totalMatchCountValue: number = 0;
   showSearchControls: boolean = false;
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
+    private changeDetectorRef: ChangeDetectorRef) {}
 
   ngOnInit() {
     // Initialize settings from user profile
@@ -169,7 +172,9 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
 
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
-        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        const reviewId = this.apiRevisions[0].reviewId;
+        this.apiRevisionsService.cacheAPIRevisionOptions(reviewId, this.apiRevisions);
+        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));
         this.tagSpecialRevisions(this.mappedApiRevisions);
 
         this.diffApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.activeApiRevisionId);
@@ -221,6 +226,53 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   }
 
   searchAndFilterDropdown(searchValue: string, filterValue: string | undefined) {
+    if (searchValue || filterValue) {
+      this.queryFilteredAPIRevisions(searchValue, filterValue);
+      return;
+    }
+
+    this.applyDropdownFilter(searchValue, filterValue);
+  }
+
+  private queryFilteredAPIRevisions(searchValue: string, filterValue: string | undefined) {
+    const detailsByFilter: Record<string, string> = {
+      approved: 'Approved',
+      released: 'Released',
+      automatic: 'Automatic',
+      pullRequest: 'PullRequest',
+      manual: 'Manual'
+    };
+    const details = filterValue && detailsByFilter[filterValue] ? [detailsByFilter[filterValue]] : [];
+    const reviewId = this.apiRevisions[0]?.reviewId;
+    if (!reviewId) {
+      return;
+    }
+
+    const normalizedSearchValue = searchValue.trim();
+    const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
+    this.diffApiRevisionsLoading = true;
+    this.changeDetectorRef.markForCheck();
+    this.apiRevisionsService.getFilteredAPIRevisionOptions(
+      reviewId, details
+    ).pipe(
+      finalize(() => {
+        this.diffApiRevisionsLoading = false;
+        this.changeDetectorRef.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));
+        this.tagSpecialRevisions(this.mappedApiRevisions);
+        const currentQueryKey = `${this.diffApiRevisionsSearchValue.trim()}\u0000${this.diffApiRevisionsFilterValue || ''}`;
+        if (currentQueryKey === queryKey) {
+          this.applyDropdownFilter(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue);
+        }
+        this.changeDetectorRef.markForCheck();
+      }
+    });
+  }
+
+  private applyDropdownFilter(searchValue: string, filterValue: string | undefined) {
     let filtered = this.mappedApiRevisions.filter((apiRevision: APIRevision) => {
       switch (filterValue) {
         case 'pullRequest':

@@ -99,6 +99,7 @@ async def main() -> None:
 
     tools = [
         knowledge_tools.search_knowledge_base,
+        knowledge_tools.wiki_search,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,

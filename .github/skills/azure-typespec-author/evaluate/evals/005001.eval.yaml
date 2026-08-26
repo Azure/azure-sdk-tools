@@ -77,11 +77,14 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "#suppress"
           path: "models.tsp"
-      - type: "file-matches"
+      - &file_matches_fixme_justification
+        type: "file-matches"
+        name: "file-matches-fixme-justification"
         config:
           pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
           path: "models.tsp"
@@ -99,14 +102,8 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "models.tsp"
-          pattern: "#suppress"
-      - type: "file-matches"
-        config:
-          path: "models.tsp"
-          pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+      - *file_matches
+      - *file_matches_fixme_justification
     constraints:
       max_turns: 6
       max_tokens: 1000000

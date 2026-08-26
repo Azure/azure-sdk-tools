@@ -4,12 +4,14 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
   $PSNativeCommandUseErrorActionPreference = $true
 }
 
+$issues_repo = "Azure/azure-sdk-pr"
+
 # Should there be more than --limit issues at once (unlikely),
 # given that we close them after processing,
 # the next batch will be picked up during the next run.
 $issues = `
     gh issue list `
-      --repo "Azure/azure-sdk-pr" `
+      --repo "$issues_repo" `
       --label "product-onboarding" `
       --state open `
       --limit 300 `
@@ -130,8 +132,8 @@ foreach ($issue_number in $issues) {
     }
 
     if ($sync_success) {
-      gh issue comment $issue_number --body "Product onboarding status synced successfully."
-      gh issue close $issue_number
+      gh issue comment $issue_number --body "Product onboarding status synced successfully." --repo "$issues_repo"
+      gh issue close $issue_number --repo "$issues_repo"
     }
   } else {
     [Console]::Error.WriteLine("Error parsing issue #$issue_number.")

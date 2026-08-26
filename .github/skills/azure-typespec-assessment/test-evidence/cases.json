@@ -1,0 +1,96 @@
+[
+  {
+    "pr": 42435,
+    "title": "Add x-ms-pageable to batchOutboundRules POST for CognitiveServices",
+    "baseCommit": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904",
+    "headCommit": "96eae0e7d5c7ede040ee0cc646d397e5d8375912",
+    "projects": ["specification/cognitiveservices/CognitiveServices.Management"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 0 }
+  },
+  {
+    "pr": 42853,
+    "title": "Add 2026-02-01 API version for RecoveryServices and RecoveryServicesBackup",
+    "baseCommit": "519e87e016492a37ce9ea6ac0fdf80d26767f47d",
+    "headCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
+    "projects": [
+      "specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices",
+      "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup"
+    ],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 2 }
+  },
+  {
+    "pr": 43308,
+    "title": "Fix TypeSpec LRO operations: remove @extension, use @useFinalStateVia",
+    "baseCommit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
+    "headCommit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
+    "projects": ["specification/chaos/resource-manager/Microsoft.Chaos/Chaos"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 0 }
+  },
+  {
+    "pr": 43745,
+    "title": "Updated CloudHsmClusterSkuName from closed enum to extensible enum",
+    "baseCommit": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+    "headCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+    "projects": ["specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 0 }
+  },
+  {
+    "pr": 44200,
+    "title": "Support for Private Frontend on Application Gateway for Containers",
+    "baseCommit": "0d3ff673b6b63361a7ba06a355d929902e596dac",
+    "headCommit": "b1582b12f39f1d122fce3c7bbb24b812b0c5c487",
+    "projects": ["specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking"],
+    "expected": { "semanticIntents": 2, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 4 }
+  },
+  {
+    "pr": 44454,
+    "title": "Mitigate operation group casing breaking changes for azure-mgmt-elastic",
+    "baseCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+    "headCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+    "projects": ["specification/elastic/Elastic.Management"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 0, "complianceFindings": 1 }
+  },
+  {
+    "pr": 44742,
+    "title": "Removed NFSv2 from STG103/104 TypeSpec & Swagger",
+    "baseCommit": "e75a07cd7ea1b2207190a362305db02b639715ec",
+    "headCommit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
+    "projects": ["specification/storage/data-plane/FileStorage"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 3, "downstreamFindings": 1, "complianceFindings": 1 }
+  },
+  {
+    "pr": 44882,
+    "title": "Add new stable version 2026-06-01 for New Relic",
+    "baseCommit": "9eb0993333857ef0ffb2863ccc76f8b123cae90b",
+    "headCommit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
+    "projects": ["specification/newrelic/NewRelicObservability.Management"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 0, "complianceFindings": 1 }
+  },
+  {
+    "pr": 44988,
+    "title": "Release Network API Version 2025-09-01",
+    "baseCommit": "9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5",
+    "headCommit": "780a61ace56c22ce10dd01caa8ab95ca4514ac2e",
+    "projects": [
+      "specification/network/resource-manager/Microsoft.Network/Network/Network",
+      "specification/network/resource-manager/Microsoft.Network/Network/Vmss"
+    ],
+    "expected": { "semanticIntents": 11, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 4 }
+  },
+  {
+    "pr": 45348,
+    "title": "Fix cross-version breaking changes for 2026-11 previews",
+    "baseCommit": "2991970c5377110244bcf9614be03e5aaf32362f",
+    "headCommit": "b209254310b3e569b16210d3c59fc8b8ac3b84b4",
+    "projects": ["specification/deviceregistry/DeviceRegistry.Management"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 0, "complianceFindings": 0 }
+  },
+  {
+    "pr": 45536,
+    "title": "Preserve Java Consumption enum names",
+    "baseCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+    "headCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+    "projects": ["specification/consumption/resource-manager/Microsoft.Consumption/Consumption"],
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 0, "complianceFindings": 0 }
+  }
+]

@@ -584,7 +584,11 @@ tools/tsp-client/test/examples/sdk/alternate-entrypoint/test-results.browser.xml
 
 # Local TypeSpec assessment artifacts
 .github/skills/azure-typespec-assessment/evals/
+!.github/skills/azure-typespec-assessment/evals/
+!.github/skills/azure-typespec-assessment/evals/*.eval.yaml
 .github/skills/azure-typespec-assessment/test-evidence/*
+!.github/skills/azure-typespec-assessment/test-evidence/README.md
+!.github/skills/azure-typespec-assessment/test-evidence/cases.json
 !.github/skills/azure-typespec-assessment/test-evidence/fast-assessment-execution-times.json
 !.github/skills/azure-typespec-assessment/test-evidence/assessments/
 !.github/skills/azure-typespec-assessment/test-evidence/assessments/**

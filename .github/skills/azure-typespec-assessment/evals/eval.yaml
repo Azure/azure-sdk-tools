@@ -1,0 +1,108 @@
+name: azure-typespec-assessment-eval
+description: Routing and report-generation coverage for azure-typespec-assessment.
+type: capability
+environment: azsdk-mcp-mock
+
+tags:
+  area: azure-typespec-assessment
+  type: ci-gate
+
+defaults:
+  runs: 1
+  timeout: "180s"
+  model: gpt-5.4
+  executor: copilot-sdk
+
+scoring:
+  threshold: 0.8
+
+stimuli:
+  - name: trigger-assess-current-typespec-diff
+    prompt: "Assess the current TypeSpec changes in the local Microsoft.Network spec against main."
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+
+  - name: trigger-check-typespec-breaking-impact
+    prompt: "Review my current TypeSpec diff for REST and downstream breaking changes."
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+
+  - name: trigger-explain-typespec-rest-impact
+    prompt: "Explain the semantic intent and Azure compliance impact of the local TypeSpec changes."
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+
+  - name: anti-trigger-analyze-sdk-pipeline
+    prompt: "Analyze the failed Azure SDK CI pipeline run 123456 and summarize the root cause."
+    environment:
+      skills:
+        - ../../azsdk-common-pipeline-analysis
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-pipeline-analysis"]
+          disallowed: ["azure-typespec-assessment"]
+
+  - name: anti-trigger-generate-sdk-locally
+    prompt: "Generate and build the Python SDK locally from my Microsoft.Widget TypeSpec."
+    environment:
+      skills:
+        - ../../azsdk-common-generate-sdk-locally
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-generate-sdk-locally"]
+          disallowed: ["azure-typespec-assessment"]
+
+  - name: anti-trigger-resolve-apiview-feedback
+    prompt: "Resolve the APIView feedback on Azure SDK pull request 12345."
+    environment:
+      skills:
+        - ../../azsdk-common-apiview-feedback-resolution
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-apiview-feedback-resolution"]
+          disallowed: ["azure-typespec-assessment"]
+
+  - name: retain-pr-44988-html-report
+    prompt: |
+      Use azure-typespec-assessment to validate the supplied PR 44988 assessment
+      fixture and render its final HTML report to output/assessment.html.
+    environment:
+      files:
+        - src: ../test-evidence/assessments/44988/assessment.json
+          dest: assessment.json
+        - src: ../scripts/validate-assessment.mjs
+          dest: validate-assessment.mjs
+        - src: ../scripts/render-assessment-html.mjs
+          dest: render-assessment-html.mjs
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+      - type: tool-calls
+        config:
+          required:
+            - "^(powershell|bash)$"
+      - type: run-command
+        config:
+          command: "node validate-assessment.mjs assessment.json"
+          expected_exit_code: 0
+      - type: run-command
+        config:
+          command: "node render-assessment-html.mjs assessment.json output/assessment.html"
+          expected_exit_code: 0
+      - type: file-exists
+        config:
+          path: "output/assessment.html"
+      - type: file-matches
+        config:
+          path: "output/assessment.html"
+          pattern: "Release Network API Version 2025-09-01"

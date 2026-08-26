@@ -57,7 +57,7 @@ function input() {
         downstream: { candidates: [] },
       },
     ],
-    complianceEvidence: { documents: [] },
+    complianceEvidence: { documents: [], reviewItems: [] },
   };
 }
 
@@ -81,8 +81,9 @@ function judgment() {
     ],
     downstreamCandidates: [],
     compliance: {
-      status: "passed",
-      rationale: "No documented mismatch was found.",
+      status: "not-assessed",
+      rationale: "No applicable documentation review item was available.",
+      reviews: [],
       findings: [],
     },
     overallConfidence: "high",
@@ -206,6 +207,14 @@ test("fast compliance uses the full report comparison structure", () => {
   const modelInput = input();
   const documentationUrl = "https://example.com/guidance";
   modelInput.complianceEvidence.documents = [{ url: documentationUrl }];
+  modelInput.complianceEvidence.reviewItems = [
+    {
+      id: "review-guidance",
+      documentationUrl,
+      sourceChangeId: "source-change",
+      sourcePath: "spec/main.tsp",
+    },
+  ];
   const value = judgment();
   value.restCandidates = [
     {
@@ -218,6 +227,14 @@ test("fast compliance uses the full report comparison structure", () => {
   value.compliance = {
     status: "failed",
     rationale: "The changed declaration differs from guidance.",
+    reviews: [
+      {
+        id: "review-guidance",
+        decision: "applicable-fail",
+        rationale: "The source differs from the fetched guidance.",
+        findingId: "compliance-change",
+      },
+    ],
     findings: [
       {
         ...finding,
@@ -253,6 +270,14 @@ test("fast compliance requires an exact source change link", () => {
   const modelInput = input();
   const documentationUrl = "https://example.com/guidance";
   modelInput.complianceEvidence.documents = [{ url: documentationUrl }];
+  modelInput.complianceEvidence.reviewItems = [
+    {
+      id: "review-guidance",
+      documentationUrl,
+      sourceChangeId: "source-change",
+      sourcePath: "spec/main.tsp",
+    },
+  ];
   const value = judgment();
   value.restCandidates[0].decision = "reject";
   value.restCandidates[0].rationale = "The candidate is not breaking.";
@@ -272,6 +297,14 @@ test("fast compliance requires an exact source change link", () => {
   value.compliance = {
     status: "failed",
     rationale: "The changed declaration differs from guidance.",
+    reviews: [
+      {
+        id: "review-guidance",
+        decision: "applicable-fail",
+        rationale: "The source differs from the fetched guidance.",
+        findingId: "compliance-change",
+      },
+    ],
     findings: [
       {
         id: "compliance-change",

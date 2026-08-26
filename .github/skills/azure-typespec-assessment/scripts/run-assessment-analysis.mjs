@@ -299,6 +299,17 @@ function compactAspectChanges(change) {
   };
 }
 
+function materialAspectChanges(change) {
+  const compact = compactAspectChanges(change);
+  compact.aspects = Object.fromEntries(
+    Object.entries(compact.aspects).filter(
+      ([, value]) =>
+        JSON.stringify(value.before) !== JSON.stringify(value.after),
+    ),
+  );
+  return compact;
+}
+
 function compactRestCandidate(candidate, index) {
   const evidence = candidate.evidence ?? {};
   let compactEvidence = evidence;
@@ -361,10 +372,22 @@ function groupOperationManifest(changes, baseline) {
     if (change.kind === "modified") continue;
     const operation = change.after ?? change.before;
     const family = operationFamily(operation.operationId);
-    const key = `${change.kind}:${operation.apiVersion}:${family}`;
+    const compactChange =
+      change.kind === "version-modified"
+        ? materialAspectChanges(change)
+        : undefined;
+    const behavior =
+      change.kind === "version-modified" &&
+      Object.keys(compactChange.aspects).length === 0
+        ? "version-propagation"
+        : change.kind === "version-modified"
+          ? "material-change"
+          : change.kind;
+    const key = `${change.kind}:${operation.apiVersion}:${family}:${behavior}`;
     const group = groups.get(key) ?? {
       id: key.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       kind: change.kind,
+      behavior,
       apiVersion: operation.apiVersion,
       family,
       operationIds: [],
@@ -372,13 +395,13 @@ function groupOperationManifest(changes, baseline) {
       changes: [],
     };
     group.operationIds.push(operation.operationId);
-    for (const aspect of change.aspects ?? []) {
-      group.changedAspects.add(
-        typeof aspect === "string" ? aspect : aspect.field,
-      );
-    }
-    if (change.kind === "version-modified") {
-      group.changes.push(compactAspectChanges(change));
+    if (compactChange) {
+      for (const aspect of Object.keys(compactChange.aspects)) {
+        group.changedAspects.add(aspect);
+      }
+      if (Object.keys(compactChange.aspects).length > 0) {
+        group.changes.push(compactChange);
+      }
     }
     groups.set(key, group);
   }
@@ -429,12 +452,13 @@ function linkOperationGroupsToSource(projects, sourceFiles) {
               member.version.replace(/^v/, "").replaceAll("_", "-") ===
                 group.apiVersion &&
               owner &&
-              (owner.startsWith(family) || family.startsWith(owner))
+              owner === family
             );
           })
-          .map(({ path, owner, symbol }) => ({
+          .map(({ path, owner, symbol, sourceChangeId }) => ({
             path,
             owner: owner ?? symbol,
+            sourceChangeIds: [sourceChangeId],
           }));
         const operationFileLinks = sourceFiles
           .filter((file) => {
@@ -442,23 +466,34 @@ function linkOperationGroupsToSource(projects, sourceFiles) {
               .split("/")
               .at(-1)
               .replace(/\.tsp$/i, "")
-              .toLowerCase();
-            return (
-              !["client", "main", "models", "back-compatible"].includes(stem) &&
-              (stem.startsWith(family) || family.startsWith(stem))
-            );
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, "");
+            return stem === family;
           })
-          .map((file) => ({ path: file.path }));
+          .map((file) => ({
+            path: file.path,
+            sourceChangeIds: file.changes.map((change) => change.id),
+          }));
         const linksByPath = new Map();
         for (const link of [...memberLinks, ...operationFileLinks]) {
-          const owners = linksByPath.get(link.path) ?? new Set();
-          if (link.owner) owners.add(link.owner);
-          linksByPath.set(link.path, owners);
+          const linked = linksByPath.get(link.path) ?? {
+            owners: new Set(),
+            sourceChangeIds: new Set(),
+          };
+          if (link.owner) linked.owners.add(link.owner);
+          for (const id of link.sourceChangeIds ?? []) {
+            if (id) linked.sourceChangeIds.add(id);
+          }
+          linksByPath.set(link.path, linked);
         }
         const sourceLinks = [...linksByPath]
-          .map(([path, owners]) => ({
+          .map(([path, linked]) => ({
             path,
-            owners: owners.size > 0 ? [...owners].sort() : undefined,
+            owners:
+              linked.owners.size > 0
+                ? [...linked.owners].sort()
+                : undefined,
+            sourceChangeIds: [...linked.sourceChangeIds].sort(),
           }))
           .sort((left, right) => left.path.localeCompare(right.path));
         return {
@@ -468,6 +503,359 @@ function linkOperationGroupsToSource(projects, sourceFiles) {
       }),
     },
   }));
+}
+
+function reviewUnitId(parts) {
+  return parts
+    .filter(Boolean)
+    .join("-")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function sourceOnlyBehavior(change) {
+  const lines = change.diffLines.map((line) => line.text.trim());
+  if (
+    lines.some((line) =>
+      /^[A-Za-z_][A-Za-z0-9_]*\s*:\s*["'][^"']+["']\s*,?$/.test(line),
+    )
+  ) {
+    return "enum-values";
+  }
+  if (
+    lines.some(
+      (line) =>
+        /\b(model|scalar|union|enum)\s+[A-Za-z_]/.test(line) ||
+        /^[A-Za-z_][A-Za-z0-9_]*\??\s*:/.test(line) ||
+        line.startsWith("@Xml."),
+    )
+  ) {
+    return "model-shape";
+  }
+  if (
+    lines.some(
+      (line) =>
+        /\b(interface|op)\s+[A-Za-z_]/.test(line) ||
+        /^@(get|put|post|patch|delete|route|action|list)\b/.test(line),
+    )
+  ) {
+    return "operation-shape";
+  }
+  return "versioning-metadata";
+}
+
+function sourceEvidenceForFamily(sourceFiles, projectPath, family) {
+  const normalizedFamily = singularFamily(family);
+  const projectFiles = sourceFiles.filter(
+    (file) =>
+      projectPath === "." ||
+      file.path === projectPath ||
+      file.path.startsWith(`${projectPath.replaceAll("\\", "/")}/`),
+  );
+  let matches = projectFiles.filter((file) => {
+    const stem = file.path
+      .split("/")
+      .at(-1)
+      .replace(/\.tsp$/i, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+    return stem === normalizedFamily;
+  });
+  const memberMatches = projectFiles
+    .flatMap((file) =>
+      file.versionedMembers
+        .filter(
+          (member) =>
+            normalizedOwner(member.owner ?? member.symbol) ===
+            normalizedFamily,
+        )
+        .map((member) => ({
+          path: file.path,
+          sourceChangeId: member.sourceChangeId,
+        })),
+    );
+  return {
+    sourceChangeIds: [
+      ...new Set(
+        [
+          ...matches.flatMap((file) =>
+            file.changes.map((change) => change.id),
+          ),
+          ...memberMatches.map((member) => member.sourceChangeId),
+        ].filter(Boolean),
+      ),
+    ],
+    sourcePaths: [
+      ...new Set([
+        ...matches.map((file) => file.path),
+        ...memberMatches.map((member) => member.path),
+      ]),
+    ],
+  };
+}
+
+export function buildSemanticReviewUnits(projects, sourceFiles) {
+  const units = [];
+  const propagation = new Map();
+  for (const project of projects) {
+    let hasOperationCoverage = project.rest.operationChanges.length > 0;
+    const materialUnits = new Map();
+    for (const change of project.rest.operationChanges) {
+      const family = operationFamily(change.operationId);
+      const source = sourceEvidenceForFamily(
+        sourceFiles,
+        project.path,
+        family,
+      );
+      if (source.sourceChangeIds.length === 0) continue;
+      const behavior = change.changedAspects.join("+");
+      const key = `${change.apiVersion}:${family}:${behavior}`;
+      const unit = materialUnits.get(key) ?? {
+        id: reviewUnitId([
+          "intent",
+          project.path,
+          change.apiVersion,
+          family,
+          behavior,
+        ]),
+        kind: "material-change",
+        family,
+        behavior,
+        operationChangeIds: [],
+        operationGroupIds: [],
+        sourceChangeIds: [],
+        sourcePaths: [],
+      };
+      unit.operationChangeIds.push(change.id);
+      unit.sourceChangeIds.push(...source.sourceChangeIds);
+      unit.sourcePaths.push(...source.sourcePaths);
+      materialUnits.set(key, unit);
+    }
+    units.push(...materialUnits.values());
+    for (const group of project.rest.operationGroups) {
+      hasOperationCoverage = true;
+      const sourceChangeIds = [
+        ...new Set(
+          (group.sourceLinks ?? []).flatMap(
+            (link) => link.sourceChangeIds ?? [],
+          ),
+        ),
+      ];
+      const sourcePaths = [
+        ...new Set((group.sourceLinks ?? []).map((link) => link.path)),
+      ];
+      if (group.behavior === "version-propagation") {
+        const projectFamilyRoot = project.path.split("/").slice(0, -1).join("/");
+        const key = `${projectFamilyRoot}:${group.apiVersion}`;
+        const unit = propagation.get(key) ?? {
+          id: reviewUnitId([
+            "intent",
+            projectFamilyRoot,
+            group.apiVersion,
+            "version-lineage",
+          ]),
+          kind: "version-propagation",
+          family: "version-lineage",
+          behavior: "publish unchanged contracts in the new API version",
+          operationChangeIds: [],
+          operationGroupIds: [],
+          sourceChangeIds: [],
+          sourcePaths: [],
+        };
+        unit.operationGroupIds.push(group.id);
+        unit.sourceChangeIds.push(...sourceChangeIds);
+        unit.sourcePaths.push(...sourcePaths);
+        propagation.set(key, unit);
+        continue;
+      }
+      units.push({
+        id: reviewUnitId([
+          "intent",
+          project.path,
+          group.apiVersion,
+          group.family,
+          group.behavior,
+        ]),
+        kind:
+          group.behavior === "material-change"
+            ? "material-change"
+            : group.kind,
+        family: group.family,
+        behavior:
+          group.behavior === "material-change"
+            ? (group.changedAspects ?? []).join("+")
+            : group.behavior,
+        operationChangeIds: [],
+        operationGroupIds: [group.id],
+        sourceChangeIds,
+        sourcePaths,
+      });
+    }
+    if (!hasOperationCoverage) {
+      const projectFiles = sourceFiles.filter(
+        (file) =>
+          project.path === "." ||
+          file.path === project.path ||
+          file.path.startsWith(`${project.path.replaceAll("\\", "/")}/`),
+      );
+      for (const file of projectFiles.filter(
+        (candidate) => candidate.changes.length > 0,
+      )) {
+        const addedDependencyVersions = file.changes.flatMap((change) =>
+          change.diffLines
+            .filter((line) => line.kind === "add")
+            .flatMap((line) => [
+              ...line.text.matchAll(/@useDependency\([^)]*\.v(\d{4}_\d{2}_\d{2})\)/g),
+            ])
+            .map((match) => match[1].replaceAll("_", "-")),
+        );
+        const onlyDependencyChanges = file.changes.every((change) =>
+          change.diffLines.every((line) =>
+            line.text.trim().startsWith("@useDependency("),
+          ),
+        );
+        if (onlyDependencyChanges && addedDependencyVersions.length === 1) {
+          const apiVersion = addedDependencyVersions[0];
+          const projectFamilyRoot = project.path
+            .split("/")
+            .slice(0, -1)
+            .join("/");
+          const key = `${projectFamilyRoot}:${apiVersion}`;
+          const unit = propagation.get(key) ?? {
+            id: reviewUnitId([
+              "intent",
+              projectFamilyRoot,
+              apiVersion,
+              "version-lineage",
+            ]),
+            kind: "version-propagation",
+            family: "version-lineage",
+            behavior: "publish unchanged contracts in the new API version",
+            operationChangeIds: [],
+            operationGroupIds: [],
+            sourceChangeIds: [],
+            sourcePaths: [],
+          };
+          unit.sourceChangeIds.push(
+            ...file.changes.map((change) => change.id),
+          );
+          unit.sourcePaths.push(file.path);
+          propagation.set(key, unit);
+          continue;
+        }
+        const behaviorChanges = new Map();
+        for (const change of file.changes) {
+          const behavior = sourceOnlyBehavior(change);
+          const changes = behaviorChanges.get(behavior) ?? [];
+          changes.push(change);
+          behaviorChanges.set(behavior, changes);
+        }
+        if (
+          behaviorChanges.has("versioning-metadata") &&
+          behaviorChanges.size > 1
+        ) {
+          const target = [...behaviorChanges]
+            .filter(([behavior]) => behavior !== "versioning-metadata")
+            .sort(
+              (left, right) =>
+                right[1].length - left[1].length ||
+                Number(right[0] === "model-shape") -
+                  Number(left[0] === "model-shape"),
+            )[0];
+          target[1].push(...behaviorChanges.get("versioning-metadata"));
+          behaviorChanges.delete("versioning-metadata");
+        }
+        const candidateRules = [
+          ...new Set(
+            project.downstream.candidates
+              .filter((candidate) =>
+                (candidate.evidence ?? []).some(
+                  (entry) => entry.path === file.path,
+                ),
+              )
+              .map((candidate) => candidate.rule),
+          ),
+        ];
+        const family = file.path
+          .split("/")
+          .at(-1)
+          .replace(/\.tsp$/i, "");
+        for (const [sourceBehavior, changes] of behaviorChanges) {
+          const behavior =
+            candidateRules.length > 0
+              ? [...new Set([...candidateRules, sourceBehavior])].join("+")
+              : sourceBehavior;
+          units.push({
+            id: reviewUnitId([
+              "intent",
+              project.path,
+              family,
+              behavior,
+              "source-change",
+            ]),
+            kind: "source-change",
+            family,
+            behavior,
+            operationChangeIds: [],
+            operationGroupIds: [],
+            sourceChangeIds: changes.map((change) => change.id),
+            sourcePaths: [file.path],
+          });
+        }
+      }
+    }
+  }
+  units.push(...propagation.values());
+  const reviewUnits = units
+    .map((unit) => ({
+      ...unit,
+      operationGroupIds: [...new Set(unit.operationGroupIds)].sort(),
+      sourceChangeIds: [...new Set(unit.sourceChangeIds)].sort(),
+      sourcePaths: [...new Set(unit.sourcePaths)].sort(),
+    }))
+    .sort((left, right) => left.id.localeCompare(right.id));
+  const missingSource = reviewUnits.filter(
+    (unit) =>
+      unit.kind !== "version-propagation" &&
+      unit.sourceChangeIds.length === 0,
+  );
+  if (missingSource.length > 0) {
+    throw new Error(
+      `Material semantic review unit(s) have no changed TypeSpec source evidence: ${missingSource
+        .map((unit) => unit.id)
+        .join(", ")}.`,
+    );
+  }
+  return reviewUnits;
+}
+
+export function buildComplianceReviewItems(
+  sourceFiles,
+  documents,
+  semanticReviewUnits,
+) {
+  const relevantChangeIds = new Set(
+    semanticReviewUnits
+      .filter((unit) => unit.kind !== "version-propagation")
+      .flatMap((unit) => unit.sourceChangeIds),
+  );
+  const changes = sourceFiles.flatMap((file) =>
+    file.changes
+      .filter((change) => relevantChangeIds.has(change.id))
+      .map((change) => ({
+        id: change.id,
+        path: file.path,
+      })),
+  );
+  return documents.flatMap((document, documentIndex) =>
+    changes.map((change, changeIndex) => ({
+      id: `compliance-${documentIndex + 1}-${changeIndex + 1}`,
+      documentationUrl: document.url,
+      sourceChangeId: change.id,
+      sourcePath: change.path,
+    })),
+  );
 }
 
 function sourceDownstreamCandidates(sourceFiles, projectPath, typeSpecDiffs) {
@@ -741,22 +1129,26 @@ function compactSourceHunk(hunk, limit, sourceReferences = []) {
   const revision = hunk.newCount === 0 ? "base" : "head";
   const startLine = revision === "base" ? hunk.oldStart : hunk.newStart;
   const lineCount = revision === "base" ? hunk.oldCount : hunk.newCount;
+  const endLine = Math.max(startLine, startLine + lineCount - 1);
   const sourceReference = sourceReferences.find(
     (reference) =>
       reference.path === hunk.path &&
       reference.revision === revision &&
-      reference.startLine <= startLine &&
+      reference.startLine <= endLine &&
       reference.endLine >= startLine,
   );
   const sourceLink = sourceReference?.link.replace(
     /#L\d+-L\d+$/,
-    `#L${startLine}-L${Math.max(startLine, startLine + lineCount - 1)}`,
+    `#L${startLine}-L${endLine}`,
   );
   return {
     id: `${hunk.path}:${hunk.newStart}:${hunk.oldStart}`,
     path: hunk.path,
+    revision,
     oldStart: hunk.oldStart,
+    oldCount: hunk.oldCount,
     newStart: hunk.newStart,
+    newCount: hunk.newCount,
     lines: selectedLines.map((entry) => entry.line),
     diffLines: selectedLines.map(({ kind, line }) => ({
       kind,
@@ -785,6 +1177,7 @@ function compactSourceFiles(sourceIndex, typeSpecDiffs, sourceReferences = []) {
       owner: member.owner,
       symbol: member.symbol,
       version: member.version,
+      sourceChangeId: member.sourceChangeId,
     });
     files.set(member.path, file);
   }
@@ -951,8 +1344,32 @@ export function buildAssessmentDraft({
       project.path,
       evidence.typeSpecDiffs,
     );
+    const operationChanges = project.rest.operationChanges.filter((change) => {
+      const source = sourceEvidenceForFamily(
+        sourceFiles,
+        project.path,
+        operationFamily(change.operationId),
+      );
+      return source.sourceChangeIds.length > 0;
+    });
+    const breakingCandidates =
+      operationChanges.length === 0 &&
+      project.rest.operationGroups.length === 0
+        ? []
+        : project.rest.breakingCandidates;
     return {
       ...project,
+      rest: {
+        ...project.rest,
+        operationChanges,
+        breakingCandidates,
+        candidateCount: breakingCandidates.length,
+        counts: {
+          ...project.rest.counts,
+          modelRelevantOperations:
+            operationChanges.length + project.rest.operationGroups.length,
+        },
+      },
       downstream: {
         ...project.downstream,
         candidates: [...project.downstream.candidates, ...sourceCandidates],
@@ -961,6 +1378,25 @@ export function buildAssessmentDraft({
       },
     };
   });
+  const semanticReviewUnits = buildSemanticReviewUnits(projects, sourceFiles);
+  for (const unit of semanticReviewUnits) {
+    if (
+      unit.kind !== "version-propagation" &&
+      unit.sourceChangeIds.length === 0
+    ) {
+      throw new Error(
+        `Semantic review unit ${unit.id} has no changed TypeSpec source evidence.`,
+      );
+    }
+  }
+  const boundedComplianceEvidence = {
+    ...complianceEvidence,
+    reviewItems: buildComplianceReviewItems(
+      sourceFiles,
+      complianceEvidence.documents ?? [],
+      semanticReviewUnits,
+    ),
+  };
   return {
     schemaVersion: 1,
     comparison: {
@@ -980,8 +1416,9 @@ export function buildAssessmentDraft({
         path.endsWith("package.json"),
     ),
     sourceFiles,
+    semanticReviewUnits,
     projects,
-    complianceEvidence,
+    complianceEvidence: boundedComplianceEvidence,
     artifactCache: evidence.artifactCache,
     checkoutCache: evidence.checkoutCache,
     errors: evidence.errors,
@@ -989,7 +1426,7 @@ export function buildAssessmentDraft({
       preparationMs: evidence.durationMs,
       deterministicAnalysisMs:
         evidence.phaseDurations?.deterministicAnalysisMs ?? analysis.durationMs,
-      documentationEvidenceMs: complianceEvidence.durationMs,
+      documentationEvidenceMs: boundedComplianceEvidence.durationMs,
       totalMs,
     },
     modelTasks: [

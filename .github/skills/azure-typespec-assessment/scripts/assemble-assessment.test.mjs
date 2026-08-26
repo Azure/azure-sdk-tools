@@ -57,10 +57,29 @@ function modelInput() {
           {
             id: "source-widget",
             oldStart: 10,
+            oldCount: 4,
             newStart: 10,
+            newCount: 4,
+            revision: "head",
             lines: ['@doc("New behavior")'],
+            diffLines: [
+              { kind: "add", text: '@doc("New behavior")' },
+            ],
+            sourceLink: "specification/widget/main.tsp#L10-L13",
           },
         ],
+      },
+    ],
+    semanticReviewUnits: [
+      {
+        id: "review-update-widget-response",
+        kind: "material-change",
+        family: "Widgets",
+        behavior: "responses",
+        operationChangeIds: ["operation-widget-get"],
+        operationGroupIds: [],
+        sourceChangeIds: ["source-widget"],
+        sourcePaths: [],
       },
     ],
     projects: [
@@ -137,6 +156,15 @@ function modelInput() {
       },
     ],
     complianceEvidence: {
+      reviewItems: [
+        {
+          id: "compliance-widget-models",
+          documentationUrl:
+            "https://typespec.io/docs/language-basics/models/",
+          sourceChangeId: "source-widget",
+          sourcePath: "specification/widget/main.tsp",
+        },
+      ],
       documents: [
         {
           category: "Models",
@@ -165,6 +193,7 @@ function judgment() {
     semanticIntents: [
       {
         id: "update-widget-response",
+        reviewUnitId: "review-update-widget-response",
         title: "Update the widget read response.",
         rationale:
           "The changed TypeSpec updates the existing GET response while preserving its route.",
@@ -207,12 +236,174 @@ function judgment() {
       rationale:
         "The changed declaration follows the fetched TypeSpec model guidance.",
       documentUrls: ["https://typespec.io/docs/language-basics/models/"],
+      reviews: [
+        {
+          id: "compliance-widget-models",
+          decision: "applicable-pass",
+          rationale: "The changed model follows the documented pattern.",
+        },
+      ],
       findings: [],
     },
     overallConfidence: "high",
     blockers: [],
   };
 }
+
+test("semantic review units must be covered exactly once", () => {
+  const input = modelInput();
+  input.semanticReviewUnits.push({
+    ...input.semanticReviewUnits[0],
+    id: "review-update-widget-description",
+  });
+  const missing = judgment();
+  assert.throws(
+    () => validateJudgment(missing, input),
+    /must be referenced exactly once/,
+  );
+
+  const duplicate = judgment();
+  duplicate.semanticIntents.push({
+    ...duplicate.semanticIntents[0],
+    id: "duplicate-widget-intent",
+  });
+  assert.throws(
+    () => validateJudgment(duplicate, input),
+    /must be referenced exactly once/,
+  );
+});
+
+test("compliance review items must be covered exactly once", () => {
+  const input = modelInput();
+  const missing = judgment();
+  missing.compliance.reviews = [];
+  assert.throws(
+    () => validateJudgment(missing, input),
+    /Missing compliance review decision\(s\)/,
+  );
+
+  const duplicate = judgment();
+  duplicate.compliance.reviews.push({
+    ...duplicate.compliance.reviews[0],
+  });
+  assert.throws(
+    () => validateJudgment(duplicate, input),
+    /Duplicate compliance review ID/,
+  );
+});
+
+test("distinct failed compliance reviews require distinct findings", () => {
+  const input = modelInput();
+  input.sourceFiles[0].changes.push({
+    id: "source-widget-operation",
+    oldStart: 20,
+    newStart: 20,
+    lines: ["get is ArmResourceRead<Widget>;"],
+  });
+  input.complianceEvidence.reviewItems.push({
+    id: "compliance-widget-operation-models",
+    documentationUrl: "https://typespec.io/docs/language-basics/models/",
+    sourceChangeId: "source-widget-operation",
+    sourcePath: "specification/widget/main.tsp",
+  });
+
+  const value = judgment();
+  value.compliance.status = "failed";
+  value.compliance.reviews = [
+    {
+      id: "compliance-widget-models",
+      decision: "applicable-fail",
+      rationale: "The model declaration does not follow the guidance.",
+      findingId: "collapsed-finding",
+    },
+    {
+      id: "compliance-widget-operation-models",
+      decision: "applicable-fail",
+      rationale: "The operation declaration does not follow the guidance.",
+      findingId: "collapsed-finding",
+    },
+  ];
+  value.compliance.findings = [
+    {
+      id: "collapsed-finding",
+      title: "Two declarations do not follow the guidance.",
+      severity: "medium",
+      summary: "Two declarations differ from the fetched guidance.",
+      documentationUrl: "https://typespec.io/docs/language-basics/models/",
+      sourceChangeIds: ["source-widget"],
+      sourcePaths: [],
+      evidence: ["The changed declarations differ from the fetched example."],
+    },
+  ];
+  assert.throws(
+    () => validateJudgment(value, input),
+    /Each failed compliance review requires its own finding/,
+  );
+});
+
+test("source-only intents and missing compliance evidence remain representable", () => {
+  const input = modelInput();
+  input.semanticReviewUnits = [
+    {
+      id: "review-widget-model-shape",
+      kind: "source-change",
+      family: "Widget",
+      behavior: "model-shape",
+      operationChangeIds: [],
+      operationGroupIds: [],
+      sourceChangeIds: ["source-widget"],
+      sourcePaths: [],
+    },
+  ];
+  input.projects[0].rest.operationChanges = [];
+  input.projects[0].rest.operationGroups = [];
+  input.projects[0].rest.breakingCandidates = [];
+  input.projects[0].downstream.candidates = [];
+  input.complianceEvidence = { documents: [], reviewItems: [] };
+
+  const value = judgment();
+  value.semanticIntents = [
+    {
+      id: "update-widget-model-shape",
+      reviewUnitId: "review-widget-model-shape",
+      title: "Update the widget model shape.",
+      rationale:
+        "The changed TypeSpec updates a model without changing a REST operation contract.",
+      operationChangeIds: [],
+      operationGroupIds: [],
+      sourceChangeIds: ["source-widget"],
+      sourcePaths: [],
+    },
+  ];
+  value.restCandidates = [];
+  value.downstreamCandidates = [];
+  value.compliance = {
+    status: "not-assessed",
+    rationale: "No applicable authoritative document was available.",
+    documentUrls: [],
+    reviews: [],
+    findings: [],
+  };
+
+  const deterministic = materialization();
+  deterministic.dimensions.semanticUnderstanding.items = [];
+  const assessment = assembleAssessment({
+    modelInput: input,
+    judgment: value,
+    materialization: deterministic,
+  });
+  assert.equal(
+    assessment.dimensions.semanticUnderstanding.items[0].sourceOnly,
+    true,
+  );
+  assert.deepEqual(
+    assessment.dimensions.semanticUnderstanding.items[0].restRepresentation
+      .operations,
+    [],
+  );
+  assert.deepEqual(validateAssessment(assessment), []);
+  assert.match(renderAssessmentHtml(assessment), /Changed TypeSpec declarations/);
+});
 
 function materialization() {
   const operation = {
@@ -318,12 +509,25 @@ function catalogOnlyInputs() {
       ],
     },
   ];
+  input.semanticReviewUnits = [
+    {
+      id: "review-widget-list",
+      kind: "material-change",
+      family: "Widgets",
+      behavior: "responses",
+      operationChangeIds: [],
+      operationGroupIds: ["version-modified-widget-list"],
+      sourceChangeIds: ["source-widget"],
+      sourcePaths: [],
+    },
+  ];
   input.projects[0].rest.breakingCandidates = [];
   input.projects[0].downstream.candidates = [];
 
   const value = judgment();
   value.semanticIntents[0].operationChangeIds = [];
   value.semanticIntents[0].operationGroupIds = ["version-modified-widget-list"];
+  value.semanticIntents[0].reviewUnitId = "review-widget-list";
   value.restCandidates = [];
   value.downstreamCandidates = [];
   return { input, value };
@@ -568,6 +772,14 @@ test("compliance findings use bounded documents and deterministic source", () =>
     status: "failed",
     rationale: "The fetched model guidance applies to the changed declaration.",
     documentUrls: ["https://typespec.io/docs/language-basics/models/"],
+    reviews: [
+      {
+        id: "compliance-widget-models",
+        decision: "applicable-fail",
+        rationale: "The changed declaration contradicts the guidance.",
+        findingId: "model-guidance-gap",
+      },
+    ],
     findings: [
       {
         id: "model-guidance-gap",
@@ -623,6 +835,14 @@ test("compliance finding evidence accepts a non-empty string", () => {
     status: "failed",
     rationale: "The fetched guidance applies.",
     documentUrls: ["https://typespec.io/docs/language-basics/models/"],
+    reviews: [
+      {
+        id: "compliance-widget-models",
+        decision: "applicable-fail",
+        rationale: "The changed declaration contradicts the guidance.",
+        findingId: "string-evidence",
+      },
+    ],
     findings: [
       {
         id: "string-evidence",

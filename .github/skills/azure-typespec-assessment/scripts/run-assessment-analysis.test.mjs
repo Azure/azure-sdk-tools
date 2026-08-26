@@ -8,6 +8,7 @@ import {
   applyModelInputBudget,
   buildAssessmentDraft,
   buildFastAssessmentDraft,
+  buildSemanticReviewUnits,
   compactAnalysisProject,
   mergeHistoricalComplianceDocuments,
 } from "./run-assessment-analysis.mjs";
@@ -209,8 +210,9 @@ test("compact drafts use a manifest for added operations", () => {
   assert.equal(project.rest.operationChanges.length, 0);
   assert.deepEqual(project.rest.operationGroups, [
     {
-      id: "added-v1-widgets",
+      id: "added-v1-widgets-added",
       kind: "added",
+      behavior: "added",
       apiVersion: "v1",
       family: "Widgets",
       operationIds: ["Widgets_Create"],
@@ -470,8 +472,9 @@ test("compact drafts omit unchanged operations inherited by a new API version", 
   });
   assert.deepEqual(project.rest.operationGroups, [
     {
-      id: "version-modified-2025-02-01-widgets",
+      id: "version-modified-2025-02-01-widgets-material-change",
       kind: "version-modified",
+      behavior: "material-change",
       apiVersion: "2025-02-01",
       family: "Widgets",
       operationIds: ["Widgets_Create"],
@@ -505,7 +508,11 @@ test("operation groups link to versioned model owners and operation files", () =
     evidence: {
       baseline: { commit: "base" },
       head: { commit: "head" },
-      changedFiles: ["spec/Widget.tsp", "spec/models.tsp"],
+      changedFiles: [
+        "spec/Widget.tsp",
+        "spec/WidgetSelector.tsp",
+        "spec/models.tsp",
+      ],
       typeSpecDiffs: [
         {
           path: "spec/Widget.tsp",
@@ -520,6 +527,13 @@ test("operation groups link to versioned model owners and operation files", () =
           oldStart: 1,
           newStart: 1,
           lines: ["+@added(Versions.v2025_02_01)", "+displayName?: string;"],
+        },
+        {
+          path: "spec/WidgetSelector.tsp",
+          context: "interface WidgetSelectors {",
+          oldStart: 1,
+          newStart: 1,
+          lines: ["+op list(): WidgetSelector[];"],
         },
       ],
       errors: [],
@@ -547,9 +561,230 @@ test("operation groups link to versioned model owners and operation files", () =
   });
 
   assert.deepEqual(draft.projects[0].rest.operationGroups[0].sourceLinks, [
-    { path: "spec/models.tsp", owners: ["WidgetProperties"] },
-    { path: "spec/Widget.tsp", owners: undefined },
+    {
+      path: "spec/models.tsp",
+      owners: ["WidgetProperties"],
+      sourceChangeIds: ["spec/models.tsp:1:1"],
+    },
+    {
+      path: "spec/Widget.tsp",
+      owners: undefined,
+      sourceChangeIds: ["spec/Widget.tsp:1:1"],
+    },
   ]);
+});
+
+test("semantic review units split material behavior and added families", () => {
+  const units = buildSemanticReviewUnits([
+    {
+      path: "spec",
+      rest: {
+        operationChanges: [],
+        operationGroups: [
+          {
+            id: "version-widgets",
+            kind: "version-modified",
+            behavior: "version-propagation",
+            apiVersion: "2025-09-01",
+            family: "Widgets",
+            operationIds: ["Widgets_Get"],
+            sourceLinks: [
+              {
+                path: "spec/Widget.tsp",
+                sourceChangeIds: ["source-version"],
+              },
+            ],
+          },
+          {
+            id: "material-firewall",
+            kind: "version-modified",
+            behavior: "material-change",
+            apiVersion: "2025-09-01",
+            family: "FirewallPolicies",
+            operationIds: ["FirewallPolicies_CreateOrUpdate"],
+            changedAspects: ["parameters"],
+            sourceLinks: [
+              {
+                path: "spec/FirewallPolicy.tsp",
+                sourceChangeIds: ["source-afc"],
+              },
+            ],
+          },
+          {
+            id: "added-prefix-sets",
+            kind: "added",
+            behavior: "added",
+            apiVersion: "2025-09-01",
+            family: "AddressPrefixSets",
+            operationIds: ["AddressPrefixSets_Get"],
+            sourceLinks: [
+              {
+                path: "spec/AddressPrefixSet.tsp",
+                sourceChangeIds: ["source-prefix-set"],
+              },
+            ],
+          },
+          {
+            id: "added-lags",
+            kind: "added",
+            behavior: "added",
+            apiVersion: "2025-09-01",
+            family: "ExpressRouteLags",
+            operationIds: ["ExpressRouteLags_Get"],
+            sourceLinks: [
+              {
+                path: "spec/ExpressRouteLag.tsp",
+                sourceChangeIds: ["source-lag"],
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ]);
+
+  assert.equal(units.length, 4);
+  assert.ok(
+    units.some(
+      (unit) =>
+        unit.family === "version-lineage" &&
+        unit.kind === "version-propagation",
+    ),
+  );
+  assert.ok(
+    units.some(
+      (unit) =>
+        unit.family === "AddressPrefixSets" && unit.behavior === "added",
+    ),
+  );
+  assert.ok(
+    units.some(
+      (unit) => unit.family === "ExpressRouteLags" && unit.behavior === "added",
+    ),
+  );
+  const firewallUnit = units.find(
+    (unit) => unit.family === "FirewallPolicies",
+  );
+  assert.equal(firewallUnit.behavior, "parameters");
+  assert.deepEqual(firewallUnit.sourceChangeIds, ["source-afc"]);
+});
+
+test("material semantic review units require exact source evidence", () => {
+  assert.throws(
+    () =>
+      buildSemanticReviewUnits([
+        {
+          path: "spec",
+          rest: {
+            operationChanges: [],
+            operationGroups: [
+              {
+                id: "material-firewall",
+                kind: "version-modified",
+                behavior: "material-change",
+                apiVersion: "2025-09-01",
+                family: "FirewallPolicies",
+                operationIds: ["FirewallPolicies_CreateOrUpdate"],
+                changedAspects: ["parameters"],
+                sourceLinks: [],
+              },
+            ],
+          },
+        },
+      ]),
+    /have no changed TypeSpec source evidence/,
+  );
+});
+
+test("related material operations share one family and behavior unit", () => {
+  const units = buildSemanticReviewUnits(
+    [
+      {
+        path: "spec",
+        rest: {
+          operationChanges: [
+            {
+              id: "get-widget",
+              apiVersion: "v1",
+              operationId: "Widgets_Get",
+              changedAspects: ["responses"],
+            },
+            {
+              id: "list-widgets",
+              apiVersion: "v1",
+              operationId: "Widgets_List",
+              changedAspects: ["responses"],
+            },
+          ],
+          operationGroups: [],
+        },
+        downstream: { candidates: [] },
+      },
+    ],
+    [
+      {
+        path: "spec/Widget.tsp",
+        versionedMembers: [],
+        changes: [{ id: "source-widget" }],
+      },
+    ],
+  );
+
+  assert.equal(units.length, 1);
+  assert.deepEqual(units[0].operationChangeIds, [
+    "get-widget",
+    "list-widgets",
+  ]);
+  assert.equal(units[0].family, "Widgets");
+  assert.equal(units[0].behavior, "responses");
+});
+
+test("source-only model and enum behaviors remain separate", () => {
+  const units = buildSemanticReviewUnits(
+    [
+      {
+        path: "spec",
+        rest: { operationChanges: [], operationGroups: [] },
+        downstream: { candidates: [] },
+      },
+    ],
+    [
+      {
+        path: "spec/models.tsp",
+        versionedMembers: [],
+        changes: [
+          {
+            id: "source-enum",
+            diffLines: [{ kind: "remove", text: 'Fifo: "Fifo",' }],
+          },
+          {
+            id: "source-model",
+            diffLines: [
+              { kind: "remove", text: "model FifoItem {" },
+              { kind: "remove", text: "name: string;" },
+            ],
+          },
+          {
+            id: "source-version",
+            diffLines: [
+              {
+                kind: "remove",
+                text: "@added(Versions.v2026_12_06)",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  );
+
+  assert.deepEqual(
+    units.map((unit) => [unit.behavior, unit.sourceChangeIds]),
+    [
+      ["enum-values", ["source-enum"]],
+      ["model-shape", ["source-model", "source-version"]],
+    ],
+  );
 });
 
 test("fast source changes retain commit-pinned TypeSpec links", () => {
@@ -562,9 +797,9 @@ test("fast source changes retain commit-pinned TypeSpec links", () => {
         {
           path: "spec/main.tsp",
           revision: "head",
-          startLine: 10,
+          startLine: 11,
           endLine: 12,
-          link: "https://github.com/Azure/example/blob/head/spec/main.tsp#L10-L12",
+          link: "https://github.com/Azure/example/blob/head/spec/main.tsp#L11-L12",
         },
       ],
       typeSpecDiffs: [
@@ -783,7 +1018,12 @@ test("assessment drafts collapse repeated decorators and bound source lines", ()
   ]);
   assert.equal(draft.sourceFiles[0].declarations.length, 1);
   assert.deepEqual(draft.sourceFiles[0].versionedMembers, [
-    { owner: "Widget", symbol: "newProperty", version: "v2" },
+    {
+      owner: "Widget",
+      symbol: "newProperty",
+      version: "v2",
+      sourceChangeId: "spec/models.tsp:1:1",
+    },
   ]);
   assert.equal(draft.sourceFiles[0].changes[0].lines.length, 200);
   assert.equal(draft.sourceFiles[0].changes[0].omittedLineCount, 300);

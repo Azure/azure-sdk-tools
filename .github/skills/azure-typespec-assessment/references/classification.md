@@ -23,6 +23,14 @@ For each intent, provide:
   continuation semantics when applicable;
 - TypeSpec source links.
 
+`model-input.json` defines deterministic semantic review units. Author exactly
+one intent for each unit and reference that unit's ID. A unit represents one
+resource family plus one caller-observable REST or metadata behavior. Do not
+merge unrelated families or behaviors into one intent, and do not split one
+unit into multiple intents. Pure publication of unchanged contracts in a new
+API version may use one version-lineage unit; a material parameter, response,
+LRO, paging, route, or operation-family change remains separate.
+
 `restRepresentation` must contain the operation inventory; it is not a prose
 summary alone. Do not summarize several operations into a generic statement.
 Follow the [operation semantics rules](operation-semantics.md).
@@ -89,6 +97,12 @@ requirements in this classifier.
   pattern. Cite that document and the TypeSpec lines.
 - `not-assessed`: no relevant authoritative document exists or a selected page
   could not be retrieved.
+
+Decide every compliance review item exactly once. Each item compares one exact
+changed TypeSpec hunk with one fetched guidance document. Use
+`applicable-pass`, `applicable-fail`, `not-applicable`, or `not-assessed`, and
+give the evidence-based rationale. Every `applicable-fail` decision requires
+its own finding; a finding cannot combine multiple changed declarations.
 
 Compiler and emitter success are supporting evidence, not compliance proof.
 

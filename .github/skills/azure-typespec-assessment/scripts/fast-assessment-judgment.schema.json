@@ -132,15 +132,48 @@
     "compliance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "rationale", "findings"],
+      "required": ["status", "rationale", "reviews", "findings"],
       "properties": {
         "status": { "enum": ["passed", "failed", "not-assessed"] },
         "rationale": { "$ref": "#/$defs/string" },
+        "reviews": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/complianceReview" }
+        },
         "findings": {
           "type": "array",
           "items": { "$ref": "#/$defs/complianceFinding" }
         }
       }
+    },
+    "complianceReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "decision", "rationale"],
+      "properties": {
+        "id": { "$ref": "#/$defs/string" },
+        "decision": {
+          "enum": [
+            "applicable-pass",
+            "applicable-fail",
+            "not-applicable",
+            "not-assessed"
+          ]
+        },
+        "rationale": { "$ref": "#/$defs/string" },
+        "findingId": { "$ref": "#/$defs/string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision": { "const": "applicable-fail" }
+            }
+          },
+          "then": { "required": ["findingId"] },
+          "else": { "not": { "required": ["findingId"] } }
+        }
+      ]
     }
   }
 }

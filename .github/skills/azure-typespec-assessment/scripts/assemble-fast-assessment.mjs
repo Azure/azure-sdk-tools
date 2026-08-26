@@ -72,6 +72,12 @@ function evidenceIndex(modelInput) {
       document,
     ]),
   );
+  const complianceReviewItems = new Map(
+    (modelInput.complianceEvidence?.reviewItems ?? []).map((item) => [
+      item.id,
+      item,
+    ]),
+  );
   return {
     sourceChanges,
     sourcePaths,
@@ -79,6 +85,7 @@ function evidenceIndex(modelInput) {
     restCandidates,
     downstreamCandidates,
     documents,
+    complianceReviewItems,
   };
 }
 
@@ -197,6 +204,52 @@ export function validateFastJudgment(judgment, modelInput) {
   );
   nonEmpty(judgment.compliance.rationale, "compliance.rationale");
   assert(
+    Array.isArray(judgment.compliance.reviews),
+    "compliance.reviews must be an array.",
+  );
+  const reviewIds = new Set();
+  const failedFindingIds = new Set();
+  for (const [index, review] of judgment.compliance.reviews.entries()) {
+    const label = `compliance.reviews[${index}]`;
+    nonEmpty(review.id, `${label}.id`);
+    assert(
+      evidence.complianceReviewItems.has(review.id),
+      `${label} references unknown review item ${review.id}.`,
+    );
+    assert(!reviewIds.has(review.id), `Duplicate compliance review ID: ${review.id}.`);
+    reviewIds.add(review.id);
+    assert(
+      [
+        "applicable-pass",
+        "applicable-fail",
+        "not-applicable",
+        "not-assessed",
+      ].includes(review.decision),
+      `${label}.decision is invalid.`,
+    );
+    nonEmpty(review.rationale, `${label}.rationale`);
+    if (review.decision === "applicable-fail") {
+      nonEmpty(review.findingId, `${label}.findingId`);
+      assert(
+        !failedFindingIds.has(review.findingId),
+        "Each failed compliance review requires its own finding.",
+      );
+      failedFindingIds.add(review.findingId);
+    } else {
+      assert(
+        review.findingId === undefined,
+        `${label}.findingId is only allowed for applicable-fail.`,
+      );
+    }
+  }
+  const missingReviews = [...evidence.complianceReviewItems.keys()].filter(
+    (id) => !reviewIds.has(id),
+  );
+  assert(
+    missingReviews.length === 0,
+    `Missing compliance review decision(s): ${missingReviews.join(", ")}.`,
+  );
+  assert(
     Array.isArray(judgment.compliance.findings),
     "compliance.findings must be an array.",
   );
@@ -206,6 +259,45 @@ export function validateFastJudgment(judgment, modelInput) {
       compliance: true,
     });
   }
+  const findingsById = new Map(
+    judgment.compliance.findings.map((finding) => [finding.id, finding]),
+  );
+  assert(
+    findingsById.size === judgment.compliance.findings.length,
+    "Compliance finding IDs must be unique.",
+  );
+  assert(
+    findingsById.size === failedFindingIds.size,
+    "Each failed compliance review requires its own finding.",
+  );
+  for (const review of judgment.compliance.reviews) {
+    if (review.decision !== "applicable-fail") continue;
+    const finding = findingsById.get(review.findingId);
+    assert(finding, `Missing compliance finding ${review.findingId}.`);
+    const reviewItem = evidence.complianceReviewItems.get(review.id);
+    assert(
+      finding.documentationUrl === reviewItem.documentationUrl,
+      `Compliance finding ${finding.id} must use its review item's document.`,
+    );
+    assert(
+      finding.sourceChangeIds.length === 1 &&
+        finding.sourceChangeIds[0] === reviewItem.sourceChangeId,
+      `Compliance finding ${finding.id} must use its review item's exact source change.`,
+    );
+  }
+  const expectedStatus =
+    failedFindingIds.size > 0
+      ? "failed"
+      : evidence.complianceReviewItems.size === 0 ||
+          judgment.compliance.reviews.some(
+            (review) => review.decision === "not-assessed",
+          )
+        ? "not-assessed"
+        : "passed";
+  assert(
+    judgment.compliance.status === expectedStatus,
+    `compliance.status must be ${expectedStatus} for the supplied review decisions.`,
+  );
   assert(
     judgment.compliance.status !== "failed" ||
       judgment.compliance.findings.length > 0,

@@ -79,7 +79,8 @@ The script writes:
   documents, content hashes, cache status, and matching excerpts;
 - `model-input.json`: the minified, size-gated deterministic input for model
   review, including operation groups, compact before/after summaries,
-  source-impact links, documentation evidence, and timing;
+  source-impact links, semantic review units, declaration-document compliance
+  review items, documentation evidence, and timing;
 - `assessment-draft.json`: a pretty-printed diagnostic copy of the same bounded
   input;
 - `artifacts/<project>/<side>/<emitter>/`: generated OpenAPI and TCGC artifacts;
@@ -105,7 +106,9 @@ compare compliance evidence with changed source, and write
 `scripts/fast-assessment-judgment.schema.json`. Approved findings must include
 actual and expected behavior, severity, confidence, evidence, affected
 operations, and source-change IDs or paths. Rejected candidates require a
-rationale.
+rationale. Decide every compliance review item exactly once; each failed
+decision requires its own finding with the review item's document and exact
+source-change ID.
 
 Render the standalone report with:
 
@@ -124,7 +127,9 @@ documentation retrieval so an empty impact report remains evidence-based.
 
 1. Read `model-input.json`. Consult raw `evidence.json` or artifacts by stable
    evidence ID only when a candidate is marked ambiguous or unsupported.
-2. Correlate related decorators and declarations into one author intent.
+2. Write exactly one author intent for every `semanticReviewUnit`. Preserve its
+   resource-family plus observable-behavior boundary and copy its evidence IDs
+   exactly. Only a version-propagation unit may group unchanged contracts.
 3. Use AutoRest diffs for wire behavior and TCGC diffs for client shape.
 4. Inspect source decorators directly for scoped client behavior missing from generic TCGC.
 5. Follow [documentation-grounded compliance](compliance.md) by running the
@@ -132,8 +137,9 @@ documentation retrieval so an empty impact report remains evidence-based.
    content for the intent-derived query and iterate until the applicable
    guidance is resolved.
 6. Record each fetched document's matching section and short verbatim excerpt,
-   then compare it with the exact changed declaration. Report a source-linked
-   finding only for a documented mismatch.
+   then decide every `complianceEvidence.reviewItems` comparison. Report one
+   source-linked finding for each `applicable-fail` decision; do not combine
+   declarations.
 7. For every operation directly or transitively affected by the diff, compare
    baseline and head artifacts field by field. Classify it as added, modified,
    or removed; record only changed aspects as structured before/after values

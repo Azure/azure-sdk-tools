@@ -114,6 +114,10 @@ function flattenedEvidence(modelInput) {
     (file.changes ?? []).map((change) => ({ ...change, path: file.path })),
   );
   return {
+    semanticReviewUnits: mapByUniqueId(
+      modelInput.semanticReviewUnits ?? [],
+      "semantic review unit",
+    ),
     sourceChanges: mapByUniqueId(sources, "source change"),
     sourcePaths: new Set([
       ...(modelInput.changedFiles ?? []),
@@ -160,6 +164,10 @@ function flattenedEvidence(modelInput) {
         document.url,
         document,
       ]),
+    ),
+    complianceReviewItems: mapByUniqueId(
+      modelInput.complianceEvidence?.reviewItems ?? [],
+      "compliance review item",
     ),
   };
 }
@@ -256,6 +264,7 @@ export function validateJudgment(judgment, modelInput) {
       intent,
       [
         "id",
+        "reviewUnitId",
         "title",
         "rationale",
         "operationChangeIds",
@@ -266,7 +275,7 @@ export function validateJudgment(judgment, modelInput) {
       ["aspects"],
       label,
     );
-    for (const field of ["id", "title", "rationale"]) {
+    for (const field of ["id", "reviewUnitId", "title", "rationale"]) {
       assertNonEmptyString(intent[field], `${label}.${field}`);
     }
     assert(
@@ -274,6 +283,11 @@ export function validateJudgment(judgment, modelInput) {
       `Duplicate semantic intent ID: ${intent.id}.`,
     );
     semanticIds.add(intent.id);
+    const reviewUnit = evidence.semanticReviewUnits.get(intent.reviewUnitId);
+    assert(
+      reviewUnit,
+      `${label}.reviewUnitId references unknown semantic review unit: ${intent.reviewUnitId}.`,
+    );
     for (const field of [
       "operationChangeIds",
       "operationGroupIds",
@@ -324,6 +338,18 @@ export function validateJudgment(judgment, modelInput) {
         `${label}.sourcePaths references unknown source path: ${sourcePath}.`,
       );
     }
+    for (const field of [
+      "operationChangeIds",
+      "operationGroupIds",
+      "sourceChangeIds",
+      "sourcePaths",
+    ]) {
+      assert(
+        JSON.stringify([...intent[field]].sort()) ===
+          JSON.stringify([...(reviewUnit[field] ?? [])].sort()),
+        `${label}.${field} must exactly match semantic review unit ${reviewUnit.id}.`,
+      );
+    }
     for (const id of intent.operationChangeIds) {
       operationChangeUse.set(id, (operationChangeUse.get(id) ?? 0) + 1);
     }
@@ -335,7 +361,7 @@ export function validateJudgment(judgment, modelInput) {
   const compliance = judgment.compliance;
   assertExactKeys(
     compliance,
-    ["status", "rationale", "documentUrls", "findings"],
+    ["status", "rationale", "documentUrls", "reviews", "findings"],
     [],
     "compliance",
   );
@@ -354,6 +380,53 @@ export function validateJudgment(judgment, modelInput) {
   assert(
     Array.isArray(compliance.findings),
     "compliance.findings must be an array.",
+  );
+  assert(
+    Array.isArray(compliance.reviews),
+    "compliance.reviews must be an array.",
+  );
+  const complianceReviews = new Map();
+  for (const [index, review] of compliance.reviews.entries()) {
+    const label = `compliance.reviews[${index}]`;
+    const optional =
+      review.decision === "applicable-fail" ? ["findingId"] : [];
+    assertExactKeys(review, ["id", "decision", "rationale"], optional, label);
+    for (const field of ["id", "decision", "rationale"]) {
+      assertNonEmptyString(review[field], `${label}.${field}`);
+    }
+    assert(
+      [
+        "applicable-pass",
+        "applicable-fail",
+        "not-applicable",
+        "not-assessed",
+      ].includes(review.decision),
+      `${label}.decision is invalid.`,
+    );
+    assert(
+      !complianceReviews.has(review.id),
+      `Duplicate compliance review ID: ${review.id}.`,
+    );
+    assert(
+      evidence.complianceReviewItems.has(review.id),
+      `${label}.id references unknown compliance review item: ${review.id}.`,
+    );
+    if (review.decision === "applicable-fail") {
+      assertNonEmptyString(review.findingId, `${label}.findingId`);
+    } else {
+      assert(
+        review.findingId === undefined,
+        `${label}.findingId is only valid for applicable-fail.`,
+      );
+    }
+    complianceReviews.set(review.id, review);
+  }
+  const missingComplianceReviews = [
+    ...evidence.complianceReviewItems.keys(),
+  ].filter((id) => !complianceReviews.has(id));
+  assert(
+    missingComplianceReviews.length === 0,
+    `Missing compliance review decision(s): ${missingComplianceReviews.join(", ")}.`,
   );
   const complianceIds = new Set();
   for (const [index, finding] of compliance.findings.entries()) {
@@ -416,6 +489,47 @@ export function validateJudgment(judgment, modelInput) {
       );
     }
   }
+  const failedReviews = [...complianceReviews.values()].filter(
+    (review) => review.decision === "applicable-fail",
+  );
+  const failedFindingIds = failedReviews.map((review) => review.findingId);
+  assert(
+    new Set(failedFindingIds).size === failedFindingIds.length,
+    "Each failed compliance review requires its own finding.",
+  );
+  assert(
+    failedFindingIds.length === compliance.findings.length &&
+      failedFindingIds.every((id) => complianceIds.has(id)),
+    "Compliance findings must exactly match applicable-fail reviews.",
+  );
+  for (const review of failedReviews) {
+    const item = evidence.complianceReviewItems.get(review.id);
+    const finding = compliance.findings.find(
+      (candidate) => candidate.id === review.findingId,
+    );
+    assert(
+      finding.documentationUrl === item.documentationUrl,
+      `Compliance finding ${finding.id} must use review item ${review.id} documentationUrl.`,
+    );
+    assert(
+      finding.sourceChangeIds.length === 1 &&
+        finding.sourceChangeIds[0] === item.sourceChangeId,
+      `Compliance finding ${finding.id} must reference only review item ${review.id} source change.`,
+    );
+  }
+  const expectedComplianceStatus =
+    failedReviews.length > 0
+      ? "failed"
+      : evidence.complianceReviewItems.size === 0 ||
+          [...complianceReviews.values()].some(
+            (review) => review.decision === "not-assessed",
+          )
+        ? "not-assessed"
+        : "passed";
+  assert(
+    compliance.status === expectedComplianceStatus,
+    `compliance.status must be ${expectedComplianceStatus} for its review decisions.`,
+  );
   assert(
     compliance.status !== "failed" || compliance.findings.length > 0,
     "failed compliance requires at least one finding.",
@@ -457,6 +571,20 @@ export function validateJudgment(judgment, modelInput) {
       `${label} evidence ID(s) must be referenced exactly once: ${duplicates.join(", ")}.`,
     );
   }
+  const reviewUnitUse = new Map();
+  for (const intent of judgment.semanticIntents) {
+    reviewUnitUse.set(
+      intent.reviewUnitId,
+      (reviewUnitUse.get(intent.reviewUnitId) ?? 0) + 1,
+    );
+  }
+  const invalidReviewUnitUse = [...evidence.semanticReviewUnits.keys()].filter(
+    (id) => reviewUnitUse.get(id) !== 1,
+  );
+  assert(
+    invalidReviewUnitUse.length === 0,
+    `Semantic review unit(s) must be referenced exactly once: ${invalidReviewUnitUse.join(", ")}.`,
+  );
   return evidence;
 }
 
@@ -859,6 +987,20 @@ function selectDiffs(selection, materialized) {
     return matches.slice(0, 1);
   });
   if (direct.length > 0) return uniqueByJson(direct);
+  const compactDiffs = selection.changes
+    .filter((change) => Array.isArray(change.diffLines))
+    .map((change) => ({
+      path: change.path,
+      oldStart: change.oldStart,
+      oldCount: change.oldCount,
+      newStart: change.newStart,
+      newCount: change.newCount,
+      lines: change.diffLines.map(
+        (line) =>
+          `${line.kind === "add" ? "+" : line.kind === "remove" ? "-" : " "}${line.text}`,
+      ),
+    }));
+  if (compactDiffs.length > 0) return uniqueByJson(compactDiffs);
   const samePath = materialized.typeSpecDiffs.filter((hunk) =>
     selection.paths.has(hunk.path),
   );
@@ -902,6 +1044,20 @@ function selectReferences(
   materialized,
   typeSpecDiffs = [],
 ) {
+  const changeReferences = selection.changes
+    .filter((change) => change.sourceLink)
+    .map((change) => {
+      const range = change.sourceLink.match(/#L(\d+)(?:-L(\d+))?$/);
+      const startLine = Number(range?.[1] ?? change.newStart ?? change.oldStart);
+      const endLine = Number(range?.[2] ?? startLine);
+      return {
+        path: change.path,
+        revision: change.revision ?? "head",
+        startLine,
+        endLine,
+        link: change.sourceLink,
+      };
+    });
   const pathReferences = materialized.sourceReferences.filter((reference) =>
     selection.paths.has(reference.path),
   );
@@ -909,7 +1065,11 @@ function selectReferences(
     .map((hunk) => sourceReferenceForHunk(hunk, materialized))
     .filter(Boolean);
   const sourceReferences =
-    exactReferences.length > 0 ? exactReferences : pathReferences;
+    changeReferences.length > 0
+      ? changeReferences
+      : exactReferences.length > 0
+        ? exactReferences
+        : pathReferences;
   const operationReferences =
     sourceReferences.length === 0
       ? operations.flatMap((operation) => operation.sourceReferences ?? [])
@@ -1072,8 +1232,11 @@ function evidenceAspects(items, kind, operationCount) {
 function materializeSemanticIntent(intent, evidence, materialized, confidence) {
   const selection = sourceSelections(intent, evidence);
   let operations = selectOperations(intent, evidence, materialized, selection);
+  const reviewUnit = evidence.semanticReviewUnits.get(intent.reviewUnitId);
+  const sourceOnly =
+    operations.length === 0 && reviewUnit?.kind === "source-change";
   assert(
-    operations.length > 0,
+    operations.length > 0 || sourceOnly,
     `Semantic intent ${intent.id} has no matching complete operation contract.`,
   );
   if (selection.paths.size === 0) {
@@ -1215,6 +1378,7 @@ function materializeSemanticIntent(intent, evidence, materialized, confidence) {
   });
   return {
     id: intent.id,
+    ...(sourceOnly ? { sourceOnly: true } : {}),
     intent: intent.title,
     transformationChain: [intent.rationale],
     changes,

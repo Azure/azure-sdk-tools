@@ -508,7 +508,15 @@ ${hasMergedOutcome ? "" : `<p class="typespec-summary"><strong>TypeSpec change:<
 ${
   suppressOperationDetails
     ? `<div class="operation-changes"><p class="empty-state"><strong>Operation impact:</strong> operations using the changed models expose the additive fields in their payload schemas. The broader ${change.operationIds.length}-operation API-version lineage is summarized here rather than presented as ${change.operationIds.length} direct behavioral changes.</p></div>`
-    : `<div class="operation-changes">
+    : change.operationIds.length === 0
+      ? `<div class="operation-changes">
+<h4>Changed TypeSpec declarations</h4>
+${change.typeSpecDiffs
+  .slice(0, 2)
+  .map((hunk) => renderDiff(hunk, change))
+  .join("")}
+</div>`
+      : `<div class="operation-changes">
 <h4>All affected operations <span class="count">${change.operationIds.length}</span></h4>
 ${renderOperationDetails(change, operations)}
 </div>`
@@ -571,7 +579,9 @@ function renderSemanticUnderstanding(assessment) {
           `<span class="intent-kind-icon" title="${CHANGE_LABELS[kind][1]}">${CHANGE_LABELS[kind][0]}</span>`,
       )
       .join("");
-    const countLabel = isVersionLineage
+    const countLabel = item.sourceOnly
+      ? "source-only change"
+      : isVersionLineage
       ? `${item.changes.flatMap((change) => change.aspects).length} model properties`
       : `${uniqueOperationCount} operation${uniqueOperationCount === 1 ? "" : "s"}`;
     return `<details class="intent-details" id="change-${index + 1}">

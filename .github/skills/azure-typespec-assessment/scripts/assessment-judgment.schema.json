@@ -93,6 +93,7 @@
       "additionalProperties": false,
       "required": [
         "id",
+        "reviewUnitId",
         "title",
         "rationale",
         "operationChangeIds",
@@ -102,6 +103,9 @@
       ],
       "properties": {
         "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reviewUnitId": {
           "$ref": "#/$defs/nonEmptyString"
         },
         "title": {
@@ -239,6 +243,57 @@
         }
       }
     },
+    "complianceReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "decision",
+        "rationale"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "decision": {
+          "enum": [
+            "applicable-pass",
+            "applicable-fail",
+            "not-applicable",
+            "not-assessed"
+          ]
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "findingId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision": {
+                "const": "applicable-fail"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "findingId"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "findingId"
+              ]
+            }
+          }
+        }
+      ]
+    },
     "compliance": {
       "type": "object",
       "additionalProperties": false,
@@ -302,6 +357,7 @@
         "status",
         "rationale",
         "documentUrls",
+        "reviews",
         "findings"
       ],
       "properties": {
@@ -321,6 +377,12 @@
           "items": {
             "type": "string",
             "format": "uri"
+          }
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/complianceReview"
           }
         },
         "findings": {

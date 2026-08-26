@@ -45,6 +45,8 @@ test("versioned members retain their enclosing declaration", () => {
     extractVersionedMembers([
       {
         path: "spec/models.tsp",
+        oldStart: 10,
+        newStart: 12,
         context: "model Widget {",
         lines: [
           "+  @added(Versions.v2)",
@@ -65,12 +67,14 @@ test("versioned members retain their enclosing declaration", () => {
         owner: "Widget",
         symbol: "displayName",
         version: "v2",
+        sourceChangeId: "spec/models.tsp:12:10",
       },
       {
         path: "spec/models.tsp",
         owner: "Gadget",
         symbol: "Gadget",
         version: "v2",
+        sourceChangeId: "spec/models.tsp:12:10",
       },
     ],
   );

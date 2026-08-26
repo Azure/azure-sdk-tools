@@ -148,6 +148,7 @@ export function extractVersionedMembers(typeSpecDiffs) {
         owner,
         symbol,
         version: pendingVersion,
+        sourceChangeId: `${hunk.path}:${hunk.newStart}:${hunk.oldStart}`,
       });
       pendingVersion = undefined;
     }

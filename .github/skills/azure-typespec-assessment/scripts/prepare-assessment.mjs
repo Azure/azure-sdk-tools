@@ -1425,7 +1425,7 @@ export async function prepareAssessment(options) {
   );
   writeFileSync(
     join(outputRoot, "analysis.json"),
-    `${JSON.stringify(analysis, null, 2)}\n`,
+    `${JSON.stringify(analysis)}\n`,
   );
   progress(
     `assessment completed in ${(evidence.durationMs / 1000).toFixed(1)}s with ${evidence.errors.length} blocking error(s)`,

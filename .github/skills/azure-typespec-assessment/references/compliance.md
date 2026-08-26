@@ -26,6 +26,21 @@ evidence.
    - `not-assessed` when no relevant authoritative document exists or a selected
      document cannot be retrieved.
 
+The bounded input contains one review item for each retained material
+declaration hunk and fetched document. Return exactly one explicit decision for
+every item:
+
+- `applicable-pass` when the guidance governs the declaration and it follows
+  the documented pattern;
+- `applicable-fail` when the guidance governs the declaration and the source
+  contradicts it;
+- `not-applicable` when the document does not govern that declaration;
+- `not-assessed` when retrieval or evidence is insufficient.
+
+Each failed decision maps to one unique, declaration-specific finding with the
+same document URL and exact source-change ID. Never combine mismatches from
+multiple declarations into one finding.
+
 Each assessed pattern records its document title, URL, section, concise
 verbatim guidance excerpt, interpretation, observed TypeSpec evidence, and
 exact TypeSpec source references. Do not copy large passages or infer
@@ -66,9 +81,10 @@ hard-coded rules:
    compliance rule catalog.
 4. Fetch independent selected URLs concurrently, then search their content
    locally for the exact changed symbols and surrounding guidance.
-5. Group declarations using the same documented pattern, compare the pattern
-   once, and then verify every affected declaration against that comparison.
-   Do not repeat the document search for each operation.
+5. Group declarations using the same documented pattern for document search,
+   then record a separate review decision for every affected declaration.
+   Do not repeat the document search for each operation or collapse failed
+   declaration comparisons into one finding.
 6. Broaden or refine the agentic search only when the targeted pages do not
    answer the code-derived query. Stop once the fetched guidance is sufficient
    to support `passed`, `failed`, or `not-assessed`.

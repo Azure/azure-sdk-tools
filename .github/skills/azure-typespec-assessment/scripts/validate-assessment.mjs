@@ -112,8 +112,9 @@ function validateOperations(
     );
     const operations = restRepresentation?.operations;
     assert(
-      Array.isArray(operations) && operations.length > 0,
-      `${itemLabel}.restRepresentation requires operations`,
+      Array.isArray(operations) &&
+        (operations.length > 0 || item.sourceOnly === true),
+      `${itemLabel}.restRepresentation requires operations unless sourceOnly is true`,
       errors,
     );
     for (const [operationIndex, operation] of (operations ?? []).entries()) {
@@ -232,8 +233,9 @@ function validateOperations(
         );
       }
       assert(
-        Array.isArray(change.operationIds) && change.operationIds.length > 0,
-        `${label}.operationIds must be a non-empty array`,
+        Array.isArray(change.operationIds) &&
+          (change.operationIds.length > 0 || item.sourceOnly === true),
+        `${label}.operationIds must be non-empty unless sourceOnly is true`,
         errors,
       );
       assert(
@@ -251,8 +253,9 @@ function validateOperations(
         coveredOperationIds.push(operationId);
       }
       assert(
-        Array.isArray(change.apiVersions) && change.apiVersions.length > 0,
-        `${label}.apiVersions must be a non-empty array`,
+        Array.isArray(change.apiVersions) &&
+          (change.apiVersions.length > 0 || item.sourceOnly === true),
+        `${label}.apiVersions must be non-empty unless sourceOnly is true`,
         errors,
       );
       const coveredVersions = new Set(

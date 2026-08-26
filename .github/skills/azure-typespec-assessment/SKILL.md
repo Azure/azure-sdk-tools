@@ -25,8 +25,11 @@ Assess changed TypeSpec without editing it.
    For fast mode, add `--fast`.
 4. Review the bounded `model-input.json` using the
    [classification rules](references/classification.md). Use its operation
-   groups, compact before/after summaries, source-impact links, and candidates
-   instead of reconstructing operation details from raw artifact diffs.
+   groups, semantic review units, compact before/after summaries,
+   source-impact links, compliance review items, and candidates instead of
+   reconstructing operation details from raw artifact diffs. Write exactly one
+   semantic intent per review unit and exactly one compliance decision per
+   review item.
 5. Write `assessment-judgment.json` following
    `scripts/assessment-judgment.schema.json`.
 6. Assemble and validate `assessment.json`, then render `assessment.html`
@@ -46,6 +49,9 @@ node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.m
 
 - Assess only files in the resolved Git diff.
 - Correlate low-level edits into the user's intended API change.
+- Preserve the deterministic semantic granularity: one resource family plus
+  caller-observable behavior per review unit. Only pure unchanged-contract
+  propagation may share a version-lineage intent.
 - Enumerate every affected operation and its complete REST behavior.
 - Write semantic understanding for TypeSpec authors: use TypeSpec concepts,
   explain operation-level REST behavior, and keep emitter internals such as
@@ -57,8 +63,9 @@ node .github/skills/azure-typespec-assessment/scripts/assemble-fast-assessment.m
   affected operations, and changed TypeSpec source.
 - Assess compliance from fetched authoritative TypeSpec Azure documentation,
   following [the compliance procedure](references/compliance.md) and its local
-  agentic search workflow. Compare guidance directly with changed TypeSpec
-  source; do not substitute validation tools, generated artifacts, or hard-coded
-  compliance rules.
+  agentic search workflow. Decide every bounded declaration-document review
+  item and create one declaration-specific finding for each failed decision.
+  Compare guidance directly with changed TypeSpec source; do not substitute
+  validation tools, generated artifacts, or hard-coded compliance rules.
 
 See [REST-compatible downstream breaking cases](references/rest-compatible-downstream-breaking-cases.md) for representative classifications.

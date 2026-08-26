@@ -6,9 +6,10 @@ structured assessment. Do not generate `assessment.md`.
 Before the final assessment, deterministic preparation produces the bounded
 `model-input.json` and a pretty diagnostic copy in `assessment-draft.json`.
 Their operation groups, compact contract summaries, source-impact links,
-compatibility candidates, documentation routes, and timing are evidence, not
-final conclusions. The model reviews candidates and supplies semantic grouping,
-service intent, applicability, final findings, and confidence.
+semantic review units, compatibility candidates, compliance review items,
+documentation routes, and timing are evidence, not final conclusions. The
+model supplies intent wording, applicability, final findings, and confidence
+while preserving the deterministic coverage boundaries.
 
 The draft is intentionally compact. It contains a method/path/version manifest
 for added and removed operations, detailed before/after contracts for modified
@@ -16,6 +17,18 @@ operations, compatibility candidates, changed TypeSpec hunks and source index,
 and matched documentation excerpts. Complete operation contracts and raw TCGC
 leaf diffs remain in `analysis.json` and must not be loaded into model context
 unless a candidate requires deeper inspection.
+
+Every judgment semantic intent references exactly one deterministic review unit
+and copies that unit's operation/source evidence IDs exactly. Every review unit
+must be referenced once. Every compliance review item must also receive exactly
+one decision. A failed decision maps to one unique finding whose document URL
+and single source-change ID match the review item.
+
+When a source-only model or metadata change has no directly affected REST
+operation, the assembled semantic item sets `sourceOnly: true`, keeps
+`restRepresentation.operations`, `operationIds`, and `apiVersions` empty, and
+renders the exact changed TypeSpec declarations. Do not invent an operation
+contract to satisfy the normal operation inventory.
 
 Render the standalone, responsive report with
 `scripts/render-assessment-html.mjs`; do not hand-author or patch individual
@@ -194,7 +207,8 @@ declaration, decorator, base type, or operation template demonstrating the
 mismatch and must be covered by a finding source reference. `passed`
 requires at least one fetched document and no findings; `failed` requires at
 least one document and finding. Use `not-assessed` with `reason` when no
-relevant authoritative document exists or retrieval fails.
+relevant authoritative document exists, no review items can be constructed, or
+retrieval fails.
 
 Before assigning compliance status, use Agent search to fetch the applicable
 authoritative reference document, retain its matching section, and compare the

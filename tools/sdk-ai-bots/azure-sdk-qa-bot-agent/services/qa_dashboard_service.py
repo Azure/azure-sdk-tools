@@ -80,8 +80,6 @@ class QADashboardService:
         query_options: dict[str, Any] = {}
         if tenant_id:
             query_options["partition_key"] = tenant_id
-        else:
-            query_options["enable_cross_partition_query"] = True
 
         container = await get_qa_records_container()
         count_query = f"SELECT VALUE COUNT(1) FROM c{where_clause}"
@@ -126,7 +124,6 @@ class QADashboardService:
                 "SELECT DISTINCT VALUE c.channel_id FROM c "
                 "WHERE IS_DEFINED(c.channel_id) AND NOT IS_NULL(c.channel_id)"
             ),
-            enable_cross_partition_query=True,
         ):
             if isinstance(value, str) and value:
                 channel_ids.add(value)
@@ -292,7 +289,6 @@ async def _load_conversation_titles(
     async for row in container.query_items(
         query=query,
         parameters=parameters,
-        enable_cross_partition_query=True,
     ):
         partition = row.get("conversation_partition")
         content = row.get("content")

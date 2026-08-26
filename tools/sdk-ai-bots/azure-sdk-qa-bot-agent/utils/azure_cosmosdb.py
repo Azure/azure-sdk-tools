@@ -340,8 +340,6 @@ async def query_episodes(
     kwargs: dict[str, Any] = {"query": query, "parameters": parameters}
     if partition_key:
         kwargs["partition_key"] = partition_key
-    else:
-        kwargs["enable_cross_partition_query"] = True
 
     items: list[dict[str, Any]] = []
     async for item in container.query_items(**kwargs):
@@ -430,8 +428,6 @@ async def query_qa_records_by_qa_status(
         conditions.append("c.tenant_id = @tenant_id")
         parameters.append({"name": "@tenant_id", "value": tenant_id})
         kwargs["partition_key"] = tenant_id
-    else:
-        kwargs["enable_cross_partition_query"] = True
 
     query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
     items: list[dict[str, Any]] = []
@@ -458,8 +454,6 @@ async def query_qa_records_by_feedback_status(
         conditions.append("c.tenant_id = @tenant_id")
         parameters.append({"name": "@tenant_id", "value": tenant_id})
         kwargs["partition_key"] = tenant_id
-    else:
-        kwargs["enable_cross_partition_query"] = True
 
     query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
     items: list[dict[str, Any]] = []

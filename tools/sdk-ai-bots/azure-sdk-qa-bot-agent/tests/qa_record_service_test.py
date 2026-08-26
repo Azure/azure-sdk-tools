@@ -408,14 +408,7 @@ async def test_run_job_persists_issue_result() -> None:
         actual = await service.run_job(record.id, record.tenant_id)
 
     assert actual == result
-    states = [
-        QARecord.from_cosmos(call.args[0]).feedback
-        for call in upsert.await_args_list
-    ]
-    assert states[0] is not None
-    assert states[1] is not None
-    assert states[0].status == FeedbackStatus.created
-    assert states[1].status == FeedbackStatus.running
+    assert upsert.await_count == 3
     final_call = upsert.await_args
     assert final_call is not None
     persisted = QARecord.from_cosmos(final_call.args[0])

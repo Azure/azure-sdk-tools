@@ -299,6 +299,7 @@ class ConversationService:
             query=query,
             parameters=parameters,
             max_item_count=1,
+            enable_cross_partition_query=True,
         ):
             return ConversationMessageItem.model_validate(raw)
 
@@ -401,6 +402,7 @@ class ConversationService:
         async for row in container.query_items(
             query=window_query,
             parameters=window_params,
+            enable_cross_partition_query=True,
         ):
             partition = row.get("partition")
             if partition:
@@ -431,6 +433,7 @@ class ConversationService:
         async for raw in container.query_items(
             query=messages_query,
             parameters=messages_params,
+            enable_cross_partition_query=True,
         ):
             items.append(ConversationMessageItem.model_validate(raw))
 

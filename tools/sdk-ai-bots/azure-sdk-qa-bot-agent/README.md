@@ -141,7 +141,8 @@ Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolutio
   "tenant_id": "azure_sdk_onboarding",
   "conversation_id": "<a real conversation id from Cosmos>",
   "conversation_type": "teams_channel",
-  "issue_url": null
+   "evaluation_time": "2026-01-01T00:00:00+00:00",
+   "issue_url": null
 }
 ```
 

@@ -45,3 +45,37 @@ async def test_fetch_conversation_preserves_complete_message_content():
 
     assert result.truncated is False
     assert result.messages[0].content == expert_correction
+
+
+@pytest.mark.asyncio
+async def test_fetch_conversation_preserves_all_messages():
+    messages = [
+        ConversationMessageItem(
+            id=f"message-{index}",
+            sender_role=Role.User,
+            sender_id="user",
+            sender_name="User",
+            content=f"content-{index}",
+            created_at=datetime.now(timezone.utc),
+            conversation_id="conversation-1",
+            conversation_type=ConversationType.teams_channel,
+            conversation_partition="teams_channel:conversation-1",
+            document_type=ConversationDocumentType.message,
+        )
+        for index in range(101)
+    ]
+    conversation_service = SimpleNamespace(
+        get_messages_by_conversation_id=AsyncMock(return_value=messages),
+    )
+
+    result = await ConversationTools(
+        conversation_service=conversation_service
+    ).fetch_conversation(
+        conversation_id="conversation-1",
+        conversation_type=ConversationType.teams_channel.value,
+    )
+
+    assert result.truncated is False
+    assert len(result.messages) == 101
+    assert result.messages[0].id == "message-0"
+    assert result.messages[-1].id == "message-100"

@@ -70,6 +70,7 @@ class QARecordService:
         async for row in container.query_items(
             query=window_query,
             parameters=window_params,
+            enable_cross_partition_query=True,
         ):
             partition = row.get("partition")
             if partition:
@@ -95,6 +96,7 @@ class QARecordService:
         async for raw in container.query_items(
             query=messages_query,
             parameters=messages_params,
+            enable_cross_partition_query=True,
         ):
             items.append(ConversationMessageItem.model_validate(raw))
         return sorted(items, key=lambda message: message.created_at)

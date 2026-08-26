@@ -192,7 +192,7 @@ union
         return []
 
     spans: list[TraceSpan] = []
-    for table in result:
+    for table in result.tables:
         col_idx = {col: i for i, col in enumerate(table.columns)}
         for row in table.rows:
             spans.append(

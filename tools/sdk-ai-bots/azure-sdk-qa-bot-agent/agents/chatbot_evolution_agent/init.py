@@ -130,7 +130,7 @@ async def main() -> None:
         knowledge_tools.search_knowledge_base,
         knowledge_tools.read_knowledge,
         knowledge_tools.update_knowledge,
-        chatagent_tools.validate_agent_response,
+        chatagent_tools.chat,
         web_tools.web_fetch,
     ]
 

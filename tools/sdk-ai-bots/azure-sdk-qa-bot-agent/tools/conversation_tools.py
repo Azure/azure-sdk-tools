@@ -17,9 +17,6 @@ from tools import tool
 
 logger = logging.getLogger(__name__)
 
-# Cap the number of messages while preserving each message's full evidence.
-_MAX_MESSAGES = 100
-
 
 def _resolve_conversation_type(value: str) -> ConversationType:
     try:
@@ -96,8 +93,6 @@ class ConversationTools:
             conversation_id=conversation_id,
             conversation_type=ctype,
         )
-        truncated = len(items) > _MAX_MESSAGES
-        clipped = items[:_MAX_MESSAGES]
         messages = [
             FeedbackMessage(
                 id=m.id,
@@ -110,7 +105,7 @@ class ConversationTools:
                 ),
                 trace_id=m.trace_id,
             )
-            for m in clipped
+            for m in items
         ]
         conversation_link = next(
             (msg.message_link for msg in messages if msg.message_link),
@@ -121,7 +116,6 @@ class ConversationTools:
             conversation_type=conversation_type,
             found=bool(items),
             message_count=len(items),
-            truncated=truncated,
             conversation_link=conversation_link,
             messages=messages,
         )

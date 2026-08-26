@@ -187,7 +187,10 @@ def main() -> None:
         sys.exit(
             "ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint"
         )
-    if not candidate_appconfig_endpoint:
+    if (
+        args.agent_name == "chatbot_evolution_agent"
+        and not candidate_appconfig_endpoint
+    ):
         sys.exit("ERROR: CANDIDATE_APPCONFIG_ENDPOINT not set in the environment")
 
     print(f"Deployment config:")
@@ -270,10 +273,11 @@ def main() -> None:
 
         env_vars = {
             "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
-            "CANDIDATE_APPCONFIG_ENDPOINT": candidate_appconfig_endpoint,
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
+        if candidate_appconfig_endpoint:
+            env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 
         # Ensure Content-safety guardrail.
         rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")

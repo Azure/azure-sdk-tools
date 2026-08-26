@@ -12,7 +12,7 @@ from tools.chatagent_tools import ChatAgentTools
 
 
 @pytest.mark.asyncio
-async def test_validate_agent_response_returns_answer_and_trace_id() -> None:
+async def test_chat_returns_answer_and_trace_id() -> None:
     chat_service = SimpleNamespace(
         chat=AsyncMock(
             return_value=ChatResponse(
@@ -26,7 +26,7 @@ async def test_validate_agent_response_returns_answer_and_trace_id() -> None:
     prod_chat_service = SimpleNamespace(chat=AsyncMock())
     result = await ChatAgentTools(
         chat_service, prod_chat_service
-    ).validate_agent_response(
+    ).chat(
         tenant_id="azure_typespec_authoring",
         question="What should I do?",
     )
@@ -44,7 +44,7 @@ async def test_validate_agent_response_returns_answer_and_trace_id() -> None:
 
 
 @pytest.mark.asyncio
-async def test_validate_agent_response_routes_to_selected_environment() -> None:
+async def test_chat_routes_to_selected_environment() -> None:
     candidate = SimpleNamespace(
         chat=AsyncMock(
             return_value=ChatResponse(
@@ -57,7 +57,7 @@ async def test_validate_agent_response_routes_to_selected_environment() -> None:
     )
     tools = ChatAgentTools(candidate, prod)
 
-    result = await tools.validate_agent_response(
+    result = await tools.chat(
         tenant_id="azure_typespec_authoring",
         question="What should I do?",
         target="prod",
@@ -69,12 +69,12 @@ async def test_validate_agent_response_routes_to_selected_environment() -> None:
 
 
 @pytest.mark.asyncio
-async def test_validate_agent_response_rejects_unknown_tenant() -> None:
+async def test_chat_rejects_unknown_tenant() -> None:
     chat_service = SimpleNamespace(chat=AsyncMock())
     prod_chat_service = SimpleNamespace(chat=AsyncMock())
 
     with pytest.raises(ValueError, match="Unknown tenant_id"):
-        await ChatAgentTools(chat_service, prod_chat_service).validate_agent_response(
+        await ChatAgentTools(chat_service, prod_chat_service).chat(
             tenant_id="unknown",
             question="Question",
         )

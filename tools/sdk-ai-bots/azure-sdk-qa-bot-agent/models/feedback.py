@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -85,6 +85,10 @@ class ChatbotEvolutionAgentInput(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid")
+    issue_url_pattern: ClassVar[re.Pattern[str]] = re.compile(
+        r"https://github\.com/Azure/azure-sdk-pr/issues/[1-9]\d*",
+        flags=re.IGNORECASE,
+    )
 
     tenant_id: str
     conversation_id: str
@@ -103,11 +107,7 @@ class ChatbotEvolutionAgentInput(BaseModel):
     @field_validator("issue_url")
     @classmethod
     def validate_issue_url(cls, value: str | None) -> str | None:
-        if value is not None and re.fullmatch(
-            r"https://github\.com/Azure/azure-sdk-pr/issues/[1-9]\d*",
-            value,
-            flags=re.IGNORECASE,
-        ) is None:
+        if value is not None and cls.issue_url_pattern.fullmatch(value) is None:
             raise ValueError("issue_url must identify an Azure/azure-sdk-pr issue")
         return value
 
@@ -138,11 +138,10 @@ class ChatbotEvolutionAgentResult(BaseModel):
     @field_validator("issue_url")
     @classmethod
     def validate_issue_url(cls, value: str | None) -> str | None:
-        if value is not None and re.fullmatch(
-            r"https://github\.com/Azure/azure-sdk-pr/issues/[1-9]\d*",
-            value,
-            flags=re.IGNORECASE,
-        ) is None:
+        if (
+            value is not None
+            and ChatbotEvolutionAgentInput.issue_url_pattern.fullmatch(value) is None
+        ):
             raise ValueError("issue_url must identify an Azure/azure-sdk-pr issue")
         return value
 

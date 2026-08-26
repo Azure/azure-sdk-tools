@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from services.chat_service import ChatService
 
 
-class ValidateAgentResponseResult(BaseModel):
+class ChatResult(BaseModel):
     answer: str
     trace_id: str | None = None
 
@@ -32,7 +32,7 @@ class ChatAgentTools:
         self._prod_chat_service = prod_chat_service
 
     @tool
-    async def validate_agent_response(
+    async def chat(
         self,
         *,
         tenant_id: Annotated[
@@ -47,8 +47,8 @@ class ChatAgentTools:
             Literal["candidate", "prod"],
             "Use 'candidate' only during analysis after updating the candidate knowledge base. Use 'prod' only during validation after the issue is closed.",
         ] = "candidate",
-    ) -> ValidateAgentResponseResult:
-        """Rerun a failed case and return the deployed Chat Agent's evidence."""
+    ) -> ChatResult:
+        """Send a question to a deployed Chat Agent and return its evidence."""
         if not question.strip():
             raise ValueError("question must not be empty")
         try:
@@ -67,7 +67,7 @@ class ChatAgentTools:
                 message=Message(role=Role.User, content=question),
             )
         )
-        return ValidateAgentResponseResult(
+        return ChatResult(
             answer=response.answer,
             trace_id=response.trace_id,
         )

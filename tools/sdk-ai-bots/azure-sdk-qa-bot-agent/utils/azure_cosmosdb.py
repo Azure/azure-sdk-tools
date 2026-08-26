@@ -430,6 +430,8 @@ async def query_qa_records_by_qa_status(
         conditions.append("c.tenant_id = @tenant_id")
         parameters.append({"name": "@tenant_id", "value": tenant_id})
         kwargs["partition_key"] = tenant_id
+    else:
+        kwargs["enable_cross_partition_query"] = True
 
     query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
     items: list[dict[str, Any]] = []
@@ -456,6 +458,8 @@ async def query_qa_records_by_feedback_status(
         conditions.append("c.tenant_id = @tenant_id")
         parameters.append({"name": "@tenant_id", "value": tenant_id})
         kwargs["partition_key"] = tenant_id
+    else:
+        kwargs["enable_cross_partition_query"] = True
 
     query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
     items: list[dict[str, Any]] = []

@@ -108,7 +108,7 @@ foreach ($issue_number in $issues) {
 
     $sync_success = $false
     try {
-      ./eng/scripts/Sync-ProductOnboardingStatus.ps1 `
+      & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
         -ProductID        "$product_id" `
         -ProductName      "$product_name" `
         -ProductType      "$product_type" `

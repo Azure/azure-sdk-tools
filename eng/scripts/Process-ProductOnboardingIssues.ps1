@@ -12,7 +12,7 @@ $issues = `
       --repo "Azure/azure-sdk-pr" `
       --label "product-onboarding" `
       --state open `
-      -- limit 300 `
+      --limit 300 `
       --json number `
   | ConvertFrom-Json `
   | Select-Object -ExpandProperty number

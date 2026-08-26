@@ -103,7 +103,7 @@
 /src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
 /packages/python-packages/apiview-copilot/ @tjprescott
 /packages/python-packages/*stub*/         @l0lawrence
-/src/go/                                  @jhendrixMSFT @chlowell @RickWinter
+/src/go/                                  @jhendrixMSFT @RickWinter
 
 ###########
 # Pylint checkers
@@ -118,6 +118,7 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
 /tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index      @lirenhe @chunyu3 @JiaqiZhang-Dev
 
 # Add owners for notifications for specific pipelines
 /eng/common/pipelines/codeowners-linter.yml        @danieljurek

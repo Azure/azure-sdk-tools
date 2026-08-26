@@ -21,9 +21,9 @@
     { "toolName": "azsdk_apireviewhub_request_review_pr", "prompt": "Create an API review through API Review Hub", "category": "all" },
     { "toolName": "azsdk_apireviewhub_request_review_pr", "prompt": "Open a review PR from for this SDK package", "category": "all" },
 
-    { "toolName": "azsdk_apireview_get_approval_status", "prompt": "Check release status for my package version", "category": "all" },
-    { "toolName": "azsdk_apireview_get_approval_status", "prompt": "Is this package version approved for release?", "category": "all" },
-    { "toolName": "azsdk_apireview_get_approval_status", "prompt": "Get release-gate status for this package", "category": "all" },
+    { "toolName": "azsdk_package_get_approval_status", "prompt": "Check release status for my package version", "category": "all" },
+    { "toolName": "azsdk_package_get_approval_status", "prompt": "Is this package version approved for release?", "category": "all" },
+    { "toolName": "azsdk_package_get_approval_status", "prompt": "Get release-gate status for this package", "category": "all" },
 
     { "toolName": "azsdk_check_service_label", "prompt": "Check if a service label exists for my service", "category": "all" },
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },
@@ -34,6 +34,10 @@
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Run the codeowner package check for sdk/storage/Azure.Storage.Blobs", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Run the codeowner cache update pipeline to unblock releases", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Update the owners cache", "category": "all" },
+
+    { "toolName": "azsdk_sync_product_onboarding", "prompt": "Sync the product onboarding status for my service", "category": "all" },
+    { "toolName": "azsdk_sync_product_onboarding", "prompt": "Create a product onboarding work item for this service", "category": "all" },
+    { "toolName": "azsdk_sync_product_onboarding", "prompt": "Update the existing product onboarding details", "category": "all" },
 
     { "toolName": "azsdk_analyze_log_file", "prompt": "Analyze this log file for errors", "category": "all" },
     { "toolName": "azsdk_analyze_log_file", "prompt": "What errors are in this build log?", "category": "all" },
@@ -87,7 +91,6 @@
     { "toolName": "azsdk_get_pipeline_status", "prompt": "Check the status of my Azure pipeline build 12345678", "category": "all" },
     { "toolName": "azsdk_get_pipeline_status", "prompt": "Get the pipeline build status for run 9876543", "category": "all" },
     { "toolName": "azsdk_get_pipeline_status", "prompt": "Get the pipeline build status for my CI run", "category": "all" },
-
     { "toolName": "azsdk_check_api_spec_ready_for_sdk", "prompt": "Check if my API spec is ready to generate SDK", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_check_api_spec_ready_for_sdk", "prompt": "Is my TypeSpec ready for SDK generation?", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_create_release_plan", "prompt": "Create a release plan for my service", "category": "all" },

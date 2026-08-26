@@ -1,17 +1,62 @@
 # Release History
 
+## 0.6.38 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.37 (2026-08-21)
+
+### Features Added
+
+- Added `product-onboarding sync` CLI command to create or update product onboarding work items.
+
+### Bugs Fixed
+
+- `package mark-released` now skips API Review Hub when `--api-hash` is omitted and succeeds when either API Review Hub or APIView succeeds, failing only when neither backend succeeds.
+
+## 0.6.36 (2026-08-19)
+
+### Features Added
+
+- Added `eng evaluate` CLI command to evaluate whether Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into the merged pull request. Accepts a repository owner and name. Optional parameters: `--since-days`, `--model`.
+
+## 0.6.35 (2026-08-14)
+
+### Features Added
+
+- Added the CLI-only `package mark-released` command to mark released packages independently in API Review Hub and APIView.
+
+### Breaking Changes
+
+- Moved `api-review get-approval-status` to `package get-approval-status` and renamed its MCP tool from `azsdk_apireview_get_approval_status` to `azsdk_package_get_approval_status`.
+- Removed the unused `apiview create-ci-revision` and `apiview create-pull-request-revision` commands.
+
+## 0.6.34 (2026-08-07)
+
+### Features Added
+
+- Added optional `--repo-owner` support to `api-review get-approval-status` (and `azsdk_apireview_get_approval_status`) so approval checks can target a specific repository owner when needed.
+
+### Bugs Fixed
+
+- `api-review create` now surfaces an already-existing API Review Hub review PR as a success rather than an error.
+- `api-review create` no longer requires `--base-tag`; when omitted, API Review Hub will construct an "all-green" review.
+
 ## 0.6.33 (2026-07-29)
 
 ### Features Added
 
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
-- Added optional `--repo-owner` support to `api-review get-approval-status` (and `azsdk_apireview_get_approval_status`) so approval checks can target a specific repository owner when needed.
 
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
-- `api-review create` now surfaces an already-existing API Review Hub review PR as a success rather than an error.
-- `api-review create` no longer requires `--base-tag`; when omitted, API Review Hub will construct an "all-green" review.
 
 ## 0.6.32 (2026-07-28)
 

@@ -1,9 +1,4 @@
-"""Knowledge retrieval tools for the Azure SDK QA Bot Agent.
-
-Provides a single search tool that queries the Azure SDK knowledge base
-via Azure AI Search and automatically expands each result by its header
-hierarchy, returning full section context to the agent.
-"""
+"""Knowledge retrieval tools for the Azure SDK QA Bot Agent."""
 
 from __future__ import annotations
 
@@ -21,6 +16,7 @@ from config.app_config import get as cfg
 from config.tenant_config import (
     KNOWLEDGE_SOURCE_REGISTRY,
     TenantID,
+    get_knowledge_source,
     get_tenant_config,
 )
 from models.knowledge import Reference, SearchKnowledgeBaseResult
@@ -32,12 +28,52 @@ from utils.knowledge_config import (
     get_kb_targets,
     select_kb_target,
 )
+from models.knowledge import KnowledgeChunk, Reference, SearchKnowledgeBaseResult
+from tools import tool
+from utils.azure_ai_search import (
+    NON_WIKI_FILTER,
+    WIKI_FILTER,
+    _escape_odata,
+    combine_source_filters,
+    SearchClient,
+    get_search_client,
+)
 
 logger = logging.getLogger(__name__)
 
 
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
+# Bound the larger wiki result while retaining every ranked page and source.
+_WIKI_PAGE_CONTENT_CHARS = 1800
+_WIKI_SOURCE_CONTENT_CHARS = 1100
+
+# Internal index contexts for cross-document Wiki pages. They are not
+# model-selectable knowledge sources.
+_WIKI_CROSS_DOCUMENT_CONTEXTS = ("wiki_entity", "wiki_concept")
+
+# Wiki pages kept as full evidence.
+_WIKI_TOP = 6
+# Source chunks each kept page is routed back to, for grounded detail.
+_WIKI_ROUTE_PER_PAGE = 8
+_WIKI_ROUTE_MAX_REFS = 48
+_WIKI_ROUTE_MAX_TOTAL = 12
+
+# Shared by both retrieval tracks so the agent picks a strategy the same way.
+_SEARCH_MODE_DESC = (
+    "Search strategy to use. "
+    "'quick' — dense + keyword retrieval, fast, good for straightforward "
+    "factual lookups about a single feature, symbol, or process step "
+    "(e.g., 'Which decorator marks an operation as long-running?'). "
+    "Use 'quick' by default. "
+    "'deep' — additionally runs agentic (intent-aware, multi-step) retrieval "
+    "in parallel, better for complex questions that need cross-referencing "
+    "multiple topics "
+    "(e.g., 'How does adding a new API version interact with the SDK release "
+    "and breaking-change review process?'). "
+    "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
+    "Default: 'quick'."
+)
 
 class KbSourceView(BaseModel):
     folder: str
@@ -81,10 +117,10 @@ class SearchMode(str, Enum):
     """Search strategy for knowledge retrieval."""
 
     quick = "quick"
-    """Vector search only — fast, good for straightforward factual lookups."""
+    """Dense + keyword retrieval — fast, good for straightforward factual lookups."""
 
     deep = "deep"
-    """Agentic + vector search in parallel — better for complex or multi-faceted questions."""
+    """Adds agentic retrieval in parallel — better for complex or multi-faceted questions."""
 
 
 class ServiceType(str, Enum):
@@ -147,14 +183,16 @@ class KnowledgeTools:
             "The knowledge base contains both documentation and historical "
             "Q&A; the index embeds the full body text, so complete natural "
             "sentences retrieve far better than stripped keyword fragments. "
+            "The search combines semantic/vector and BM25 keyword retrieval. "
             "Provide the queries as a **progressive abstraction ladder** — "
             "start concrete and get more abstract with each query, so the set "
             "covers both exact-wording recall and conceptual-topic recall. "
             "QUERY 1 (REQUIRED) — the **most concrete** version: a full, "
             "standalone restatement of the user's question that KEEPS their "
             "concrete nouns (decorator names, model/property names, version "
-            "numbers, error text). Resolve follow-up context (replace "
-            "'it'/'this' with the real subject) and normalize obvious synonyms "
+            "numbers, error text, rule IDs, check names, config keys) verbatim. "
+            "This is also the exact-term lookup path. Resolve follow-up context "
+            "(replace 'it'/'this' with the real subject) and normalize obvious synonyms "
             "(e.g. 'CI failure' → 'validation failure'). "
             "QUERY 2 (optional) — **more abstract**: drop the conversation-"
             "specific sample values (their own model name, exact version "
@@ -202,25 +240,14 @@ class KnowledgeTools:
             "general questions, anything ambiguous). "
             "When in doubt, use None.",
         ] = None,
-        search_mode: Annotated[
-            str,
-            "Search strategy to use. "
-            "'quick' — vector search only, fast, good for straightforward "
-            "factual lookups (e.g., 'What template emits x-ms-pageable?'). "
-            "Use 'quick' by default. "
-            "'deep' — runs both agentic and vector search in parallel, "
-            "better for complex questions that need cross-referencing multiple topics "
-            "(e.g., 'How do I use SDK versioning with spread properties AND deprecation policies?'). "
-            "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
-            "Default: 'quick'.",
-        ] = "quick",
+        search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
         """Search the knowledge base with one or more queries and return results with full section context.
 
-        Each query runs agentic and/or vector search in parallel, then all
-        results are merged and deduplicated. Use multiple queries to cover
-        different facets of the user's problem — the original question,
-        related concepts, and potential solutions.
+        Each query runs vector and keyword search in parallel, plus agentic
+        search in deep mode, then all results are merged and deduplicated. Use
+        multiple queries to cover different facets of the user's problem —
+        the original question, related concepts, and potential solutions.
         """
         # Resolve sources: explicit list wins; otherwise fall back to the
         # tenant's configured sources, or the whole registry when no tenant.
@@ -237,36 +264,14 @@ class KnowledgeTools:
         source_filters = _resolve_source_filters(sources, tenant_id, service_type)
 
         use_deep = search_mode == SearchMode.deep.value
-
-        # Cap queries to avoid excessive parallel searches
         capped_queries = queries[:3]
 
-        # Build search tasks for all queries
-        tasks: list = []
-        for q in capped_queries:
-            if use_deep:
-                tasks.append(
-                    search_client.agentic_search(
-                        query=q,
-                        source_filters=source_filters,
-                    )
-                )
-            tasks.append(
-                search_client.vector_search(
-                    query=q,
-                    source_filters=source_filters,
-                )
-            )
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Collect raw chunks, tolerating individual search failures
-        raw_chunks: list = []
-        for result in results:
-            if isinstance(result, BaseException):
-                logger.warning("Search failed: %s", result)
-            else:
-                raw_chunks.extend(result)
+        raw_chunks = await search_client.fused_search(
+            capped_queries,
+            source_filters,
+            extra_filter=NON_WIKI_FILTER,
+            use_agentic=use_deep,
+        )
 
         logger.info(
             "Search completed: mode=%s, queries=%s, raw_chunks=%d",
@@ -275,16 +280,11 @@ class KnowledgeTools:
             len(raw_chunks),
         )
 
-        # Deduplicate across all search results
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
 
-        # Reorder by rerank_score descending and cap at top_k
-        unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
         top_k = search_client.top_k
         if len(unique_chunks) > top_k:
-            logger.info(
-                "Capping results from %d to %d (top_k)", len(unique_chunks), top_k
-            )
+            logger.info("Capping results from %d to %d (top_k)", len(unique_chunks), top_k)
             unique_chunks = unique_chunks[:top_k]
 
         logger.info(
@@ -298,7 +298,7 @@ class KnowledgeTools:
         ]
         expanded = await asyncio.gather(*expand_tasks)
 
-        # Log final search results (mirrors Go backend's "Final Search Result" log)
+        # Log final search results.
         logger.info("=========Final Search Result=========")
         refs = [
             Reference(
@@ -541,6 +541,123 @@ class KnowledgeTools:
             reason="folder_unmapped_or_non_github",
         )
 
+    @tool
+    async def wiki_search(
+        self,
+        *,
+        queries: Annotated[
+            list[str],
+            "1-3 queries for the curated WIKI layer: per-document SUMMARY pages, "
+            "per-symbol ENTITY pages (decorators/APIs/types), per-topic CONCEPT "
+            "pages. Use symbol/concept names or short topic phrases. Returns the "
+            "top pages' full synthesized content PLUS the source-document chunks "
+            "they were built from — enough to answer most conceptual/overview "
+            "questions in one call.",
+        ],
+        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
+        sources: Annotated[
+            list[str] | None,
+            "Optional list of knowledge source names to scope the search. "
+            "If omitted, all sources configured for the tenant are used.",
+        ] = None,
+        search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
+    ) -> SearchKnowledgeBaseResult:
+        """Search wiki pages and their routed source chunks."""
+        sources = _source_names(tenant_id, sources)
+        search_client = get_search_client()
+        source_filters = _resolve_source_filters(sources, tenant_id, None)
+        wiki_page_filters = _wiki_page_filters(tenant_id, source_filters)
+        capped_queries = queries[:3]
+
+        raw = await search_client.fused_search(
+            capped_queries,
+            wiki_page_filters,
+            extra_filter=WIKI_FILTER,
+            use_agentic=search_mode == SearchMode.deep.value,
+        )
+        page_hits = _deduplicate_wiki_pages(search_client.deduplicate_chunks(raw))
+        wiki_pages = sorted(
+            page_hits, key=lambda c: c.rerank_score, reverse=True
+        )[:_WIKI_TOP]
+        if not wiki_pages:
+            logger.info("wiki_search: no wiki pages for queries=%s", capped_queries)
+            return SearchKnowledgeBaseResult(results=[])
+
+        # Route each page to the SOURCE chunks it was built from (grounded detail).
+        routed = await search_client.backfill_wiki_sources(
+            wiki_pages,
+            queries=capped_queries,
+            per_page=_WIKI_ROUTE_PER_PAGE,
+            max_refs=_WIKI_ROUTE_MAX_REFS,
+            max_total=_WIKI_ROUTE_MAX_TOTAL,
+            source_filter=combine_source_filters(source_filters) or None,
+        )
+        combined = wiki_pages + routed
+        expanded = await asyncio.gather(
+            *[search_client.expand_by_hierarchy(c) for c in combined]
+        )
+        page_count = len(wiki_pages)
+        results = _refs_from_expanded(
+            expanded[:page_count],
+            combined[:page_count],
+            max_content_chars=_WIKI_PAGE_CONTENT_CHARS,
+        )
+        results.extend(
+            _refs_from_expanded(
+                expanded[page_count:],
+                combined[page_count:],
+                max_content_chars=_WIKI_SOURCE_CONTENT_CHARS,
+            )
+        )
+        logger.info(
+            "wiki_search: mode=%s, %d page(s) + %d routed source(s) for queries=%s",
+            search_mode, len(wiki_pages), len(routed), capped_queries,
+        )
+        return SearchKnowledgeBaseResult(results=results)
+
+
+def _source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
+    """Resolve model-selectable source names for either retrieval track."""
+    config = get_tenant_config(TenantID(tenant_id))
+    tenant_sources = [src.name for src in config.sources] if config else []
+    names = list(sources) if sources else tenant_sources
+    ignored = [n for n in names if n in _WIKI_CROSS_DOCUMENT_CONTEXTS]
+    if ignored:
+        logger.warning("Ignoring internal Wiki contexts requested as sources: %s", ignored)
+    kept = [n for n in names if n not in _WIKI_CROSS_DOCUMENT_CONTEXTS]
+    if kept:
+        return kept
+    return tenant_sources
+
+
+def _wiki_page_filters(
+    tenant_id: str,
+    source_filters: dict[str, str],
+) -> dict[str, str]:
+    """Add internal Wiki page contexts when enabled for the tenant."""
+    tenant_config = get_tenant_config(TenantID(tenant_id))
+    enabled = bool(
+        tenant_config and tenant_config.enable_wiki_cross_document_pages
+    )
+    if not source_filters:
+        if enabled:
+            return {}
+        exclusions = " and ".join(
+            f"context_id ne '{context}'"
+            for context in _WIKI_CROSS_DOCUMENT_CONTEXTS
+        )
+        return {"wiki_summaries": exclusions}
+
+    page_filters = dict(source_filters)
+    if enabled:
+        page_filters.update(
+            {
+                context: f"context_id eq '{context}'"
+                for context in _WIKI_CROSS_DOCUMENT_CONTEXTS
+            }
+        )
+    return page_filters
+
 
 def _resolve_source_filters(
     sources: list[str],
@@ -572,7 +689,13 @@ def _resolve_source_filters(
 
     source_filters: dict[str, str] = {}
     for source_name in sources:
-        filter_clauses = [f"context_id eq '{source_name}'"]
+        # ``sources`` reaches here straight from a model-authored tool call, so
+        # the value is escaped before it goes into the filter.  Unregistered
+        # names are kept rather than dropped: an escaped unknown name matches
+        # nothing, whereas dropping every name would leave the search unfiltered.
+        if not get_knowledge_source(source_name):
+            logger.warning("Unknown knowledge source %r requested", source_name)
+        filter_clauses = [f"context_id eq '{_escape_odata(source_name)}'"]
         if source_filter_overrides.get(source_name):
             filter_clauses.append(f"({source_filter_overrides[source_name]})")
         if service_type_filter:
@@ -595,13 +718,27 @@ def _validate_blob_path(blob_path: str) -> str:
     return path.as_posix()
 
 
-def _truncate_content(content: str | None) -> str:
-    """Truncate content to _MAX_CONTENT_CHARS_PER_RESULT to control context size."""
+def _truncate_content(
+    content: str | None,
+    max_chars: int = _MAX_CONTENT_CHARS_PER_RESULT,
+) -> str:
+    """Truncate content to *max_chars* to control context size."""
     if not content:
         return ""
-    if len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
+    if len(content) <= max_chars:
         return content
-    return content[:_MAX_CONTENT_CHARS_PER_RESULT] + "\n... [truncated]"
+    return content[:max_chars] + "\n... [truncated]"
+
+
+def _deduplicate_wiki_pages(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
+    """Keep the strongest chunk hit for each synthesized wiki page."""
+    best: dict[tuple[str, str, str], KnowledgeChunk] = {}
+    for chunk in chunks:
+        key = (chunk.page_type, chunk.source, chunk.title)
+        prior = best.get(key)
+        if prior is None or chunk.rerank_score > prior.rerank_score:
+            best[key] = chunk
+    return list(best.values())
 
 
 def _build_reference_title(
@@ -613,3 +750,30 @@ def _build_reference_title(
     """Build a reference title from the deepest available header path."""
     parts = [part for part in (header1, header2, header3) if part]
     return " | ".join(parts) if parts else document_title
+
+
+def _refs_from_expanded(
+    expanded: list[KnowledgeChunk],
+    scored: list[KnowledgeChunk],
+    *,
+    max_content_chars: int = _MAX_CONTENT_CHARS_PER_RESULT,
+) -> list[Reference]:
+    """Build References from expanded chunks, taking scores from *scored*."""
+    return [
+        Reference(
+            title=_build_reference_title(
+                item.title,
+                item.header1,
+                item.header2,
+                item.header3,
+            ),
+            source=item.source,
+            link=item.link,
+            content=_truncate_content(
+                item.content,
+                max_chars=max_content_chars,
+            ),
+            score=score.rerank_score,
+        )
+        for item, score in zip(expanded, scored, strict=True)
+    ]

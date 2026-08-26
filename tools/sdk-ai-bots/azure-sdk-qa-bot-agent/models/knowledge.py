@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from collections.abc import Callable
 from pydantic import BaseModel, Field, field_validator
@@ -85,12 +86,8 @@ class KnowledgeChunk(BaseModel):
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
     page_type: str = ""
+    chunk_refs: list[str] = Field(default_factory=list, validation_alias="chunk_refs_str")
     rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
-
-    @field_validator("page_type", mode="before")
-    @classmethod
-    def _coerce_page_type(cls, v: object) -> str:
-        return str(v) if v else ""
 
     @field_validator("rerank_score", mode="before")
     @classmethod
@@ -100,6 +97,38 @@ class KnowledgeChunk(BaseModel):
         if isinstance(v, (int, float)):
             return float(v)
         return float(str(v))
+
+    @field_validator("page_type", mode="before")
+    @classmethod
+    def _coerce_page_type(cls, v: object) -> str:
+        """Raw (non-wiki) chunks carry null for this added field."""
+        return str(v) if v else ""
+
+    @field_validator("header1", "header2", "header3", mode="before")
+    @classmethod
+    def _coerce_header(cls, v: object) -> str:
+        """Wiki pages carry null for the deeper header levels."""
+        return str(v) if v else ""
+
+    @field_validator("chunk_refs", mode="before")
+    @classmethod
+    def _coerce_chunk_refs(cls, v: object) -> list[str]:
+        """Parse source refs from null, list, or JSON-string index values.
+
+        Wiki refs use scalar ``chunk_refs_str`` because index projections cannot
+        populate a collection field from scalar blob metadata.
+        """
+        if not v:
+            return []
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, list) else []
+            except (ValueError, TypeError):
+                return []
+        if isinstance(v, list):
+            return v
+        return []
 
 
 class KnowledgeResult(BaseModel):
@@ -131,7 +160,7 @@ class Reference(BaseModel):
 class SearchKnowledgeBaseResult(BaseModel):
     """Output of the search_knowledge_base tool call."""
 
-    results: list[Reference] = []
+    results: list[Reference] = Field(default_factory=list)
 
 
 class DocumentContext(BaseModel):

@@ -26,7 +26,7 @@ if ($null -ne $issues) {
 [Console]::Error.WriteLine("Found $issues_count issues to process.")
 
 foreach ($issue_number in $issues) {
-  $issue = gh issue view $issue_number
+  $issue = gh issue view $issue_number --repo "$issues_repo"
   $issue = $issue -join "`n"
 
   $product_id = ""

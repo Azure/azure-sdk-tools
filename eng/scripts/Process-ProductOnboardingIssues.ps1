@@ -1,4 +1,5 @@
 [CmdletBinding()]
+param()
 
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'

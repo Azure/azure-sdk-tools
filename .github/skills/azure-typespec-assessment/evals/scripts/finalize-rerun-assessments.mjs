@@ -416,26 +416,34 @@ export function correctHistoricalSemanticChains(assessment, operationsByPr) {
   const chaosLro = items.get("intent-location-based-lro-metadata");
   if (chaosLro) {
     const summary =
-      'Six existing operations retain their 202 response, Location and Retry-After headers, Location polling, and final result. Replacing raw OpenAPI extensions with @Azure.Core.useFinalStateVia("location") makes the same LRO behavior visible to TypeSpec-aware SDK generators.';
+      'Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia("location"), and obsolete polling-operation links and suppressions are removed.';
     replaceSemanticText(chaosLro, {
-      intent:
-        "Model existing Location-based long-running behavior with TypeSpec LRO metadata",
+      intent: "Use TypeSpec-native metadata for Location-based LROs",
       summary,
     });
     setChangeExplanation(chaosLro, {
       aspects: [
         {
-          field: "TypeSpec LRO metadata",
+          field: "LRO metadata authoring",
           before:
-            "Final-state-via Location is represented with raw OpenAPI extensions.",
+            "Final-state-via Location is authored with raw OpenAPI extensions and selected operations also carry explicit polling-operation links.",
           after:
-            'Final-state-via Location is represented with @Azure.Core.useFinalStateVia("location").',
+            'Final-state-via Location is authored with @Azure.Core.useFinalStateVia("location"); obsolete polling-operation links are removed.',
         },
       ],
       effect: summary,
       typeSpecCause:
         "Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove the obsolete polling-operation link.",
     });
+    for (const change of chaosLro.changes) change.linkedFindingIds = [];
+    assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings =
+      assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.filter(
+        ({ id }) => id !== "source-lro-metadata-representation-changed",
+      );
+    assessment.artifactEvidence.tcgc =
+      "Base and head generic TCGC artifacts are identical for the six affected operations; their LRO classification and final-state metadata do not change.";
+    assessment.artifactEvidence.canonicalComparison =
+      "The TypeSpec authoring representation changes, but the emitted REST and generated SDK LRO metadata remain unchanged. No REST or downstream breaking change is present.";
   }
 
   const cloudHsm = items.get("replace-cloud-hsm-cluster-sku-enum");
@@ -697,9 +705,9 @@ export function correctHistoricalSemanticChains(assessment, operationsByPr) {
   if (assessment.pr === 44988) {
     correctNetwork44988(assessment, items);
     assessment.artifactEvidence.tcgc =
-      "Preserved successful base/head generic TCGC artifacts were reused without recompilation. The service gateway update actions create a downstream compatibility risk when generated SDKs adopt 2025-09-01 because their methods can change from long-running pollers to synchronous calls.";
+      "Fresh baseline/head TCGC YAML comparison confirms that ServiceGateways.updateAddressLocations and ServiceGateways.updateServices change from kind lro with Location polling in 2025-05-01 and 2025-07-01 to kind basic with an immediate ServiceGatewayActionOkResponseBody in 2025-09-01. The older LRO forms remain available under the new updateAddressLocationsLro and updateServicesLro method identities.";
     assessment.artifactEvidence.canonicalComparison =
-      "Materially consistent with the corrected PR #44988 report: 10 semantic intents, no REST breaking finding, one downstream SDK finding for the service gateway LRO-to-synchronous transition, failed compliance status with the same two medium findings, high confidence, and a Medium code-safety conclusion.";
+      "Fresh deterministic analysis confirms no version-aware REST breaking finding and one high-severity downstream SDK finding for the two service gateway LRO-to-synchronous method transitions.";
   }
 
   return assessment;

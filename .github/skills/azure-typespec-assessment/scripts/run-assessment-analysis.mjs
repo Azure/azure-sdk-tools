@@ -977,30 +977,6 @@ function sourceDownstreamCandidates(sourceFiles, projectPath, typeSpecDiffs) {
       reviewRequired: true,
     });
   }
-  if (
-    /@Azure\.Core\.useFinalStateVia/.test(changedSource) &&
-    /x-ms-long-running-operation|@pollingOperation/.test(changedSource)
-  ) {
-    candidates.push({
-      id: "source-lro-metadata-representation-changed",
-      rule: "sdk-lro-recognition-changed",
-      severity: "high",
-      summary:
-        "Replacing raw OpenAPI or polling metadata with TypeSpec LRO metadata can change whether generated SDK methods are recognized as long-running.",
-      evidence: projectFiles
-        .filter((file) =>
-          file.changes.some((change) =>
-            change.lines.some((line) =>
-              /useFinalStateVia|x-ms-long-running-operation|@pollingOperation/.test(
-                line,
-              ),
-            ),
-          ),
-        )
-        .map((file) => ({ path: file.path })),
-      reviewRequired: true,
-    });
-  }
   const removedAsyncActions = new Set(
     typeSpecDiffs
       .filter(

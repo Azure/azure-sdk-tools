@@ -7474,9 +7474,9 @@
   },
   "artifactEvidence": {
     "autorest": "Preserved successful base/head AutoRest artifacts were reused without recompilation. They contain 37 additive 2025-09-01 operations, no removed operation, unchanged older-version wire shapes apart from documentation text, and additive shared Vmss model fields.",
-    "tcgc": "Preserved successful base/head generic TCGC artifacts were reused without recompilation; no REST-compatible downstream breaking change was identified.",
+    "tcgc": "Fresh baseline/head TCGC YAML comparison confirms that ServiceGateways.updateAddressLocations and ServiceGateways.updateServices change from kind lro with Location polling in 2025-05-01 and 2025-07-01 to kind basic with an immediate ServiceGatewayActionOkResponseBody in 2025-09-01. The older LRO forms remain available under the new updateAddressLocationsLro and updateServicesLro method identities.",
     "compilation": "Compilation was explicitly skipped; preserved successful base/head AutoRest and TCGC artifacts from the designated historical evidence set were reused.",
-    "canonicalComparison": "Materially consistent with the canonical PR #44988 report: all 10 semantic intents, empty REST and downstream finding sets, failed compliance status with the same two medium findings, high confidence, and Medium code-safety conclusion match. Differences are limited to fresh-run skip/reuse metadata and measured timing."
+    "canonicalComparison": "Fresh deterministic analysis confirms no version-aware REST breaking finding and one high-severity downstream SDK finding for the two service gateway LRO-to-synchronous method transitions."
   },
   "dimensions": {
     "semanticUnderstanding": {
@@ -25736,13 +25736,14 @@
       "findings": [
         {
           "id": "source-arm-action-changed-from-async-to-sync",
-          "title": "Replacing existing asynchronous ARM actions with synchronous actions can change generated SDK methods from pollers to immediate-return calls",
+          "title": "Generated service gateway update methods change from LROs to synchronous calls",
           "severity": "high",
           "confidence": "high",
-          "summary": "SDKs generated from 2025-09-01 can replace poller-returning service gateway update methods with immediate-return synchronous methods.",
+          "summary": "Generated SDKs that move to 2025-09-01 can expose ServiceGateways_UpdateAddressLocations and ServiceGateways_UpdateServices as synchronous methods instead of long-running poller or operation-handle methods. Existing call sites can stop compiling because the return type and completion-handling pattern change.",
           "evidence": [
-            "Replacing existing asynchronous ARM actions with synchronous actions can change generated SDK methods from pollers to immediate-return calls.",
-            "Changed TypeSpec source: specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp."
+            "Baseline generated client metadata classifies updateAddressLocations and updateServices as long-running methods for 2025-05-01 and 2025-07-01, with Location polling.",
+            "Head generated client metadata classifies the same method identities as synchronous methods for 2025-09-01, returning ServiceGatewayActionOkResponseBody without polling metadata.",
+            "The generated client preserves the earlier asynchronous forms under updateAddressLocationsLro and updateServicesLro."
           ],
           "sourceReferences": [
             {

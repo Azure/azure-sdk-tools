@@ -7320,9 +7320,9 @@
   },
   "artifactEvidence": {
     "autorest": "Preserved successful base/head AutoRest artifacts were reused without recompilation. They contain 37 additive 2025-09-01 operations, no removed operation, unchanged older-version wire shapes apart from documentation text, and additive shared Vmss model fields.",
-    "tcgc": "Preserved successful base/head generic TCGC artifacts were reused without recompilation. The service gateway update actions create a downstream compatibility risk when generated SDKs adopt 2025-09-01 because their methods can change from long-running pollers to synchronous calls.",
+    "tcgc": "Fresh baseline/head TCGC YAML comparison confirms that ServiceGateways.updateAddressLocations and ServiceGateways.updateServices change from kind lro with Location polling in 2025-05-01 and 2025-07-01 to kind basic with an immediate ServiceGatewayActionOkResponseBody in 2025-09-01. The older LRO forms remain available under the new updateAddressLocationsLro and updateServicesLro method identities.",
     "compilation": "Compilation was explicitly skipped; preserved successful base/head AutoRest and TCGC artifacts from the designated historical evidence set were reused.",
-    "canonicalComparison": "Materially consistent with the corrected PR #44988 report: 10 semantic intents, no REST breaking finding, one downstream SDK finding for the service gateway LRO-to-synchronous transition, failed compliance status with the same two medium findings, high confidence, and a Medium code-safety conclusion."
+    "canonicalComparison": "Fresh deterministic analysis confirms no version-aware REST breaking finding and one high-severity downstream SDK finding for the two service gateway LRO-to-synchronous method transitions."
   },
   "dimensions": {
     "semanticUnderstanding": {
@@ -16965,8 +16965,9 @@
           "confidence": "high",
           "summary": "The older REST API versions remain compatible, but generated SDKs that move to 2025-09-01 can expose ServiceGateways_UpdateAddressLocations and ServiceGateways_UpdateServices as synchronous methods instead of long-running poller or operation-handle methods. Existing call sites can stop compiling because the return type and completion-handling pattern change, and runtime code that waits for polling completion must instead consume the immediate 200 response.",
           "evidence": [
-            "Both existing operations change from 202/204 responses with Location polling to a synchronous 200 response in 2025-09-01.",
-            "The TypeSpec replaces ArmResourceActionAsync with version-gated ArmResourceActionSync operations."
+            "Baseline generated client metadata classifies updateAddressLocations and updateServices as long-running methods for 2025-05-01 and 2025-07-01, with Location polling.",
+            "Head generated client metadata classifies the same method identities as synchronous methods for 2025-09-01, returning ServiceGatewayActionOkResponseBody without polling metadata.",
+            "The generated client preserves the earlier asynchronous forms under updateAddressLocationsLro and updateServicesLro."
           ],
           "sourceReferences": [
             {

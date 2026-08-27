@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "class-transformer": "^0.5.1"
+    "class-transformer": "^0.5.1",
+    "yaml": "^2.9.0"
   }
 }

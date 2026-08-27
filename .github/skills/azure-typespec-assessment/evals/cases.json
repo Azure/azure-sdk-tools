@@ -24,7 +24,7 @@
     "baseCommit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
     "headCommit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
     "projects": ["specification/chaos/resource-manager/Microsoft.Chaos/Chaos"],
-    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 1, "complianceFindings": 0 }
+    "expected": { "semanticIntents": 1, "restBreakingFindings": 0, "downstreamFindings": 0, "complianceFindings": 0 }
   },
   {
     "pr": 43745,

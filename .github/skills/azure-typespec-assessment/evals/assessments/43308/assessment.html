@@ -17,9 +17,9 @@
 <h1><a href="https://github.com/Azure/azure-rest-api-specs/pull/43308" style="color:inherit">PR #43308 — Fix TypeSpec LRO operations: remove @extension, use @useFinalStateVia</a></h1>
 <div class="hero-meta">Overall confidence: <strong class="status-high">High</strong> · Baseline <code>232dfa71843fd574be49ba91a918ee7d3e7bfec3</code> → Head <code>a3b8933eb6ce030faa6abc6d354fc97e30f02e96</code></div>
 <div class="metrics">
-<div class="metric safety-metric"><strong class="status-low"><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>Low</strong><span class="metric-title">Overall code safety</span></div>
+<div class="metric safety-metric"><strong class="status-high"><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>High</strong><span class="metric-title">Overall code safety</span></div>
 <a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">REST breaking changes</span></a>
-<a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Downstream breaking changes</span></a>
+<a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Downstream breaking changes</span></a>
 <a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">0 findings</span></a>
 <a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>1</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">6 operations<br>0 Added, 6 Modified, 0 Removed</span></a>
 </div></div></header>
@@ -31,90 +31,10 @@
 <nav><div class="container"><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#appendix">Appendix</a></div></nav>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-high" id="finding-source-lro-metadata-representation-changed">
-<div class="finding-heading"><span class="severity severity-high">high</span><h3>Generated SDK long-running operation behavior changes</h3></div>
-<p>SDK generators receive different LRO and polling metadata, which can change poller recognition, method return shape, and final-result retrieval without a REST wire change.</p>
-<p><strong>Evidence:</strong> Replacing raw OpenAPI or polling metadata with TypeSpec LRO metadata can change whether generated SDK methods are recognized as long-running.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp.; Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L31">lro-helpers.tsp:L22-L31</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L60-L69">lro-helpers.tsp:L60-L69</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L95-L104">lro-helpers.tsp:L95-L104</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L53">scenarioConfiguration.tsp:L48-L53</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L57-L63">scenarioConfiguration.tsp:L57-L63</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L67-L72">scenarioConfiguration.tsp:L67-L72</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L76-L81">scenarioConfiguration.tsp:L76-L81</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L50">scenarioRun.tsp:L44-L50</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L71-L76">workspace.tsp:L71-L76</a></p>
-<details class="finding-source-diff">
-<summary>TypeSpec source change <span>expand to inspect why this breaks clients</span></summary>
-<div class="diff">
-<div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div>
-<pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</span>
-<span class="meta">+++ b/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</span>
-<span class="meta">@@ -24,15 +22,10 @@ namespace Microsoft.Chaos;</span>
-<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;template&quot;</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;Custom LRO operation with specific response codes&quot;</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;Required for LRO extensions in OpenAPI output&quot;</span>
-<span class="context"> @autoRoute</span>
-<span class="context"> @armResourceAction(Resource)</span>
-<span class="context"> @post</span>
-<span class="remove">-@extension(&quot;x-ms-long-running-operation&quot;, true)</span>
-<span class="remove">-@extension(</span>
-<span class="remove">-  &quot;x-ms-long-running-operation-options&quot;,</span>
-<span class="remove">-  #{ `final-state-via`: &quot;location&quot; }</span>
-<span class="remove">-)</span>
-<span class="add">+@Azure.Core.useFinalStateVia(&quot;location&quot;)</span>
-<span class="omitted"> ... 3 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div>
-<pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</span>
-<span class="meta">+++ b/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</span>
-<span class="meta">@@ -67,15 +60,10 @@ op ArmResourceActionAsyncWithLocation&lt;</span>
-<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;template&quot;</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;Custom LRO operation with specific response codes&quot;</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;Required for LRO extensions in OpenAPI output&quot;</span>
-<span class="context"> @autoRoute</span>
-<span class="context"> @armResourceAction(Resource)</span>
-<span class="context"> @post</span>
-<span class="remove">-@extension(&quot;x-ms-long-running-operation&quot;, true)</span>
-<span class="remove">-@extension(</span>
-<span class="remove">-  &quot;x-ms-long-running-operation-options&quot;,</span>
-<span class="remove">-  #{ `final-state-via`: &quot;location&quot; }</span>
-<span class="remove">-)</span>
-<span class="add">+@Azure.Core.useFinalStateVia(&quot;location&quot;)</span>
-<span class="omitted"> ... 3 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div>
-<pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</span>
-<span class="meta">+++ b/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</span>
-<span class="meta">@@ -107,15 +95,10 @@ op ArmResourceActionNoContentAsyncWithLocationResult&lt;</span>
-<span class="omitted"> ... 1 earlier diff lines omitted ...</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;template&quot;</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;Custom LRO operation with specific response codes&quot;</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;Required for LRO extensions in OpenAPI output&quot;</span>
-<span class="context"> @autoRoute</span>
-<span class="context"> @armResourceAction(Resource)</span>
-<span class="context"> @post</span>
-<span class="remove">-@extension(&quot;x-ms-long-running-operation&quot;, true)</span>
-<span class="remove">-@extension(</span>
-<span class="remove">-  &quot;x-ms-long-running-operation-options&quot;,</span>
-<span class="remove">-  #{ `final-state-via`: &quot;location&quot; }</span>
-<span class="remove">-)</span>
-<span class="add">+@Azure.Core.useFinalStateVia(&quot;location&quot;)</span>
-<span class="omitted"> ... 3 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div>
-<pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
-<span class="meta">+++ b/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
-<span class="meta">@@ -48,8 +48,6 @@ interface ScenarioConfigurations {</span>
-<span class="context">   /**</span>
-<span class="context">    * Execute the scenario execution with the given scenario configuration.</span>
-<span class="context">    */</span>
-<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL&quot;</span>
-<span class="remove">-  @pollingOperation(ScenarioRuns.get)</span>
-<span class="context">   execute is ArmResourceActionNoContentAsyncWithLocationResult&lt;</span>
-<span class="context">     ScenarioConfiguration,</span>
-<span class="context">     void,</span></pre>
-</div>
-</details>
-
-</article></section>
+<section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No downstream breaking changes detected.</p></div></section>
 <section id="azure-compliance"><h2>Azure compliance <span class="compliance-status passed">passed</span></h2><div class="panel"><p class="empty-state good">Azure compliance passed with no mismatches.</p></div></section>
 <section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Describe Location-based LROs with TypeSpec metadata <span class="count">6 operations</span></span></summary>
+<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span>Use TypeSpec-native metadata for Location-based LROs <span class="count">6 operations</span></span></summary>
 <article class="change-card">
 <div class="change-content">
 <p class="intent-summary">The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p>
@@ -123,13 +43,13 @@
 <thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
 <tbody><tr>
 <td><span class="change-badge modified">✏️ Modified</span></td>
-<td>long-running operation metadata</td>
-<td>Location polling relied on raw OpenAPI extensions and explicit polling-operation relationships.</td>
-<td>The helpers use Azure.Core final-state metadata and remove the legacy raw extensions and polling links.</td>
-<td><div class="table-impacts"><a class="impact severity-high" href="#finding-source-lro-metadata-representation-changed">Generated SDK long-running operation behavior changes</a></div></td>
+<td>LRO metadata authoring</td>
+<td>Final-state-via Location is authored with raw OpenAPI extensions and selected operations also carry explicit polling-operation links.</td>
+<td>Final-state-via Location is authored with @Azure.Core.useFinalStateVia(&quot;location&quot;); obsolete polling-operation links are removed.</td>
+<td><div class="table-impacts"><span class="empty">—</span></div></td>
 </tr></tbody>
 </table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p>
+
 <p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L31">lro-helpers.tsp:L22-L31</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L60-L69">lro-helpers.tsp:L60-L69</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L95-L104">lro-helpers.tsp:L95-L104</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L53">scenarioConfiguration.tsp:L48-L53</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L57-L63">scenarioConfiguration.tsp:L57-L63</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L67-L72">scenarioConfiguration.tsp:L67-L72</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L76-L81">scenarioConfiguration.tsp:L76-L81</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L50">scenarioRun.tsp:L44-L50</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L71-L76">workspace.tsp:L71-L76</a></p>
 <div class="operation-changes">
 <h4>All affected operations <span class="count">6</span></h4>
@@ -137,7 +57,7 @@
 <summary><code>ScenarioConfigurations_Execute</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute</span><span class="operation-version tooltip" data-tooltip="2026-05-01-preview">2026-05-01-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">LRO:</span> Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions. Service behavior is unchanged: the operation still starts with 202: no body; Location and Retry-After headers, wait Retry-After, then poll the Location URL until the scenario run reaches a terminal state, and returns ScenarioRun from the Location endpoint.</p></div>
 <div class="diff">
 <div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div>
 <pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
@@ -158,7 +78,7 @@
 <summary><code>ScenarioConfigurations_Validate</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate</span><span class="operation-version tooltip" data-tooltip="2026-05-01-preview">2026-05-01-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">LRO:</span> Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions. Service behavior is unchanged: the operation still starts with 202: no body; Location and Retry-After headers, poll Location after Retry-After until terminal completion, and returns Validation result from the Location endpoint.</p></div>
 <div class="diff">
 <div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div>
 <pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
@@ -178,7 +98,7 @@
 <summary><code>ScenarioConfigurations_Cancel</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel</span><span class="operation-version tooltip" data-tooltip="2024-11-01-preview">2024-11-01-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">LRO:</span> Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions. Service behavior is unchanged: the operation still starts with 202: no body; Location and Retry-After headers, poll Location after Retry-After until Succeeded, Failed, or Canceled, and returns OperationStatusResult from the Location endpoint.</p></div>
 <div class="diff">
 <div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div>
 <pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
@@ -215,7 +135,7 @@
 <summary><code>ScenarioConfigurations_FixResourcePermissions</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/fixResourcePermissions">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/fixResourcePermissions</span><span class="operation-version tooltip" data-tooltip="2026-05-01-preview">2026-05-01-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/fixResourcePermissions</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">LRO:</span> Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions. Service behavior is unchanged: the operation still starts with 202: no body; Location and Retry-After headers, poll Location after Retry-After until terminal completion, and returns PermissionsFix result from the Location endpoint.</p></div>
 <div class="diff">
 <div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div>
 <pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
@@ -235,7 +155,7 @@
 <summary><code>ScenarioRuns_Cancel</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel</span><span class="operation-version tooltip" data-tooltip="2026-05-01-preview">2026-05-01-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">LRO:</span> Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions. Service behavior is unchanged: the operation still starts with 202: no body; Location and Retry-After headers, poll Location after Retry-After until Succeeded, Failed, or Canceled, and returns ScenarioRun from the Location endpoint.</p></div>
 <div class="diff">
 <div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div>
 <pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</span>
@@ -272,7 +192,7 @@
 <summary><code>Workspaces_RefreshRecommendations</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/refreshRecommendations">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/refreshRecommendations</span><span class="operation-version tooltip" data-tooltip="2026-05-01-preview">2026-05-01-preview</span></summary>
 <div class="operation-body">
 <div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/refreshRecommendations</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p></div>
+<div class="lro-service-behavior"><strong>Change outcomes</strong><p><span class="behavior-title">LRO:</span> Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions. Service behavior is unchanged: the operation still starts with 202: no body; Location and Retry-After headers, poll Location after Retry-After until terminal completion, and returns No response body after successful completion.</p></div>
 <div class="diff">
 <div class="diff-file">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</div>
 <pre><span class="meta">--- a/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</span>
@@ -301,7 +221,7 @@
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
 <h3>Artifact Evidence</h3>
-<dl><dt>autorest</dt><dd>Base/head OpenAPI wire contracts are identical for all six operations after excluding documentation text; both retain x-ms-long-running-operation and final-state-via location.</dd><dt>tcgc</dt><dd>Execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel change from kind: basic without lroMetadata to kind: lro with finalStateVia: location. Validate, fixResourcePermissions, and refreshRecommendations remain kind: lro.</dd><dt>canonicalComparison</dt><dd>Materially consistent overall: both reports identify one emitter-metadata intent, no REST break, one high-severity REST-compatible downstream break, passed compliance with no findings, high confidence, and a rest-compatible-downstream-breaking-change conclusion. The fresh report narrows the downstream scope: preserved TCGC proves only ScenarioConfigurations.execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel change from basic to lro; validate, fixResourcePermissions, and refreshRecommendations were already lro methods. The canonical semantic wording therefore overstates SDK LRO recognition as newly affecting all six operations.</dd></dl>
+<dl><dt>autorest</dt><dd>Base/head OpenAPI wire contracts are identical for all six operations after excluding documentation text; both retain x-ms-long-running-operation and final-state-via location.</dd><dt>tcgc</dt><dd>Base and head generic TCGC artifacts are identical for the six affected operations; their LRO classification and final-state metadata do not change.</dd><dt>canonicalComparison</dt><dd>The TypeSpec authoring representation changes, but the emitted REST and generated SDK LRO metadata remain unchanged. No REST or downstream breaking change is present.</dd></dl>
 <h3>Execution time breakdown</h3>
 <div class="panel timing-panel">
 <div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>11s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>5s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>1s</td><td>estimated</td></tr><tr><td>Compliance</td><td>11s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>28s</td><td>measured</td></tr></tbody></table></div>

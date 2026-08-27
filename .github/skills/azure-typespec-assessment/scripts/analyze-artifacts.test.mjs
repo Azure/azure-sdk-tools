@@ -203,7 +203,77 @@ test("TCGC JSON changes become classified downstream candidates", () => {
   );
   assert.equal(comparison.changes.length, 2);
   assert.equal(comparison.candidates[0].rule, "naming");
+  assert.match(comparison.candidates[0].id, /^tcgc-[0-9a-f]{12}$/);
   assert.equal(comparison.candidates[0].reviewRequired, true);
+});
+
+test("TCGC LRO candidates include only operations whose metadata changed", () => {
+  const unchangedLro = (name) => ({
+    name,
+    kind: "lro",
+    lroMetadata: { finalStateVia: "location" },
+  });
+  const newlyRecognizedLro = ["execute", "legacyCancel", "runCancel"];
+  const unchanged = [
+    "validate",
+    "fixResourcePermissions",
+    "refreshRecommendations",
+  ];
+  const comparison = compareJsonArtifacts(
+    {
+      "tcgc.json": {
+        methods: [
+          ...newlyRecognizedLro.map((name) => ({ name, kind: "basic" })),
+          ...unchanged.map(unchangedLro),
+        ],
+      },
+    },
+    {
+      "tcgc.json": {
+        methods: [
+          ...newlyRecognizedLro.map(unchangedLro),
+          ...unchanged.map(unchangedLro),
+        ],
+      },
+    },
+  );
+  assert.ok(
+    comparison.candidates.every(
+      (candidate) => candidate.rule === "lro-metadata",
+    ),
+  );
+  const evidence = JSON.stringify(comparison.candidates);
+  for (const name of newlyRecognizedLro) assert.match(evidence, RegExp(name));
+  for (const name of unchanged) assert.doesNotMatch(evidence, RegExp(name));
+});
+
+test("TCGC API-version propagation does not create downstream candidates", () => {
+  for (const [beforeVersions, afterVersions] of [
+    [["2025-01-01"], ["2026-01-01"]],
+    [[], ["2026-01-01"]],
+    [["2025-01-01"], []],
+  ]) {
+    const comparison = compareJsonArtifacts(
+      {
+        "tcgc.json": {
+          methods: [
+            { name: "get", kind: "basic", apiVersions: beforeVersions },
+          ],
+          crossLanguageVersion: "old-hash",
+        },
+      },
+      {
+        "tcgc.json": {
+          methods: [
+            { name: "get", kind: "basic", apiVersions: afterVersions },
+          ],
+          crossLanguageVersion: "new-hash",
+        },
+      },
+    );
+    assert.ok(comparison.changes.length > 0);
+    assert.deepEqual(comparison.candidates, []);
+  }
 });
 
 test("artifact directories compare matching relative TCGC files", () => {
@@ -223,6 +293,7 @@ test("artifact directories compare matching relative TCGC files", () => {
           clients: [
             {
               name: side === "base" ? "WidgetsClient" : "WidgetClient",
+              crossLanguageDefinitionId: "Test.WidgetsClient",
             },
           ],
         }),
@@ -238,8 +309,48 @@ test("artifact directories compare matching relative TCGC files", () => {
       root,
     );
     assert.equal(analysis.projects[0].rest.changes.length, 0);
-    assert.equal(analysis.projects[0].downstream.changes.length, 2);
+    assert.equal(analysis.projects[0].downstream.changes.length, 1);
     assert.equal(analysis.projects[0].downstream.candidates[0].rule, "naming");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("artifact directories compare YAML TCGC output", () => {
+  const root = mkdtempSync(join(tmpdir(), "assessment-analysis-yaml-"));
+  const projectRoot = join(root, "artifacts", "spec");
+  try {
+    for (const side of ["base", "head"]) {
+      mkdirSync(join(projectRoot, side, "autorest"), { recursive: true });
+      mkdirSync(join(projectRoot, side, "tcgc"), { recursive: true });
+      writeFileSync(
+        join(projectRoot, side, "tcgc", "tcgc-output.yaml"),
+        [
+          "clients:",
+          "  - &client",
+          `    name: ${side === "base" ? "WidgetsClient" : "WidgetClient"}`,
+          "    crossLanguageDefinitionId: Test.WidgetsClient",
+          "    self: *client",
+          "  - *client",
+          "",
+        ].join("\n"),
+      );
+    }
+    const analysis = analyzeArtifacts(
+      {
+        baseline: { commit: "base" },
+        head: { commit: "head" },
+        projects: [{ path: "spec" }],
+        sourceReferences: [],
+      },
+      root,
+    );
+    assert.equal(analysis.projects[0].downstream.changes.length, 2);
+    assert.ok(
+      analysis.projects[0].downstream.candidates.every(
+        (candidate) => candidate.rule === "naming",
+      ),
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

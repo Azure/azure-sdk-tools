@@ -332,22 +332,22 @@
   },
   "artifactEvidence": {
     "autorest": "Base/head OpenAPI wire contracts are identical for all six operations after excluding documentation text; both retain x-ms-long-running-operation and final-state-via location.",
-    "tcgc": "Execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel change from kind: basic without lroMetadata to kind: lro with finalStateVia: location. Validate, fixResourcePermissions, and refreshRecommendations remain kind: lro.",
-    "canonicalComparison": "Materially consistent overall: both reports identify one emitter-metadata intent, no REST break, one high-severity REST-compatible downstream break, passed compliance with no findings, high confidence, and a rest-compatible-downstream-breaking-change conclusion. The fresh report narrows the downstream scope: preserved TCGC proves only ScenarioConfigurations.execute, legacy ScenarioConfigurations.cancel, and ScenarioRuns.cancel change from basic to lro; validate, fixResourcePermissions, and refreshRecommendations were already lro methods. The canonical semantic wording therefore overstates SDK LRO recognition as newly affecting all six operations."
+    "tcgc": "Base and head generic TCGC artifacts are identical for the six affected operations; their LRO classification and final-state metadata do not change.",
+    "canonicalComparison": "The TypeSpec authoring representation changes, but the emitted REST and generated SDK LRO metadata remain unchanged. No REST or downstream breaking change is present."
   },
   "dimensions": {
     "semanticUnderstanding": {
       "items": [
         {
           "id": "describe-location-lros-with-typespec-metadata",
-          "intent": "Describe Location-based LROs with TypeSpec metadata",
+          "intent": "Use TypeSpec-native metadata for Location-based LROs",
           "transformationChain": [
-            "The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(\"location\"), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results."
+            "Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(\"location\"), and obsolete polling-operation links and suppressions are removed."
           ],
           "changes": [
             {
               "kind": "modified",
-              "summary": "Describe Location-based LROs with TypeSpec metadata",
+              "summary": "Use TypeSpec-native metadata for Location-based LROs",
               "operationIds": [
                 "ScenarioConfigurations_Execute",
                 "ScenarioConfigurations_Validate",
@@ -362,13 +362,13 @@
               ],
               "aspects": [
                 {
-                  "field": "long-running operation metadata",
-                  "before": "Location polling relied on raw OpenAPI extensions and explicit polling-operation relationships.",
-                  "after": "The helpers use Azure.Core final-state metadata and remove the legacy raw extensions and polling links."
+                  "field": "LRO metadata authoring",
+                  "before": "Final-state-via Location is authored with raw OpenAPI extensions and selected operations also carry explicit polling-operation links.",
+                  "after": "Final-state-via Location is authored with @Azure.Core.useFinalStateVia(\"location\"); obsolete polling-operation links are removed."
                 }
               ],
-              "effect": "The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(\"location\"), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.",
-              "typeSpecCause": "The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(\"location\"), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.",
+              "effect": "Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(\"location\"), and obsolete polling-operation links and suppressions are removed.",
+              "typeSpecCause": "Replace OpenAPI-only LRO extensions with TypeSpec LRO decorators and remove obsolete polling-operation links and suppressions.",
               "sourceReferences": [
                 {
                   "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
@@ -622,9 +622,7 @@
                   ]
                 }
               ],
-              "linkedFindingIds": [
-                "source-lro-metadata-representation-changed"
-              ]
+              "linkedFindingIds": []
             }
           ],
           "restRepresentation": {
@@ -1269,86 +1267,7 @@
       "findings": []
     },
     "restCompatibleDownstreamBreakingChanges": {
-      "findings": [
-        {
-          "id": "source-lro-metadata-representation-changed",
-          "title": "Generated SDK long-running operation behavior changes",
-          "severity": "high",
-          "confidence": "high",
-          "summary": "SDK generators receive different LRO and polling metadata, which can change poller recognition, method return shape, and final-result retrieval without a REST wire change.",
-          "evidence": [
-            "Replacing raw OpenAPI or polling metadata with TypeSpec LRO metadata can change whether generated SDK methods are recognized as long-running.",
-            "Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp.",
-            "Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp.",
-            "Changed TypeSpec source: specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp."
-          ],
-          "sourceReferences": [
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
-              "revision": "head",
-              "startLine": 22,
-              "endLine": 31,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L31"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
-              "revision": "head",
-              "startLine": 60,
-              "endLine": 69,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L60-L69"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
-              "revision": "head",
-              "startLine": 95,
-              "endLine": 104,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L95-L104"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
-              "revision": "head",
-              "startLine": 48,
-              "endLine": 53,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L53"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
-              "revision": "head",
-              "startLine": 57,
-              "endLine": 63,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L57-L63"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
-              "revision": "head",
-              "startLine": 67,
-              "endLine": 72,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L67-L72"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
-              "revision": "head",
-              "startLine": 76,
-              "endLine": 81,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L76-L81"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
-              "revision": "head",
-              "startLine": 44,
-              "endLine": 50,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L50"
-            },
-            {
-              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
-              "revision": "head",
-              "startLine": 71,
-              "endLine": 76,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L71-L76"
-            }
-          ]
-        }
-      ]
+      "findings": []
     },
     "azureCompliance": {
       "status": "passed",

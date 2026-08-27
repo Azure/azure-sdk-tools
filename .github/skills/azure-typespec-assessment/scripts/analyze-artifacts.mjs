@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse as parseYaml } from "yaml";
 
 import { buildSourceIndex } from "./source-index.mjs";
 
@@ -520,6 +522,181 @@ function listJsonFiles(root) {
   });
 }
 
+function listStructuredFiles(root) {
+  if (!existsSync(root)) return [];
+  return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) return listStructuredFiles(path);
+    return [".json", ".yaml", ".yml"].includes(
+      extname(entry.name).toLowerCase(),
+    ) || entry.name.toLowerCase() === "json"
+      ? [path]
+      : [];
+  });
+}
+
+function parseStructuredFile(path) {
+  const content = readFileSync(path, "utf8");
+  return [".yaml", ".yml"].includes(extname(path).toLowerCase())
+    ? parseYaml(content, { maxAliasCount: -1 })
+    : JSON.parse(content);
+}
+
+function tcgcVersions(values) {
+  return (values ?? []).map((value) =>
+    typeof value === "object" ? (value.value ?? value.name ?? value.kind) : value,
+  );
+}
+
+function tcgcTypeReference(value) {
+  if (value === undefined || value === null || typeof value !== "object") {
+    return value;
+  }
+  return stable({
+    kind: value.kind,
+    name: value.name,
+    namespace: value.namespace,
+    crossLanguageDefinitionId: value.crossLanguageDefinitionId,
+    value:
+      typeof value.value === "object"
+        ? (value.value.value ?? value.value.name ?? value.value.kind)
+        : value.value,
+    encode: value.encode,
+    format: value.format,
+    nullable: value.nullable,
+    elementType: tcgcTypeReference(value.elementType),
+    valueType: tcgcTypeReference(value.valueType),
+    keyType: tcgcTypeReference(value.keyType),
+  });
+}
+
+function projectTcgcParameter(parameter) {
+  return stable({
+    kind: parameter.kind,
+    name: parameter.name,
+    serializedName: parameter.serializedName,
+    crossLanguageDefinitionId: parameter.crossLanguageDefinitionId,
+    type: tcgcTypeReference(parameter.type),
+    optional: parameter.optional,
+    onClient: parameter.onClient,
+    isApiVersionParam: parameter.isApiVersionParam,
+    flatten: parameter.flatten,
+    access: parameter.access,
+    visibility: parameter.visibility,
+    apiVersions: tcgcVersions(parameter.apiVersions),
+  });
+}
+
+function projectTcgcLro(metadata) {
+  if (!metadata) return undefined;
+  return stable({
+    finalStateVia: metadata.finalStateVia,
+    finalStepKind: metadata.finalStep?.kind,
+    pollingStepKind: metadata.pollingStep?.kind,
+    statusMonitorStepKind: metadata.statusMonitorStep?.kind,
+    pollingInfoKind: metadata.pollingInfo?.kind,
+    pollingResponse: tcgcTypeReference(metadata.pollingInfo?.responseModel),
+    logicalResult: tcgcTypeReference(metadata.logicalResult),
+    envelopeResult: tcgcTypeReference(metadata.envelopeResult),
+    finalEnvelopeResult: tcgcTypeReference(metadata.finalEnvelopeResult),
+  });
+}
+
+function projectTcgcMethod(method) {
+  return stable({
+    kind: method.kind,
+    name: method.name,
+    crossLanguageDefinitionId: method.crossLanguageDefinitionId,
+    access: method.access,
+    parameters: (method.parameters ?? []).map(projectTcgcParameter),
+    response: method.response
+      ? {
+          kind: method.response.kind,
+          optional: method.response.optional,
+          type: tcgcTypeReference(method.response.type),
+        }
+      : undefined,
+    apiVersions: tcgcVersions(method.apiVersions),
+    generateConvenient: method.generateConvenient,
+    generateProtocol: method.generateProtocol,
+    isOverride: method.isOverride,
+    lroMetadata: projectTcgcLro(method.lroMetadata),
+  });
+}
+
+function projectTcgcClient(client) {
+  return stable({
+    kind: client.kind,
+    name: client.name,
+    namespace: client.namespace,
+    crossLanguageDefinitionId: client.crossLanguageDefinitionId,
+    apiVersions: tcgcVersions(client.apiVersions),
+    clientInitialization: (client.clientInitialization?.parameters ?? []).map(
+      projectTcgcParameter,
+    ),
+    methods: (client.methods ?? []).map(projectTcgcMethod),
+    children: (client.children ?? []).map(projectTcgcClient),
+  });
+}
+
+function projectTcgcModel(model) {
+  return stable({
+    kind: model.kind,
+    name: model.name,
+    namespace: model.namespace,
+    crossLanguageDefinitionId: model.crossLanguageDefinitionId,
+    access: model.access,
+    usage: model.usage,
+    apiVersions: tcgcVersions(model.apiVersions),
+    baseModel: tcgcTypeReference(model.baseModel),
+    additionalProperties: tcgcTypeReference(model.additionalProperties),
+    properties: (model.properties ?? []).map(projectTcgcParameter),
+  });
+}
+
+function projectTcgcEnum(enumeration) {
+  return stable({
+    kind: enumeration.kind,
+    name: enumeration.name,
+    namespace: enumeration.namespace,
+    crossLanguageDefinitionId: enumeration.crossLanguageDefinitionId,
+    access: enumeration.access,
+    usage: enumeration.usage,
+    isFixed: enumeration.isFixed,
+    isFlags: enumeration.isFlags,
+    apiVersions: tcgcVersions(enumeration.apiVersions),
+    valueType: tcgcTypeReference(enumeration.valueType),
+    values: (enumeration.values ?? []).map((value) =>
+      stable({
+        name: value.name,
+        value: value.value,
+        apiVersions: tcgcVersions(value.apiVersions),
+      }),
+    ),
+  });
+}
+
+function projectTcgcDocument(document) {
+  return stable({
+    crossLanguagePackageId: document.crossLanguagePackageId,
+    crossLanguageVersion: document.crossLanguageVersion,
+    clients: (document.clients ?? []).map(projectTcgcClient),
+    models: (document.models ?? []).map(projectTcgcModel),
+    enums: (document.enums ?? []).map(projectTcgcEnum),
+    unions: (document.unions ?? []).map((union) =>
+      stable({
+        kind: union.kind,
+        name: union.name,
+        namespace: union.namespace,
+        crossLanguageDefinitionId: union.crossLanguageDefinitionId,
+        access: union.access,
+        usage: union.usage,
+        type: tcgcTypeReference(union.type),
+      }),
+    ),
+  });
+}
+
 function operationsFromDirectory(root, artifactRoot) {
   const operations = listJsonFiles(root).flatMap((path) => {
     const document = JSON.parse(readFileSync(path, "utf8"));
@@ -550,35 +727,53 @@ const DOWNSTREAM_PATH_RULES = [
   ["parameter-surface", /parameter/i],
   ["flattening", /flatten/i],
   ["access-or-usage", /(?:access|usage|visibility|reachable)/i],
+  ["lro-metadata", /(?:long.?running|\blro\b|polling|final.?state)/i],
   ["client-location", /(?:client|operation.?group|location)/i],
   ["type-shape", /(?:type|base|extends|discriminator|hierarchy)/i],
 ];
 
-function flattenJson(value, path = "$", entries = new Map()) {
+function flattenJson(
+  value,
+  path = "$",
+  entries = new Map(),
+  seen = new WeakMap(),
+) {
   if (Array.isArray(value)) {
+    if (seen.has(value)) {
+      entries.set(path, `$ref:${seen.get(value)}`);
+      return entries;
+    }
+    seen.set(value, path);
     if (value.length === 0) entries.set(path, []);
-    const identities = value.map((child) => {
-      if (!child || typeof child !== "object") return undefined;
-      for (const key of [
-        "crossLanguageDefinitionId",
-        "operationId",
-        "name",
-        "serializedName",
-      ]) {
-        if (typeof child[key] === "string" && child[key]) {
-          return `${key}=${child[key]}`;
-        }
+    let identities;
+    for (const key of [
+      "crossLanguageDefinitionId",
+      "operationId",
+      "name",
+      "serializedName",
+    ]) {
+      const candidates = value.map((child) =>
+        child &&
+        typeof child === "object" &&
+        typeof child[key] === "string" &&
+        child[key]
+          ? `${key}=${child[key]}`
+          : undefined,
+      );
+      if (
+        candidates.every(Boolean) &&
+        new Set(candidates).size === candidates.length
+      ) {
+        identities = candidates;
+        break;
       }
-      return undefined;
-    });
-    const useIdentities =
-      identities.every(Boolean) &&
-      new Set(identities).size === identities.length;
+    }
     value.forEach((child, index) =>
       flattenJson(
         child,
-        `${path}[${useIdentities ? identities[index] : index}]`,
+        `${path}[${identities ? identities[index] : index}]`,
         entries,
+        seen,
       ),
     );
     return entries;
@@ -587,31 +782,38 @@ function flattenJson(value, path = "$", entries = new Map()) {
     entries.set(path, value);
     return entries;
   }
-  const children = Object.entries(value).filter(
-    ([key]) =>
-      !/^(?:description|doc|summary|crossLanguageDefinitionId)$/i.test(key),
-  );
+  if (seen.has(value)) {
+    entries.set(path, `$ref:${seen.get(value)}`);
+    return entries;
+  }
+  seen.set(value, path);
+  const children = Object.entries(value)
+    .filter(
+      ([key]) =>
+        !/^(?:description|doc|summary|crossLanguageDefinitionId)$/i.test(key),
+    )
+    .sort(([left], [right]) => left.localeCompare(right));
   if (children.length === 0) entries.set(path, {});
   for (const [key, child] of children) {
-    flattenJson(child, `${path}.${key}`, entries);
+    flattenJson(child, `${path}.${key}`, entries, seen);
   }
   return entries;
 }
 
-function jsonDocuments(root, artifactRoot) {
+function structuredDocuments(root, artifactRoot) {
   return Object.fromEntries(
-    listJsonFiles(root)
+    listStructuredFiles(root)
       .sort()
       .map((path) => [
         relative(artifactRoot, path).replaceAll("\\", "/"),
-        JSON.parse(readFileSync(path, "utf8")),
+        projectTcgcDocument(parseStructuredFile(path)),
       ]),
   );
 }
 
 export function compareJsonArtifacts(baselineDocuments, headDocuments) {
-  const baseline = flattenJson(stable(baselineDocuments));
-  const head = flattenJson(stable(headDocuments));
+  const baseline = flattenJson(baselineDocuments);
+  const head = flattenJson(headDocuments);
   const paths = uniqueSorted([...baseline.keys(), ...head.keys()]);
   const changes = paths
     .filter(
@@ -627,43 +829,65 @@ export function compareJsonArtifacts(baselineDocuments, headDocuments) {
       before: baseline.get(path),
       after: head.get(path),
     }));
-  const candidates = changes.map((change) => {
+  const classifiedChanges = changes.map((change) => {
     const rule =
-      DOWNSTREAM_PATH_RULES.find(([, pattern]) =>
-        pattern.test(change.path),
+      DOWNSTREAM_PATH_RULES.find(
+        ([name, pattern]) =>
+          pattern.test(change.path) ||
+          (name === "lro-metadata" &&
+            pattern.test(
+              `${stableJson(change.before)} ${stableJson(change.after)}`,
+            )),
       )?.[0] ?? "unclassified-client-surface";
-    return {
-      rule,
-      summary: `TCGC ${change.kind} ${change.path}.`,
-      evidence: change,
-      reviewRequired: true,
-    };
+    const declaration =
+      change.path.match(
+        /^(.*\.(?:children|clients|clientInitialization|methods|parameters|models|properties|enums|values|unions)\[[^\]]+\])/,
+      )?.[1] ?? change.path;
+    return { rule, declaration, change };
   });
-  const namingChanges = candidates.filter(
-    (candidate) => candidate.rule === "naming",
-  );
-  const compactCandidates =
-    namingChanges.length === 2 &&
-    namingChanges.some((candidate) => candidate.evidence.kind === "removed") &&
-    namingChanges.some((candidate) => candidate.evidence.kind === "added")
-      ? [
-          ...candidates.filter((candidate) => candidate.rule !== "naming"),
-          {
-            rule: "naming",
-            summary: "TCGC public surface contains a possible rename.",
-            evidence: {
-              before: namingChanges.find(
-                (candidate) => candidate.evidence.kind === "removed",
-              ).evidence,
-              after: namingChanges.find(
-                (candidate) => candidate.evidence.kind === "added",
-              ).evidence,
-            },
-            reviewRequired: true,
-          },
-        ]
-      : candidates;
-  return { changes, candidates: compactCandidates };
+  const candidateGroups = new Map();
+  for (const item of classifiedChanges) {
+    const group = candidateGroups.get(item.declaration) ?? {
+      declaration: item.declaration,
+      changes: [],
+      rules: new Set(),
+    };
+    group.changes.push(item.change);
+    group.rules.add(item.rule);
+    candidateGroups.set(item.declaration, group);
+  }
+  const rulePriority = [
+    "lro-metadata",
+    "naming",
+    "parameter-surface",
+    "flattening",
+    "access-or-usage",
+    "client-location",
+    "type-shape",
+    "unclassified-client-surface",
+  ];
+  const candidates = [...candidateGroups.values()]
+    .filter((group) =>
+      group.changes.some(
+        (change) =>
+          !change.path.endsWith(".crossLanguageVersion") &&
+          !/\.apiVersions(?:\[|$)/.test(change.path) &&
+          ["modified", "removed"].includes(change.kind),
+      ),
+    )
+    .map((group) => ({
+      id: `tcgc-${createHash("sha256")
+        .update(group.declaration)
+        .digest("hex")
+        .slice(0, 12)}`,
+      rule:
+        rulePriority.find((rule) => group.rules.has(rule)) ??
+        "unclassified-client-surface",
+      summary: `TCGC changed ${group.declaration}.`,
+      evidence: group.changes,
+      reviewRequired: true,
+    }));
+  return { changes, candidates };
 }
 
 function projectSourceReferences(evidence, projectPath) {
@@ -694,8 +918,8 @@ export function analyzeArtifacts(evidence, evidenceDirectory) {
     const baselineTcgcRoot = join(artifactRoot, "base", "tcgc");
     const headTcgcRoot = join(artifactRoot, "head", "tcgc");
     const downstream = compareJsonArtifacts(
-      jsonDocuments(baselineTcgcRoot, baselineTcgcRoot),
-      jsonDocuments(headTcgcRoot, headTcgcRoot),
+      structuredDocuments(baselineTcgcRoot, baselineTcgcRoot),
+      structuredDocuments(headTcgcRoot, headTcgcRoot),
     );
     return {
       path: project.path,
@@ -742,10 +966,7 @@ function main() {
   const evidencePath = resolve(evidencePathValue);
   const evidence = JSON.parse(readFileSync(evidencePath, "utf8"));
   const analysis = analyzeArtifacts(evidence, dirname(evidencePath));
-  writeFileSync(
-    resolve(analysisPathValue),
-    `${JSON.stringify(analysis, null, 2)}\n`,
-  );
+  writeFileSync(resolve(analysisPathValue), `${JSON.stringify(analysis)}\n`);
 }
 
 const isMain =

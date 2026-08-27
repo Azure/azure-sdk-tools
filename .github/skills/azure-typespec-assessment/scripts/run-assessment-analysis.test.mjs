@@ -962,6 +962,52 @@ test("assessment drafts identify ARM actions changed from async to sync", () => 
   );
 });
 
+test("PR 43308-style LRO cleanup does not synthesize downstream impact", () => {
+  const sourcePath = "spec/lro-helpers.tsp";
+  const draft = buildAssessmentDraft({
+    evidence: {
+      baseline: { commit: "base" },
+      head: { commit: "head", hasWorkingTreeChanges: false, changeScope: [] },
+      changedFiles: [sourcePath],
+      typeSpecDiffs: [
+        {
+          path: sourcePath,
+          oldStart: 1,
+          newStart: 1,
+          lines: [
+            '-@extension("x-ms-long-running-operation", true)',
+            '-@extension("x-ms-long-running-operation-options", #{ `final-state-via`: "location" })',
+            "-@pollingOperation(ScenarioRuns.get)",
+            '+@Azure.Core.useFinalStateVia("location")',
+          ],
+        },
+      ],
+      errors: [],
+      durationMs: 1,
+      phaseDurations: {},
+    },
+    analysis: {
+      durationMs: 1,
+      sourceIndex: [],
+      projects: [
+        {
+          path: "spec",
+          rest: {
+            baseline: [],
+            head: [],
+            changes: [],
+            restBreakingCandidates: [],
+          },
+          downstream: { candidates: [], changes: [] },
+        },
+      ],
+    },
+    complianceEvidence: { durationMs: 1, documents: [] },
+    totalMs: 2,
+  });
+  assert.equal(draft.projects[0].downstream.candidates.length, 0);
+});
+
 test("assessment drafts collapse repeated decorators and bound source lines", () => {
   const draft = buildAssessmentDraft({
     evidence: {

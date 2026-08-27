@@ -173,6 +173,11 @@ Downstream findings describe public generated-client behavior—such as a method
 moving clients, becoming pageable, or changing from a fixed enum to an
 extensible string-backed shape—without exposing TCGC or its internal metadata
 field names in user-visible titles, summaries, or evidence.
+Determine LRO downstream impact from the baseline/head TCGC metadata. A source
+change between raw OpenAPI decorators and TypeSpec-native LRO decorators is not
+itself a downstream change. When TCGC LRO metadata is unchanged, describe the
+edit as an authoring representation change and state that generated LRO
+behavior is unchanged; do not create or link a downstream finding.
 Breaking findings require `id`, `title`, `severity`, `confidence`, `summary`,
 `evidence`, and `sourceReferences`.
 

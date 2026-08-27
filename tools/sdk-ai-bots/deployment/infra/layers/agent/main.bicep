@@ -117,12 +117,12 @@ var modelDeploymentConfigs = [
     }
   }
   {
-    name: 'gpt-5.4'
+    name: 'gpt-5.6-sol'
     properties: {
       model: {
         format: 'OpenAI'
-        name: 'gpt-5.4'
-        version: '2026-03-05'
+        name: 'gpt-5.6-sol'
+        version: '2026-07-09'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
       // 500 capacity units ≈ 500,000 TPM (GlobalStandard: 1 unit ≈ 1,000 TPM).
@@ -132,9 +132,8 @@ var modelDeploymentConfigs = [
     }
     sku: {
       name: 'GlobalStandard'
-      // 500 units ≈ 500,000 TPM. Bounded by the regional GlobalStandard gpt-5.4
-      // quota (eastus2 limit 3,000 units); raise the quota via portal/support to
-      // exceed that.
+      // 500 units ≈ 500,000 TPM. This consumes the currently available half of
+      // the subscription's 1,000-unit GlobalStandard gpt-5.6-sol quota.
       capacity: 500
     }
   }
@@ -174,12 +173,12 @@ var modelDeploymentConfigs = [
     }
   }
   {
-    name: 'text-embedding-ada-002'
+    name: 'text-embedding-3-small'
     properties: {
       model: {
         format: 'OpenAI'
-        name: 'text-embedding-ada-002'
-        version: '2'
+        name: 'text-embedding-3-small'
+        version: '1'
       }
       versionUpgradeOption: 'NoAutoUpgrade'
       currentCapacity: 1

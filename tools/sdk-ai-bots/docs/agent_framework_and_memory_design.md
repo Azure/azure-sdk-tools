@@ -144,7 +144,7 @@ All knowledge is converted to markdown format for consistency.
 
 **Chunking** — Content is split into blocks for two reasons:
 
-1. **Token limit** — Embedding models have token limits (e.g., OpenAI `text-embedding-ada-002` has an 8191 token input limit).
+1. **Token limit** — Embedding models have token limits (e.g., OpenAI `text-embedding-3-small` has an 8191 token input limit).
 2. **Semantic clarity** — Long content with many topics produces vectors that cannot represent the content meaning clearly, affecting retrieval performance.
 
 An Azure AI Search Indexer automatically splits markdown files into chunks using **Markdown** parsing mode with **H3** header depth.

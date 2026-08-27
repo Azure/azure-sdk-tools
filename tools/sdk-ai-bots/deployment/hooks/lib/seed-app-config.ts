@@ -113,7 +113,7 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     ADO_RESOURCE_SCOPE: `${ADO_RESOURCE_APP_ID}/.default`,
 
     // ── AI Foundry agent ─────────────────────────────────────────────────
-    AI_FOUNDRY_AGENT_COMPLETION_MODEL: "gpt-5.4",
+    AI_FOUNDRY_AGENT_COMPLETION_MODEL: "gpt-5.6-sol",
     AI_FOUNDRY_AGENT_REASONING_EFFORT: "medium",
 
     // ── Azure OpenAI chat (model selection + tuning) ─────────────────────
@@ -144,7 +144,7 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
 
     // ── Tenant / user memory ─────────────────────────────────────────────
     ENABLE_TENANT_MEMORY_SEARCH: "true",
-    MEMORY_STORE_EMBEDDING_MODEL: "text-embedding-ada-002",
+    MEMORY_STORE_EMBEDDING_MODEL: "text-embedding-3-small",
     MEMORY_USER_STORE_NAME: "azure-sdk-qa-bot-user-memory-store",
 
     // ── GitHub App (external; not created by azd — override per env if the

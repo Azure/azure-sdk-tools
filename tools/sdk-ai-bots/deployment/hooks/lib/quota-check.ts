@@ -65,10 +65,10 @@ const CS_ACCOUNT_SKU = "S0";
 const CS_MODEL_SKU = "GlobalStandard";
 const OPENAI_MODELS = [
   "gpt-4.1",
-  "gpt-5.4",
+  "gpt-5.6-sol",
   "gpt-5.1",
   "gpt-5-mini",
-  "text-embedding-ada-002",
+  "text-embedding-3-small",
 ];
 
 const STORAGE_QUOTAS = new Set(["StorageAccounts"]);

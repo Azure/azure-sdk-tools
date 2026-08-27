@@ -79,21 +79,19 @@ The following live quota was observed in `eastus2`:
 | Model | Used | Limit | Remaining | Requested | Status |
 |---|---:|---:|---:|---:|---|
 | `gpt-4.1` | 1,198 | 3,000 | 1,802 | 1 | Ready |
-| `gpt-5.4` | 6,250 | 6,250 | 0 | 500 | Blocked |
+| `gpt-5.6-sol` | 500 | 1,000 | 500 | 500 | Ready |
 | `gpt-5.1` | 2,130 | 3,000 | 870 | 1 | Ready |
 | `gpt-5-mini` | 1,110 | 3,000 | 1,890 | 1 | Ready |
-| `text-embedding-ada-002` | 5,150 | 5,150 | 0 | 1 | Blocked |
+| `text-embedding-3-small` | 120 | 3,000 | 2,880 | 1 | Ready |
 
-- [ ] Obtain at least 500 additional `gpt-5.4` GlobalStandard units.
-- [ ] Obtain at least one additional `text-embedding-ada-002` GlobalStandard
-      unit.
-- [ ] Alternatively, release existing capacity or approve and validate a model
-      or SKU change in Bicep and application configuration.
+- [x] Replace the exhausted `gpt-5.4` deployment with `gpt-5.6-sol`.
+- [x] Replace the exhausted `text-embedding-ada-002` deployment with the
+      supported `text-embedding-3-small` successor.
 - [ ] Re-run the live quota check immediately before provisioning.
 
-These GlobalStandard quota values were identical in every Azure region that
-reported them, so changing only the deployment region does not resolve the
-current exhaustion.
+GlobalStandard quota is shared across regions. The remaining `gpt-5.6-sol`
+capacity exactly matches this deployment's request, so any intervening quota
+consumption will block provisioning.
 
 ## Entra applications
 

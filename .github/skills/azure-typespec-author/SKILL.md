@@ -26,7 +26,6 @@ This includes but is not limited to:
 | Tool                                                   | Purpose                                                   |
 | ------------------------------------------------------ | --------------------------------------------------------- |
 | `azure-sdk-mcp:azsdk_typespec_retrieve_knowledge` | Retrieve knowledge for authoring plan (General Authoring only) |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate a grounded authoring plan for requests **not** covered by the eight cases in [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search (`web_fetch`) instead. |
 | `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.

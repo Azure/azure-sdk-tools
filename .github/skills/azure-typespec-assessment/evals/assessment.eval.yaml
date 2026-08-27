@@ -1,7 +1,6 @@
 name: azure-typespec-assessment-eval
 description: Routing and report-generation coverage for azure-typespec-assessment.
 type: capability
-environment: azsdk-mcp-mock
 
 tags:
   area: azure-typespec-assessment
@@ -37,6 +36,55 @@ stimuli:
       - type: skill-invocation
         config:
           required: ["azure-typespec-assessment"]
+
+  - name: anti-trigger-add-typespec-api-version
+    tags:
+      boundary: authoring
+    prompt: "Add stable API version 2027-01-01 to the local Microsoft.Widget TypeSpec service."
+    environment: &authoring_competition
+      skills:
+        - ..
+        - fixtures/routing/azure-typespec-author
+      files:
+        - src: ../../azure-typespec-author/SKILL.md
+          dest: production-author-SKILL.md
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-author"]
+          disallowed: ["azure-typespec-assessment"]
+      - type: run-command
+        config:
+          command: >-
+            node -e "const fs=require('fs');const d=p=>fs.readFileSync(p,'utf8').match(/^description: (.+)$/m)?.[1];if(d('production-author-SKILL.md')!==d('azure-typespec-author/SKILL.md'))process.exit(1)"
+          expected_exit_code: 0
+    constraints: &authoring_routing_constraints
+      max_turns: 3
+      max_tokens: 100000
+
+  - name: anti-trigger-fix-typespec-breaking-change
+    tags:
+      boundary: authoring
+    prompt: "Fix the breaking change in my current Microsoft.Widget TypeSpec diff by applying the correct versioning decorators."
+    environment: *authoring_competition
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-author"]
+          disallowed: ["azure-typespec-assessment"]
+    constraints: *authoring_routing_constraints
+
+  - name: anti-trigger-mitigate-typespec-sdk-impact
+    tags:
+      boundary: authoring
+    prompt: "Mitigate the SDK impact of changing Widget.mode from string to an enum by editing the local .tsp files."
+    environment: *authoring_competition
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-author"]
+          disallowed: ["azure-typespec-assessment"]
+    constraints: *authoring_routing_constraints
 
   - name: anti-trigger-analyze-sdk-pipeline
     prompt: "Analyze the failed Azure SDK CI pipeline run 123456 and summarize the root cause."

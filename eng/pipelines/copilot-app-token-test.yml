@@ -1,0 +1,68 @@
+# Throwaway diagnostic pipeline for Phase 1 of the Copilot-org-billing investigation.
+# Mints a properly-scoped GitHub App installation token (repository_ids + copilot_requests:
+# write) using the same Key Vault-signing identity as eng/common/scripts/login-to-github.ps1,
+# then confirms the Copilot permission actually landed and that a real Copilot CLI call
+# succeeds with it. Delete this file once the investigation is done.
+
+trigger: none
+
+pr: none
+
+jobs:
+  - job: TestCopilotAppToken
+    pool:
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
+    steps:
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+
+      - task: AzureCLI@2
+        displayName: Mint scoped installation token and check permissions
+        inputs:
+          azureSubscription: 'AzureSDKEngKeyVault Secrets'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Load the script's functions without triggering its normal auto-run at the bottom.
+            $env:PESTER_TEST_RUN = 'true'
+            . $(Build.SourcesDirectory)/eng/common/scripts/login-to-github.ps1
+            Remove-Item Env:\PESTER_TEST_RUN
+
+            $jwt = New-GitHubAppJwt -VaultName "azuresdkengkeyvault" -KeyName "azure-sdk-automation" -AppId "1086291"
+            $installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase "https://api.github.com" -ApiVersion "2022-11-28" -InstallationTokenOwner "Azure"
+            Write-Host "Installation ID: $installationId"
+
+            $ghHeaders = @{ Authorization = "Bearer $jwt"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
+            $repo = Invoke-RestMethod -Uri "https://api.github.com/repos/Azure/azure-sdk-tools" -Headers $ghHeaders
+            $repoId = $repo.id
+            Write-Host "Repo ID: $repoId"
+
+            $body = @{ repository_ids = @($repoId); permissions = @{ copilot_requests = "write" } } | ConvertTo-Json
+            $resp = Invoke-RestMethod -Method Post -Headers $ghHeaders -Uri "https://api.github.com/app/installations/$installationId/access_tokens" -Body $body -ContentType "application/json"
+
+            # Mask immediately - never Write-Host the raw token.
+            Write-Host "##vso[task.setvariable variable=ScopedToken;issecret=true]$($resp.token)"
+
+            $grantedPermissions = ($resp.permissions.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join ", "
+            Write-Host "Granted permissions on minted token: $grantedPermissions"
+
+            if ($resp.permissions.copilot_requests -eq "write") {
+              Write-Host "##[section]PASS: copilot_requests=write is present on the minted token."
+            } else {
+              Write-Host "##vso[task.logissue type=error]FAIL: copilot_requests permission is missing. App permission grant or org Copilot licensing is not active yet."
+              exit 1
+            }
+
+      - task: AzureCLI@2
+        displayName: Test a real Copilot CLI call with the scoped token
+        inputs:
+          azureSubscription: 'AzureSDKEngKeyVault Secrets'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            npm install -g @github/copilot
+            $env:COPILOT_GITHUB_TOKEN = "$(ScopedToken)"
+            copilot --version
+            copilot --yolo -p "Reply with the single word: success" 2>&1 | Tee-Object -Variable copilotOutput
+            Write-Host "---"
+            Write-Host ($copilotOutput -join "`n")

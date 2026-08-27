@@ -12,7 +12,7 @@ $issues_repo = "Azure/azure-sdk-pr"
 # Should there be more than --limit issues at once (unlikely),
 # given that we close them after processing,
 # the next batch will be picked up during the next run.
-$issues = `
+$issues = @(`
     gh issue list `
       --repo "$issues_repo" `
       --label "product-onboarding" `
@@ -20,7 +20,8 @@ $issues = `
       --limit 300 `
       --json number `
   | ConvertFrom-Json `
-  | Select-Object -ExpandProperty number
+  | Select-Object -ExpandProperty number `
+  )
 
 $issues_count = 0
 if ($null -ne $issues) {

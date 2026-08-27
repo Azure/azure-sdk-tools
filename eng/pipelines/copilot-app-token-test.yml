@@ -32,11 +32,14 @@ jobs:
             $installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase "https://api.github.com" -ApiVersion "2022-11-28" -InstallationTokenOwner "Azure"
             Write-Host "Installation ID: $installationId"
 
-            $ghHeaders = @{ Authorization = "Bearer $jwt"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
-            $repo = Invoke-RestMethod -Uri "https://api.github.com/repos/Azure/azure-sdk-tools" -Headers $ghHeaders
+            # The JWT is only valid for App-level endpoints (/app, /app/installations/*) - it
+            # is rejected with "Bad credentials" on generic /repos/ lookups. azure-sdk-tools is
+            # public, so this one lookup needs no auth at all.
+            $repo = Invoke-RestMethod -Uri "https://api.github.com/repos/Azure/azure-sdk-tools" -Headers @{ Accept = "application/vnd.github+json" }
             $repoId = $repo.id
             Write-Host "Repo ID: $repoId"
 
+            $ghHeaders = @{ Authorization = "Bearer $jwt"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
             $body = @{ repository_ids = @($repoId); permissions = @{ copilot_requests = "write" } } | ConvertTo-Json
             $resp = Invoke-RestMethod -Method Post -Headers $ghHeaders -Uri "https://api.github.com/app/installations/$installationId/access_tokens" -Body $body -ContentType "application/json"
 

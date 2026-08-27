@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from json import JSONDecodeError
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -48,6 +49,13 @@ async def _make_stream(events, item_delay: float = 0.0):
         if item_delay:
             await asyncio.sleep(item_delay)
         yield event
+
+
+async def _malformed_stream(events):
+    """Yield events, then fail as the OpenAI SSE JSON decoder does."""
+    for event in events:
+        yield event
+    raise JSONDecodeError("Extra data", "{}\n{}", 3)
 
 
 def _completed_stream(response: _FakeResponse):
@@ -203,6 +211,45 @@ async def test_consume_stream_raises_without_completed_event() -> None:
         await HostedAgentClient(AsyncMock())._consume_stream(stream, "conv")
 
 
+@pytest.mark.asyncio
+async def test_invoke_recovers_stored_response_after_malformed_sse() -> None:
+    """Malformed SSE after response creation retrieves the stored result."""
+    created = _FakeResponse(output_text="", status="in_progress", id="r1")
+    stored = _FakeResponse(output_text="answer", status="completed", id="r1")
+    client = _mock_client(
+        [_malformed_stream([_FakeEvent("response.created", created)])]
+    )
+    client.responses.retrieve = AsyncMock(return_value=stored)
+
+    with patch(
+        "utils.azure_ai_foundry_agent.asyncio.sleep", new_callable=AsyncMock
+    ):
+        _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+            conversation_items=[],
+            agent_ref={},
+        )
+
+    assert out is stored
+    assert client.responses.create.await_count == 1
+    client.responses.retrieve.assert_awaited_once_with("r1")
+
+
+@pytest.mark.asyncio
+async def test_invoke_retries_when_malformed_sse_has_no_response_id() -> None:
+    """Malformed SSE before response creation retries with a new stream."""
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+    client = _mock_client([_malformed_stream([]), _completed_stream(good)])
+
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert out is good
+    assert client.responses.create.await_count == 2
+    client.responses.retrieve.assert_not_awaited()
+
+
 def _api_error(error_cls, status_code: int):
     """Build a real OpenAI ``APIStatusError`` subclass instance for tests."""
     request = httpx.Request("POST", "https://example.test/v1/responses")
@@ -278,5 +325,3 @@ async def test_invoke_returns_content_safety_response_without_retry() -> None:
     assert out.output_text == CONTENT_SAFETY_MESSAGE
     # No retry: the deterministic content-safety block fails fast.
     assert client.responses.create.await_count == 1
-
-

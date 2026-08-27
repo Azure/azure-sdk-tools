@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import socket
 import sys
 from pathlib import Path
@@ -48,6 +49,20 @@ def test_is_public_url_blocks_hostname_resolving_to_private_ip() -> None:
             (2, 1, 6, "", ("169.254.169.254", 0)),
         ]
         assert _is_public_url("https://example.com/path") is False
+
+
+def test_is_public_url_deduplicates_dns_results() -> None:
+    with patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 0)),
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 0)),
+        ],
+    ), patch("tools.web_tools.ipaddress.ip_address", wraps=ipaddress.ip_address) as mock_ip:
+        assert _is_public_url("https://example.com/path") is True
+
+    parsed_ips = [call.args[0] for call in mock_ip.call_args_list]
+    assert parsed_ips.count("93.184.216.34") == 1
 
 
 def test_html_text_extractor_strips_tags() -> None:

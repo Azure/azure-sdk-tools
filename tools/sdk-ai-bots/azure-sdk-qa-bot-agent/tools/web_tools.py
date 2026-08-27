@@ -119,14 +119,17 @@ def _is_public_url(url: str) -> bool:
         if not addrinfos:
             return False
 
+        seen_ips: set[str] = set()
         for family, _, _, _, sockaddr in addrinfos:
-            if family == socket.AF_INET:
-                resolved_ip = ipaddress.ip_address(sockaddr[0])
-            elif family == socket.AF_INET6:
-                resolved_ip = ipaddress.ip_address(sockaddr[0])
-            else:
+            if family not in {socket.AF_INET, socket.AF_INET6}:
                 continue
 
+            resolved_ip_str = sockaddr[0]
+            if resolved_ip_str in seen_ips:
+                continue
+            seen_ips.add(resolved_ip_str)
+
+            resolved_ip = ipaddress.ip_address(resolved_ip_str)
             if not resolved_ip.is_global:
                 return False
 

@@ -9,7 +9,7 @@ This folder exists solely to give the [Skill Evaluations GitHub Actions workflow
 ## Updating the Vally CLI version
 
 1. Bump `@microsoft/vally-cli` in `package.json`.
-2. Run `npm install --package-lock-only --registry https://packagefeedproxy.microsoft.io/npm/` to refresh `package-lock.json`.
+2. Run `npm install --package-lock-only --registry https://registry.npmjs.org/` to refresh `package-lock.json`.
 3. Commit both files in the same PR. The workflow's path triggers include `eng/skill-eval/**`, so CI will re-run `vally lint` against the new version automatically.
 
 ## Local skill linting

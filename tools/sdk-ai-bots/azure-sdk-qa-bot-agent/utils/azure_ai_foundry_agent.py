@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from json import JSONDecodeError
 from typing import Any
 
 from openai import (
@@ -269,29 +270,52 @@ class HostedAgentClient:
         stream,
         agent_conversation_id: str | None,
     ) -> OpenAIResponse:
-        """Consume a responses stream until the ``response.completed`` event."""
+        """Consume a responses stream until the ``response.completed`` event.
+
+        If Foundry returns malformed SSE after exposing a response ID, recover
+        the completed result from storage instead of rerunning the agent.
+        """
         response: OpenAIResponse | None = None
+        latest_response: OpenAIResponse | None = None
         last_event_type: str | None = None
-        async for event in stream:
-            logger.debug("Stream event: type=%s, content=%s", event.type, event)
-            last_event_type = event.type
-            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                response = event.response
-                break
-            if event.type in (
-                STREAM_EVENT_RESPONSE_FAILED,
-                STREAM_EVENT_RESPONSE_INCOMPLETE,
-            ):
-                failed = getattr(event, "response", None)
-                logger.error(
-                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
-                    "conversation=%s",
-                    event.type,
-                    getattr(failed, "error", None),
-                    getattr(failed, "incomplete_details", None),
-                    getattr(failed, "status", None),
-                    agent_conversation_id,
-                )
+        try:
+            async for event in stream:
+                logger.debug("Stream event: type=%s, content=%s", event.type, event)
+                last_event_type = event.type
+                event_response = getattr(event, "response", None)
+                if event_response is not None:
+                    latest_response = event_response
+                if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                    response = event.response
+                    break
+                if event.type in (
+                    STREAM_EVENT_RESPONSE_FAILED,
+                    STREAM_EVENT_RESPONSE_INCOMPLETE,
+                ):
+                    failed = getattr(event, "response", None)
+                    logger.error(
+                        "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
+                        "conversation=%s",
+                        event.type,
+                        getattr(failed, "error", None),
+                        getattr(failed, "incomplete_details", None),
+                        getattr(failed, "status", None),
+                        agent_conversation_id,
+                    )
+        except JSONDecodeError as ex:
+            if latest_response is None:
+                raise RuntimeError(
+                    "Agent stream contained malformed SSE before a response ID "
+                    "was observed"
+                ) from ex
+            logger.warning(
+                "Agent stream contained malformed SSE; retrieving stored response: "
+                "response=%s, conversation=%s, error=%s",
+                latest_response.id,
+                agent_conversation_id,
+                ex,
+            )
+            return await self._poll_response(latest_response)
 
         if response is None:
             raise RuntimeError(

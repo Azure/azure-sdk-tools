@@ -199,8 +199,7 @@ CustomCodeInSope --Yes --> CodeCustomization["Code Repair<br/>Apply Code Customi
 CustomCodeInSope --No --> Failure
 
 CodeCustomization --> Build
-SpecInputInScope -- No --> AppendSpecInputOutofScope["SpecInput out-of-scope to Customization Request"]
-AppendSpecInputOutofScope --> M
+SpecInputInScope -- No --> Failure
 SpecInputInScope -- Yes --> ApplyTypespecCustomization["Apply TypeSpec<br/>Customization"]
 ApplyTypespecCustomization --> CustomCodeInSopeForSpec
 CustomCodeInSopeForSpec -- No --> Success

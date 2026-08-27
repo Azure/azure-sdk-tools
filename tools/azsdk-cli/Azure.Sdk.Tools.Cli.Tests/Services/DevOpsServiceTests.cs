@@ -162,6 +162,44 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.IsNull(result, "Should handle state comparison case-insensitively");
         }
 
+        [Test]
+        public async Task GetReleasePlanAsync_WithPullRequestUrl_NullRelations_ShouldNotThrow()
+        {
+            // Arrange: the ADO client leaves Relations null (rather than empty) for work items
+            // returned without any relations, e.g. an API Spec item never linked to a parent.
+            var pullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
+            var apiSpecWorkItem = CreateApiSpecWorkItem(1, pullRequestUrl, "Active");
+            apiSpecWorkItem.Relations = null;
+
+            _connection.AddWorkItemToQuery(apiSpecWorkItem);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(result, "Should return null instead of throwing when Relations is null");
+        }
+
+        [Test]
+        public async Task GetReleasePlanAsync_WithPullRequestUrl_DifferentConcreteReleaseTypeStillSkipped()
+        {
+            // Arrange: an existing GA plan; requesting Public Preview must NOT treat it as a duplicate,
+            // since multiple release types are allowed to coexist for the same spec PR/TypeSpec project.
+            var pullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
+            var apiSpecWorkItem = CreateApiSpecWorkItem(1, pullRequestUrl, "Active");
+            var gaParent = CreateReleasePlanWorkItem(100, "In Progress");
+            gaParent.Fields["Custom.ReleasePlanType"] = "GA";
+
+            _connection.AddWorkItemToQuery(apiSpecWorkItem);
+            _connection.AddWorkItem(gaParent);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ApiReleaseType.PublicPreview, CancellationToken.None);
+
+            // Assert: a different, concrete release type must not be treated as a duplicate.
+            Assert.IsNull(result, "A plan with a different, concrete release type must not be treated as a duplicate.");
+        }
+
         #endregion
 
         #region ResolveReleasePlanByIdAsync Tests

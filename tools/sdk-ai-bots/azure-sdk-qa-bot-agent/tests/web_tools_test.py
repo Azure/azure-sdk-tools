@@ -120,6 +120,7 @@ async def test_public_ip_transport_tries_each_validated_address() -> None:
         "tools.web_tools.socket.getaddrinfo",
         return_value=[
             (socket.AF_INET6, socket.SOCK_STREAM, 0, "", ("2606:2800:220:1::", 443)),
+            (socket.AF_INET6, socket.SOCK_STREAM, 0, "", ("2606:2800:220:1::", 443)),
             (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 443)),
         ],
     ):

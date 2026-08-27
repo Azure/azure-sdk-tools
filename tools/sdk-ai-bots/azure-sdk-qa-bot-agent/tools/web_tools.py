@@ -51,11 +51,13 @@ class _PublicIPTransport(httpx.AsyncBaseTransport):
                 f"Could not resolve host {hostname}.", request=request
             ) from e
 
-        resolved_ips = [
-            ipaddress.ip_address(sockaddr[0])
-            for family, _, _, _, sockaddr in addrinfos
-            if family in {socket.AF_INET, socket.AF_INET6}
-        ]
+        resolved_ips = list(
+            dict.fromkeys(
+                ipaddress.ip_address(sockaddr[0])
+                for family, _, _, _, sockaddr in addrinfos
+                if family in {socket.AF_INET, socket.AF_INET6}
+            )
+        )
         if not resolved_ips or any(not ip.is_global for ip in resolved_ips):
             raise httpx.ConnectError(
                 f"Host {hostname} resolved to a non-public IP address.",

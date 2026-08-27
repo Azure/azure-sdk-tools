@@ -9,13 +9,24 @@ node .github/skills/azure-typespec-assessment/scripts/run-assessment-analysis.mj
   --output .typespec-assessment
 ```
 
-Optional flags:
+Common options:
+
+| Flag              | Purpose                                                    |
+| ----------------- | ---------------------------------------------------------- |
+| `--base <ref>`    | Override the auto-detected tracked/default remote baseline |
+| `--repo <path>`   | Assess another Git worktree                                |
+| `--output <path>` | Change the artifact directory                              |
+
+The assessment automatically manages document, emitter-artifact, and sparse
+checkout caches. Normal assessments do not need cache options.
+
+### Advanced diagnostics
+
+These options are for skill development, controlled benchmarks, and
+troubleshooting. Do not present them during normal assessment intake.
 
 | Flag                      | Purpose                                                               |
 | ------------------------- | --------------------------------------------------------------------- |
-| `--base <ref>`            | Override the auto-detected tracked/default remote baseline            |
-| `--repo <path>`           | Assess another Git worktree                                           |
-| `--output <path>`         | Change the artifact directory                                         |
 | `--skip-compile`          | Debug project/source discovery only; never use for a final assessment |
 | `--document-cache <path>` | Override the persistent fetched-document cache                        |
 | `--artifact-cache <path>` | Override the persistent input-keyed emitter artifact cache            |

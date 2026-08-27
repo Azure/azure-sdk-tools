@@ -13,12 +13,6 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 ## Available Skills
 
-### TypeSpec Skills
-
-| Skill                                                           | Triggers                                          | Description                                                                     |
-| --------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
-| [azure-typespec-assessment](azure-typespec-assessment/SKILL.md) | "assess TypeSpec changes", "review TypeSpec diff" | Assess changed TypeSpec for REST and downstream compatibility with source links |
-
 ### Workflow & Utility Skills
 
 | Skill                                                                                         | Triggers                                               | Description                                                 |

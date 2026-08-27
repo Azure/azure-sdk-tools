@@ -1,6 +1,6 @@
 ---
 name: azure-typespec-assessment
-description: 'Assess only the current Git diff in Azure TypeSpec specifications. Produces source-linked semantic intent, REST breaking changes, REST-compatible downstream breaking changes, and documentation-grounded Azure TypeSpec compliance results. WHEN: "assess TypeSpec changes", "review TypeSpec diff", "check TypeSpec breaking changes", "assess TypeSpec compliance", "explain TypeSpec REST impact".'
+description: 'Read-only assessment of an existing current Git diff in Azure TypeSpec specifications. Produces source-linked semantic intent, REST and downstream impact, and documentation-grounded compliance results. WHEN: "assess the current TypeSpec diff", "review existing TypeSpec changes", "explain the REST impact of current changes", "assess current-diff compliance".'
 license: MIT
 metadata:
   author: Microsoft
@@ -11,6 +11,17 @@ compatibility: "Git, Node.js 22+, TypeSpec project dependencies"
 # Azure TypeSpec Assessment
 
 Assess changed TypeSpec without editing it.
+
+## Activation boundary
+
+Continue only when the requested outcome is a read-only assessment of an
+already-existing current Git diff. An explicit assessment request after edits
+qualifies.
+
+If the primary request is to create, add, modify, fix, or mitigate TypeSpec,
+stop before asking assessment options or running commands. That is an authoring
+request and requires `azure-typespec-author`. This skill never edits `.tsp`
+files or invokes the authoring skill.
 
 ## Workflow
 

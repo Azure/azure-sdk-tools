@@ -62,7 +62,8 @@ logger = logging.getLogger(__name__)
 # to diagnose system defects, fetch a source URL, and file an issue in one
 # turn.
 MAX_TOOL_CALLS_PER_TURN = 20
-MAX_TOOL_CALL_ITERATIONS = MAX_TOOL_CALLS_PER_TURN
+# Reserve a tool-free iteration for the final structured response.
+MAX_TOOL_CALL_ITERATIONS = MAX_TOOL_CALLS_PER_TURN + 1
 
 
 def _load_instructions(file_path: Path) -> str:

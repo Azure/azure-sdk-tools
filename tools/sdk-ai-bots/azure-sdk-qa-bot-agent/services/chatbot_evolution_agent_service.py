@@ -157,11 +157,16 @@ class ChatbotEvolutionAgentService:
             can_run = (
                 record.qa_status == QAStatus.ongoing
                 and feedback_status is None
+            ) or (
+                feedback_status == FeedbackStatus.failed
+                and not bool(record.feedback and record.feedback.issue_url)
             )
         else:
             can_run = (
-                record.qa_status == QAStatus.failed
-                and feedback_status == FeedbackStatus.pending_validation
+                feedback_status in (
+                    FeedbackStatus.pending_validation,
+                    FeedbackStatus.failed,
+                )
                 and bool(record.feedback and record.feedback.issue_url)
             )
         if not can_run:

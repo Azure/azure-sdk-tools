@@ -261,25 +261,56 @@ class QARecordService:
         *,
         tenant_id: str | None = None,
     ) -> list[QARecord]:
-        """Return ongoing records that have not started Agent analysis."""
+        """Return new and failed records eligible for Agent analysis."""
         docs = await query_qa_records_by_qa_status(
             qa_status=QAStatus.ongoing.value,
             tenant_id=tenant_id,
         )
-        records = [QARecord.from_cosmos(doc) for doc in docs]
-        return [record for record in records if record.feedback is None]
+        failed_docs = await query_qa_records_by_feedback_status(
+            feedback_status=FeedbackStatus.failed.value,
+            tenant_id=tenant_id,
+        )
+        records = {
+            (record.tenant_id, record.id): record
+            for record in (
+                QARecord.from_cosmos(doc) for doc in [*docs, *failed_docs]
+            )
+        }.values()
+        return [
+            record
+            for record in records
+            if record.feedback is None
+            or (
+                record.feedback.status == FeedbackStatus.failed
+                and not record.feedback.issue_url
+            )
+        ]
 
     async def list_pending_validation(
         self,
         *,
         tenant_id: str | None = None,
     ) -> list[QARecord]:
-        """Return records waiting for remediation-issue validation."""
+        """Return pending and failed remediation-issue validations."""
         docs = await query_qa_records_by_feedback_status(
             feedback_status=FeedbackStatus.pending_validation.value,
             tenant_id=tenant_id,
         )
-        return [QARecord.from_cosmos(doc) for doc in docs]
+        failed_docs = await query_qa_records_by_feedback_status(
+            feedback_status=FeedbackStatus.failed.value,
+            tenant_id=tenant_id,
+        )
+        records = {
+            (record.tenant_id, record.id): record
+            for record in (
+                QARecord.from_cosmos(doc) for doc in [*docs, *failed_docs]
+            )
+        }.values()
+        return [
+            record
+            for record in records
+            if record.feedback and record.feedback.issue_url
+        ]
 
 
 def _now() -> datetime:

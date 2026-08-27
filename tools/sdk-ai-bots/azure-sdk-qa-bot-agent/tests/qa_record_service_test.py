@@ -319,12 +319,12 @@ def test_validation_result_is_terminal(
     assert record.feedback.validated_at is not None
 
 
-def test_failed_feedback_is_not_eligible_for_retry() -> None:
+def test_failed_analysis_is_eligible_for_retry() -> None:
     record = _record(
         qa_status=QAStatus.failed,
         feedback_status=FeedbackStatus.failed,
     )
-    assert not ChatbotEvolutionAgentService._can_run(
+    assert ChatbotEvolutionAgentService._can_run(
         record,
         ChatbotEvolutionAgentMode.analysis,
     )
@@ -332,6 +332,61 @@ def test_failed_feedback_is_not_eligible_for_retry() -> None:
         record,
         ChatbotEvolutionAgentMode.validation,
     )
+
+
+def test_failed_validation_is_eligible_for_retry() -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=FeedbackStatus.failed,
+    )
+    assert record.feedback is not None
+    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    assert not ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.analysis,
+    )
+    assert ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.validation,
+    )
+
+
+@pytest.mark.asyncio
+async def test_failed_analysis_is_listed_as_analyzable() -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=FeedbackStatus.failed,
+    )
+    with (
+        patch(
+            "services.qa_record_service.query_qa_records_by_qa_status",
+            new=AsyncMock(return_value=[]),
+        ),
+        patch(
+            "services.qa_record_service.query_qa_records_by_feedback_status",
+            new=AsyncMock(return_value=[record.to_cosmos()]),
+        ),
+    ):
+        records = await QARecordService().list_analyzable()
+
+    assert [item.id for item in records] == [record.id]
+
+
+@pytest.mark.asyncio
+async def test_failed_validation_is_listed_as_pending() -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=FeedbackStatus.failed,
+    )
+    assert record.feedback is not None
+    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    with patch(
+        "services.qa_record_service.query_qa_records_by_feedback_status",
+        new=AsyncMock(side_effect=[[], [record.to_cosmos()]]),
+    ):
+        records = await QARecordService().list_pending_validation()
+
+    assert [item.id for item in records] == [record.id]
 
 
 @pytest.mark.parametrize(

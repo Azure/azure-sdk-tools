@@ -23,6 +23,15 @@ public interface IApiReviewHubService
         string apiHash,
         string repoOwner,
         CancellationToken ct);
+
+    Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = false);
 }
 
 public class ApiReviewHubService(
@@ -33,6 +42,7 @@ public class ApiReviewHubService(
     TimeSpan? operationTimeout = null) : IApiReviewHubService
 {
     private static readonly TimeSpan DefaultOperationTimeout = TimeSpan.FromMinutes(30);
+    private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     private static readonly JsonSerializerOptions serializerOptions = new()
     {
@@ -139,6 +149,32 @@ public class ApiReviewHubService(
         logger.LogInformation("Querying API Review Hub release gate for {packageName} {packageVersion}", packageName, packageVersion);
         var result = await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), authorization, ct);
         return result;
+    }
+
+    public async Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = false)
+    {
+        var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
+        var authorization = await GetAuthorizationAsync(DefaultEndpoint, ct);
+        var request = new MarkPackageReleasedRequest
+        {
+            Language = language,
+            PackageName = packageName,
+            Version = packageVersion,
+            ApiHash = apiHash,
+            RepoOwner = repositoryOwner,
+            ReleasedOn = _timeProvider.GetUtcNow(),
+            DryRun = dryRun
+        };
+
+        logger.LogInformation("Marking {packageName} {packageVersion} as released in API Review Hub", packageName, packageVersion);
+        return await PostJsonAsync<ApiReviewHubMarkReleasedResult>(httpClient, $"{DefaultEndpoint}/api/releases/mark-released", request, authorization, ct);
     }
 
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)

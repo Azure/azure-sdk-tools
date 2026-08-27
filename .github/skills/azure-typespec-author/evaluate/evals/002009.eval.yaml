@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
+      In the Widget project, add an update operation for the existing Employee ARM resource. The operation should complete synchronously and allow clients to update the resource's tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: &shared_environment
       files:
         - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
@@ -59,7 +59,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
+      @azure-typespec-author In the Widget project, add an update operation for the existing Employee ARM resource. The operation should complete synchronously and allow clients to update the resource's tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -79,7 +79,8 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
           path: "employee.tsp"
@@ -90,17 +91,14 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "In the Widget project, add a patch operation to an existing ARM resource named 'Employee'"
+    prompt: "In the Widget project, add an update operation for the existing Employee ARM resource. The operation should complete synchronously and allow clients to update the resource's tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change."
     environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+      - *file_matches
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

@@ -93,7 +93,6 @@ SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
 SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
-
 # ---------------------------------------------------------------------------
 # Global knowledge source registry
 # ---------------------------------------------------------------------------
@@ -345,7 +344,8 @@ class TenantConfig:
     ``sources`` is an ordered list of :class:`KnowledgeSource` objects
     available to this tenant.  Each source carries its own description and
     default filter; tenants can override a source's filter via
-    ``source_filter``.
+    ``source_filter``. ``enable_wiki_cross_document_pages`` controls access to
+    synthesized entity and concept pages, which are not knowledge sources.
     """
 
     display_name: str = ""
@@ -358,6 +358,7 @@ class TenantConfig:
     qa_guideline_file: str = ""
     enable_routing: bool = False
     agent: AgentConfig = field(default_factory=AgentConfig)
+    enable_wiki_cross_document_pages: bool = True
 
 
 # ---------------------------------------------------------------------------

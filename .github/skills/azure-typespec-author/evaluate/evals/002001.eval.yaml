@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+      Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,7 +63,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+      @azure-typespec-author Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -83,15 +83,19 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "ExtensionResource<"
           path: "*.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches
+        type: "file-not-matches"
         config:
           pattern: "TrackedResource<"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_operations
+        type: "file-matches"
+        name: "file-matches-operations"
         config:
           pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<'
           path: "*.tsp"
@@ -102,25 +106,16 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines."
+    prompt: "Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation."
     environment: *shared_environment
     graders:
       - type: "tool-calls"
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "ExtensionResource<"
-      - type: "file-not-matches"
-        config:
-          path: "*.tsp"
-          pattern: "TrackedResource<"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<'
+      - *file_matches
+      - *file_not_matches
+      - *file_matches_operations
       - type: "prompt"
         config:
           prompt: "The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized interface should be defined to allow the extension resource to be scoped to any parent resource."

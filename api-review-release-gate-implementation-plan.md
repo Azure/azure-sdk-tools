@@ -205,7 +205,7 @@ Non-responsibilities:
 - **Artifact determinism:** When an API hash is available, approval and mark-released must use the exact hash associated with the package being published. The hash must travel with that package's package-info file so the gate does not correlate separate artifact sets at runtime.
 - **Onboarding dependency:** ARH-enabled repositories must run `create-apireview-hub-artifacts-{lang}` during their build stage and persist each resulting hash in the matching package-info file.
 - **Future enforcement:** API hash is optional only during the APIView-to-ARH transition. It becomes required once ARH onboarding is complete and APIView fallback is removed.
-- **CLI availability:** Pipeline agents that run approval or release completion must provide AZSdkCli 0.6.37 or later for the required `azsdk package get-approval-status` and `azsdk package mark-released` commands and the documented missing-hash and partial-success behavior.
+- **CLI availability:** Pipeline agents that run approval or release completion must provide AZSdkCli 0.6.38 or later for the required `azsdk package get-approval-status` and `azsdk package mark-released` commands and the documented missing-hash and partial-success behavior.
 - **Behavior preservation:** The creation-only script must retain source-only upload because not every language pipeline produces a review token file.
 - **CLI command removal:** Any out-of-repository consumers of the two APIView revision commands would break. Repository search found no callers, but release notes should identify the removal.
 - **Dual-backend consistency:** The CLI owns approval reconciliation across APIView and ARH; scripts should not second-guess it.

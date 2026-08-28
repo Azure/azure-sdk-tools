@@ -455,7 +455,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Get details from API spec work item
             try
             {
-                logger.LogInformation("Fetching API spec work item for release plan work item {workItemId}", releasePlan.WorkItemId);
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
@@ -2192,11 +2191,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                         logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath} with API version: {apiVersion}",
                             releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion);
                         return releasePlan;
-                    }
-                    else
-                    {
-                        logger.LogInformation("Release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath} has API version: {actualVersion}, not matching requested: {expectedVersion}",
-                            releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, releasePlan.SpecAPIVersion, apiVersion);
                     }
                 }
 

@@ -1002,6 +1002,51 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
                 }
 
+                // Run TypeSpec metadata emitter to get API version (local paths only)
+                TypeSpecProject? typeSpecMetadata = null;
+                if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
+                {
+                    typeSpecMetadata = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
+                }
+                else
+                {
+                    logger.LogWarning("Cannot run TypeSpec metadata emitter for URL-based TypeSpec project paths. Skipping API version extraction.");
+                }
+
+                // Fail create release plan for public preview and GA if TypeSpec metadata is not available. Private preview spec may not have emitter config.
+                if (typeSpecMetadata == null && parsedApiReleaseType != ApiReleaseType.PrivatePreview && !typeSpecHelper.IsUrl(typeSpecProjectPath))
+                {
+                    var error = $"Failed to parse TypeSpec metadata for project path '{typeSpecProjectPath}'. Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile.";
+                    return new ReleasePlanResponse
+                    {
+                        ResponseError = error,
+                        NextSteps = ["Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile."],
+                        TypeSpecProject = typeSpecProjectPath,
+                    };
+                }
+
+                // Extract API version from the parsed metadata
+                var apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
+                // Check if a release plan already exists with the same TypeSpec project path and API version
+                if (!string.IsNullOrEmpty(apiVersion))
+                {
+                    logger.LogInformation("Checking for existing release plan with TypeSpec project '{SpecProject}' and API version '{ApiVersion}'.", specProject, apiVersion);
+                    var existingReleasePlanWithSameVersion = await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(specProject, apiVersion, ct);
+                    if (existingReleasePlanWithSameVersion != null)
+                    {
+                        logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) with the same TypeSpec project path and API version. Returning existing plan instead of creating a new one.",
+                            existingReleasePlanWithSameVersion.ReleasePlanId, existingReleasePlanWithSameVersion.WorkItemId);
+                        
+                        return new ReleasePlanResponse
+                        {
+                            ReleasePlanDetails = existingReleasePlanWithSameVersion,
+                            Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
+                            TypeSpecProject = specProject,
+                            NextSteps = ["Review the existing release plan and use it for your SDK release."]
+                        };
+                    }
+                }
+
                 // Get service and product id from previous release plan
                 string productName = Path.GetFileName(specProject);
                 string productType = string.Empty;
@@ -1096,51 +1141,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         warnings.Add(warning);
                         logger.LogWarning(ex, "Failed to resolve spec PR author email. Proceeding without user email for release plan submission.");
                     }
-                }
-
-                // Run TypeSpec metadata emitter to get API version (local paths only)
-                TypeSpecProject? typeSpecMetadata = null;
-                if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
-                {
-                    typeSpecMetadata = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
-                }
-                else
-                {
-                    logger.LogWarning("Cannot run TypeSpec metadata emitter for URL-based TypeSpec project paths. Skipping API version extraction.");
-                }
-
-                // Fail create release plan for public preview and GA if TypeSpec metadata is not available. Private preview spec may not have emitter config.
-                if (typeSpecMetadata == null && parsedApiReleaseType != ApiReleaseType.PrivatePreview && !typeSpecHelper.IsUrl(typeSpecProjectPath))
-                {
-                    var error = $"Failed to parse TypeSpec metadata for project path '{typeSpecProjectPath}'. Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile.";
-                    return new ReleasePlanResponse
-                    {
-                        ResponseError = error,
-                        NextSteps = ["Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile."],
-                        TypeSpecProject = typeSpecProjectPath,
-                    };
-                }
-
-                // Extract API version from the parsed metadata
-                var apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
-                // Check if a release plan already exists with the same TypeSpec project path and API version
-                if (!string.IsNullOrEmpty(apiVersion))
-                {
-                    var existingReleasePlanWithSameVersion = await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(specProject, apiVersion, ct);
-                    if (existingReleasePlanWithSameVersion != null)
-                    {
-                        logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) with the same TypeSpec project path and API version. Returning existing plan instead of creating a new one.",
-                            existingReleasePlanWithSameVersion.ReleasePlanId, existingReleasePlanWithSameVersion.WorkItemId);
-                        
-                        return new ReleasePlanResponse
-                        {
-                            ReleasePlanDetails = existingReleasePlanWithSameVersion,
-                            Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
-                            TypeSpecProject = specProject,
-                            NextSteps = ["Review the existing release plan and use it for your SDK release."]
-                        };
-                    }
-                }
+                }                
 
                 var productDisplayName = productName;
                 var releasePlan = new ReleasePlanWorkItem

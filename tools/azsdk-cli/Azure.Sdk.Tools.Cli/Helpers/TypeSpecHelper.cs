@@ -209,8 +209,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Parses the typespec-metadata.yaml to extract SDK package names per language.
-        /// Returns a list of <see cref="PackageInfo"/> with Language and PackageName populated.
+        /// Parses the typespec-metadata.yaml to extract SDK package names, API version, and SDK type per language.
+        /// Returns a list of <see cref="PackageInfo"/> with Language, PackageName, ApiVersion, and TypeSpecSdkType populated.
         /// </summary>
         public static List<PackageInfo>? ParsePackageNamesFromMetadata(string metadataYaml)
         {
@@ -235,11 +235,22 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         var languageName = lang.Key?.ToString() ?? string.Empty;
                         var packageName = string.Empty;
                         var groupName = string.Empty;
+                        var apiVersion = string.Empty;
+                        var sdkType = string.Empty;
+
                         if (lang.Value is Dictionary<object, object> langDict)
                         {
                             if (langDict.TryGetValue("packageName", out var pkgName))
                             {
                                 packageName = pkgName?.ToString() ?? string.Empty;
+                            }
+                            if (langDict.TryGetValue("apiVersion", out var apiVer))
+                            {
+                                apiVersion = apiVer?.ToString() ?? string.Empty;
+                            }
+                            if (langDict.TryGetValue("sdkType", out var sdkT))
+                            {
+                                sdkType = sdkT?.ToString() ?? string.Empty;
                             }
                         }
                         else if (lang.Value is ICollection<object> langList && langList.FirstOrDefault() is Dictionary<object, object> langDictTemp)
@@ -247,6 +258,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                             if (langDictTemp.TryGetValue("packageName", out var pkgName))
                             {
                                 packageName = pkgName?.ToString() ?? string.Empty;
+                            }
+                            if (langDictTemp.TryGetValue("apiVersion", out var apiVer))
+                            {
+                                apiVersion = apiVer?.ToString() ?? string.Empty;
+                            }
+                            if (langDictTemp.TryGetValue("sdkType", out var sdkT))
+                            {
+                                sdkType = sdkT?.ToString() ?? string.Empty;
                             }
                         }
 
@@ -265,7 +284,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                             {
                                 Language = language,
                                 PackageName = packageName,
-                                Group = groupName
+                                Group = groupName,
+                                ApiVersion = string.IsNullOrEmpty(apiVersion) ? null : apiVersion,
+                                TypeSpecSdkType = string.IsNullOrEmpty(sdkType) ? null : sdkType
                             });
                         }
                     }

@@ -9,7 +9,7 @@ import logging
 import re
 from urllib.parse import urlparse
 
-from config.app_config import get as cfg
+from config.app_config import Settings, get as cfg
 from config.tenant_config import (
     get_tenant_scope_description,
 )
@@ -73,22 +73,49 @@ _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 class ChatService:
     """Coordinates conversation state, hosted-agent invocation, and response mapping."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        settings: Settings | None = None,
+        project_client: AIProjectClient | None = None,
+        openai_client: AsyncOpenAI | None = None,
+    ) -> None:
         self._conversation_service = ConversationService()
+        self._settings = settings or cfg
+        self._project_client = project_client
+        self._openai_client = openai_client
+        self._stateless_session_id: str | None = None
+
+    def _get_project_client(self) -> AIProjectClient:
+        return self._project_client or get_project_client()
+
+    def _get_openai_client(self) -> AsyncOpenAI:
+        return self._openai_client or get_openai_client()
+
+    def _get_stateless_session_id(self) -> str | None:
+        if self._project_client is None and self._openai_client is None:
+            return get_stateless_session_id()
+        return self._stateless_session_id
+
+    def _set_stateless_session_id(self, session_id: str | None) -> None:
+        if self._project_client is None and self._openai_client is None:
+            set_stateless_session_id(session_id)
+        else:
+            self._stateless_session_id = session_id
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        project_client = get_project_client()
+        project_client = self._get_project_client()
 
         agent = await self._get_agent(project_client)
-        openai_client = get_openai_client()
+        openai_client = self._get_openai_client()
 
         # Stateless calls (no customer conversation_id) skip conversation
         # threading and reuse a warm sandbox; threaded calls resolve history.
         stateless = not req.conversation_id
         if stateless:
             agent_conversation_id, is_new = None, True
-            agent_session_id = get_stateless_session_id()
+            agent_session_id = self._get_stateless_session_id()
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
         else:
             agent_conversation_id, is_new = await self._resolve_conversation(
@@ -163,10 +190,10 @@ class ChatService:
             agent_ref=agent_ref,
         )
         # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless and not get_stateless_session_id():
+        if stateless and not self._get_stateless_session_id():
             extra = getattr(response, "model_extra", None) or {}
             captured = extra.get("agent_session_id")
-            set_stateless_session_id(captured)
+            self._set_stateless_session_id(captured)
             logger.info("Stateless request: captured warm session=%s", captured)
 
         logger.info(
@@ -202,7 +229,7 @@ class ChatService:
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
                 self._save_bot_answer_to_conversation(
-                    req, response.id, chat_response.answer
+                    req, response.id, chat_response.answer, trace_id
                 )
             )
         )
@@ -213,6 +240,7 @@ class ChatService:
         req: ChatRequest,
         response_id: str,
         answer: str,
+        trace_id: str | None = None,
     ) -> None:
         """Persist the final bot answer so intention uses the real reply, not placeholders."""
         if not req.conversation_id or not req.conversation_type:
@@ -232,6 +260,7 @@ class ChatService:
             created_at=datetime.now(timezone.utc),
             conversation_id=req.conversation_id,
             conversation_type=req.conversation_type,
+            trace_id=trace_id,
         )
 
         try:
@@ -245,8 +274,8 @@ class ChatService:
 
     async def _get_agent(self, project_client: AIProjectClient) -> AgentVersionDetails:
         """Load hosted-agent version definition from Foundry."""
-        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
-        agent_version = cfg("AI_FOUNDRY_AGENT_VERSION")
+        agent_name = self._settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+        agent_version = self._settings("AI_FOUNDRY_AGENT_VERSION", None)
         if agent_version:
             agent = await project_client.agents.get_version(agent_name, agent_version)
         else:
@@ -298,8 +327,8 @@ class ChatService:
         logger.info("Created new AI Foundry conversation: %s", new_id)
         return new_id, True
 
-    @staticmethod
     async def _build_additional_info_items(
+        self,
         infos: list[AdditionalInfo],
     ) -> list[ResponseInputItemParam]:
         """Convert additional_infos into Responses API input items.
@@ -313,7 +342,7 @@ class ChatService:
         for info in infos:
             if info.type == AdditionalInfoType.Text and info.content:
                 content = info.content
-                max_chars = int(cfg("AOAI_CHAT_MAX_TOKENS", "100000"))
+                max_chars = int(self._settings("AOAI_CHAT_MAX_TOKENS", "100000") or "100000")
                 if len(content) > max_chars:
                     logger.warning(
                         "Text additional_info is large (%d chars, limit %d)",
@@ -374,7 +403,7 @@ class ChatService:
 
     def _resolve_memory_scope(self, req: ChatRequest) -> str | None:
         """Derive user memory scope from user_id. Returns None if disabled or no user_id."""
-        if cfg("ENABLE_USER_MEMORY_SEARCH", "true").lower() != "true":
+        if (self._settings("ENABLE_USER_MEMORY_SEARCH", "true") or "true").lower() != "true":
             logger.info("User memory search disabled by config")
             return None
         user_id = getattr(req.message, "user_id", None)

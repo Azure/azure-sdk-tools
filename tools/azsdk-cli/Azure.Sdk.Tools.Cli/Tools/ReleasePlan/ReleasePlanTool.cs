@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -15,6 +16,8 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Octokit;
@@ -1236,7 +1239,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to create release plan work item");
-                return new ReleasePlanResponse { ResponseError = $"Failed to create release plan work item: {ex.Message}" };
+                // The DevOps service wraps the real ADO failure as an inner exception; surface it so callers can tell
+                // a permission/rule-violation error apart from the generic wrapper message.
+                var baseEx = ex.GetBaseException();
+                var detail = baseEx.Message != ex.Message ? $"{ex.Message}: {baseEx.Message}" : ex.Message;
+                var response = new ReleasePlanResponse { ResponseError = $"Failed to create release plan work item: {detail}" };
+                if (baseEx is VssUnauthorizedException or VssServiceResponseException { HttpStatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden })
+                {
+                    response.NextSteps = ["Make sure you're authenticated with the Azure CLI (`az login --tenant microsoft.onmicrosoft.com`) and have work item creation permissions in the azure-sdk DevOps 'Release' project (https://aka.ms/azsdk/access)."];
+                }
+                return response;
             }
         }
 

@@ -34,6 +34,8 @@ public class PackageMarkReleasedToolTests
                 Version = "1.0.0",
                 ReleasedApiHash = "hash",
                 ApprovalStatus = "Approved",
+                ApprovalRecordId = "approval-record-id",
+                AppliedInheritanceRule = "prereleaseToPrerelease",
                 IsReleased = false
             });
         apiViewService = new Mock<IAPIViewService>();
@@ -85,6 +87,8 @@ public class PackageMarkReleasedToolTests
         var apiView = document.RootElement.GetProperty("api_view");
 
         Assert.That(reviewHub.GetProperty("packageVersionId").GetString(), Is.EqualTo("22222222-2222-2222-2222-222222222222"));
+        Assert.That(reviewHub.GetProperty("approvalRecordId").GetString(), Is.EqualTo("approval-record-id"));
+        Assert.That(reviewHub.GetProperty("appliedInheritanceRule").GetString(), Is.EqualTo("prereleaseToPrerelease"));
         Assert.That(reviewHub.TryGetProperty("succeeded", out _), Is.False);
         Assert.That(apiView.GetProperty("revisionId").GetString(), Is.EqualTo("revision456"));
         Assert.That(apiView.TryGetProperty("message", out _), Is.False);
@@ -93,6 +97,30 @@ public class PackageMarkReleasedToolTests
         Assert.That(document.RootElement.TryGetProperty("package_name", out _), Is.False);
         Assert.That(document.RootElement.TryGetProperty("package_type", out _), Is.False);
         Assert.That(document.RootElement.TryGetProperty("sdk_repo", out _), Is.False);
+    }
+
+    [Test]
+    public async Task MarkReleasedAsync_JsonOmitsUnavailableReviewHubFields()
+    {
+        apiReviewHubService
+            .Setup(x => x.MarkPackageReleasedAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+            .ReturnsAsync(new ApiReviewHubMarkReleasedResult
+            {
+                PackageId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                PackageVersionId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                PackageName = "azure-test",
+                Language = "python",
+                Version = "1.0.0",
+                ReleasedApiHash = "hash",
+                ApprovalStatus = "Approved",
+                IsReleased = false
+            });
+
+        var response = await MarkReleasedAsync();
+
+        Assert.That(response.ApiReviewHub!.Value.TryGetProperty("approvalRecordId", out _), Is.False);
+        Assert.That(response.ApiReviewHub.Value.TryGetProperty("appliedInheritanceRule", out _), Is.False);
     }
 
     [Test]

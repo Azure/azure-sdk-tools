@@ -187,13 +187,6 @@ class HostedAgentClient:
                         exc_info=True,
                     )
                     return None, _build_content_safety_response()
-                if isinstance(ex, BadRequestError) and any(
-                    message in str(ex).lower() for message in _TOOL_OUTPUT_ERRORS
-                ):
-                    # Retrying the same corrupted tool history cannot succeed;
-                    # let the service rebuild the conversation instead.
-                    # This is a known bug for foundry agent: https://github.com/Azure/azure-sdk-for-python/issues/46092
-                    raise ToolOutputError(str(ex)) from ex
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
                     set_stateless_session_id(None)
@@ -231,11 +224,27 @@ class HostedAgentClient:
                     self._max_retries,
                     agent_conversation_id,
                 )
-            except (EmptyAgentResponseError, RuntimeError) as ex:
-                # ``RuntimeError`` = stream ended without a completed event;
-                # both are transient and retryable.
+            except EmptyAgentResponseError as ex:
                 last_error = ex
                 await self.close_stream(stream)
+                logger.warning(
+                    "Agent returned no usable response (attempt %d/%d): "
+                    "conversation=%s, error=%s",
+                    attempt,
+                    self._max_retries,
+                    agent_conversation_id,
+                    ex,
+                )
+            except RuntimeError as ex:
+                last_error = ex
+                await self.close_stream(stream)
+                if any(
+                    message in str(ex).lower() for message in _TOOL_OUTPUT_ERRORS
+                ):
+                    # Retrying the same corrupted tool history cannot succeed;
+                    # let the service rebuild the conversation instead.
+                    # This is a known bug for foundry agent: https://github.com/Azure/azure-sdk-for-python/issues/46092
+                    raise ToolOutputError(str(ex)) from ex
                 logger.warning(
                     "Agent returned no usable response (attempt %d/%d): "
                     "conversation=%s, error=%s",

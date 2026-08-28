@@ -326,23 +326,16 @@ def _content_filter_error() -> BadRequestError:
         "No tool call found for function call output call_123.",
     ],
 )
-async def test_invoke_raises_tool_output_error_without_retry(message: str) -> None:
-    """Known tool-pairing bad requests are surfaced for conversation recovery."""
-    body = {
-        "error": {
-            "message": message,
-            "type": "invalid_request_error",
-            "param": "input",
-            "code": None,
-        }
-    }
-    error = _api_error(
-        BadRequestError,
-        400,
-        f"Error code: 400 - {body}",
-        body,
-    )
-    client = _mock_client([error])
+async def test_invoke_raises_tool_output_error_from_runtime_error(
+    message: str,
+) -> None:
+    """Known tool-pairing runtime errors trigger conversation recovery."""
+
+    async def _failed_stream():
+        raise RuntimeError(message)
+        yield
+
+    client = _mock_client([_failed_stream()])
 
     with pytest.raises(ToolOutputError):
         await HostedAgentClient(client, retry_delay=0).invoke(

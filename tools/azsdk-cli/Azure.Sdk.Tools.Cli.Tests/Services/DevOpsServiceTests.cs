@@ -625,6 +625,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region RunSDKGenerationPipelineAsync Tests
+
+        [Test]
+        public void RunSDKGenerationPipelineAsync_WhenRunningInAzurePipelines_DoesNotIncludeSdkReleaseTypeOrApiVersionTemplateParams()
+        {
+            // Arrange
+            var method = typeof(DevOpsService).GetMethod("BuildSdkGenerationTemplateParams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.That(method, Is.Not.Null);
+
+            // Act
+            var templateParams = (Dictionary<string, string>)method!.Invoke(null, ["specification/test/service", 0, "stable", "v1", "feature/sdk-branch", true])!;
+
+            // Assert
+            Assert.That(templateParams, Contains.Key("ConfigType"));
+            Assert.That(templateParams, Contains.Key("ConfigPath"));
+            Assert.That(templateParams, Contains.Key("CreatePullRequest"));
+            Assert.That(templateParams, Contains.Key("ReleasePlanWorkItemId"));
+            Assert.That(templateParams, Contains.Key("TriggerSource"));
+            Assert.That(templateParams, Contains.Key("SdkRepoBranch"));
+            Assert.That(templateParams["SdkRepoBranch"], Is.EqualTo("feature/sdk-branch"));
+            Assert.That(templateParams, Does.Not.ContainKey("SdkReleaseType"));
+            Assert.That(templateParams, Does.Not.ContainKey("ApiVersion"));
+        }
+
+        #endregion
+
         #region FindPackageWorkItemIdsAsync Tests
 
         [Test]
@@ -840,4 +866,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
     }
 }
-

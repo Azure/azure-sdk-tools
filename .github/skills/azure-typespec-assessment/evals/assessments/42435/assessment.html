@@ -9,6 +9,7 @@
 .behavior-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.behavior-section:first-of-type{border-top:0}.behavior-title{margin-right:8px;font-weight:700}.compliance-finding>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.compliance-finding>summary::-webkit-details-marker{display:none}.compliance-finding>summary::after{content:"▸";margin-left:auto;color:var(--muted);font-size:18px}.compliance-finding[open]>summary::after{content:"▾"}.compliance-finding>summary h3{margin:0}.finding-body{padding-top:12px}.comparison-details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.comparison-details>summary{cursor:pointer;padding:11px 13px;font-weight:750}.comparison-body{padding:0 13px 13px}.compliance-code{margin-top:12px}.compliance-code h4{margin:14px 0 6px}.source-code .line-number{display:inline-block;min-width:3.5em;margin-right:12px;color:#64748b;text-align:right;user-select:none}.source-code pre>.context{white-space:pre}
 .metric strong{display:flex;align-items:center}.metric strong .metric-icon{width:1.15em;margin-right:.4em;font-size:1.05em;opacity:1}.metric>span.metric-title{display:block;font-size:15px;font-weight:650;opacity:.9}.metric>span.metric-detail{display:block;margin-top:4px;font-size:12px;opacity:.75}
 .finding-source-diff{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow:hidden}.finding-source-diff>summary{cursor:pointer;padding:11px 13px;font-weight:750}.finding-source-diff>summary span{margin-left:6px;color:var(--muted);font-size:12px;font-weight:400}.finding-source-diff>.diff{margin:0;border-width:1px 0 0;border-radius:0}.finding-source-diff .diff pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.disposition{display:inline-flex;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}.disposition.blocking{background:#fee2e2;color:#991b1b}.disposition.preview-allowed{background:#dcfce7;color:#166534}.finding-heading{flex-wrap:wrap}.finding-heading h3{flex-basis:100%}
 </style>
 </head>
 <body>
@@ -28,12 +29,14 @@
 <p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p>
 </div></aside>
-<nav><div class="container"><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#appendix">Appendix</a></div></nav>
+<nav><div class="container"><a href="#api-versions">Compared API versions</a><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#appendix">Appendix</a></div></nav>
 <main class="container">
+<section id="api-versions"><h2>Compared API versions</h2><div class="panel"><p class="empty-state">No explicit API version comparison was recorded.</p></div></section>
 <section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">1</span></h2><article class="finding severity-border-medium" id="finding-source-paging-metadata-added">
 <div class="finding-heading"><span class="severity severity-medium">medium</span><h3>Generated SDK result becomes pageable</h3></div>
 <p>Generated SDKs can change from returning one response model to exposing pageable iteration and continuation handling while the REST payload remains unchanged.</p>
+
 <p><strong>Evidence:</strong> Added paging metadata can change generated SDK return and iteration shapes while preserving the REST wire contract.; Changed TypeSpec source: specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp.</p>
 <p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L81-L87">ManagedNetworkSettingsPropertiesBasicResource.tsp:L81-L87</a></p>
 <details class="finding-source-diff">
@@ -108,6 +111,8 @@
 <p class="empty-state">None.</p>
 <h3>Tooling Used</h3>
 <ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
+<h3>Version-scoped compiler options</h3>
+<p class="empty-state">No explicit API version options recorded.</p>
 <h3>Artifact Evidence</h3>
 <dl><dt>autorest</dt><dd>All four emitted API versions add only x-ms-pageable.nextLinkName = nextLink to OutboundRules_Post; method, path, parameters, request, responses, schemas, and LRO metadata are unchanged.</dd><dt>tcgc</dt><dd>The head adds pagingMetadata with GET next-link traversal and page-item segments to the existing LRO method.</dd></dl>
 <h3>Execution time breakdown</h3>

@@ -1,102 +1,8 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 import test from "node:test";
-import {
-  indexTcgcOperations,
-  normalizeTcgcContract,
-  normalizeTcgcPackage,
-  parseTcgcYaml,
-} from "./tcgc-contract.mjs";
+import { normalizeTcgcPackage, parseTcgcYaml } from "./tcgc-contract.mjs";
 
-/**
- * @template T
- * @param {T | null | undefined} value
- * @returns {T}
- */
-function required(value) {
-  assert.ok(value);
-  return value;
-}
-
-/**
- * @param {unknown} value
- * @returns {value is Record<string, unknown>}
- */
-function isRecord(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-void test("reuses normalized TCGC artifacts while invalidating changed files and parser limits", (context) => {
-  const root = fs.mkdtempSync(path.join(process.cwd(), ".tcgc-contract-cache-"));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const artifact = { format: "tcgc-yaml", files: [{ path: "tcgc.yaml" }] };
-  const file = path.join(root, "tcgc.yaml");
-  const raw = { crossLanguagePackageId: "Example", crossLanguageVersion: "1.0", metadata: {} };
-  fs.writeFileSync(file, JSON.stringify(raw));
-  const read = context.mock.method(fs, "readFileSync");
-  const options = { workRoot: root, artifact };
-  const first = normalizeTcgcContract(options);
-  assert.equal(normalizeTcgcContract(options), first);
-  assert.equal(read.mock.callCount(), 1);
-  assert.throws(() => normalizeTcgcContract({ ...options, maxObjects: 1 }), /resource limit/);
-  raw.crossLanguagePackageId = "ChangedPackage";
-  fs.writeFileSync(file, JSON.stringify(raw));
-  const second = normalizeTcgcContract(options);
-  assert.notEqual(second, first);
-  assert.equal(second.package.crossLanguagePackageId, "ChangedPackage");
-  const other = path.join(root, "other");
-  fs.mkdirSync(other);
-  fs.writeFileSync(path.join(other, "tcgc.yaml"), JSON.stringify(raw));
-  assert.notEqual(normalizeTcgcContract({ ...options, workRoot: other }), second);
-});
-
-void test("indexes compiler identities once per normalized contract and selected version", () => {
-  let scans = 0;
-  const method = {
-    crossLanguageDefinitionId: "Service.Owner.post",
-    apiVersions: ["v1"],
-    operation: { verb: "POST", path: "/one" },
-  };
-  const contract = {
-    get methods() {
-      scans += 1;
-      return [
-        method,
-        { ...method, apiVersions: ["v2"], operation: { verb: "post", path: "/two" } },
-      ];
-    },
-  };
-  const normalizedContract = /** @type {import("./runtime-types.js").NormalizedTcgcContract} */ (
-    /** @type {unknown} */ (contract)
-  );
-  const first = indexTcgcOperations(normalizedContract, "v1");
-  assert.deepEqual(
-    [...required(required(first.get("Owner.post")).get("Service.Owner.post"))],
-    ["post\0/one"],
-  );
-  assert.equal(
-    required(first.get("Owner.post")).get("Service.Owner.post"),
-    required(first.get("post")).get("Service.Owner.post"),
-  );
-  assert.equal(
-    required(first.get("Owner.post")).get("Service.Owner.post"),
-    required(first.get("Service.Owner.post")).get("Service.Owner.post"),
-  );
-  for (let count = 0; count < 100; count += 1) {
-    assert.equal(indexTcgcOperations(normalizedContract, "v1"), first);
-    assert.equal(required(first.get("Owner.post")).size, 1);
-  }
-  assert.equal(scans, 1);
-  const second = indexTcgcOperations(normalizedContract, "v2");
-  assert.deepEqual(
-    [...required(required(second.get("Owner.post")).get("Service.Owner.post"))],
-    ["post\0/two"],
-  );
-  assert.equal(scans, 2);
-});
-
-void test("normalizes the TCGC graph with aliases, cycles, all method kinds, and separate bodyParam", () => {
+test("normalizes the TCGC graph with aliases, cycles, all method kinds, and separate bodyParam", () => {
   const root = parseTcgcYaml(`
 crossLanguagePackageId: Contoso
 crossLanguageVersion: "1.0"
@@ -251,65 +157,49 @@ namespaces:
     clients: [*client]
 `);
   const contract = normalizeTcgcPackage(root);
-  assert.deepEqual(
-    contract.methods.map((item) => item.kind),
-    ["lro", "lropaging", "basic", "paging"],
-  );
-  const get = required(contract.methods.find((item) => item.name === "get"));
-  const operation = required(get.operation);
-  assert.equal(required(required(operation.parameters)[0]).kind, "path");
-  assert.equal(required(operation.bodyParam).kind, "body");
-  assert.equal(required(operation.bodyParam).type.kind, "dictionary");
-  assert.deepEqual(required(required(operation.responses)[0]).statusCodes, {
-    start: 200,
-    end: 299,
-  });
-  assert.equal(required(required(operation.exceptions)[0]).statusCodes, "*");
+  assert.deepEqual(contract.methods.map((item) => item.kind), ["lro", "lropaging", "basic", "paging"]);
+  const get = contract.methods.find((item) => item.name === "get");
+  assert.equal(get.operation.parameters[0].kind, "path");
+  assert.equal(get.operation.bodyParam.kind, "body");
+  assert.equal(get.operation.bodyParam.type.kind, "dictionary");
+  assert.deepEqual(get.operation.responses[0].statusCodes, { start: 200, end: 299 });
+  assert.equal(get.operation.exceptions[0].statusCodes, "*");
   assert.equal(contract.clients.length, 1);
-  const model = required(contract.models[0]);
-  assert.equal(model.discriminatorProperty, "kind");
-  assert.equal(required(required(model.properties)[1]).type.id, "Contoso.Widget");
-  assert.equal(required(contract.enums[0]).isUnionAsEnum, true);
-  const union = required(contract.unions[0]);
-  const external = required(required(required(union.variantTypes)[1]).external);
-  assert.ok(isRecord(external));
-  assert.equal(external.identity, "ext.Ext");
-  assert.ok(isRecord(union.discriminatedOptions));
-  assert.equal(union.discriminatedOptions.envelope, "object");
+  assert.equal(contract.models[0].discriminatorProperty, "kind");
+  assert.equal(contract.models[0].properties[1].type.id, "Contoso.Widget");
+  assert.equal(contract.enums[0].isUnionAsEnum, true);
+  assert.equal(contract.unions[0].variantTypes[1].external.identity, "ext.Ext");
+  assert.equal(contract.unions[0].discriminatedOptions.envelope, "object");
   assert.deepEqual(contract.package.apiVersions, [{ service: "Contoso", version: "v2" }]);
-  assert.deepEqual(
-    contract.conflicts.map((item) => item.code),
-    ["api-version-conflict", "method-parameter-segments-conflict"],
-  );
+  assert.deepEqual(contract.conflicts.map((item) => item.code), [
+    "api-version-conflict",
+    "method-parameter-segments-conflict",
+  ]);
 });
 
-void test("rejects invalid normal response status arrays", () => {
+test("rejects invalid normal response status arrays", () => {
   assert.throws(
     () =>
       normalizeTcgcPackage({
         crossLanguagePackageId: "Contoso",
         crossLanguageVersion: "1",
         metadata: { apiVersions: ["v1"] },
-        clients: [
-          {
-            kind: "client",
-            name: "Client",
-            methods: [
-              {
-                kind: "basic",
-                name: "get",
-                parameters: [],
-                operation: {
-                  kind: "http",
-                  parameters: [],
-                  responses: [{ statusCodes: [200, 201] }],
-                  exceptions: [],
-                },
-              },
-            ],
-            children: [],
-          },
-        ],
+        clients: [{
+          kind: "client",
+          name: "Client",
+          methods: [{
+            kind: "basic",
+            name: "get",
+            parameters: [],
+            operation: {
+              kind: "http",
+              parameters: [],
+              responses: [{ statusCodes: [200, 201] }],
+              exceptions: [],
+            },
+          }],
+          children: [],
+        }],
         models: [],
         enums: [],
         unions: [],

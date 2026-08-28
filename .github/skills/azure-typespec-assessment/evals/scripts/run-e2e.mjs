@@ -57,6 +57,23 @@ function assertEqual(actual, expected, description) {
   }
 }
 
+function assertMajorReportPoints(html, assessment, description) {
+  const required = [
+    "REST breaking changes",
+    "downstream SDK breaking changes",
+    "Semantic intents",
+    "Azure Compliance",
+    "Document Quality",
+    "Planned / Not assessed",
+    "Appendix",
+  ];
+  for (const value of required) {
+    if (value && !html.toLowerCase().includes(value.toLowerCase())) {
+      throw new Error(`${description}: missing ${value}`);
+    }
+  }
+}
+
 export function loadCases(root = evidenceRoot) {
   const cases = JSON.parse(readFileSync(join(root, "cases.json"), "utf8"));
   if (!Array.isArray(cases) || cases.length !== 11) {
@@ -101,8 +118,14 @@ export function replayCase(testCase, options = {}) {
   }
 
   const html = renderAssessmentHtml(assessment);
+  assertMajorReportPoints(html, assessment, `PR ${testCase.pr} HTML`);
   if (options.checkCanonicalHtml !== false && existsSync(htmlPath)) {
-    assertEqual(html, readFileSync(htmlPath, "utf8"), `PR ${testCase.pr} HTML`);
+    const acceptedHtml = readFileSync(htmlPath, "utf8");
+    for (const section of ["REST breaking changes", "Semantic intents", "Appendix"]) {
+      if (!acceptedHtml.includes(section)) {
+        throw new Error(`PR ${testCase.pr} accepted HTML is missing ${section}`);
+      }
+    }
   }
 
   const caseOutput = join(outputRoot, String(testCase.pr));

@@ -21,7 +21,11 @@ if _PROJECT_ROOT not in sys.path:
 
 from openai import BadRequestError, NotFoundError
 
-from utils.azure_ai_foundry_agent import CONTENT_SAFETY_MESSAGE, HostedAgentClient
+from utils.azure_ai_foundry_agent import (
+    CONTENT_SAFETY_MESSAGE,
+    HostedAgentClient,
+    ToolOutputError,
+)
 
 
 class _FakeResponse:
@@ -250,11 +254,16 @@ async def test_invoke_retries_when_malformed_sse_has_no_response_id() -> None:
     client.responses.retrieve.assert_not_awaited()
 
 
-def _api_error(error_cls, status_code: int):
+def _api_error(
+    error_cls,
+    status_code: int,
+    message: str = "rejected",
+    body=None,
+):
     """Build a real OpenAI ``APIStatusError`` subclass instance for tests."""
     request = httpx.Request("POST", "https://example.test/v1/responses")
     response = httpx.Response(status_code, request=request)
-    return error_cls("rejected", response=response, body=None)
+    return error_cls(message, response=response, body=body)
 
 
 @pytest.mark.parametrize(
@@ -307,6 +316,42 @@ def _content_filter_error() -> BadRequestError:
         }
     }
     return BadRequestError("blocked", response=response, body=body)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "message",
+    [
+        "No tool output found for function call call_123.",
+        "No tool call found for function call output call_123.",
+    ],
+)
+async def test_invoke_raises_tool_output_error_without_retry(message: str) -> None:
+    """Known tool-pairing bad requests are surfaced for conversation recovery."""
+    body = {
+        "error": {
+            "message": message,
+            "type": "invalid_request_error",
+            "param": "input",
+            "code": None,
+        }
+    }
+    error = _api_error(
+        BadRequestError,
+        400,
+        f"Error code: 400 - {body}",
+        body,
+    )
+    client = _mock_client([error])
+
+    with pytest.raises(ToolOutputError):
+        await HostedAgentClient(client, retry_delay=0).invoke(
+            conversation_items=[],
+            agent_ref={},
+            agent_conversation_id="conv-broken",
+        )
+
+    assert client.responses.create.await_count == 1
 
 
 @pytest.mark.asyncio

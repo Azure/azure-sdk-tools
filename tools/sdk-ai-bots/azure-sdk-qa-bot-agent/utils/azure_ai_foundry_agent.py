@@ -51,9 +51,18 @@ CONTENT_SAFETY_MESSAGE = (
     "our content safety policy. Please rephrase your message and try again."
 )
 
+_TOOL_OUTPUT_ERRORS = (
+    "no tool output found for function call",
+    "no tool call found for function call output",
+)
+
 
 class EmptyAgentResponseError(Exception):
     """Raised when the agent completes with empty ``output_text`` (retryable)."""
+
+
+class ToolOutputError(Exception):
+    """Raised when stored conversation history contains invalid tool output."""
 
 
 def _is_content_filter_error(ex: BadRequestError) -> bool:
@@ -178,6 +187,13 @@ class HostedAgentClient:
                         exc_info=True,
                     )
                     return None, _build_content_safety_response()
+                if isinstance(ex, BadRequestError) and any(
+                    message in str(ex).lower() for message in _TOOL_OUTPUT_ERRORS
+                ):
+                    # Retrying the same corrupted tool history cannot succeed;
+                    # let the service rebuild the conversation instead.
+                    # This is a known bug for foundry agent: https://github.com/Azure/azure-sdk-for-python/issues/46092
+                    raise ToolOutputError(str(ex)) from ex
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
                     set_stateless_session_id(None)

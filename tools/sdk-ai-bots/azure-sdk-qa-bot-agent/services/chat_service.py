@@ -22,7 +22,7 @@ from models.chat import (
     ConversationItem,
     Role,
 )
-from models.conversation import ConversationMessage
+from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
@@ -37,7 +37,6 @@ from utils.azure_ai_foundry import (
     get_stateless_session_id,
     set_stateless_session_id,
 )
-from utils.azure_ai_foundry_agent import HostedAgentClient
 from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
@@ -48,6 +47,7 @@ from openai import (
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
+from utils.azure_ai_foundry_agent import HostedAgentClient, ToolOutputError
 from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseOutputItem,
@@ -122,18 +122,17 @@ class ChatService:
                 openai_client, req
             )
             agent_session_id = None
+        tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
+        tenant_system_item = cast(
+            ResponseInputItemParam,
+            ConversationItem(
+                role=Role.System,
+                content=tenant_system_msg,
+            ).model_dump(mode="json", exclude_none=True),
+        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
-            tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
-            conversation_items.append(
-                cast(
-                    ResponseInputItemParam,
-                    ConversationItem(
-                        role=Role.System,
-                        content=tenant_system_msg,
-                    ).model_dump(mode="json", exclude_none=True),
-                )
-            )
+            conversation_items.append(tenant_system_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -183,12 +182,37 @@ class ChatService:
         }
 
         agent_client = HostedAgentClient(openai_client)
-        trace_id, response = await agent_client.invoke(
-            conversation_items=conversation_items,
-            agent_conversation_id=agent_conversation_id,
-            agent_session_id=agent_session_id,
-            agent_ref=agent_ref,
-        )
+        try:
+            trace_id, response = await agent_client.invoke(
+                conversation_items=conversation_items,
+                agent_conversation_id=agent_conversation_id,
+                agent_session_id=agent_session_id,
+                agent_ref=agent_ref,
+            )
+        except ToolOutputError:
+            if not agent_conversation_id:
+                raise
+            agent_conversation_id, conversation_items = (
+                await self._rebuild_conversation_after_failure(
+                    req.conversation_id,
+                    req.conversation_type,
+                )
+            )
+            # The replacement conversation has no tenant context of its own.
+            conversation_items.insert(0, tenant_system_item)
+            # Additional infos are not persisted in Cosmos; reuse the items already built.
+            conversation_items.extend(additional_items)
+            # Replace the poisoned mapping before the single recovery attempt.
+            await self._conversation_service.save_agent_conversation_mapping(
+                req.conversation_id,
+                req.conversation_type,
+                agent_conversation_id=agent_conversation_id,
+            )
+            trace_id, response = await agent_client.invoke(
+                conversation_items=conversation_items,
+                agent_conversation_id=agent_conversation_id,
+                agent_ref=agent_ref,
+            )
         # Cache the warm sandbox id so later stateless calls reuse it.
         if stateless and not self._get_stateless_session_id():
             extra = getattr(response, "model_extra", None) or {}
@@ -326,6 +350,72 @@ class ChatService:
 
         logger.info("Created new AI Foundry conversation: %s", new_id)
         return new_id, True
+
+    async def _rebuild_conversation_after_failure(
+        self,
+        conversation_id: str | None,
+        conversation_type: ConversationType | None,
+    ) -> tuple[str, list[ResponseInputItemParam]]:
+        """Replace corrupted history and replay only safe message items."""
+        openai_client = self._get_openai_client()
+        replay_items = await self._list_message_items(
+            conversation_id,
+            conversation_type,
+        )
+
+        replacement = await openai_client.conversations.create()
+        replacement_id = replacement.id
+
+        logger.info(
+            "Created replacement Foundry conversation %s: replay_messages=%d",
+            replacement_id,
+            len(replay_items),
+        )
+        return replacement_id, replay_items
+
+    async def _list_message_items(
+        self,
+        conversation_id: str | None,
+        conversation_type: ConversationType | None,
+    ) -> list[ResponseInputItemParam]:
+        """Read replayable conversation messages from Cosmos in chronological order."""
+        replay: list[ResponseInputItemParam] = []
+        if not conversation_id or not conversation_type:
+            return replay
+        try:
+            messages = await self._conversation_service.get_messages_by_conversation_id(
+                conversation_id,
+                conversation_type,
+            )
+            for message in messages:
+                if message.sender_role == Role.User:
+                    role = Role.User
+                elif message.sender_role in (Role.System, Role.Assistant):
+                    role = Role.Assistant
+                else:
+                    continue
+
+                replay.append(
+                    cast(
+                        ResponseInputItemParam,
+                        ConversationItem(
+                            role=role,
+                            content=message.content,
+                            user_id=(message.sender_id if role == Role.User else None),
+                            user_name=(
+                                message.sender_name if role == Role.User else None
+                            ),
+                        ).model_dump(mode="json", exclude_none=True),
+                    )
+                )
+        except Exception:
+            logger.warning(
+                "Failed to read messages from Cosmos conversation %s; "
+                "continuing with fresh history",
+                conversation_id,
+                exc_info=True,
+            )
+        return replay
 
     async def _build_additional_info_items(
         self,

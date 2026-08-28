@@ -91,7 +91,6 @@ extends:
                     --ignore=tests/github_tools_test.py \
                     --ignore=tests/knowledge_tools_test.py \
                     --ignore=tests/intention_service_test.py \
-                    --ignore=tests/conversation_evaluation_test.py \
                     --ignore=tests/knowledge_retrieve_service_test.py \
                     --cov=config \
                     --cov=services \

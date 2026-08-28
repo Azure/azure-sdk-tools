@@ -177,6 +177,7 @@ def main() -> None:
     registry = cfg("ACR_LOGIN_SERVER")
     project_endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
     appconfig_endpoint = args.appconfig_endpoint
+    candidate_appconfig_endpoint = os.environ.get("CANDIDATE_APPCONFIG_ENDPOINT")
 
     if not registry:
         sys.exit("ERROR: ACR_LOGIN_SERVER not found in App Configuration")
@@ -186,6 +187,11 @@ def main() -> None:
         sys.exit(
             "ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint"
         )
+    if (
+        args.agent_name == "chatbot_evolution_agent"
+        and not candidate_appconfig_endpoint
+    ):
+        sys.exit("ERROR: CANDIDATE_APPCONFIG_ENDPOINT not set in the environment")
 
     print(f"Deployment config:")
     print(f"  Registry: {registry}")
@@ -270,6 +276,8 @@ def main() -> None:
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
+        if candidate_appconfig_endpoint:
+            env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 
         # Ensure Content-safety guardrail.
         rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")

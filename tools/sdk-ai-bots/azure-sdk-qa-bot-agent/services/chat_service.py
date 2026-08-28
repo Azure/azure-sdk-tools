@@ -47,7 +47,7 @@ from openai import (
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
-from utils.azure_ai_foundry_agent import HostedAgentClient, ToolOutputError
+from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
 from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseOutputItem,
@@ -189,7 +189,7 @@ class ChatService:
                 agent_session_id=agent_session_id,
                 agent_ref=agent_ref,
             )
-        except ToolOutputError:
+        except ConversationBrokenError:
             if not agent_conversation_id:
                 raise
             agent_conversation_id, conversation_items = (

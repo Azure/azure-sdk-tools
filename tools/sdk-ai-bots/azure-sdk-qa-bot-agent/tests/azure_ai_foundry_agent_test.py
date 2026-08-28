@@ -24,7 +24,7 @@ from openai import BadRequestError, NotFoundError
 from utils.azure_ai_foundry_agent import (
     CONTENT_SAFETY_MESSAGE,
     HostedAgentClient,
-    ToolOutputError,
+    ConversationBrokenError,
 )
 
 
@@ -135,7 +135,7 @@ async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
 
 @pytest.mark.asyncio
 async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
-    """When every attempt is empty, retries exhaust and a RuntimeError is raised."""
+    """Stateless empty responses exhaust retries without history recovery."""
     client = _mock_client(
         lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
     )
@@ -150,6 +150,26 @@ async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
             )
 
     assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_invoke_recovers_thread_after_empty_response_polling_exhausted() -> None:
+    """An empty threaded response triggers recovery after polling is exhausted."""
+    client = _mock_client(
+        lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
+    )
+
+    with patch.object(
+        HostedAgentClient, "_poll_response", AsyncMock(side_effect=lambda r: r)
+    ):
+        with pytest.raises(ConversationBrokenError):
+            await HostedAgentClient(client, max_retries=2, retry_delay=0).invoke(
+                conversation_items=[],
+                agent_ref={},
+                agent_conversation_id="conv-broken",
+            )
+
+    assert client.responses.create.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -316,35 +336,6 @@ def _content_filter_error() -> BadRequestError:
         }
     }
     return BadRequestError("blocked", response=response, body=body)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "message",
-    [
-        "No tool output found for function call call_123.",
-        "No tool call found for function call output call_123.",
-    ],
-)
-async def test_invoke_raises_tool_output_error_from_runtime_error(
-    message: str,
-) -> None:
-    """Known tool-pairing runtime errors trigger conversation recovery."""
-
-    async def _failed_stream():
-        raise RuntimeError(message)
-        yield
-
-    client = _mock_client([_failed_stream()])
-
-    with pytest.raises(ToolOutputError):
-        await HostedAgentClient(client, retry_delay=0).invoke(
-            conversation_items=[],
-            agent_ref={},
-            agent_conversation_id="conv-broken",
-        )
-
-    assert client.responses.create.await_count == 1
 
 
 @pytest.mark.asyncio

@@ -51,18 +51,12 @@ CONTENT_SAFETY_MESSAGE = (
     "our content safety policy. Please rephrase your message and try again."
 )
 
-_TOOL_OUTPUT_ERRORS = (
-    "no tool output found for function call",
-    "no tool call found for function call output",
-)
-
-
 class EmptyAgentResponseError(Exception):
     """Raised when the agent completes with empty ``output_text`` (retryable)."""
 
 
-class ToolOutputError(Exception):
-    """Raised when stored conversation history contains invalid tool output."""
+class ConversationBrokenError(Exception):
+    """Raised when a threaded conversation can no longer produce a response."""
 
 
 def _is_content_filter_error(ex: BadRequestError) -> bool:
@@ -227,6 +221,8 @@ class HostedAgentClient:
             except EmptyAgentResponseError as ex:
                 last_error = ex
                 await self.close_stream(stream)
+                if agent_conversation_id:
+                    raise ConversationBrokenError(str(ex)) from ex
                 logger.warning(
                     "Agent returned no usable response (attempt %d/%d): "
                     "conversation=%s, error=%s",
@@ -238,15 +234,9 @@ class HostedAgentClient:
             except RuntimeError as ex:
                 last_error = ex
                 await self.close_stream(stream)
-                if any(
-                    message in str(ex).lower() for message in _TOOL_OUTPUT_ERRORS
-                ):
-                    # Retrying the same corrupted tool history cannot succeed;
-                    # let the service rebuild the conversation instead.
-                    # This is a known bug for foundry agent: https://github.com/Azure/azure-sdk-for-python/issues/46092
-                    raise ToolOutputError(str(ex)) from ex
                 logger.warning(
-                    "Agent returned no usable response (attempt %d/%d): "
+                    "Agent invocation failed with a retryable runtime error "
+                    "(attempt %d/%d): "
                     "conversation=%s, error=%s",
                     attempt,
                     self._max_retries,
@@ -259,7 +249,7 @@ class HostedAgentClient:
             await asyncio.sleep(self._retry_delay * attempt)
 
         raise RuntimeError(
-            f"Failed to obtain a non-empty agent response after "
+            f"Failed to obtain an agent response after "
             f"{self._max_retries} attempts (conversation={agent_conversation_id})"
         ) from last_error
 

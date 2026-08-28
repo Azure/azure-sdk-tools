@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.38 (Unreleased)
+## 0.6.39 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,13 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.38 (2026-08-26)
+
+### Features Added
+
+- `package mark-released` output now includes the API Review Hub approval record ID and applied inheritance rule.
+- `package get-approval-status` output now includes IDs for API Review Hub approval records.
 
 ## 0.6.37 (2026-08-21)
 

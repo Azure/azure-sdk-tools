@@ -217,6 +217,11 @@ public class PackageApprovalStatusTool(
             var versionText = string.IsNullOrWhiteSpace(approval.Version) ? string.Empty : $" (version {approval.Version})";
             details.Add($"- {approval.Status}: {approval.ApiHash}{matchText}{versionText}");
 
+            if (!string.IsNullOrWhiteSpace(approval.Id))
+            {
+                details.Add($"  Approval record ID: {approval.Id}");
+            }
+
             if (!string.IsNullOrWhiteSpace(approval.LastUpdatedBy) || !string.IsNullOrWhiteSpace(approval.LastUpdatedOn))
             {
                 details.Add($"  Updated by: {approval.LastUpdatedBy ?? "unknown"}{FormatOnSuffix(approval.LastUpdatedOn)}");

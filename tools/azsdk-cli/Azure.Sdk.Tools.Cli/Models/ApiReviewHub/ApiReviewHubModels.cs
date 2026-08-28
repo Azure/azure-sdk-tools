@@ -52,6 +52,10 @@ public class ApiReviewHubMarkReleasedResult
     public required string Version { get; set; }
     public required string ReleasedApiHash { get; set; }
     public required string ApprovalStatus { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ApprovalRecordId { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AppliedInheritanceRule { get; set; }
     public bool IsReleased { get; set; }
     public DateTimeOffset? ReleasedOn { get; set; }
 }
@@ -104,6 +108,10 @@ public class OperationStatus
 
 public class ApiReviewHubApprovalRecord
 {
+    [JsonPropertyName("id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Id { get; set; }
+
     [JsonPropertyName("apiHash")]
     public string ApiHash { get; set; } = string.Empty;
 

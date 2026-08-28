@@ -1,396 +1,63 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://azure.github.io/azure-sdk-tools/schemas/assessment-judgment.schema.json",
-  "title": "Azure TypeSpec assessment judgment",
+  "title": "TypeSpec Assessment Judgment",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schemaVersion",
     "semanticIntents",
-    "restCandidates",
-    "downstreamCandidates",
-    "compliance",
+    "restDecisions",
+    "downstreamDecisions",
     "overallConfidence",
     "blockers"
   ],
   "properties": {
-    "schemaVersion": {
-      "const": 1
-    },
-    "pr": {
-      "oneOf": [
-        {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 9007199254740991
-        },
-        {
-          "type": "string",
-          "pattern": "^0*[1-9][0-9]*$"
-        }
-      ]
-    },
+    "schemaVersion": { "const": 1 },
     "semanticIntents": {
       "type": "array",
-      "minItems": 1,
       "items": {
-        "$ref": "#/$defs/semanticIntent"
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reviewUnitId",
+          "title",
+          "summary",
+          "sourceChangeIds",
+          "operationIds"
+        ],
+        "properties": {
+          "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
+          "title": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "sourceChangeIds": { "type": "array", "items": { "type": "string" } },
+          "operationIds": { "type": "array", "items": { "type": "string" } }
+        }
       }
     },
-    "restCandidates": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/candidateDecision"
-      }
-    },
-    "downstreamCandidates": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/candidateDecision"
-      }
-    },
-    "compliance": {
-      "$ref": "#/$defs/compliance"
-    },
-    "overallConfidence": {
-      "$ref": "#/$defs/confidence"
-    },
-    "blockers": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/nonEmptyString"
-      }
-    }
+    "restDecisions": { "$ref": "#/$defs/decisions" },
+    "downstreamDecisions": { "$ref": "#/$defs/decisions" },
+    "overallConfidence": { "enum": ["high", "medium", "low"] },
+    "blockers": { "type": "array", "items": { "type": "string" } }
   },
   "$defs": {
-    "nonEmptyString": {
-      "type": "string",
-      "minLength": 1
-    },
-    "uniqueStrings": {
+    "decisions": {
       "type": "array",
-      "uniqueItems": true,
       "items": {
-        "$ref": "#/$defs/nonEmptyString"
-      }
-    },
-    "confidence": {
-      "enum": [
-        "high",
-        "medium",
-        "low"
-      ]
-    },
-    "severity": {
-      "enum": [
-        "high",
-        "medium",
-        "low"
-      ]
-    },
-    "semanticIntent": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "reviewUnitId",
-        "title",
-        "rationale",
-        "operationChangeIds",
-        "operationGroupIds",
-        "sourceChangeIds",
-        "sourcePaths"
-      ],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/nonEmptyString"
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidateId", "decision", "rationale"],
+        "properties": {
+          "candidateId": { "type": "string" },
+          "decision": { "enum": ["approve", "reject"] },
+          "severity": { "enum": ["high", "medium", "low"] },
+          "rationale": { "type": "string", "minLength": 1 }
         },
-        "reviewUnitId": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "title": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "rationale": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "operationChangeIds": {
-          "$ref": "#/$defs/uniqueStrings"
-        },
-        "operationGroupIds": {
-          "$ref": "#/$defs/uniqueStrings"
-        },
-        "sourceChangeIds": {
-          "$ref": "#/$defs/uniqueStrings"
-        },
-        "sourcePaths": {
-          "$ref": "#/$defs/uniqueStrings"
-        },
-        "aspects": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["field", "before", "after"],
-            "properties": {
-              "field": { "$ref": "#/$defs/nonEmptyString" },
-              "before": { "$ref": "#/$defs/nonEmptyString" },
-              "after": { "$ref": "#/$defs/nonEmptyString" }
-            }
+        "allOf": [
+          {
+            "if": { "properties": { "decision": { "const": "approve" } } },
+            "then": { "required": ["severity"] }
           }
-        }
-      }
-    },
-    "candidateDecision": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "id",
-            "decision",
-            "rationale"
-          ],
-          "properties": {
-            "id": {
-              "$ref": "#/$defs/nonEmptyString"
-            },
-            "decision": {
-              "const": "approve"
-            },
-            "severity": {
-              "$ref": "#/$defs/severity"
-            },
-            "rationale": {
-              "$ref": "#/$defs/nonEmptyString"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "id",
-            "decision",
-            "rationale"
-          ],
-          "properties": {
-            "id": {
-              "$ref": "#/$defs/nonEmptyString"
-            },
-            "decision": {
-              "const": "reject"
-            },
-            "rationale": {
-              "$ref": "#/$defs/nonEmptyString"
-            }
-          }
-        }
-      ]
-    },
-    "complianceFinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "title",
-        "severity",
-        "summary",
-        "documentationUrl",
-        "evidence",
-        "sourceChangeIds",
-        "sourcePaths"
-      ],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "title": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "severity": {
-          "$ref": "#/$defs/severity"
-        },
-        "summary": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "documentationUrl": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https://(azure\\.github\\.io/typespec-azure|typespec\\.io)/"
-        },
-        "evidence": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/nonEmptyString"
-            },
-            {
-              "type": "array",
-              "minItems": 1,
-              "uniqueItems": true,
-              "items": {
-                "$ref": "#/$defs/nonEmptyString"
-              }
-            }
-          ]
-        },
-        "sourceChangeIds": {
-          "$ref": "#/$defs/uniqueStrings"
-        },
-        "sourcePaths": {
-          "$ref": "#/$defs/uniqueStrings"
-        }
-      }
-    },
-    "complianceReview": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "decision",
-        "rationale"
-      ],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "decision": {
-          "enum": [
-            "applicable-pass",
-            "applicable-fail",
-            "not-applicable",
-            "not-assessed"
-          ]
-        },
-        "rationale": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "findingId": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "decision": {
-                "const": "applicable-fail"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "findingId"
-            ]
-          },
-          "else": {
-            "not": {
-              "required": [
-                "findingId"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    "compliance": {
-      "type": "object",
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "failed"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "documentUrls": {
-                "minItems": 1
-              },
-              "findings": {
-                "minItems": 1
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "passed"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "documentUrls": {
-                "minItems": 1
-              },
-              "findings": {
-                "maxItems": 0
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "not-assessed"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "findings": {
-                "maxItems": 0
-              }
-            }
-          }
-        }
-      ],
-      "required": [
-        "status",
-        "rationale",
-        "documentUrls",
-        "reviews",
-        "findings"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "passed",
-            "failed",
-            "not-assessed"
-          ]
-        },
-        "rationale": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "documentUrls": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "reviews": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/complianceReview"
-          }
-        },
-        "findings": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/complianceFinding"
-          }
-        }
+        ]
       }
     }
   }

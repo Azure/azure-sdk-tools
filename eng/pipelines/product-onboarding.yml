@@ -2,16 +2,19 @@ trigger: none
 pr: none
 
 schedules:
-- cron: "0 * * * *" # every hour
+- cron: "0 */4 * * *" # every 4 hours (0-4-8-12-16-20@UTC = 16-20-0-4-8-12@PST = 17-21-1-5-9-13@PDT)
   displayName: 'Scheduled Product Onboarding Issue Processing'
   branches:
     include:
     - main
   always: true
 
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
 pool:
-  name: azsdk-pool
-  demands: ImageOverride -equals windows-2022
+  name: $(LINUXPOOL)
+  demands: ImageOverride -equals $(LINUXVMIMAGE)
 
 steps:
 - template: /eng/common/pipelines/templates/steps/login-to-github.yml

@@ -27,7 +27,7 @@ $issues_count = 0
 if ($null -ne $issues) {
   $issues_count = $issues.Count
 }
-[Console]::Error.WriteLine("Found $issues_count issues to process.")
+Write-Host "Found $issues_count issues to process."
 
 foreach ($issue_number in $issues) {
   $issue = gh issue view $issue_number --repo "$issues_repo"
@@ -113,7 +113,7 @@ foreach ($issue_number in $issues) {
     -and ($submitter         -ne "") `
   ) {
     $needs_sdk_bool = ($needs_sdk_str -ieq "Yes")
-    [Console]::Error.WriteLine("Processing issue #$issue_number.")
+    Write-Host "Processing issue #$issue_number."
 
     $sync_success = $false
     try {
@@ -131,8 +131,10 @@ foreach ($issue_number in $issues) {
 
       $sync_success = $true
     } catch {
-      [Console]::Error.WriteLine("Error syncing product onboarding status: $_")
-      [Console]::Error.WriteLine($_.Exception.StackTrace)
+      $error_msg = "Error syncing product onboarding status:`n"
+      $error_detail = "$_`n" + $_.Exception.StackTrace
+      Write-Host "$error_msg$error_detail"
+      gh issue comment $issue_number --body "$error_msg```````n$error_detail`n``````" --repo "$issues_repo"
     }
 
     if ($sync_success) {
@@ -140,6 +142,6 @@ foreach ($issue_number in $issues) {
       gh issue close $issue_number --repo "$issues_repo"
     }
   } else {
-    [Console]::Error.WriteLine("Error parsing issue #$issue_number.")
+    Write-Host "Error parsing issue #$issue_number."
   }
 }

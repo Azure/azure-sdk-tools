@@ -37,21 +37,21 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
   $PSNativeCommandUseErrorActionPreference = $true
 }
 
-[Console]::Error.WriteLine("Syncing product onboarding status:" `
-   + "`n`tProduct ID:        '$ProductID'" `
-   + "`n`tProduct Name:      '$ProductName'" `
-   + "`n`tProduct Type:      '$ProductType'" `
-   + "`n`tProduct Lifecycle: '$ProductLifecycle'" `
-   + "`n`n" `
-   + "`n`tService ID:        '$ServiceID'" `
-   + "`n`tService Name:      '$ServiceName'" `
-   + "`n`n" `
-   + "`n`tNeeds SDK:         '$NeedsSDK'" `
-   + "`n`tData Plane:        '$DataPlane'" `
-   + "`n`tManagement Plane:  '$MgmtPlane'" `
-   + "`n`n" `
-   + "`n`tSubmitter:         '$Submitter'" `
-   + "`n`n")
+Write-Host "Syncing product onboarding status:" `
+  "`n`tProduct ID:        '$ProductID'" `
+  "`n`tProduct Name:      '$ProductName'" `
+  "`n`tProduct Type:      '$ProductType'" `
+  "`n`tProduct Lifecycle: '$ProductLifecycle'" `
+  "`n`n" `
+  "`n`tService ID:        '$ServiceID'" `
+  "`n`tService Name:      '$ServiceName'" `
+  "`n`n" `
+  "`n`tNeeds SDK:         '$NeedsSDK'" `
+  "`n`tData Plane:        '$DataPlane'" `
+  "`n`tManagement Plane:  '$MgmtPlane'" `
+  "`n`n" `
+  "`n`tSubmitter:         '$Submitter'" `
+  "`n`n"
 
 $azsdk = "azsdk"
 if ($env:AZSDK) {

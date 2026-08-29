@@ -142,6 +142,7 @@ foreach ($issue_number in $issues) {
       gh issue close $issue_number --repo "$issues_repo"
     }
   } else {
-    Write-Host "Error parsing issue #$issue_number."
+    Write-Host "Error parsing issue #$issue_number."\
+    gh issue comment $issue_number --body "Error parsing the issue. Is all the required data present?" --repo "$issues_repo"
   }
 }

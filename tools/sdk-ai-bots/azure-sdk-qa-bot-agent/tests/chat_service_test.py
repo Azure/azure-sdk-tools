@@ -9,19 +9,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
-if _PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, _PROJECT_ROOT)
-
 from models.chat import ChatRequest, Message as ChatMessage
 from services.chat_service import ChatService
-
 
 # -- Memory scope handling ------------
 
 
 def test_chat_service_resolves_memory_scope() -> None:
-    service = ChatService(settings=lambda _key, default="": default)
+    service = ChatService()
 
     # user_id present → user_{user_id}
     with_user_id = ChatRequest(
@@ -63,7 +58,7 @@ def test_chat_service_resolves_memory_scope() -> None:
 
 def test_chat_service_returns_none_when_user_id_empty() -> None:
     """Empty/whitespace user_id returns None."""
-    service = ChatService(settings=lambda _key, default="": default)
+    service = ChatService()
 
     empty_id = ChatRequest(
         tenant_id="azure_sdk_qa_bot",

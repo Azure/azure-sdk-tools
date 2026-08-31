@@ -6,6 +6,11 @@
 
 - Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
 
+### Bugs Fixed
+
+- Ignore API version associated with unknown language emitter configuration in metadata output.
+- Ignore unsupported languages when updating the languages in release plan.
+
 ## 0.6.39 (2026-08-31)
 
 ### Features Added

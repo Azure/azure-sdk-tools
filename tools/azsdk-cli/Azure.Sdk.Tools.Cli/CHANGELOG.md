@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.39 (Unreleased)
+## 0.6.39 (2026-08-31)
 
 ### Features Added
 
@@ -9,10 +9,6 @@
 ### Breaking Changes
 
 - Removed the option to force create a release plan to avoid duplicate release plan.
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 0.6.38 (2026-08-26)
 

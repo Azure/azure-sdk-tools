@@ -75,17 +75,25 @@ public class PipelineFixEvaluatorTool(
 
             // Read the clock once so the window reported back is exactly the window that was queried.
             var windowEnd = (until ?? DateTimeOffset.UtcNow).ToUniversalTime();
-            var since = windowEnd.AddDays(-sinceDays);
-
-            var results = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(owner, repo, since, windowEnd, ct);
+            List<PipelineFixDateEvaluation> dates = [];
+            for (var dayOffset = 0; dayOffset < sinceDays; dayOffset++)
+            {
+                var dayUntil = windowEnd.AddDays(-dayOffset);
+                var daySince = dayUntil.AddDays(-1);
+                var evaluations = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(
+                    owner, repo, daySince, dayUntil, ct);
+                dates.Add(new PipelineFixDateEvaluation
+                {
+                    Date = DateOnly.FromDateTime(dayUntil.UtcDateTime),
+                    Evaluations = evaluations,
+                });
+            }
 
             return new PipelineFixEvaluatorResponse
             {
                 Owner = owner,
                 Repo = repo,
-                Since = since,
-                Until = windowEnd,
-                Results = results,
+                Dates = dates,
             };
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)

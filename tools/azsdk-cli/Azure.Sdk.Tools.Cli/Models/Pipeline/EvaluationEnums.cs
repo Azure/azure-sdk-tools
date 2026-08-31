@@ -4,22 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Pipeline;
 
-
-/// <summary>
-/// How Copilot came to make the commit. The two paths deliver a fix differently - the workflow publishes a
-/// separate branch, a mention pushes onto the pull request branch in place - so the trigger is what tells a
-/// reader which delivery path an outcome is a verdict on.
-/// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum CopilotFixTrigger
-{
-    /// The pipeline-analysis auto-fix workflow produced the commit on a pipeline-fix/pr-N branch.
-    GitHubActionsWorkflow,
-
-    /// Somebody directed Copilot at the pull request with an @copilot mention.
-    CopilotMention,
-}
-
 /// <summary>
 /// Whether the Copilot fix changed the pipeline outcome.
 /// </summary>
@@ -34,18 +18,17 @@ public enum CopilotPipelineOutcome
 }
 
 /// <summary>
-/// Deterministic verification of a Copilot fix. Mention fixes are verified by their check transition;
-/// workflow fixes are verified by adoption into the original pull request.
+/// Deterministic verification of an automated workflow fix.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CopilotFixVerification
 {
     /// <summary>
-    /// The mention fixed a failing check without later human overlap, or the workflow branch commit entered the original pull request.
+    /// The workflow branch commit entered the original pull request and its fixed checks remained green.
     /// </summary>
     CopilotVerifiedFix,
 
-    /// <summary>A later human edit touched the Copilot fix, or a fixed check was explicitly failing at merge.</summary>
+    /// <summary>A later human commit rewrote lines changed by the adopted workflow fix.</summary>
     CopilotFixOverridden,
 
     /// <summary>The pipeline never recovered across the commit, so there is no fix whose survival can be judged.</summary>

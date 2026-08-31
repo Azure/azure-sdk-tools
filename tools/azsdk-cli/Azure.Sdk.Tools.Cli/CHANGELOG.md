@@ -12,6 +12,8 @@
 
 ### Bugs Fixed
 
+- `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged or has the required ARM/API stewardship sign-off, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
+
 ### Other Changes
 
 ## 0.6.38 (2026-08-26)

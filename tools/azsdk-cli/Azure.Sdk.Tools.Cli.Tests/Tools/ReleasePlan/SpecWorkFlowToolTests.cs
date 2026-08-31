@@ -257,6 +257,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var releasePlan = new ReleasePlanWorkItem
             {
+                IsSpecApproved = true,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -277,6 +278,84 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 workItemId: 456               
             );
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+        }
+
+        [Test]
+        public async Task GenerateSdk_BlockedWhenSpecPullRequestNotMergedOrApproved()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            // Open pull request with no sign-off label and not merged.
+            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                pullRequestNumber: 123,
+                workItemId: 456
+            );
+
+            Assert.That(result.ToString(), Does.Contain("has not been merged yet and does not have the required sign-off"));
+            Assert.That(result.ToString(), Does.Not.Contain("Azure DevOps pipeline"));
+        }
+
+        [Test]
+        public async Task GenerateSdk_BlockedWhenSpecPullRequestClosedWithoutMerge()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            // Pull request closed without merging.
+            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Closed, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                pullRequestNumber: 123,
+                workItemId: 456
+            );
+
+            Assert.That(result.ToString(), Does.Contain("was closed without being merged"));
+            Assert.That(result.ToString(), Does.Not.Contain("Azure DevOps pipeline"));
         }
 
         [Test]

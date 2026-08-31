@@ -1,10 +1,13 @@
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
@@ -16,6 +19,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForSpecPrUrl { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPath { get; set; }
         public string? ConfiguredReleasePlanForTypeSpecPathKey { get; set; }
+        public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPathAndApiVersion { get; set; }
+        public string? ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey { get; set; }
+        public string? ConfiguredApiVersionForTypeSpecPathAndApiVersion { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
@@ -364,6 +370,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult<ReleasePlanWorkItem?>(null);
         }
 
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct)
+        {
+            if (ConfiguredReleasePlanForTypeSpecPathAndApiVersion != null 
+                && typeSpecProjectPath == ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey
+                && apiVersion == ConfiguredApiVersionForTypeSpecPathAndApiVersion)
+            {
+                return Task.FromResult<ReleasePlanWorkItem?>(ConfiguredReleasePlanForTypeSpecPathAndApiVersion);
+            }
+
+            return Task.FromResult<ReleasePlanWorkItem?>(null);
+        }
+
         public Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default)
         {
             return Task.FromResult(new List<WorkItem>());
@@ -395,6 +413,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest)
+            => productId == serviceId
+                ? null
+                : await UpdateProductOnboardingAsync(
+                    123,
+                    new()
+                    {
+                        ProductId = productId,
+                        ProductName = "Product Name",
+                        ProductType = ProductType.Sku,
+                        ProductLifecycle = ProductLifecycle.InDev,
+                        ServiceId = serviceId,
+                        ServiceName = "Service Name",
+                        DataPlane = DataPlaneApplicability.Yes,
+                        ManagementPlane = ManagementPlaneApplicability.No,
+                        Submitter = "@handle",
+                    },
+                    ct,
+                    isTest);
+
+        public async Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+            => await UpdateProductOnboardingAsync(456, status, ct, isTest);
+
+        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        {
+            var wi = new ProductOnboardingWorkItem { WorkItemId = workItemId };
+            wi.SetFromProductOnboardingStatus(status);
+            wi.IsTestProductOnboarding = isTest;
+            return await Task.FromResult(wi);
         }
 
         public Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)

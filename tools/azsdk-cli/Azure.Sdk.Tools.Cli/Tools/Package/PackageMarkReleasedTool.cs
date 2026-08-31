@@ -73,20 +73,34 @@ public class PackageMarkReleasedTool(
         {
             JsonElement? reviewHubResponse = null;
             bool reviewHubSucceeded = false;
+            bool reviewHubSkipped = false;
             string reviewHubMessage;
-            try
+            if (string.IsNullOrWhiteSpace(apiHash))
             {
-                var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, repoOwner, ct, dryRun);
-                reviewHubResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
-                reviewHubSucceeded = true;
-                string reviewHubAction = dryRun ? "Dry run resolved" : "Release request resolved";
-                reviewHubMessage = $"{reviewHubAction} package version {result.PackageVersionId}; approval is {result.ApprovalStatus}, release state is {(result.IsReleased ? "released" : "not released")}.";
+                reviewHubSkipped = true;
+                reviewHubMessage = "Skipped because apiHash is required.";
+                reviewHubResponse = JsonSerializer.SerializeToElement(new
+                {
+                    Skipped = true,
+                    Message = reviewHubMessage
+                }, responseSerializerOptions);
             }
-            catch (Exception ex)
+            else
             {
-                logger.LogError(ex, "Failed to mark {packageName} {packageVersion} released in API Review Hub", packageName, packageVersion);
-                reviewHubResponse = GetRawErrorResponse(ex);
-                reviewHubMessage = ex.Message;
+                try
+                {
+                    var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, repoOwner, ct, dryRun);
+                    reviewHubResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
+                    reviewHubSucceeded = true;
+                    string reviewHubAction = dryRun ? "Dry run resolved" : "Release request resolved";
+                    reviewHubMessage = $"{reviewHubAction} package version {result.PackageVersionId}; approval is {result.ApprovalStatus}, release state is {(result.IsReleased ? "released" : "not released")}.";
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to mark {packageName} {packageVersion} released in API Review Hub", packageName, packageVersion);
+                    reviewHubResponse = GetRawErrorResponse(ex);
+                    reviewHubMessage = ex.Message;
+                }
             }
 
             JsonElement? apiViewResponse = null;
@@ -120,12 +134,12 @@ public class PackageMarkReleasedTool(
             }
 
             List<string> errors = [];
-            if (!reviewHubSucceeded)
+            if (!reviewHubSucceeded && !apiViewSucceeded)
             {
-                errors.Add($"API Review Hub: {reviewHubMessage}");
-            }
-            if (!apiViewSucceeded && apiViewFailureIsFatal)
-            {
+                if (!reviewHubSkipped)
+                {
+                    errors.Add($"API Review Hub: {reviewHubMessage}");
+                }
                 errors.Add($"APIView: {apiViewMessage}");
             }
 
@@ -135,6 +149,7 @@ public class PackageMarkReleasedTool(
                 Version = packageVersion,
                 ApiReviewHub = reviewHubResponse,
                 ApiReviewHubSucceeded = reviewHubSucceeded,
+                ApiReviewHubSkipped = reviewHubSkipped,
                 ApiReviewHubMessage = reviewHubMessage,
                 ApiView = apiViewResponse,
                 ApiViewSucceeded = apiViewSucceeded,

@@ -1,19 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Common;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
@@ -168,6 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
+        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct = default);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
@@ -175,6 +180,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
+        Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest);
+        Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest);
+        Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest);
         Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct);
     }
 
@@ -447,7 +455,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Get details from API spec work item
             try
             {
-                logger.LogInformation("Fetching API spec work item for release plan work item {workItemId}", releasePlan.WorkItemId);
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
@@ -483,7 +490,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 foreach (var workItem in apiSpecWorkItems)
                 {
-                    if (workItem.Relations.Any())
+                    if (workItem.Relations != null && workItem.Relations.Any())
                     {
                         var parent = workItem.Relations.FirstOrDefault(w => w.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
                         if (parent == null)
@@ -618,7 +625,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger.LogDebug("Input work item json: {releasePlanJson}", workItemsFieldJson);
             var specDocument = workItem.GetPatchDocument();
 
-            logger.LogInformation("Creating {workItemType} work item", workItemType);
+            logger.LogDebug("Creating {workItemType} work item", workItemType);
             logger.LogDebug("Sending work item request to DevOps: {@specDocument}", specDocument);
             var createdWorkItem = await connection.GetWorkItemClient(ct).CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType, cancellationToken: ct);
             if (createdWorkItem == null)
@@ -875,7 +882,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 var workItemClient = connection.GetWorkItemClient(ct);
                 var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: ct);
-                logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
                     var ids = result.WorkItems.Select(wi => wi.Id).ToList();
@@ -978,25 +984,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var templateParams = new Dictionary<string, string>
-            {
-                 { "ConfigType", "TypeSpec"},
-                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
-                 { "SdkReleaseType", sdkReleaseType },
-                 { "CreatePullRequest", "true" },
-                 { "ReleasePlanWorkItemId", $"{workItemId}"},
-                 { "TriggerSource", "sdk-release" }
-            };
-
-            if (!string.IsNullOrEmpty(apiVersion))
-            {
-                templateParams["ApiVersion"] = apiVersion;
-            }
-
-            if (!string.IsNullOrEmpty(sdkRepoBranch))
-            {
-                templateParams["SdkRepoBranch"] = sdkRepoBranch;
-            }
+            var isRunningInAzurePipelines = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID"));
+            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch, isRunningInAzurePipelines);
 
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef, ct: ct);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
@@ -1008,6 +997,35 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             return build;
+        }
+
+        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch, bool isRunningInAzurePipelines)
+        {
+            var templateParams = new Dictionary<string, string>
+            {
+                 { "ConfigType", "TypeSpec"},
+                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
+                 { "CreatePullRequest", "true" },
+                 { "ReleasePlanWorkItemId", $"{workItemId}"},
+                 { "TriggerSource", "sdk-release" }
+            };
+
+            if (!isRunningInAzurePipelines)
+            {
+                templateParams["SdkReleaseType"] = sdkReleaseType;
+
+                if (!string.IsNullOrEmpty(apiVersion))
+                {
+                    templateParams["ApiVersion"] = apiVersion;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sdkRepoBranch))
+            {
+                templateParams["SdkRepoBranch"] = sdkRepoBranch;
+            }
+
+            return templateParams;
         }
 
         public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default)
@@ -2120,6 +2138,72 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        /// <summary>
+        /// Get an existing release plan by TypeSpec project path and exact API version match.
+        /// Searches for both in-progress and finished release plans.
+        /// The API version is retrieved from the child API Spec work item.
+        /// </summary>
+        /// <param name="typeSpecProjectPath">The TypeSpec project path to search for</param>
+        /// <param name="apiVersion">The exact API version to match</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>A matching release plan if found, or null otherwise</returns>
+        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(typeSpecProjectPath) || string.IsNullOrEmpty(apiVersion))
+                {
+                    logger.LogInformation("TypeSpec project path or API version is empty. Skipping search for existing release plan.");
+                    return null;
+                }
+
+                logger.LogInformation("Searching for existing release plan with TypeSpec project path: {typeSpecProjectPath} and API version: {apiVersion}", typeSpecProjectPath, apiVersion);
+
+                // Get all release plans (in-progress and finished) for the TypeSpec project path
+                var escapedPath = typeSpecProjectPath?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                // Include both in-progress and finished states
+                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                query += " ORDER BY [System.Id] DESC";
+
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                    return null;
+                }
+
+                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}", 
+                    releasePlanWorkItems.Count, typeSpecProjectPath, apiVersion);
+
+                // Loop through all release plans to find one with matching API version
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    // Map the work item to ReleasePlanWorkItem to populate SpecAPIVersion from child API Spec work item
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
+
+                    // Check if the API version matches
+                    if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion) && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) for TypeSpec project path: {typeSpecProjectPath} with API version: {apiVersion}",
+                            releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion);
+                        return releasePlan;
+                    }
+                }
+
+                logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath} with matching API version: {apiVersion}", typeSpecProjectPath, apiVersion);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plan for TypeSpec project path: {typeSpecProjectPath} with API version: {apiVersion}", typeSpecProjectPath, apiVersion);
+                throw new Exception($"Failed to get release plan for TypeSpec project path '{typeSpecProjectPath}' with API version '{apiVersion}'. Error: {ex.Message}", ex);
+            }
+        }
+
         public async Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default)
         {
             var escapedValue = fieldValue.Replace("'", "''");
@@ -2151,6 +2235,157 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var workItemClient = connection.GetWorkItemClient(ct);
             await workItemClient.DeleteWorkItemAsync(workItemId, destroy: false, cancellationToken: ct);
+        }
+
+        private ProductOnboardingWorkItem ToProductOnboardingWorkItem(WorkItem wi)
+        {
+            if (wi.Id == null)
+            {
+                logger.LogError("Work item ID is null.");
+                throw new ($"Work item ID is null");
+            }
+
+            var result = new ProductOnboardingWorkItem
+            {
+                WorkItemId = wi.Id ?? 0,
+                IsTestProductOnboarding
+                    = (wi.Fields.TryGetValue(ProductOnboardingWorkItem.TestFieldName, out var id)
+                        ? id?.ToString() ?? string.Empty : string.Empty).Contains(ProductOnboardingWorkItem.TestFieldTestValue),
+            };
+
+            foreach (var property in result.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
+            {
+                var fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                if (!fieldName.IsNullOrEmpty())
+                {
+                    var stringValue = wi.Fields.TryGetValue(fieldName, out var pv) ? pv?.ToString() ?? string.Empty : string.Empty;
+                    if (property.PropertyType == typeof(string))
+                    {
+                        property.SetValue(result, stringValue);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest)
+        {
+            var productIdPropertyName
+                = typeof(ProductOnboardingWorkItem).GetProperty(nameof(ProductOnboardingWorkItem.ProductId))?
+                .GetCustomAttribute<FieldNameAttribute>()?.Name;
+
+            var serviceIdPropertyName
+                = typeof(ProductOnboardingWorkItem).GetProperty(nameof(ProductOnboardingWorkItem.ServiceId))?
+                .GetCustomAttribute<FieldNameAttribute>()?.Name;
+
+            var serviceCondition = new StringBuilder();
+            serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceIdPropertyName}] = '{serviceId.ToString()}'");
+            serviceCondition.Append(
+                $" AND [{ProductOnboardingWorkItem.TestFieldName}] {(isTest ? "" : "NOT ")}CONTAINS '{ProductOnboardingWorkItem.TestFieldTestValue}'");
+            
+            var query
+                = $"SELECT [System.Id] "
+                + $"FROM WorkItems "
+                + $"WHERE "
+                + /**/ $"[System.State] <> 'Duplicate' "
+                + /**/ $"AND [{ProductOnboardingWorkItem.WorkItemTypeFieldName}] = '{ProductOnboardingWorkItem.WorkItemTypeValue}' "
+                + /**/ $"AND {serviceCondition}";
+
+            logger.LogDebug("Finding work items with query: '{query}'", query);
+
+            var workItems = await FetchWorkItemsAsync(query, ct);
+
+            if (workItems.Count > 0)
+            {
+                if (workItems.Count > 1)
+                {
+                    logger.LogError("Found multiple work items matching criteria.");
+                    throw new ($"Found multiple work items matching criteria. Query: '{query}'");
+                }
+                return ToProductOnboardingWorkItem(workItems[0]);
+            }
+
+            return null;
+        }
+
+        private string GetProductOnboardingWorkItemTitle(ProductOnboardingStatus status) => $"Onboarding {status.ServiceName} - {status.ProductName}";
+
+        private IEnumerable<PropertyInfo> SetTestValue(ProductOnboardingWorkItem wi)
+        {
+            var result = new List<PropertyInfo>();
+            foreach (var property in wi.GetType().GetProperties().Where(p => p.CanWrite))
+            {
+                string? fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                if (fieldName == ProductOnboardingWorkItem.TestFieldName)
+                {
+                    string testValue = ProductOnboardingWorkItem.TestFieldTestValue;
+                    if (property.PropertyType == typeof(string))
+                    {
+                        property.SetValue(wi, testValue);
+                        result.Add(property);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        {
+            var wi = new ProductOnboardingWorkItem { };
+            wi.SetFromProductOnboardingStatus(status);
+            if (isTest)
+            {
+                SetTestValue(wi);
+            }
+
+            return ToProductOnboardingWorkItem(
+                await CreateWorkItemAsync(wi, ProductOnboardingWorkItem.WorkItemTypeValue, GetProductOnboardingWorkItemTitle(status), ct: ct));
+        }
+
+        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        {
+            var wi = new ProductOnboardingWorkItem
+            {
+                WorkItemId = workItemId,
+                Title = GetProductOnboardingWorkItemTitle(status),
+            };
+            wi.SetFromProductOnboardingStatus(status);
+
+            IList<PropertyInfo> properties = new List<PropertyInfo>();
+            foreach (
+                var property
+                in wi.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
+                    .Concat([wi.GetType().GetProperty(nameof(wi.Title))])
+            )
+            {
+                if (property != null)
+                {
+                    properties.Add(property);
+                }
+            }
+
+            if (isTest)
+            {
+                properties.AddRange(SetTestValue(wi));
+            }
+
+            var fields = new Dictionary<string, string>();
+            foreach (var property in properties)
+            {
+                var fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                if (!fieldName.IsNullOrEmpty())
+                {
+                    var value = property.GetValue(wi);
+                    if (property.PropertyType == typeof(string))
+                    {
+                        fields[fieldName] = value != null ? (string)value : string.Empty;
+                    }
+                }
+            }
+
+            return ToProductOnboardingWorkItem(await UpdateWorkItemAsync(wi.WorkItemId, fields, ct));
         }
 
         /// <summary>

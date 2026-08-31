@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir --pre -r requirements.txt
 COPY config/ ./config/
 COPY models/ ./models/
 COPY prompts/ ./prompts/
+COPY services/ ./services/
 COPY skills/ ./skills/
 COPY tools/ ./tools/
 COPY utils/ ./utils/

@@ -119,37 +119,51 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-exists"
+      - &file_exists
+        type: "file-exists"
         config:
           path: "examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-not-exists"
+      - &file_not_exists
+        type: "file-not-exists"
         config:
           path: "examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "2025-05-04-preview"
           path: "main.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches
+        type: "file-not-matches"
         config:
           pattern: "2024-10-01-preview"
           path: "main.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_old_property
+        type: "file-not-matches"
+        name: "file-not-matches-old-property"
         config:
           pattern: "oldAge"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_added_property
+        type: "file-matches"
+        name: "file-matches-added-property"
         config:
           pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
           path: "employee.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_old_version
+        type: "file-not-matches"
+        name: "file-not-matches-old-version"
         config:
           pattern: "v2024_10_01_preview"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_property
+        type: "file-matches"
+        name: "file-matches-property"
         config:
           pattern: 'age\?: int32;'
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_type_change
+        type: "file-matches"
+        name: "file-matches-type-change"
         config:
           pattern: '@typeChangedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview, string\[\]\)'
           path: "employee.tsp"
@@ -167,40 +181,15 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-exists"
-        config:
-          path: "examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-not-exists"
-        config:
-          path: "examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2025-05-04-preview"
-      - type: "file-not-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2024-10-01-preview"
-      - type: "file-not-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "oldAge"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
-      - type: "file-not-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "v2024_10_01_preview"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'age\?: int32;'
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: '@typeChangedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview, string\[\]\)'
+      - *file_exists
+      - *file_not_exists
+      - *file_matches
+      - *file_not_matches
+      - *file_not_matches_old_property
+      - *file_matches_added_property
+      - *file_not_matches_old_version
+      - *file_matches_property
+      - *file_matches_type_change
     constraints:
       max_turns: 6
       max_tokens: 100000

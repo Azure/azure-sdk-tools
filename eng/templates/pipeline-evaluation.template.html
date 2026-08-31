@@ -554,8 +554,8 @@ footer {
               <option value="">All</option>
               <option value="merged">Merged PRs</option>
               <option value="workflow">Fix Workflow Runs</option>
-              <option value="opened">Fix PR Opened</option>
-              <option value="adopted">Fix PR Merged</option>
+              <option value="opened">Fix Branch Opened</option>
+              <option value="adopted">Fix Adopted</option>
               <option value="success">Pipeline Success</option>
             </select>
           </label>
@@ -618,7 +618,7 @@ footer {
       <span>Pipeline Analysis Dashboard</span>
       <span class="sep">/</span>
       <a
-        href="https://github.com/Azure/azure-sdk-tools/blob/main/eng/templates/index.html"
+        href="https://github.com/Azure/azure-sdk-tools/blob/main/eng/templates/pipeline-evaluation.template.html"
         target="_blank"
         rel="noopener"
         >Source</a
@@ -787,8 +787,8 @@ const PIPELINE_SUCCESS = "CopilotPipelineFixSuccess";
 const EVALUATION_STAGES = [
   { key: "merged", label: "Merged PRs", color: "#0078d4" },
   { key: "workflow", label: "Fix Workflow Runs", color: "#168aad" },
-  { key: "opened", label: "Fix PR Opened", color: "#52b69a" },
-  { key: "adopted", label: "Fix PR Merged", color: "#76c893" },
+  { key: "opened", label: "Fix Branch Opened", color: "#52b69a" },
+  { key: "adopted", label: "Fix Adopted", color: "#76c893" },
   { key: "success", label: "Pipeline Success", color: "#2d6a4f" },
 ];
 
@@ -1050,6 +1050,8 @@ function buildDashboardView(
     );
     const stageFilter = element("stage-filter");
     if (stageFilter) stageFilter.value = state.selectedStage;
+    const daysFilter = element("days-filter");
+    if (daysFilter) daysFilter.value = state.filters.days;
     renderRepositories();
 
     setHidden("evaluations-view", !dataAvailable);

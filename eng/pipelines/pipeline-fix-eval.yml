@@ -215,7 +215,7 @@ jobs:
               -Value "window.pipelineAnalysisData = $($json.Replace('</', '<\/'));" `
               -Encoding utf8
             Copy-Item `
-              '$(Build.SourcesDirectory)/eng/templates/index.html' `
+              '$(Build.SourcesDirectory)/eng/templates/pipeline-evaluation.template.html' `
               "$outputDirectory/index.html" `
               -Force
             Write-Host "Dashboard data -> $outputDirectory/dashboard-data.js ($($reports.Count) repositories)"

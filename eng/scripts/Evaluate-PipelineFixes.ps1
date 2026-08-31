@@ -94,6 +94,7 @@ foreach ($repository in $repositories) {
     $repositoryDirectory = Join-Path $EvalArtifactDir "$MetricsPrefix/$repository"
     New-Item -ItemType Directory -Force -Path $repositoryDirectory | Out-Null
 
+    # CLI stdout is temporary input for splitting; only the dated *.json files are uploaded.
     $combinedReportPath = Join-Path $repositoryDirectory 'report.tmp'
     $standardErrorPath = Join-Path $repositoryDirectory 'report.stderr.log'
     Remove-Item -Path $combinedReportPath, $standardErrorPath -Force -ErrorAction SilentlyContinue
@@ -116,7 +117,11 @@ foreach ($repository in $repositories) {
         $process.WaitForExit()
     }
 
-    $standardError = if (Test-Path $standardErrorPath) { Get-Content -Raw -Path $standardErrorPath } else { '' }
+    $standardError = ''
+    if (Test-Path $standardErrorPath) { 
+        $standardError = Get-Content -Raw -Path $standardErrorPath 
+    }
+    
     Remove-Item -Path $standardErrorPath -Force -ErrorAction SilentlyContinue
     if (-not $completed -or $process.ExitCode -ne 0) {
         $reason = if ($completed) { "failed with exit code $($process.ExitCode)" } else { "exceeded ${perEvaluationMinutes}m" }

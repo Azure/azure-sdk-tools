@@ -16,9 +16,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from enum import Enum
+from typing import Callable
 
+from azure.core.exceptions import HttpResponseError
 from azure.search.documents.aio import SearchClient as AzureSearchClient
+from azure.search.documents.indexes.aio import SearchIndexerClient
+from azure.search.documents.indexes.models import IndexerExecutionStatus
 from azure.search.documents.knowledgebases.aio import KnowledgeBaseRetrievalClient
 from azure.search.documents.knowledgebases.models import (
     KnowledgeBaseRetrievalRequest,
@@ -40,6 +45,8 @@ logger = logging.getLogger(__name__)
 
 _KB_MAX_OUTPUT_SIZE = 20000
 _HIERARCHY_EXPANSION_TOP = 20
+_INDEXER_POLL_INTERVAL_SECS = 2.0
+_INDEXER_TIMEOUT_SECS = 300.0
 
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
@@ -148,15 +155,18 @@ def fuse_with_rrf(
 class SearchClient:
     """Search wrapper using Azure AI Search SDK clients."""
 
-    def __init__(self) -> None:
-        self._endpoint = (cfg("AI_SEARCH_BASE_URL", "") or "").rstrip("/")
-        self._index = cfg("AI_SEARCH_INDEX", "")
-        self._knowledge_base_name = cfg("AI_SEARCH_KNOWLEDGE_BASE", "")
-        self._knowledge_source_name = cfg("AI_SEARCH_KNOWLEDGE_SOURCE", "")
-        self._top_k = int(cfg("AI_SEARCH_TOPK", "5"))
+    def __init__(
+        self, settings: Callable[[str, str], str] = cfg
+    ) -> None:
+        self._endpoint = settings("AI_SEARCH_BASE_URL", "").rstrip("/")
+        self._index = settings("AI_SEARCH_INDEX", "")
+        self._indexer_name = settings("AI_SEARCH_INDEXER", "")
+        self._knowledge_base_name = settings("AI_SEARCH_KNOWLEDGE_BASE", "")
+        self._knowledge_source_name = settings("AI_SEARCH_KNOWLEDGE_SOURCE", "")
+        self._top_k = int(settings("AI_SEARCH_TOPK", "5"))
         self._candidate_top_k = max(
             self._top_k,
-            int(cfg("AI_SEARCH_CANDIDATE_TOPK", str(max(self._top_k * 4, 20)))),
+            int(settings("AI_SEARCH_CANDIDATE_TOPK", str(max(self._top_k * 4, 20)))),
         )
         self._credential = get_credential()
         self._kb_client = KnowledgeBaseRetrievalClient(
@@ -169,11 +179,51 @@ class SearchClient:
             index_name=self._index,
             credential=self._credential,
         )
+        self._indexer_client = SearchIndexerClient(
+            endpoint=self._endpoint,
+            credential=self._credential,
+        )
 
     @property
     def top_k(self) -> int:
         """The configured top-k result limit."""
         return self._top_k
+
+    async def run_indexer(self) -> str:
+        """Start the knowledge indexer and wait for it to finish."""
+        if not self._indexer_name:
+            raise RuntimeError("AI_SEARCH_INDEXER not configured in App Configuration")
+        try:
+            await self._indexer_client.run_indexer(self._indexer_name)
+        except HttpResponseError as exc:
+            if exc.status_code == 409:
+                logger.info("AI Search indexer is already running: %s", self._indexer_name)
+            else:
+                raise
+
+        await self._wait_for_indexer()
+        return "succeeded"
+
+    async def _wait_for_indexer(self) -> None:
+        deadline = time.monotonic() + _INDEXER_TIMEOUT_SECS
+        while time.monotonic() < deadline:
+            status = await self._indexer_client.get_indexer_status(self._indexer_name)
+            last_result = status.last_result
+            if last_result:
+                if last_result.status == IndexerExecutionStatus.SUCCESS:
+                    return
+                if last_result.status in (
+                    IndexerExecutionStatus.TRANSIENT_FAILURE,
+                    IndexerExecutionStatus.RESET,
+                ):
+                    raise RuntimeError(
+                        f"AI Search indexer finished with status {last_result.status}"
+                    )
+            await asyncio.sleep(_INDEXER_POLL_INTERVAL_SECS)
+
+        raise TimeoutError(
+            f"AI Search indexer did not complete within {_INDEXER_TIMEOUT_SECS} seconds"
+        )
 
     @property
     def candidate_top_k(self) -> int:
@@ -559,6 +609,7 @@ class SearchClient:
     async def close(self) -> None:
         await self._kb_client.close()
         await self._search_client.close()
+        await self._indexer_client.close()
         close_method = getattr(self._credential, "close", None)
         if close_method is not None:
             result = close_method()
@@ -568,6 +619,11 @@ class SearchClient:
 
 def _escape_odata(value: str) -> str:
     return value.replace("'", "''")
+
+
+def _raw_chunk_filter(source_filter: str) -> str:
+    raw_filter = "(page_type eq null or page_type eq '')"
+    return f"({source_filter}) and {raw_filter}" if source_filter else raw_filter
 
 
 class HierarchyLevel(str, Enum):

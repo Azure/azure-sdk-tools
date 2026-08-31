@@ -13,7 +13,7 @@ from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
-from config.app_config import get as cfg
+from config.app_config import Settings, get as cfg
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,31 @@ _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
 _openai_clients: dict[str, AsyncOpenAI] = {}
 _embedding_client: AsyncAzureOpenAI | None = None
+
+
+def create_project_client(
+    settings: Settings,
+) -> AIProjectClient:
+    """Create a project client from an explicit configuration scope."""
+    endpoint = settings("AI_FOUNDRY_PROJECT_ENDPOINT", None)
+    if not endpoint:
+        raise RuntimeError(
+            "AI_FOUNDRY_PROJECT_ENDPOINT is required in App Configuration."
+        )
+    return AIProjectClient(
+        endpoint=endpoint,
+        credential=get_credential(),
+        allow_preview=True,
+    )
+
+
+def create_openai_client(
+    project_client: AIProjectClient,
+    settings: Settings,
+) -> AsyncOpenAI:
+    """Create a hosted-agent OpenAI client from an explicit config scope."""
+    agent_name = settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+    return project_client.get_openai_client(agent_name=agent_name)
 
 
 def get_agent_client() -> FoundryChatClient:
@@ -48,22 +73,13 @@ def get_project_client() -> AIProjectClient:
     """Return the shared AIProjectClient (created once on first call)."""
     global _project_client
     if _project_client is None:
-        endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
-        if not endpoint:
-            raise RuntimeError(
-                "AI_FOUNDRY_PROJECT_ENDPOINT is required in App Configuration."
-            )
-        _project_client = AIProjectClient(
-            endpoint=endpoint,
-            credential=get_credential(),
-            allow_preview=True,
-        )
+        _project_client = create_project_client(cfg)
     return _project_client
 
 
-def get_openai_client(agent_name: str) -> AsyncOpenAI:
+def get_openai_client(agent_name: str | None = None) -> AsyncOpenAI:
     """Return the OpenAI client for a hosted agent."""
-    resolved_name = agent_name
+    resolved_name = agent_name or cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
     if resolved_name not in _openai_clients:
         # Hosted agents in refreshed preview must be called via per-agent endpoint.
         _openai_clients[resolved_name] = get_project_client().get_openai_client(

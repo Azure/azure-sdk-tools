@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from models.chat import ChatRequest, Message as ChatMessage
-from config.tenant_config import TenantID, get_tenant_config
 from services.chat_service import ChatService
 
 
@@ -19,7 +21,7 @@ from services.chat_service import ChatService
 
 
 def test_chat_service_resolves_memory_scope() -> None:
-    service = ChatService()
+    service = ChatService(settings=lambda _key, default="": default)
 
     # user_id present → user_{user_id}
     with_user_id = ChatRequest(
@@ -61,7 +63,7 @@ def test_chat_service_resolves_memory_scope() -> None:
 
 def test_chat_service_returns_none_when_user_id_empty() -> None:
     """Empty/whitespace user_id returns None."""
-    service = ChatService()
+    service = ChatService(settings=lambda _key, default="": default)
 
     empty_id = ChatRequest(
         tenant_id="azure_sdk_qa_bot",
@@ -76,18 +78,72 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
     assert service._resolve_memory_scope(whitespace_id) is None
 
 
-def test_chat_service_resolves_agent_by_tenant() -> None:
-    settings = {
-        "AI_FOUNDRY_AGENT_NAME": "sdk-agent",
-        "AI_FOUNDRY_AGENT_VERSION": "3",
-        "AZURE_MCP_SERVER_AGENT_NAME": "mcp-agent",
-        "AZURE_MCP_SERVER_AGENT_VERSION": "7",
-    }
+@pytest.mark.asyncio
+async def test_rebuild_replays_safe_messages_in_chronological_order() -> None:
+    """Recovery replays durable Cosmos messages into a fresh conversation."""
+    from datetime import datetime, timezone
 
-    with patch("services.chat_service.cfg", side_effect=settings.get):
-        assert ChatService._resolve_agent_configuration(
-            get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
-        ) == ("sdk-agent", "3")
-        assert ChatService._resolve_agent_configuration(
-            get_tenant_config(TenantID.AZURE_MCP_SERVER)
-        ) == ("mcp-agent", "7")
+    from models.conversation import ConversationMessageItem, ConversationType, Role
+
+    openai_client = MagicMock()
+    openai_client.conversations.create = AsyncMock(
+        return_value=SimpleNamespace(id="conv-new")
+    )
+    service = ChatService(openai_client=openai_client)
+    service._conversation_service.get_messages_by_conversation_id = AsyncMock(
+        return_value=[
+            ConversationMessageItem(
+                id="user-old",
+                tenant_id="azure_sdk_qa_bot",
+                sender_role=Role.User,
+                sender_id="user-1",
+                sender_name="Ada",
+                content="previous question",
+                created_at=datetime.now(timezone.utc),
+                conversation_id="teams-thread",
+                conversation_type="teams_channel",
+                conversation_partition="teams_channel:teams-thread",
+            ),
+            ConversationMessageItem(
+                id="bot-old",
+                tenant_id="azure_sdk_qa_bot",
+                sender_role=Role.System,
+                sender_id="azure-sdk-qa-bot",
+                sender_name="Azure SDK Q&A Bot",
+                content="previous answer",
+                created_at=datetime.now(timezone.utc),
+                conversation_id="teams-thread",
+                conversation_type="teams_channel",
+                conversation_partition="teams_channel:teams-thread",
+            ),
+            ConversationMessageItem(
+                id="current-message",
+                tenant_id="azure_sdk_qa_bot",
+                sender_role=Role.User,
+                sender_id="user-1",
+                sender_name="Ada",
+                content="current question",
+                created_at=datetime.now(timezone.utc),
+                conversation_id="teams-thread",
+                conversation_type="teams_channel",
+                conversation_partition="teams_channel:teams-thread",
+            ),
+        ]
+    )
+    replacement_id, rebuilt = await service._rebuild_conversation_after_failure(
+        "teams-thread",
+        ConversationType.teams_channel,
+    )
+
+    assert replacement_id == "conv-new"
+    assert [item["role"] for item in rebuilt] == [
+        "user",
+        "assistant",
+        "user",
+    ]
+    assert [item["content"] for item in rebuilt] == [
+        "previous question",
+        "previous answer",
+        "current question",
+    ]
+    assert openai_client.conversations.items.list.call_count == 0

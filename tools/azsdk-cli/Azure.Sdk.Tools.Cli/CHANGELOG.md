@@ -1,10 +1,12 @@
 # Release History
 
-## 0.6.40 (2026-08-31)
+## 0.6.41 (2026-08-31)
 
 ### Features Added
 
 - Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
+
+## 0.6.40 (2026-08-31)
 
 ### Bugs Fixed
 

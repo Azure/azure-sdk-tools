@@ -194,16 +194,16 @@ Entry["Entry Point<br/>Customize Request"] --> Classify["Classifier<br/>Analyze 
 
 Classify -- Stalled/complex --> Failure
 Classify -- TypeApplicable Request --> SpecInputInScope{SpecInput in Scope?}
-Classify -- CodeCustomization Request --> CustomCodeInSope
-CustomCodeInSope --Yes --> CodeCustomization["Code Repair<br/>Apply Code Customization</br>Max 2 Ierations"]
-CustomCodeInSope --No --> Failure
+Classify -- CodeCustomization Request --> CustomCodeInScope
+CustomCodeInScope --Yes --> CodeCustomization["Code Repair<br/>Apply Code Customization</br>Max 2 Iterations"]
+CustomCodeInScope --No --> Failure
 
 CodeCustomization --> Build
 SpecInputInScope -- No --> Failure
 SpecInputInScope -- Yes --> ApplyTypespecCustomization["Apply TypeSpec<br/>Customization"]
-ApplyTypespecCustomization --> CustomCodeInSopeForSpec
-CustomCodeInSopeForSpec -- No --> Success
-CustomCodeInSopeForSpec -- Yes --> Regen[Regen SDK]
+ApplyTypespecCustomization --> CustomCodeInScopeForSpec
+CustomCodeInScopeForSpec -- No --> Success
+CustomCodeInScopeForSpec -- Yes --> Regen[Regen SDK]
 Regen --> RegenOK{Regen Successfully?}
 RegenOK -- Yes --> Build[Build SDK]
 RegenOK -- No --> AppendRegenFailure["Append Regen Failure<br/>to Customization Request"]
@@ -218,8 +218,8 @@ M -- Yes --> Classify
 
 Success[<b>Success</b><br/>Return change summary]
 Failure[<b>Failure</b><br/>Return manual guidance]
-CustomCodeInSope{CustomCode<br/>in Scope?}
-CustomCodeInSopeForSpec{CustomCode<br/>in Scope?}
+CustomCodeInScope{CustomCode<br/>in Scope?}
+CustomCodeInScopeForSpec{CustomCode<br/>in Scope?}
 
 style Entry fill:#fff9c4
 style Classify fill:#e1f5fe

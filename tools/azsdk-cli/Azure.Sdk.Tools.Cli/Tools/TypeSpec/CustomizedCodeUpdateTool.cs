@@ -535,7 +535,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             });
         }
         // Everything was classified as success
-        if (tspApplicable == 0 && codeCustomizations == 0 && customCodeChangeRequired.Count ==0 && noChanges > 0)
+        if (tspApplicable == 0 && codeCustomizations == 0 && customCodeChangeRequired.Count == 0 && noChanges > 0)
         {
             return CreateResponse(new CustomizedCodeUpdateResponse
             {

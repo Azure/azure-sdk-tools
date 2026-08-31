@@ -249,7 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private static readonly string NAMESPACE_APPROVAL_REPO = "azure-sdk";
         private static readonly string REPO_OWNER = "Azure";
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
-        public static readonly string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
+        public static readonly string DATA_PLANE_REVIEW_SIGNOFF = "data-plane-review-signoff";
         public static readonly HashSet<string> SUPPORTED_LANGUAGES = new()
         {
             "python",
@@ -1681,7 +1681,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 var isMgmtPlane = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
                 response.PackageType = isMgmtPlane ? SdkType.Management : SdkType.Dataplane;
-                // Check if ARM or API stewardship approval is present if PR is not in merged status
+                // Check if ARM or data-plane review sign-off is present if PR is not in merged status
                 // Check ARM approval label is present on the management pull request
                 if (!pullRequest.Merged && isMgmtPlane && (pullRequest.Labels == null || !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL))))
                 {
@@ -1689,14 +1689,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                // Check if API stewardship approval label is present on the data plane pull request
-                if (!pullRequest.Merged && !isMgmtPlane && (pullRequest.Labels == null || !pullRequest.Labels.Any(l => l.Name.Equals(API_STEWARDSHIP_APPROVAL))))
+                // Check if data-plane review sign-off label is present on the data plane pull request
+                if (!pullRequest.Merged && !isMgmtPlane && (pullRequest.Labels == null || !pullRequest.Labels.Any(l => l.Name.Equals(DATA_PLANE_REVIEW_SIGNOFF))))
                 {
-                    response.Details.Add($"Pull request {pullRequest.Number} does not have API stewardship approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                    response.Details.Add($"Pull request {pullRequest.Number} does not have data-plane review sign-off. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
                     return response;
                 }
 
-                var approvalLabel = isMgmtPlane ? ARM_SIGN_OFF_LABEL : API_STEWARDSHIP_APPROVAL;
+                var approvalLabel = isMgmtPlane ? ARM_SIGN_OFF_LABEL : DATA_PLANE_REVIEW_SIGNOFF;
                 response.Details.Add($"Pull request {pullRequest.Number} has {approvalLabel} or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
                 response.Status = "Success";
                 return response;

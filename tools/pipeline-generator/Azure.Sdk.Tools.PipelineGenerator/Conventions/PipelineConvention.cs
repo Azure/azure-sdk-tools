@@ -318,7 +318,7 @@ namespace PipelineGenerator.Conventions
 
             var schedule = new Schedule
             {
-                DaysToBuild = (ScheduleDays)31, // Schedule M-F
+                DaysToBuild = ScheduleDays.All, // Schedule every day, including weekends
                 ScheduleOnlyWithChanges = true,
                 StartHours = FirstSchedulingHour + startHours,
                 StartMinutes = startMinutes * BucketSizeInMinutes,

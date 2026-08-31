@@ -12,6 +12,7 @@ declared:
 - approval requirement
 - whether prod is pipeline-only
 - whether local deploy is allowed
+- whether the chatbot evolution workflow is enabled
 - Teams group ID and channel IDs
 - fixed Bicep resource-name and identity overrides
 - rollout strategy (`direct`, `slot-swap`, `slot-swap-with-watch`)
@@ -37,6 +38,7 @@ environments:
         functionAppName: string
         aiLocation: string
         cosmosDbLocation: string
+        chatbotEvolutionAgentEnabled: bool
         bicepOverrides: Record<string, string>?
         teamsGroupId: string
         teamsChannelIds: string[]
@@ -80,8 +82,8 @@ pwsh ./scripts/sync-env-suite.ps1 -Environment <env>
 This script reads the per-env block from `environment-suite.yaml` and calls
 `azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
 `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
-`CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`) plus every
-entry in `bicepOverrides`.
+`CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`,
+`CHATBOT_EVOLUTION_AGENT_ENABLED`) plus every entry in `bicepOverrides`.
 
 Teams routing values are suite-owned and copied into the local azd environment:
 `teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →

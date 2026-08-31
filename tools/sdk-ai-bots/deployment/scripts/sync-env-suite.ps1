@@ -84,6 +84,7 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_DEPLOYMENTS_LOCATION' }
     @{ Path = ".environments.$Environment.cosmosDbLocation";     Key = 'COSMOS_DB_LOCATION' }
+    @{ Path = ".environments.$Environment.chatbotEvolutionAgentEnabled"; Key = 'CHATBOT_EVOLUTION_AGENT_ENABLED' }
     @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.agentServerSiteName";  Key = 'AGENT_SERVER_SITE_NAME' }
     @{ Path = ".environments.$Environment.agentServerSiteName";  Key = 'AGENT_SERVER_SITE_NAME_OVERRIDE' }

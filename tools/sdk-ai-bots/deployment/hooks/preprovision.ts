@@ -112,6 +112,9 @@ function detectLocalDrift(): void {
     expected.AZURE_AI_LOCATION = read(`.environments.${ENV_NAME}.aiLocation`);
     expected.AZURE_AI_DEPLOYMENTS_LOCATION = expected.AZURE_AI_LOCATION;
     expected.COSMOS_DB_LOCATION = read(`.environments.${ENV_NAME}.cosmosDbLocation`);
+    expected.CHATBOT_EVOLUTION_AGENT_ENABLED = read(
+      `.environments.${ENV_NAME}.chatbotEvolutionAgentEnabled`,
+    );
     expected.FRONTEND_SITE_NAME = read(`.environments.${ENV_NAME}.frontendSiteName`);
     expected.AGENT_SERVER_SITE_NAME = read(`.environments.${ENV_NAME}.agentServerSiteName`);
     expected.FUNCTION_APP_NAME = read(`.environments.${ENV_NAME}.functionAppName`);

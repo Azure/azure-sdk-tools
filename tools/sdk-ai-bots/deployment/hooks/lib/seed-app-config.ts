@@ -115,6 +115,7 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     // ── AI Foundry agent ─────────────────────────────────────────────────
     AI_FOUNDRY_AGENT_COMPLETION_MODEL: "gpt-5.6-sol",
     AI_FOUNDRY_AGENT_REASONING_EFFORT: "medium",
+    CHATBOT_EVOLUTION_AGENT_ENABLED: or("CHATBOT_EVOLUTION_AGENT_ENABLED", "false"),
 
     // ── Azure OpenAI chat (model selection + tuning) ─────────────────────
     AOAI_CHAT_COMPLETIONS_MODEL: "gpt-5.1",
@@ -189,6 +190,7 @@ export function derivedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, s
     ACR_LOGIN_SERVER:
       env.AZURE_CONTAINER_REGISTRY_ENDPOINT?.trim() ||
       `${required("CONTAINER_REGISTRY_NAME")}.azurecr.io`,
+    AGENT_APPLICATIONINSIGHTS_RESOURCE_ID: required("AGENT_APPLICATIONINSIGHTS_RESOURCE_ID"),
     AI_FOUNDRY_PROJECT_ENDPOINT: required("FOUNDRY_PROJECT_ENDPOINT").replace(/\/+$/, ""),
     AI_SEARCH_SERVICE_NAME: searchServiceName,
     AI_SEARCH_BASE_URL: `https://${searchServiceName}.search.windows.net`,

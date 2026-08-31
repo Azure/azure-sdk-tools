@@ -65,6 +65,7 @@ environments:
               enabled: true
         aiLocation: 'eastus2'
         cosmosDbLocation: 'eastus2'
+        chatbotEvolutionAgentEnabled: false
         bicepOverrides:
             BOT_SERVICE_NAME: 'azsdkqabot-dev-20260826-federated'
             # Set to 'true' for one provision only when recovering a soft-deleted
@@ -103,6 +104,7 @@ environments:
               enabled: true
         aiLocation: 'westus2'
         cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: false
         approvalRequired: true
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: false
@@ -151,6 +153,7 @@ environments:
             #   enabled: false
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: true
         bicepOverrides:
             SERVER_AUDIENCE: '899da762-d510-48f2-911a-db9ea0cc41fd'
             DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'

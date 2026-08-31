@@ -369,3 +369,6 @@ output AZURE_AI_PROJECT_ID string = project.id
 
 @description('Azure AI Foundry project REST API endpoint.')
 output FOUNDRY_PROJECT_ENDPOINT string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'
+
+@description('Full ARM resource ID of the Application Insights component containing chat-agent traces.')
+output AGENT_APPLICATIONINSIGHTS_RESOURCE_ID string = component.id

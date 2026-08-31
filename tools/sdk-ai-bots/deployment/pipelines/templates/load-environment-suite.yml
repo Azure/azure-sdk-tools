@@ -16,7 +16,7 @@
 #   FRONTEND_SITE_NAME, AGENT_SERVER_SITE_NAME, FUNCTION_APP_NAME,
 #   *_IMAGE_REPOSITORY, TEAMS_GROUP_ID, TEAMS_CHANNEL_IDS, bicepOverrides,
 #   TEAMS_CHANNEL_IDS_JSON, APPROVAL_REQUIRED, PROD_DEPLOY_ONLY_FROM_PIPELINE,
-#   ROLLOUT_STRATEGY
+#   CHATBOT_EVOLUTION_AGENT_ENABLED, ROLLOUT_STRATEGY
 #
 # Implementation: uses `yq` (pre-installed on 1ES Linux images) to extract
 # values; no PowerShell yaml parsing required.
@@ -82,6 +82,7 @@ steps:
           export_var AZURE_AI_LOCATION              ".environments.${ENV}.aiLocation"
           export_var AZURE_AI_DEPLOYMENTS_LOCATION  ".environments.${ENV}.aiLocation"
           export_var COSMOS_DB_LOCATION             ".environments.${ENV}.cosmosDbLocation"
+          export_var CHATBOT_EVOLUTION_AGENT_ENABLED ".environments.${ENV}.chatbotEvolutionAgentEnabled"
           export_var ACR_NAME                       ".environments.${ENV}.containerRegistryName"
           export_var CONTAINER_REGISTRY_NAME        ".environments.${ENV}.containerRegistryName"
           export_var CONTAINER_REGISTRY_NAME_OVERRIDE ".environments.${ENV}.containerRegistryName"

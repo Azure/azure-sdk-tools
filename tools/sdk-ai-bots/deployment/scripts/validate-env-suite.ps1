@@ -31,7 +31,8 @@ $RequiredKeys = @(
     'subscription', 'subscriptionId', 'tenantId',
     'resourceGroupPrefix', 'keyVaultName', 'appConfigName',
     'containerRegistryName', 'teamsGroupId', 'approvalRequired',
-    'prodDeployOnlyFromPipeline', 'rolloutStrategy'
+    'prodDeployOnlyFromPipeline', 'chatbotEvolutionAgentEnabled',
+    'rolloutStrategy'
 )
 $Envs = @('dev', 'preview', 'prod')
 
@@ -57,6 +58,9 @@ foreach ($env in $Envs) {
         }
         if ($key -eq 'subscriptionId' -and $value -notmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') {
             $errors += "[$env] subscriptionId '$value' is not GUID-shaped"
+        }
+        if ($key -eq 'chatbotEvolutionAgentEnabled' -and $value -notmatch '^(true|false)$') {
+            $errors += "[$env] chatbotEvolutionAgentEnabled '$value' must be true or false"
         }
     }
 

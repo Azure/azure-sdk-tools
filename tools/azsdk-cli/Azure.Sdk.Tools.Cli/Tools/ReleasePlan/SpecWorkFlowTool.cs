@@ -178,7 +178,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = RunGenerateSdkToolName), Description("Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. If a pull request number is provided, generation is blocked until that spec pull request is merged or has the required ARM/API stewardship sign-off, so SDK pull requests are not created while the API spec is still under review. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK.")]
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. If a pull request number is provided, generation is blocked until that spec pull request is merged, so SDK pull requests are not created while the API spec is still under review. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK.")]
         public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
@@ -276,8 +276,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 string apiSpecBranchRef = "main";
                 if (pullRequestNumber > 0)
                 {
-                    var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber, ct);
-                    if (pullRequest == null)
+                    Octokit.PullRequest pullRequest;
+                    try
+                    {
+                        pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber, ct);
+                    }
+                    catch (Octokit.NotFoundException)
                     {
                         response.ResponseErrors.Add($"Spec pull request {pullRequestNumber} was not found in {REPO_OWNER}/{PUBLIC_SPECS_REPO}.");
                         response.Status = "Failed";
@@ -292,15 +296,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
 
                     // Don't let an SDK PR be generated (and surfaced to SDK reviewers) while the spec is still under active review.
-                    if (!IsSpecPullRequestReadyForGeneration(releasePlan.IsSpecApproved, pullRequest, response.PackageType))
+                    if (!pullRequest.Merged)
                     {
-                        response.ResponseErrors.Add($"Spec pull request {pullRequestNumber} has not been merged yet and does not have the required sign-off. SDK generation is blocked until the API spec review is complete.");
+                        response.ResponseErrors.Add($"Spec pull request {pullRequestNumber} has not been merged yet. SDK generation is blocked until the spec pull request is merged.");
                         response.Status = "Failed";
-                        response.NextSteps = [$"Wait for spec pull request {pullRequestNumber} to be merged, or for it to receive the required sign-off label, then re-run SDK generation."];
+                        response.NextSteps = [$"Wait for spec pull request {pullRequestNumber} to be merged, then re-run SDK generation."];
                         return response;
                     }
 
-                    apiSpecBranchRef = pullRequest.Merged ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
+                    apiSpecBranchRef = pullRequest.Base.Ref;
                 }
 
                 string sdkRepoBranch = "";                
@@ -331,32 +335,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 errorResponse.TypeSpecProject = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
                 return errorResponse;
             }
-        }
-
-        /// <summary>
-        /// A spec pull request is ready to trigger SDK generation once it's merged, or once it has the
-        /// sign-off required for its plane (ARM sign-off for management plane, API stewardship board
-        /// sign-off for data plane). A release plan whose API spec status was already marked approved
-        /// (via azsdk_check_api_spec_ready_for_sdk) is also considered ready.
-        /// </summary>
-        private static bool IsSpecPullRequestReadyForGeneration(bool isSpecApproved, Octokit.PullRequest pullRequest, SdkType packageType)
-        {
-            if (isSpecApproved || pullRequest.Merged)
-            {
-                return true;
-            }
-
-            if (pullRequest.Labels == null)
-            {
-                return false;
-            }
-
-            return packageType switch
-            {
-                SdkType.Management => pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)),
-                SdkType.Dataplane => pullRequest.Labels.Any(l => l.Name.Equals(ReleasePlanTool.API_STEWARDSHIP_APPROVAL)),
-                _ => pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL) || l.Name.Equals(ReleasePlanTool.API_STEWARDSHIP_APPROVAL)),
-            };
         }
 
         /// <summary>

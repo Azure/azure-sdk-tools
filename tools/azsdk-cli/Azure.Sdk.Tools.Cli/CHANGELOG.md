@@ -1,16 +1,12 @@
 # Release History
 
-## 0.6.40 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.40 (2026-08-31)
 
 ### Bugs Fixed
 
 - `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
-
-### Other Changes
+- Ignore API version associated with unknown language emitter configuration in metadata output.
+- Ignore unsupported languages when updating the languages in release plan.
 
 ## 0.6.39 (2026-08-31)
 

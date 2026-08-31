@@ -1,14 +1,11 @@
 # Release History
 
-## 0.6.40 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.40 (2026-08-31)
 
 ### Bugs Fixed
 
-### Other Changes
+- Ignore API version associated with unknown language emitter configuration in metadata ouput.
+- Ignore unsupported languages when updating the languages in release plan.
 
 ## 0.6.39 (2026-08-31)
 

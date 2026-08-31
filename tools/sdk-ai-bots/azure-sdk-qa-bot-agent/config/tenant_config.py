@@ -568,10 +568,11 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
         skill_name="sdk-onboarding",
-        scope="Azure API specification & SDK onboarding process, SDK lifecycle, Azure MCP, and retirement processes.",
+        scope="Azure API specification and SDK onboarding, release plan lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
             "Permission issues for specification repo or SDK repo access, workflow visibility",
+            "Release plan creation, status, readiness, lifecycle, and troubleshooting",
             "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
             "Service, API and SDK deprecation guidance",
             "API documentation publishing",
@@ -634,15 +635,16 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         skill_name="azsdk-tools-agent",
         scope=(
             "Azure SDK Tools Agent (azsdk CLI/MCP) usage and troubleshooting: agent/MCP "
-            "setup and reliability, tool capabilities, release plan status and readiness "
-            "lifecycle, and authoring azsdk CLI tools and skills."
+            "setup and reliability, tool capabilities, and authoring azsdk CLI tools and skills."
         ),
         topics=[
             "azsdk CLI / MCP server setup, connection, and reliability (mcp.json, VS Code / Copilot CLI, cold-start/timeout)",
             "Azure SDK Tools Agent capabilities and tool usage (generation, validation, review, release)",
-            "Release plan and readiness lifecycle status, errors, and troubleshooting",
             "Triage errors reported by the agent and route downstream failures to the appropriate specialist",
             "Authoring azsdk CLI tools and skills (custom agents, CLI command and skill guidelines)",
+        ],
+        exclusions=[
+            "Release plan creation, status, readiness, and lifecycle questions — route to azure_sdk_onboarding; issues using or debugging an azsdk release-plan tool remain in this tenant",
         ],
         sources=_sources(
             SRC_AZSDK_CLI_DOCS,

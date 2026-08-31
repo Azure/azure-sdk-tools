@@ -208,7 +208,6 @@ jobs:
               reports = @($reports.Values | Sort-Object owner, repo)
             }
             $json = $snapshot | ConvertTo-Json -Depth 100 -Compress
-            $json = $json.Replace([string][char]0x2028, '\u2028').Replace([string][char]0x2029, '\u2029')
             $outputDirectory = '$(EvalArtifactDir)/$(MetricsPrefix)'
             New-Item -ItemType Directory -Force $outputDirectory | Out-Null
             Set-Content `

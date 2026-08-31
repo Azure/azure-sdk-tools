@@ -16,7 +16,7 @@ public class PipelineFixEvaluatorToolTests
     {
         var helper = new Mock<IPipelineFixEvaluatorHelper>();
         var until = new DateTimeOffset(2026, 8, 31, 8, 30, 0, TimeSpan.FromHours(-7));
-        var utc = until.ToUniversalTime();
+        var windowEnd = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
         helper
             .Setup(service => service.EvaluatePipelineFixesAsync(
                 "Azure", "azure-sdk-for-python", It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
@@ -38,7 +38,7 @@ public class PipelineFixEvaluatorToolTests
         });
         for (var offset = 0; offset < 3; offset++)
         {
-            var dayUntil = utc.AddDays(-offset);
+            var dayUntil = windowEnd.AddDays(-offset);
             helper.Verify(service => service.EvaluatePipelineFixesAsync(
                 "Azure",
                 "azure-sdk-for-python",

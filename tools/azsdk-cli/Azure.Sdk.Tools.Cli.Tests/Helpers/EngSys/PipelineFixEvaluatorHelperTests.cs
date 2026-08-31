@@ -72,12 +72,12 @@ public class PipelineFixEvaluatorHelperTests
     }
 
     [Test]
-    public async Task PublishedBranchNotAdopted_StopsAtOpenedStage()
+    public async Task OpenedFixBranchNotAdopted_StopsAtOpenedStage()
     {
-        GivenPublishedWorkflow();
+        GivenOpenedFixBranch();
         GivenCommits(Commit(Sha(3), FailingSha));
-        GivenCommitFiles(FixHeadSha, CommitFile("fix"));
-        GivenCommitFiles(Sha(3), CommitFile("different"));
+        GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "old", "fix")));
+        GivenCommitFiles(Sha(3), CommitFile(Patch(10, "old", "different")));
 
         var result = (await RunAsync()).Single();
 
@@ -94,7 +94,7 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task AdoptedBranchThatFixesPipeline_ReachesSuccessStage()
     {
-        GivenPublishedWorkflow(mergeCommitSha: FixHeadSha);
+        GivenOpenedFixBranch(mergeCommitSha: FixHeadSha);
         GivenCommits(Commit(FixHeadSha, FailingSha));
         GivenChecks(FailingSha, Check("FAILURE"));
         GivenChecks(FixHeadSha, Check("SUCCESS"));
@@ -114,7 +114,7 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task LaterHumanCommitOverlappingFix_IsOverridden()
     {
-        GivenPublishedWorkflow();
+        GivenOpenedFixBranch();
         GivenCommits(Commit(FixHeadSha, FailingSha), Commit(Sha(3), FixHeadSha));
         GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "old", "fix")));
         GivenCommitFiles(Sha(3), CommitFile(Patch(10, "fix", "human")));
@@ -129,7 +129,7 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task LaterHumanCommitTouchingDifferentLine_RemainsVerified()
     {
-        GivenPublishedWorkflow();
+        GivenOpenedFixBranch();
         GivenCommits(Commit(FixHeadSha, FailingSha), Commit(Sha(3), FixHeadSha));
         GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "old", "fix")));
         GivenCommitFiles(Sha(3), CommitFile(Patch(30, "old", "human")));
@@ -142,9 +142,28 @@ public class PipelineFixEvaluatorHelperTests
     }
 
     [Test]
+    public async Task MultipleLaterHumanCommitsTouchingDifferentLines_RemainVerified()
+    {
+        GivenOpenedFixBranch();
+        GivenCommits(
+            Commit(FixHeadSha, FailingSha),
+            Commit(Sha(3), FixHeadSha),
+            Commit(Sha(4), Sha(3)));
+        GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "old", "fix")));
+        GivenCommitFiles(Sha(3), CommitFile(Patch(30, "old", "first human")));
+        GivenCommitFiles(Sha(4), CommitFile(Patch(50, "old", "second human")));
+        GivenChecks(FailingSha, Check("FAILURE"));
+        GivenChecks(FixHeadSha, Check("SUCCESS"));
+
+        var result = (await RunAsync()).Single();
+
+        Assert.That(result.Verification, Is.EqualTo(CopilotFixVerification.CopilotVerifiedFix));
+    }
+
+    [Test]
     public async Task LaterBotCommitOverlappingFix_RemainsVerified()
     {
-        GivenPublishedWorkflow();
+        GivenOpenedFixBranch();
         GivenCommits(
             Commit(FixHeadSha, FailingSha),
             Commit(Sha(3), FixHeadSha, ActionsBotName));
@@ -161,7 +180,7 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task FailedCheckAtMergedHeadWithoutHumanRewrite_RemainsVerified()
     {
-        GivenPublishedWorkflow(mergeCommitSha: Sha(3));
+        GivenOpenedFixBranch(mergeCommitSha: Sha(3));
         GivenCommits(Commit(FixHeadSha, FailingSha));
         GivenChecks(FailingSha, Check("FAILURE"));
         GivenChecks(FixHeadSha, Check("SUCCESS"));
@@ -178,7 +197,7 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task AdoptedBranchThatDoesNotFixPipeline_RecordsFailure()
     {
-        GivenPublishedWorkflow(mergeCommitSha: FixHeadSha);
+        GivenOpenedFixBranch(mergeCommitSha: FixHeadSha);
         GivenCommits(Commit(FixHeadSha, FailingSha));
         GivenChecks(FailingSha, Check("FAILURE"));
         GivenChecks(FixHeadSha, Check("FAILURE"));
@@ -193,7 +212,7 @@ public class PipelineFixEvaluatorHelperTests
     [Test]
     public async Task AdoptedBranchWithoutCheckEvidence_LeavesOutcomeUnknown()
     {
-        GivenPublishedWorkflow(mergeCommitSha: FixHeadSha);
+        GivenOpenedFixBranch(mergeCommitSha: FixHeadSha);
         GivenCommits(Commit(FixHeadSha, FailingSha));
 
         var result = (await RunAsync()).Single();
@@ -204,14 +223,97 @@ public class PipelineFixEvaluatorHelperTests
     }
 
     [Test]
-    public async Task EquivalentPatchCountsAsMerged()
+    public async Task AdoptedBranchWithMissingAfterChecks_RecordsFailure()
     {
-        GivenPublishedWorkflow();
-        GivenCommits(Commit(Sha(3), FailingSha));
-        GivenCommitFiles(FixHeadSha, CommitFile("same"));
-        GivenCommitFiles(Sha(3), CommitFile("same"));
+        GivenOpenedFixBranch();
+        GivenCommits(Commit(FixHeadSha, FailingSha));
         GivenChecks(FailingSha, Check("FAILURE"));
-        GivenChecks(FixHeadSha, Check("SUCCESS"));
+
+        var result = (await RunAsync()).Single();
+
+        Assert.That(result.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixFailure));
+        Assert.That(result.Verification, Is.EqualTo(CopilotFixVerification.NotApplicable));
+    }
+
+    [Test]
+    public async Task AdoptedBranchThatFixesOneCheckButRegressesAnother_RecordsFailure()
+    {
+        GivenOpenedFixBranch();
+        GivenCommits(Commit(FixHeadSha, FailingSha));
+        GivenChecks(FailingSha, Check("analyze", "FAILURE"), Check("verify", "SUCCESS"));
+        GivenChecks(FixHeadSha, Check("analyze", "SUCCESS"), Check("verify", "FAILURE"));
+
+        var result = (await RunAsync()).Single();
+
+        Assert.That(result.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixFailure));
+        Assert.That(result.Verification, Is.EqualTo(CopilotFixVerification.NotApplicable));
+    }
+
+    [Test]
+    public async Task ShiftedEquivalentPatchCountsAsAdoptedAndUsesAdoptedChecks()
+    {
+        GivenOpenedFixBranch();
+        GivenCommits(Commit(Sha(3), FailingSha));
+        GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "old", "fix")));
+        GivenCommitFiles(Sha(3), CommitFile(Patch(30, "old", "fix")));
+        GivenChecks(FailingSha, Check("FAILURE"));
+        GivenChecks(Sha(3), Check("SUCCESS"));
+
+        var result = (await RunAsync()).Single();
+
+        Assert.That(result.FixPullRequestMerged, Is.EqualTo(Sha(3)));
+        Assert.That(result.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixSuccess));
+        gitHub.Verify(
+            service => service.GetCommitCheckRunsAsync(Owner, Repo, FixHeadSha, It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task LaterHumanCommitOverlappingShiftedAdoption_IsOverridden()
+    {
+        GivenOpenedFixBranch();
+        GivenCommits(Commit(Sha(3), FailingSha), Commit(Sha(4), Sha(3)));
+        GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "old", "fix")));
+        GivenCommitFiles(Sha(3), CommitFile(Patch(30, "old", "fix")));
+        GivenCommitFiles(Sha(4), CommitFile(Patch(30, "fix", "human")));
+        GivenChecks(FailingSha, Check("FAILURE"));
+        GivenChecks(Sha(3), Check("SUCCESS"));
+
+        var result = (await RunAsync()).Single();
+
+        Assert.That(result.FixPullRequestMerged, Is.EqualTo(Sha(3)));
+        Assert.That(result.Verification, Is.EqualTo(CopilotFixVerification.CopilotFixOverridden));
+    }
+
+    [Test]
+    public async Task ShiftedAdoptionPreservesChangedLinesBeginningWithRepeatedSigns()
+    {
+        GivenOpenedFixBranch();
+        GivenCommits(Commit(Sha(3), FailingSha));
+        GivenCommitFiles(FixHeadSha, CommitFile(Patch(10, "--count", "++count")));
+        GivenCommitFiles(Sha(3), CommitFile(Patch(30, "--count", "++count")));
+        GivenChecks(FailingSha, Check("FAILURE"));
+        GivenChecks(Sha(3), Check("SUCCESS"));
+
+        var result = (await RunAsync()).Single();
+
+        Assert.That(result.FixPullRequestMerged, Is.EqualTo(Sha(3)));
+        Assert.That(result.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixSuccess));
+    }
+
+    [Test]
+    public async Task PartialEquivalentPatchCountsAsAdopted()
+    {
+        GivenOpenedFixBranch();
+        GivenCommits(Commit(Sha(3), FailingSha));
+        GivenCommitFiles(
+            FixHeadSha,
+            CommitFile(Patch(10, "old", "fix"), "src/first.cs"),
+            CommitFile(Patch(20, "old", "other fix"), "src/second.cs"),
+            CommitFile(null, "assets/image.bin"));
+        GivenCommitFiles(Sha(3), CommitFile(Patch(40, "old", "fix"), "src/first.cs"));
+        GivenChecks(FailingSha, Check("FAILURE"));
+        GivenChecks(Sha(3), Check("SUCCESS"));
 
         var result = (await RunAsync()).Single();
 
@@ -243,7 +345,7 @@ public class PipelineFixEvaluatorHelperTests
     private Task<List<PipelineFixEvaluation>> RunAsync() =>
         helper.EvaluatePipelineFixesAsync(Owner, Repo, Since, Until, CancellationToken.None);
 
-    private void GivenPublishedWorkflow(string? mergeCommitSha = null)
+    private void GivenOpenedFixBranch(string? mergeCommitSha = null)
     {
         GivenMergedPullRequests(PullRequest(mergeCommitSha: mergeCommitSha));
         GivenComments(WorkflowComment($"[Fix](https://github.com/{Owner}/{Repo}/compare/main...{FixBranch})"));
@@ -299,11 +401,13 @@ public class PipelineFixEvaluatorHelperTests
     private static PullRequestCommit Commit(string sha, string parentSha, string author = "dev") =>
         new(null, User(author), null, null, null, null, [Reference(parentSha)], sha, null);
 
-    private static PrCheckRun Check(string conclusion) =>
-        new() { Name = CheckName, Conclusion = conclusion, Type = "CheckRun" };
+    private static PrCheckRun Check(string conclusion) => Check(CheckName, conclusion);
 
-    private static GitHubCommitFile CommitFile(string patch) =>
-        new("src/file.cs", 1, 1, 2, "modified", null, null, null, Sha(999), patch, null);
+    private static PrCheckRun Check(string name, string conclusion) =>
+        new() { Name = name, Conclusion = conclusion, Type = "CheckRun" };
+
+    private static GitHubCommitFile CommitFile(string? patch, string filename = "src/file.cs") =>
+        new(filename, 1, 1, 2, "modified", null, null, null, Sha(999), patch, null);
 
     private static string Patch(int line, string oldValue, string newValue) =>
         $"@@ -{line},1 +{line},1 @@\n-{oldValue}\n+{newValue}";

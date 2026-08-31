@@ -160,7 +160,7 @@ public class PipelineFixEvaluatorHelper(
         }
 
         var beforeChecks = await GetChecksAsync(owner, repo, [failingSha], ct);
-        var afterChecks = await GetChecksAsync(owner, repo, [fixHeadSha], ct);
+        var afterChecks = await GetChecksAsync(owner, repo, [adoptedCommit.Sha], ct);
         if (beforeChecks.Count == 0)
         {
             return new(null, CopilotFixVerification.NotApplicable, adoptedCommit.Sha);
@@ -177,7 +177,7 @@ public class PipelineFixEvaluatorHelper(
         }
 
         var laterHumanCommits = CommitsAfter(adoptedCommit.Sha, commits).Where(IsHumanCommit).ToList();
-        var verification = await HasHumanOverlapAsync(owner, repo, fixHeadSha, laterHumanCommits, ct)
+        var verification = await HasHumanOverlapAsync(owner, repo, adoptedCommit.Sha, laterHumanCommits, ct)
             ? CopilotFixVerification.CopilotFixOverridden
             : CopilotFixVerification.CopilotVerifiedFix;
         return new(CopilotPipelineOutcome.CopilotPipelineFixSuccess, verification, adoptedCommit.Sha);
@@ -252,7 +252,10 @@ public class PipelineFixEvaluatorHelper(
         CancellationToken ct)
     {
         var fixFiles = await gitHubService.GetCommitFilesAsync(owner, repo, fixCommitSha, ct);
-        if (fixFiles.Count == 0 || fixFiles.Any(file => string.IsNullOrEmpty(file.Patch)))
+        var comparableFixFiles = fixFiles
+            .Where(file => PatchChanges(file.Patch) != null)
+            .ToList();
+        if (comparableFixFiles.Count == 0)
         {
             return null;
         }
@@ -260,8 +263,7 @@ public class PipelineFixEvaluatorHelper(
         foreach (var commit in laterCommits)
         {
             var files = await gitHubService.GetCommitFilesAsync(owner, repo, commit.Sha, ct);
-            if (fixFiles.Count == files.Count
-                && fixFiles.All(fixFile => files.Any(file => SamePatch(fixFile, file))))
+            if (comparableFixFiles.Any(fixFile => files.Any(file => SameChanges(fixFile, file))))
             {
                 return commit;
             }
@@ -272,7 +274,7 @@ public class PipelineFixEvaluatorHelper(
     private async Task<bool> HasHumanOverlapAsync(
         string owner,
         string repo,
-        string fixCommitSha,
+        string adoptedCommitSha,
         IReadOnlyList<PullRequestCommit> humanCommits,
         CancellationToken ct)
     {
@@ -281,7 +283,7 @@ public class PipelineFixEvaluatorHelper(
             return false;
         }
 
-        var fixFiles = await gitHubService.GetCommitFilesAsync(owner, repo, fixCommitSha, ct);
+        var fixFiles = await gitHubService.GetCommitFilesAsync(owner, repo, adoptedCommitSha, ct);
         List<IReadOnlyList<GitHubCommitFile>> humanFilesByCommit = [];
         foreach (var commit in humanCommits)
         {
@@ -294,11 +296,6 @@ public class PipelineFixEvaluatorHelper(
                 .Select(files => files.Where(file => FileNamesOverlap(fixFile, file)).ToList())
                 .Where(files => files.Count > 0)
                 .ToList();
-            if (matchingHumanCommits.Count > 1)
-            {
-                return true;
-            }
-
             foreach (var humanFile in matchingHumanCommits.SelectMany(files => files))
             {
                 var fixLines = ChangedLines(fixFile.Patch, useNewSide: true);
@@ -347,11 +344,36 @@ public class PipelineFixEvaluatorHelper(
             && !author.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool SamePatch(GitHubCommitFile left, GitHubCommitFile right) =>
-        string.Equals(left.Filename, right.Filename, StringComparison.OrdinalIgnoreCase)
-        && string.Equals(left.PreviousFileName, right.PreviousFileName, StringComparison.OrdinalIgnoreCase)
-        && string.Equals(left.Status, right.Status, StringComparison.OrdinalIgnoreCase)
-        && string.Equals(left.Patch, right.Patch, StringComparison.Ordinal);
+    private static bool SameChanges(GitHubCommitFile left, GitHubCommitFile right)
+    {
+        var leftChanges = PatchChanges(left.Patch);
+        var rightChanges = PatchChanges(right.Patch);
+        return FileNamesOverlap(left, right)
+            && leftChanges != null
+            && rightChanges != null
+            && leftChanges.Value.Added.SequenceEqual(rightChanges.Value.Added)
+            && leftChanges.Value.Removed.SequenceEqual(rightChanges.Value.Removed);
+    }
+
+    private static (IReadOnlyList<string> Added, IReadOnlyList<string> Removed)? PatchChanges(string? patch)
+    {
+        if (string.IsNullOrEmpty(patch))
+        {
+            return null;
+        }
+
+        var added = patch.Split('\n')
+            .Where(line => line.StartsWith('+'))
+            .Select(line => line[1..])
+            .Order(StringComparer.Ordinal)
+            .ToList();
+        var removed = patch.Split('\n')
+            .Where(line => line.StartsWith('-'))
+            .Select(line => line[1..])
+            .Order(StringComparer.Ordinal)
+            .ToList();
+        return added.Count == 0 && removed.Count == 0 ? null : (added, removed);
+    }
 
     private static bool FileNamesOverlap(GitHubCommitFile left, GitHubCommitFile right) =>
         NamesOf(left).Any(name => NamesOf(right).Contains(name, StringComparer.OrdinalIgnoreCase));

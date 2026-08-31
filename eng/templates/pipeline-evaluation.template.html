@@ -6,7 +6,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Azure SDK Pipeline Analysis Dashboard</title>
-    <script src="dashboard-data.js"></script>
       <style>
 :root {
   --ink: #17242e;
@@ -624,6 +623,7 @@ footer {
         >Source</a
       >
     </footer>
+      <script src="dashboard-data.js"></script>
       <script>
 // core.js
 (function (dashboard) {
@@ -779,7 +779,7 @@ footer {
 })(window.dashboard);
 
 ;
-// dashboard-data.js
+// dashboard-data-loader.js
 const MAX_DAYS = 3650;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const PIPELINE_SUCCESS = "CopilotPipelineFixSuccess";
@@ -842,7 +842,7 @@ const SOURCE = {
 
 function normalizeRow(row, report) {
   if (!Number.isInteger(row?.pr_number) || !row.verification) {
-    throw new Error("Invalid pipeline-fix evaluation row.");
+    return null;
   }
   return {
     owner: report.owner,
@@ -862,7 +862,8 @@ function parseSnapshot(snapshot) {
     throw new Error("Unsupported dashboard data format.");
   }
 
-  return snapshot.reports.flatMap((report) => {
+  let skippedRows = 0;
+  const runs = snapshot.reports.flatMap((report) => {
     if (!report?.owner || !report.repo || !Array.isArray(report.dates)) {
       throw new Error("Invalid repository report.");
     }
@@ -875,15 +876,22 @@ function parseSnapshot(snapshot) {
           `Invalid dated report for ${report.owner}/${report.repo}.`,
         );
       }
+      const results = dateReport.evaluations.flatMap((row) => {
+        const normalized = normalizeRow(row, report);
+        if (normalized) return [normalized];
+        skippedRows++;
+        return [];
+      });
       return {
         date: dateReport.date,
         timestamp: `${dateReport.date}T23:59:59.999Z`,
         owner: report.owner,
         repo: report.repo,
-        results: dateReport.evaluations.map((row) => normalizeRow(row, report)),
+        results,
       };
     });
   });
+  return { runs, skippedRows };
 }
 
 function withinDays(runs, days, now = Date.now()) {
@@ -943,7 +951,7 @@ function buildDashboardView(
   snapshot,
   { repo = "", days = "", stage = "", details = false, now } = {},
 ) {
-  const allRuns = parseSnapshot(snapshot);
+  const { runs: allRuns, skippedRows } = parseSnapshot(snapshot);
   const dayCount = days === "" ? null : Number(days);
   if (
     dayCount !== null &&
@@ -961,7 +969,8 @@ function buildDashboardView(
       (total, run) => total + run.results.length,
       0,
     ),
-    repos: [...new Set(windowed.map((run) => run.repo))].sort(),
+    repos: [...new Set(allRuns.map((run) => run.repo))].sort(),
+    skippedRows,
     fetchedAt: snapshot.generatedAt || "",
     latestDataAt: allRuns.reduce(
       (latest, run) => (run.timestamp > latest ? run.timestamp : latest),
@@ -982,11 +991,10 @@ function buildDashboardView(
 (function (dashboard) {
   "use strict";
 
-  const SNAPSHOT_URL = "dashboard-data.js";
-  const REFRESH_MS = 24 * 60 * 60 * 1000;
   const state = {
     loading: true,
     error: "",
+    skippedRows: 0,
     source: null,
     evaluation: [],
     repos: [],
@@ -996,8 +1004,6 @@ function buildDashboardView(
     selectedStage: "",
     filters: { repo: "", days: "90" },
   };
-  let refreshTimer;
-
   function element(id) {
     return document.getElementById(id);
   }
@@ -1029,8 +1035,12 @@ function buildDashboardView(
     const dataAvailable = hasData();
     const errorBanner = element("error-banner");
     if (errorBanner) {
-      errorBanner.textContent = state.error;
-      errorBanner.hidden = !state.error;
+      const message = state.error ||
+        (state.skippedRows
+          ? `Skipped ${state.skippedRows} malformed evaluation row${state.skippedRows === 1 ? "" : "s"}.`
+          : "");
+      errorBanner.textContent = message;
+      errorBanner.hidden = !message;
     }
     setText("metric-name", state.source?.name || "Pipeline fix evaluation");
     setText("metric-description", state.source?.description || "");
@@ -1060,33 +1070,14 @@ function buildDashboardView(
     setHidden("empty-state", state.loading || dataAvailable);
   }
 
-  function loadSnapshot(refresh = false) {
-    if (!refresh) {
-      if (!window.pipelineAnalysisData)
-        throw new Error("Dashboard data is unavailable.");
-      return Promise.resolve(window.pipelineAnalysisData);
-    }
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = `${SNAPSHOT_URL}?v=${Date.now()}`;
-      script.onload = () => {
-        script.remove();
-        resolve(window.pipelineAnalysisData);
-      };
-      script.onerror = () => {
-        script.remove();
-        reject(new Error("Dashboard data refresh failed."));
-      };
-      document.head.append(script);
-    });
-  }
-
-  async function loadMetric({ refresh = false } = {}) {
+  async function loadMetric() {
     state.loading = true;
     state.error = "";
     renderShell();
     try {
-      const data = buildDashboardView(await loadSnapshot(refresh), {
+      if (!window.pipelineAnalysisData)
+        throw new Error("Dashboard data is unavailable.");
+      const data = buildDashboardView(window.pipelineAnalysisData, {
         ...state.filters,
         stage: state.selectedStage,
         details: true,
@@ -1147,8 +1138,6 @@ function buildDashboardView(
   async function init() {
     bindControls();
     await loadMetric();
-    clearInterval(refreshTimer);
-    refreshTimer = setInterval(() => loadMetric({ refresh: true }), REFRESH_MS);
   }
 
   init();

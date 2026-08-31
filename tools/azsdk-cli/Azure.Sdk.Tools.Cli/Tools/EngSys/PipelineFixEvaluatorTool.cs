@@ -73,8 +73,9 @@ public class PipelineFixEvaluatorTool(
 
             logger.LogDebug("Evaluating Copilot pipeline fixes in {Owner}/{Repo} for merged PRs over the last {SinceDays} days", owner, repo, sinceDays);
 
-            // Read the clock once so the window reported back is exactly the window that was queried.
-            var windowEnd = (until ?? DateTimeOffset.UtcNow).ToUniversalTime();
+            // Calendar-day keys must always represent stable midnight-to-midnight UTC windows.
+            var requestedEnd = (until ?? DateTimeOffset.UtcNow).ToUniversalTime();
+            var windowEnd = new DateTimeOffset(requestedEnd.UtcDateTime.Date, TimeSpan.Zero).AddDays(1);
             List<PipelineFixDateEvaluation> dates = [];
             for (var dayOffset = 0; dayOffset < sinceDays; dayOffset++)
             {
@@ -84,7 +85,7 @@ public class PipelineFixEvaluatorTool(
                     owner, repo, daySince, dayUntil, ct);
                 dates.Add(new PipelineFixDateEvaluation
                 {
-                    Date = DateOnly.FromDateTime(dayUntil.UtcDateTime),
+                    Date = DateOnly.FromDateTime(daySince.UtcDateTime),
                     Evaluations = evaluations,
                 });
             }

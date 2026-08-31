@@ -1,5 +1,5 @@
-# Nightly evaluation of whether GitHub Copilot's fixes for failing Azure SDK pipelines took
-# the pipeline from failure to success and survived into the merged PR.
+# Nightly evaluation of whether GitHub Copilot's fixes for failing Azure SDK pipelines were
+# adopted into the original pull request and took the pipeline from failure to success.
 #
 # For each repository the azsdk CLI evaluator returns dated PR-level evaluations. Each date is
 # uploaded as durable history, then all history is consolidated into two static assets:
@@ -208,11 +208,12 @@ jobs:
               reports = @($reports.Values | Sort-Object owner, repo)
             }
             $json = $snapshot | ConvertTo-Json -Depth 100 -Compress
+            $json = $json.Replace([string][char]0x2028, '\u2028').Replace([string][char]0x2029, '\u2029')
             $outputDirectory = '$(EvalArtifactDir)/$(MetricsPrefix)'
             New-Item -ItemType Directory -Force $outputDirectory | Out-Null
             Set-Content `
               -Path "$outputDirectory/dashboard-data.js" `
-              -Value "window.pipelineAnalysisData = $($json.Replace('</', '<\/'));" `
+              -Value "window.pipelineAnalysisData = $json;" `
               -Encoding utf8
             Copy-Item `
               '$(Build.SourcesDirectory)/eng/templates/pipeline-evaluation.template.html' `

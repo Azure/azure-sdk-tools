@@ -4,7 +4,7 @@
 
 ### Bugs Fixed
 
-- Ignore API version associated with unknown language emitter configuration in metadata ouput.
+- Ignore API version associated with unknown language emitter configuration in metadata output.
 - Ignore unsupported languages when updating the languages in release plan.
 
 ## 0.6.39 (2026-08-31)

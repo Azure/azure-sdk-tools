@@ -275,6 +275,7 @@ Returns an answer with supporting references and documentation links
                     AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
                     Query = request,
                     SearchMode = "quick", // For authoring, default quick search
+                    WithWikiSearch = true, // Include wiki search for knowledge retrieval
                 };
                 
                 // Call the service

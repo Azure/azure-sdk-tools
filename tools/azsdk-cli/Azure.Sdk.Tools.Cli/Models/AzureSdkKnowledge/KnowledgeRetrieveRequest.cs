@@ -42,5 +42,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
         /// </summary>
         [JsonPropertyName("top_k")]
         public int? TopK { get; set; }
+
+        /// <summary>
+        /// Whether to include wiki search.
+        /// </summary>
+        [JsonPropertyName("with_wiki_search")]
+        public bool WithWikiSearch { get; set; } = false;
     }
 }

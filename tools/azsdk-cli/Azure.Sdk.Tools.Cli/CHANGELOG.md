@@ -1,14 +1,25 @@
 # Release History
 
-## 0.6.38 (Unreleased)
+## 0.6.39 (Unreleased)
 
 ### Features Added
 
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in release plan.
+
 ### Breaking Changes
+
+- Removed the option to force create a release plan to avoid duplicate release plan.
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.38 (2026-08-26)
+
+### Features Added
+
+- `package mark-released` output now includes the API Review Hub approval record ID and applied inheritance rule.
+- `package get-approval-status` output now includes IDs for API Review Hub approval records.
 
 ## 0.6.37 (2026-08-21)
 
@@ -52,11 +63,16 @@
 
 ### Features Added
 
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in the release plan.
+
+### Breaking Changes
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
+
+- Removed the option to force-create a release plan to avoid duplicate release plans.
 
 ## 0.6.32 (2026-07-28)
 

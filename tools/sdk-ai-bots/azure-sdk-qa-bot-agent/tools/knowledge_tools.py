@@ -5,10 +5,29 @@ from __future__ import annotations
 import asyncio
 import logging
 from enum import Enum
-from typing import Annotated
+from pathlib import PurePosixPath
+from typing import Annotated, Callable
 
-from config.tenant_config import TenantID, get_knowledge_source, get_tenant_config
+from azure.core.exceptions import ResourceModifiedError
+from azure.storage.blob.aio import BlobServiceClient
+from pydantic import BaseModel
+
 from config.app_config import get as cfg
+from config.tenant_config import (
+    KNOWLEDGE_SOURCE_REGISTRY,
+    TenantID,
+    get_knowledge_source,
+    get_tenant_config,
+)
+from models.knowledge import Reference, SearchKnowledgeBaseResult
+from tools import tool
+from utils.azure_ai_search import SearchClient, get_search_client
+from utils.azure_storage import BlobContent, download_blob, upload_blob
+from utils.knowledge_config import (
+    KbTarget,
+    get_kb_targets,
+    select_kb_target,
+)
 from models.knowledge import KnowledgeChunk, Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import (
@@ -16,6 +35,7 @@ from utils.azure_ai_search import (
     WIKI_FILTER,
     _escape_odata,
     combine_source_filters,
+    SearchClient,
     get_search_client,
 )
 
@@ -55,6 +75,43 @@ _SEARCH_MODE_DESC = (
     "Default: 'quick'."
 )
 
+class KbSourceView(BaseModel):
+    folder: str
+    resolved: bool
+    owner: str | None = None
+    repo: str | None = None
+    branch: str | None = None
+    path: str | None = None
+    scope: str | None = None
+    reason: str | None = None  # populated when resolved=False
+
+
+class KnowledgeSourceView(BaseModel):
+    """A single knowledge source advertised for a tenant."""
+
+    name: str
+    description: str
+
+
+class KnowledgeSourceCatalog(BaseModel):
+    """The full set of knowledge sources configured for a tenant."""
+
+    tenant_id: str | None = None
+    sources: list[KnowledgeSourceView]
+
+class ReadKnowledgeResult(BaseModel):
+    blob_path: str
+    content: str
+    etag: str
+
+
+class UpdateKnowledgeResult(BaseModel):
+    blob_path: str
+    status: str
+    indexer_status: str | None = None
+    error: str | None = None
+
+
 
 class SearchMode(str, Enum):
     """Search strategy for knowledge retrieval."""
@@ -75,6 +132,46 @@ class ServiceType(str, Enum):
 
 class KnowledgeTools:
     """Tools for Azure SDK knowledge retrieval and search operations."""
+
+    def __init__(
+        self,
+        *,
+        settings: Callable[[str, str], str | None] | None = None,
+        search_client: SearchClient | None = None,
+        blob_client: BlobServiceClient | None = None,
+    ) -> None:
+        self._settings = settings or cfg
+        self._search_client = search_client
+        self._blob_client = blob_client
+
+    def _get_search_client(self) -> SearchClient:
+        return self._search_client or get_search_client()
+
+    async def _download_blob(
+        self, container: str, blob_path: str
+    ) -> BlobContent | None:
+        if self._blob_client is not None:
+            return await download_blob(
+                container,
+                blob_path,
+                include_metadata=True,
+                client=self._blob_client,
+            )
+        return await download_blob(container, blob_path, include_metadata=True)
+
+    async def _upload_blob(
+        self, container: str, blob_path: str, data: bytes, etag: str
+    ) -> None:
+        if self._blob_client is not None:
+            await upload_blob(
+                container,
+                blob_path,
+                data,
+                etag=etag,
+                client=self._blob_client,
+            )
+        else:
+            await upload_blob(container, blob_path, data, etag=etag)
 
     @tool
     async def search_knowledge_base(
@@ -115,12 +212,19 @@ class KnowledgeTools:
             "OVER historical Q&A sources (e.g., 'static_typespec_qa'). "
             "Q&A sources often discuss workarounds and edge cases; for template selection, "
             "start with the official docs. "
-            "If not provided, all sources configured for the tenant will be used.",
+            "If not provided, falls back to the tenant's sources when a "
+            "`tenant_id` is given, otherwise every source in the whole "
+            "knowledge base.",
         ] = None,
         tenant_id: Annotated[
-            str,
-            "The active tenant ID for the current conversation.",
-        ],
+            str | None,
+            "Optional tenant ID for the current conversation. When set, the "
+            "search is scoped to that tenant's configured sources and its "
+            "source-filter overrides are applied. When omitted (None) AND no "
+            "explicit `sources` list is given, the search spans the ENTIRE "
+            "knowledge base across every tenant — use this to check whether the "
+            "required information exists anywhere in the KB.",
+        ] = None,
         service_type: Annotated[
             str | None,
             "Filter results by Azure service plane. ALMOST ALWAYS use None. "
@@ -145,10 +249,16 @@ class KnowledgeTools:
         multiple queries to cover different facets of the user's problem —
         the original question, related concepts, and potential solutions.
         """
-        # Fall back to tenant-configured sources when none are specified
-        sources = _source_names(tenant_id, sources)
+        # Resolve sources: explicit list wins; otherwise fall back to the
+        # tenant's configured sources, or the whole registry when no tenant.
+        if not sources:
+            if tenant_id:
+                config = get_tenant_config(TenantID(tenant_id))
+                sources = [src.name for src in config.sources] if config else []
+            else:
+                sources = list(KNOWLEDGE_SOURCE_REGISTRY.keys())
 
-        search_client = get_search_client()
+        search_client = self._get_search_client()
 
         # Resolve source → OData filter using tenant config
         source_filters = _resolve_source_filters(sources, tenant_id, service_type)
@@ -190,7 +300,22 @@ class KnowledgeTools:
 
         # Log final search results.
         logger.info("=========Final Search Result=========")
-        refs = _refs_from_expanded(expanded, unique_chunks)
+        refs = [
+            Reference(
+                title=_build_reference_title(
+                    expanded[i].title,
+                    expanded[i].header1,
+                    expanded[i].header2,
+                    expanded[i].header3,
+                ),
+                source=expanded[i].source,
+                blob_path=f"{expanded[i].source}/{expanded[i].title}",
+                link=expanded[i].link,
+                content=_truncate_content(expanded[i].content),
+                score=unique_chunks[i].rerank_score,
+            )
+            for i in range(len(expanded))
+        ]
         for i, ref in enumerate(refs):
             logger.info(
                 "Result [%d] score=%.2f, source=%s, title=%s, link=%s, content_len=%d",
@@ -207,6 +332,214 @@ class KnowledgeTools:
         )
 
         return SearchKnowledgeBaseResult(results=refs)
+
+    @tool
+    async def read_knowledge(
+        self,
+        *,
+        blob_path: Annotated[
+            str,
+            "Exact `blob_path` returned by `search_knowledge_base`. The path must be a Markdown document under a registered knowledge-source folder.",
+        ],
+    ) -> ReadKnowledgeResult:
+        """Read a complete knowledge document and its version for a safe update."""
+        normalized_path = _validate_blob_path(blob_path)
+        blob = await self._download_blob(
+            self._settings("STORAGE_KNOWLEDGE_CONTAINER", "") or "",
+            normalized_path,
+        )
+        if blob is None:
+            raise ValueError(f"Knowledge document not found: {normalized_path}")
+        return ReadKnowledgeResult(
+            blob_path=normalized_path,
+            content=blob.data.decode("utf-8"),
+            etag=blob.etag,
+        )
+
+    @tool
+    async def update_knowledge(
+        self,
+        *,
+        blob_path: Annotated[
+            str,
+            "Exact `blob_path` previously passed to `read_knowledge`.",
+        ],
+        expected_content: Annotated[
+            str,
+            "Exact existing text to replace. It must occur exactly once in the current document; include enough surrounding text to make it unique.",
+        ],
+        replacement_content: Annotated[
+            str,
+            "Replacement text. Use an empty string only when the grounded fix requires deleting the expected content.",
+        ],
+        etag: Annotated[
+            str,
+            "The ETag returned by `read_knowledge`; prevents overwriting a document changed since it was read.",
+        ],
+    ) -> UpdateKnowledgeResult:
+        """Safely replace one exact passage and refresh the knowledge index."""
+        normalized_path = _validate_blob_path(blob_path)
+        if not expected_content:
+            raise ValueError("expected_content must not be empty")
+
+        knowledge_container = self._settings("STORAGE_KNOWLEDGE_CONTAINER", "") or ""
+        blob = await self._download_blob(
+            knowledge_container,
+            normalized_path,
+        )
+        if blob is None:
+            raise ValueError(f"Knowledge document not found: {normalized_path}")
+        occurrence_count = blob.data.decode("utf-8").count(expected_content)
+        if occurrence_count != 1:
+            raise ValueError(
+                "expected_content must occur exactly once; "
+                f"found {occurrence_count} occurrences"
+            )
+
+        updated_content = blob.data.decode("utf-8").replace(
+            expected_content,
+            replacement_content,
+            1,
+        )
+        print("##vso[task.setvariable variable=restore_required]true", flush=True)
+        try:
+            await self._upload_blob(
+                knowledge_container,
+                normalized_path,
+                updated_content.encode("utf-8"),
+                etag,
+            )
+        except ResourceModifiedError:
+            return UpdateKnowledgeResult(
+                blob_path=normalized_path,
+                status="conflict",
+                error="The knowledge document changed after it was read. Read it again before retrying.",
+            )
+
+        try:
+            indexer_status = await self._get_search_client().run_indexer()
+        except (RuntimeError, TimeoutError) as exc:
+            logger.exception("Knowledge indexer did not complete after updating %s", normalized_path)
+            return UpdateKnowledgeResult(
+                blob_path=normalized_path,
+                status="indexing_failed",
+                indexer_status="failed",
+                error=str(exc),
+            )
+        return UpdateKnowledgeResult(
+            blob_path=normalized_path,
+            status="updated",
+            indexer_status=indexer_status,
+        )
+
+    @tool
+    async def list_knowledge_sources(
+        self,
+        *,
+        tenant_id: Annotated[
+            str | None,
+            "Optional tenant ID. When provided, returns only the sources "
+            "configured for that tenant. When omitted (None), returns EVERY "
+            "source registered across the whole project — use this to check "
+            "whether information exists anywhere in the knowledge base.",
+        ] = None,
+    ) -> KnowledgeSourceCatalog:
+        """List maintainable knowledge sources for a tenant, or the whole project.
+
+        When *tenant_id* is given, returns only that tenant's sources. When
+        omitted, returns every source registered across the entire project.
+        Each source carries a ``name`` and ``description`` so the caller can
+        reason about which source *should* cover a given question, then
+        target ``search_knowledge_base`` with an explicit ``sources`` list.
+        A source whose topic matches the question but returns nothing on an
+        on-topic query is a strong signal of a knowledge gap in that source.
+        """
+        if tenant_id is None:
+            sources = [
+                KnowledgeSourceView(name=src.name, description=src.description)
+                for src in KNOWLEDGE_SOURCE_REGISTRY.values()
+            ]
+            return KnowledgeSourceCatalog(tenant_id=None, sources=sources)
+
+        try:
+            config = get_tenant_config(TenantID(tenant_id))
+        except ValueError:
+            logger.warning("Unknown tenant_id for source listing: %s", tenant_id)
+            return KnowledgeSourceCatalog(tenant_id=tenant_id, sources=[])
+
+        sources = (
+            [
+                KnowledgeSourceView(name=src.name, description=src.description)
+                for src in config.sources
+            ]
+            if config
+            else []
+        )
+        return KnowledgeSourceCatalog(tenant_id=tenant_id, sources=sources)
+
+    @tool
+    async def resolve_kb_source(
+        self,
+        *,
+        folder: Annotated[
+            str,
+            "The chunk `source` value from a knowledge-base hit — used as "
+            "the join key into the upstream knowledge-config.json.",
+        ],
+        blob_path: Annotated[
+            str | None,
+            "The exact `blob_path` from the same search hit. Required when "
+            "multiple repository paths use the same source folder.",
+        ] = None,
+    ) -> KbSourceView:
+        """Resolve a KB folder to its upstream ownership metadata.
+
+        Returns the owner/repo/branch/path where the KB content lives, to
+        cite in a KB-gap issue. ``resolved=False`` when the folder is
+        unmapped or an ambiguous path cannot be selected.
+        """
+        targets: tuple[KbTarget, ...] = ()
+        try:
+            targets = await get_kb_targets(folder)
+        except Exception:
+            logger.exception("knowledge_config lookup failed for %s", folder)
+
+        target = select_kb_target(folder, blob_path, targets)
+        if target is not None:
+            return KbSourceView(
+                folder=folder,
+                resolved=True,
+                owner=target.owner,
+                repo=target.repo,
+                branch=target.branch,
+                path=target.path,
+                scope=target.scope,
+            )
+
+        if targets:
+            return KbSourceView(
+                folder=folder,
+                resolved=False,
+                reason=(
+                    "blob_path_required_for_ambiguous_folder"
+                    if blob_path is None
+                    else "blob_path_not_in_registered_source_path"
+                ),
+            )
+
+        if folder in KNOWLEDGE_SOURCE_REGISTRY:
+            return KbSourceView(
+                folder=folder,
+                resolved=True,
+                path=folder,
+                scope=folder,
+            )
+
+        return KbSourceView(
+            folder=folder,
+            resolved=False,
+            reason="folder_unmapped_or_non_github",
+        )
 
     @tool
     async def wiki_search(
@@ -328,16 +661,24 @@ def _wiki_page_filters(
 
 def _resolve_source_filters(
     sources: list[str],
-    tenant_id: str,
+    tenant_id: str | None = None,
     service_type: str | None = None,
 ) -> dict[str, str]:
     """Build source-name → OData-filter mapping.
 
     Each source gets a base ``context_id`` filter.  Tenant-level overrides
-    and the service-type clause are layered on with ``and``.
+    (when a tenant is given) and the service-type clause are layered on with
+    ``and``.
     """
-    tenant_config = get_tenant_config(TenantID(tenant_id))
-    source_filter_overrides = tenant_config.source_filter if tenant_config else {}
+    source_filter_overrides: dict[str, str] = {}
+    if tenant_id:
+        try:
+            tenant_config = get_tenant_config(TenantID(tenant_id))
+        except ValueError:
+            tenant_config = None
+        source_filter_overrides = (
+            tenant_config.source_filter if tenant_config else {}
+        )
 
     valid_service_types = {t.value for t in ServiceType}
     service_type_filter = (
@@ -361,6 +702,20 @@ def _resolve_source_filters(
             filter_clauses.append(service_type_filter)
         source_filters[source_name] = " and ".join(filter_clauses)
     return source_filters
+
+
+def _validate_blob_path(blob_path: str) -> str:
+    """Return a normalized knowledge blob path or reject unsafe/unmapped paths."""
+    if not blob_path or "\\" in blob_path:
+        raise ValueError("blob_path must use a non-empty forward-slash path")
+    path = PurePosixPath(blob_path)
+    if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
+        raise ValueError("blob_path must be a normalized relative path")
+    if len(path.parts) < 2 or path.parts[0] not in KNOWLEDGE_SOURCE_REGISTRY:
+        raise ValueError("blob_path must be under a registered knowledge-source folder")
+    if path.suffix.lower() not in {".md", ".mdx"}:
+        raise ValueError("blob_path must identify a Markdown document")
+    return path.as_posix()
 
 
 def _truncate_content(

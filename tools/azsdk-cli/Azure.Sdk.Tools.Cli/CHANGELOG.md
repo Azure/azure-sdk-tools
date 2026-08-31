@@ -20,6 +20,10 @@
 
 - Removed the option to force create a release plan to avoid duplicate release plan.
 
+### Bugs Fixed
+
+- `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
+
 ## 0.6.38 (2026-08-26)
 
 ### Features Added

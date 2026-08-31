@@ -24,6 +24,7 @@ COPY config/ ./config/
 COPY models/ ./models/
 COPY prompts/ ./prompts/
 COPY services/ ./services/
+COPY static/ ./static/
 COPY tools/ ./tools/
 COPY utils/ ./utils/
 COPY skills/ ./skills/

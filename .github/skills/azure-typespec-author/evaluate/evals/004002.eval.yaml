@@ -79,19 +79,25 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "scalar.*extends string"
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_min_length
+        type: "file-matches"
+        name: "file-matches-min-length"
         config:
           pattern: '@minLength\(3\)'
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_max_length
+        type: "file-matches"
+        name: "file-matches-max-length"
         config:
           pattern: '@maxLength\(10\)'
           path: "employee.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches
+        type: "file-not-matches"
         config:
           pattern: 'assets:\s*string\[\]'
           path: "employee.tsp"
@@ -109,22 +115,10 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: "scalar.*extends string"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: '@minLength\(3\)'
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: '@maxLength\(10\)'
-      - type: "file-not-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'assets:\s*string\[\]'
+      - *file_matches
+      - *file_matches_min_length
+      - *file_matches_max_length
+      - *file_not_matches
       - type: "prompt"
         config:
           prompt: "Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string."

@@ -1,0 +1,1108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Chatbot Evolution Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css"
+    integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer">
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: #172033;
+      background: #f4f7fb;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      padding: 22px 28px;
+      color: white;
+      background: linear-gradient(120deg, #182b49, #124e78);
+    }
+    header h1 { margin: 0; font-size: 24px; }
+    header p { margin: 6px 0 0; color: #d9e4f5; }
+    .account {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+    .account a { color: white; font-weight: 600; }
+    main { padding: 20px 28px 32px; }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid #d8e0ec;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(23, 32, 51, .06);
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: #41506a;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    input, select, button {
+      min-height: 36px;
+      border: 1px solid #aebbd0;
+      border-radius: 6px;
+      padding: 7px 9px;
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      color: white;
+      border-color: #0067b8;
+      background: #0067b8;
+      font-weight: 600;
+    }
+    button.secondary {
+      color: #24324a;
+      border-color: #aebbd0;
+      background: white;
+    }
+    button:disabled { cursor: default; opacity: .5; }
+    .actions {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0 10px;
+      color: #41506a;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #d8e0ec;
+      border-radius: 10px;
+      background: white;
+    }
+    table {
+      width: 100%;
+      min-width: 1180px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #e5eaf2;
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: #34425a;
+      background: #eef3f9;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: #f8fbff; }
+    .conversation-title {
+      min-width: 280px;
+      max-width: 430px;
+    }
+    .conversation-title strong {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
+    .muted { color: #66758d; }
+    .small { font-size: 12px; }
+    .mono { font-family: Consolas, monospace; }
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: #34425a;
+      background: #e7edf6;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .status-finished, .status-done, .status-correct, .status-closed {
+      color: #0b5f32;
+      background: #dff5e7;
+    }
+    .status-failed, .status-incorrect, .status-validation_failed,
+    .status-assessment_failed {
+      color: #9b1c1c;
+      background: #fde3e3;
+    }
+    .status-running, .status-open {
+      color: #705500;
+      background: #fff1bd;
+    }
+    .status-pending_validation {
+      color: #63348b;
+      background: #eee2fa;
+    }
+    .status-ongoing, .status-created {
+      color: #075a9c;
+      background: #deefff;
+    }
+    .status-not_started, .status-not_evaluated, .status-inconclusive,
+    .status-not_applicable {
+      color: #596579;
+      background: #edf0f4;
+    }
+    .pagination {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pagination button { min-width: 84px; }
+    .error { color: #a4262c; font-weight: 600; }
+    dialog {
+      width: min(1120px, 94vw);
+      max-height: 92vh;
+      border: 0;
+      border-radius: 12px;
+      padding: 0;
+      box-shadow: 0 18px 56px rgba(0, 0, 0, .32);
+    }
+    dialog::backdrop { background: rgba(10, 18, 32, .62); }
+    .dialog-shell {
+      display: flex;
+      max-height: 92vh;
+      flex-direction: column;
+      background: #f4f7fb;
+    }
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 20px;
+      padding: 18px 22px;
+      border-bottom: 1px solid #d8e0ec;
+      background: white;
+    }
+    .dialog-header h2 {
+      max-width: 860px;
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.35;
+    }
+    .dialog-header p { margin: 5px 0 0; }
+    .dialog-header button { min-height: 32px; }
+    .detail-content {
+      overflow: auto;
+      padding: 22px 28px 30px;
+    }
+    .detail-overview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .timeline {
+      position: relative;
+      margin-left: 8px;
+      padding-left: 30px;
+    }
+    .timeline::before {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 8px;
+      width: 2px;
+      content: "";
+      background: #c8d4e5;
+    }
+    .timeline-step {
+      position: relative;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border: 1px solid #d8e0ec;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(23, 32, 51, .05);
+    }
+    .timeline-step::before {
+      position: absolute;
+      top: 22px;
+      left: -29px;
+      width: 14px;
+      height: 14px;
+      border: 3px solid #f4f7fb;
+      border-radius: 50%;
+      content: "";
+      background: #0078d4;
+    }
+    .step-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .step-heading h3 { margin: 0; font-size: 17px; }
+    .step-heading p { margin: 4px 0 0; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .meta-item {
+      padding: 10px 12px;
+      border-radius: 7px;
+      background: #f4f7fb;
+    }
+    .meta-item dt {
+      margin-bottom: 4px;
+      color: #66758d;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .meta-item dd { margin: 0; }
+    .evidence {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-left: 3px solid #6b85aa;
+      border-radius: 0 6px 6px 0;
+      background: #f7f9fc;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .evidence h4 {
+      margin: 0 0 6px;
+      color: #41506a;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .evidence p { margin: 0; }
+    .markdown > :first-child { margin-top: 0; }
+    .markdown > :last-child { margin-bottom: 0; }
+    .markdown p { margin: 0 0 9px; }
+    .markdown ul, .markdown ol {
+      margin: 7px 0 9px;
+      padding-left: 24px;
+    }
+    .markdown li { margin: 3px 0; }
+    .markdown blockquote {
+      margin: 8px 0;
+      padding: 4px 12px;
+      border-left: 3px solid #9babc1;
+      color: #52627a;
+    }
+    .markdown pre {
+      overflow: auto;
+      margin: 9px 0;
+      padding: 11px 13px;
+      border-radius: 7px;
+      color: #e8edf5;
+      background: #172033;
+      font: 12px/1.5 Consolas, monospace;
+      white-space: pre;
+    }
+    .markdown code {
+      border-radius: 4px;
+      padding: 1px 4px;
+      color: #7a271a;
+      background: #f4e9e7;
+      font-family: Consolas, monospace;
+      font-size: .92em;
+    }
+    .markdown pre code {
+      padding: 0;
+      color: inherit;
+      background: transparent;
+    }
+    .markdown h1, .markdown h2, .markdown h3, .markdown h4 {
+      margin: 12px 0 7px;
+      line-height: 1.3;
+    }
+    .markdown h1 { font-size: 18px; }
+    .markdown h2 { font-size: 16px; }
+    .markdown h3, .markdown h4 { font-size: 14px; }
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 88%;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: #eef3f9;
+    }
+    .message.user {
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+      background: #edf5ff;
+    }
+    .message.bot {
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+      background: #e7f5eb;
+    }
+    .message.system { align-self: center; background: #f0edf7; }
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 6px;
+      color: #52627a;
+      font-size: 11px;
+    }
+    .message-content {
+      margin: 0;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .feedback-note {
+      margin-top: 9px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #7a271a;
+      background: #fff1ee;
+      font-size: 12px;
+    }
+    .labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .label-chip {
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: #40506a;
+      background: #e8edf5;
+      font-size: 11px;
+    }
+    .loading {
+      padding: 48px 20px;
+      color: #52627a;
+      text-align: center;
+    }
+    a { color: #0067b8; }
+    @media (max-width: 1100px) {
+      .filters { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+    }
+    @media (max-width: 700px) {
+      main { padding: 14px; }
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px 14px;
+      }
+      .filters, .meta-grid { grid-template-columns: 1fr; }
+      .detail-content { padding: 16px 12px 24px; }
+      .timeline { padding-left: 24px; }
+      .message { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Chatbot Evolution Dashboard</h1>
+      <p>Conversation assessment, diagnosis, remediation, and validation</p>
+    </div>
+    <div class="account">
+      <span id="user-name">Loading identity...</span>
+      <a id="sign-out" href="/.auth/logout" hidden>Sign out</a>
+    </div>
+  </header>
+  <main>
+    <form id="filters" class="filters">
+      <label>Channel
+        <select id="channel"><option value="">All channels</option></select>
+      </label>
+      <label>Conversation status
+        <select id="conversation-status">
+          <option value="">All conversation statuses</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="finished">Bot answered correctly</option>
+          <option value="failed">Failed (incorrect or unassessed)</option>
+        </select>
+      </label>
+      <label>Evolution status
+        <select id="evolution-status">
+          <option value="">All evolution statuses</option>
+          <option value="not_started">Not started</option>
+          <option value="created">Created</option>
+          <option value="running">Running</option>
+          <option value="pending_validation">Pending validation</option>
+          <option value="done">Done</option>
+          <option value="failed">Failed</option>
+        </select>
+      </label>
+      <label>Updated from
+        <input id="updated-from" type="datetime-local">
+      </label>
+      <label>Updated to
+        <input id="updated-to" type="datetime-local">
+      </label>
+      <label>Conversation ID
+        <input id="conversation-id" type="search" placeholder="Contains...">
+      </label>
+      <div class="actions">
+        <button type="submit">Apply</button>
+        <button id="reset" class="secondary" type="button">Reset</button>
+        <button id="refresh" class="secondary" type="button">Refresh</button>
+      </div>
+    </form>
+
+    <div class="summary">
+      <span id="result-count">Loading...</span>
+      <span id="error" class="error" role="alert"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Created</th>
+            <th>Channel</th>
+            <th>Conversation</th>
+            <th>Conversation status</th>
+            <th>Evolution status</th>
+            <th>Issue</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="records"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button id="previous" class="secondary" type="button">Previous</button>
+      <span id="page-label">Page 1</span>
+      <button id="next" class="secondary" type="button">Next</button>
+    </div>
+  </main>
+
+  <dialog id="details">
+    <div class="dialog-shell">
+      <div class="dialog-header">
+        <div>
+          <h2 id="details-title">Conversation details</h2>
+          <p id="details-subtitle" class="muted small"></p>
+        </div>
+        <button id="close-details" class="secondary" type="button">Close</button>
+      </div>
+      <div id="details-content" class="detail-content"></div>
+    </div>
+  </dialog>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js"
+    integrity="sha384-kyb7rY2xnKgiRpRdAeNJxQ8e2SiGZy1m+FK9yME6M0eGJpg7EFaGGvf7+JSirgqE"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/dompurify@3.4.13/dist/purify.min.js"
+    integrity="sha384-ZuC+DIACqSIZTsp+7YF57cR5Y+6qXa7YFbEKdA/EHA/R0T+41dtorqucYl71Zp+t"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/highlight.min.js"
+    integrity="sha384-RH2xi4eIQ/gjtbs9fUXM68sLSi99C7ZWBRX1vDrVv6GQXRibxXLbwO2NGZB74MbU"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/languages/powershell.min.js"
+    integrity="sha384-q/8iVbv95DiFN+l7qeoBwJ0Wju7gozJemMfG3DdxiOR8CfA/2dKvKA3W5t4l/n9t"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script>
+    const pageSize = 50;
+    let page = 1;
+    let total = 0;
+    let activeRequest = null;
+    let activeDetailRequest = null;
+
+    const elements = {
+      form: document.querySelector("#filters"),
+      channel: document.querySelector("#channel"),
+      conversationStatus: document.querySelector("#conversation-status"),
+      evolutionStatus: document.querySelector("#evolution-status"),
+      updatedFrom: document.querySelector("#updated-from"),
+      updatedTo: document.querySelector("#updated-to"),
+      conversationId: document.querySelector("#conversation-id"),
+      records: document.querySelector("#records"),
+      resultCount: document.querySelector("#result-count"),
+      error: document.querySelector("#error"),
+      previous: document.querySelector("#previous"),
+      next: document.querySelector("#next"),
+      pageLabel: document.querySelector("#page-label"),
+      details: document.querySelector("#details"),
+      detailsTitle: document.querySelector("#details-title"),
+      detailsSubtitle: document.querySelector("#details-subtitle"),
+      detailsContent: document.querySelector("#details-content"),
+      userName: document.querySelector("#user-name"),
+      signOut: document.querySelector("#sign-out")
+    };
+
+    function node(tag, className = "", text = "") {
+      const value = document.createElement(tag);
+      if (className) value.className = className;
+      if (text) value.textContent = text;
+      return value;
+    }
+
+    function addParameter(parameters, name, value) {
+      if (value) parameters.set(name, value);
+    }
+
+    function toIso(value) {
+      return value ? new Date(value).toISOString() : "";
+    }
+
+    function formatDate(value) {
+      return value ? new Date(value).toLocaleString() : "—";
+    }
+
+    function label(value) {
+      if (!value) return "—";
+      return value.replaceAll("_", " ").replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function statusBadge(value, text = "") {
+      const badge = node("span", `badge status-${value}`);
+      badge.textContent = text || label(value);
+      return badge;
+    }
+
+    function cell(value, className = "") {
+      const td = node("td", className);
+      td.textContent = value ?? "—";
+      return td;
+    }
+
+    function safeHttpsUrl(value) {
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" ? url : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function isAllowedIssueUrl(value) {
+      const url = safeHttpsUrl(value);
+      return Boolean(url
+        && url.hostname.toLowerCase() === "github.com"
+        && /^\/Azure\/azure-sdk-pr\/issues\/[1-9]\d*\/?$/i.test(url.pathname));
+    }
+
+    function externalLink(value, text) {
+      const url = safeHttpsUrl(value);
+      if (!url) return null;
+      const link = node("a", "", text);
+      link.href = url.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      return link;
+    }
+
+    function conversationStatus(record) {
+      if (record.qa_status === "ongoing") return "Ongoing";
+      if (record.qa_status === "finished") return "Bot answered correctly";
+      if (record.qa_status === "failed" && record.verdict === "incorrect") {
+        return "Needs evolution";
+      }
+      if (record.qa_status === "failed") return "Bot answer assessment failed";
+      return label(record.qa_status);
+    }
+
+    function conversationStatusBadge(record) {
+      return statusBadge(record.qa_status, conversationStatus(record));
+    }
+
+    function evolutionStatusBadge(record) {
+      if (record.qa_status === "finished") {
+        return statusBadge("not_applicable", "/");
+      }
+      const value = record.feedback?.status ?? "not_started";
+      return statusBadge(value);
+    }
+
+    function setDetailsTitle(record) {
+      const link = externalLink(record.message_link, record.conversation_title);
+      elements.detailsTitle.replaceChildren(
+        link || document.createTextNode(record.conversation_title)
+      );
+    }
+
+    function renderMarkdown(content) {
+      const wrapper = node("div", "markdown");
+      const source = String(content || "—");
+      if (!window.marked || !window.DOMPurify || !window.hljs) {
+        wrapper.textContent = source;
+        return wrapper;
+      }
+      const markup = marked.parse(source, {
+        breaks: true,
+        gfm: true
+      });
+      const sanitized = DOMPurify.sanitize(markup, {
+        USE_PROFILES: {html: true}
+      });
+      const parsed = new DOMParser().parseFromString(sanitized, "text/html");
+      for (const link of parsed.body.querySelectorAll("a")) {
+        const safeUrl = safeHttpsUrl(link.getAttribute("href"));
+        if (!safeUrl) {
+          link.replaceWith(document.createTextNode(link.textContent || ""));
+          continue;
+        }
+        link.href = safeUrl.href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      }
+      for (const child of Array.from(parsed.body.childNodes)) {
+        wrapper.append(document.importNode(child, true));
+      }
+      for (const code of wrapper.querySelectorAll("pre code")) {
+        hljs.highlightElement(code);
+      }
+      return wrapper;
+    }
+
+    function answerAssessment(record) {
+      if (record.qa_status === "ongoing") {
+        return {value: "not_evaluated", text: "Not evaluated"};
+      }
+      if (record.verdict === "correct" || record.verdict === "incorrect") {
+        return {value: record.verdict, text: label(record.verdict)};
+      }
+      if (record.feedback?.status === "failed") {
+        return {value: "assessment_failed", text: "Assessment failed"};
+      }
+      return {value: "inconclusive", text: "Inconclusive"};
+    }
+
+    function renderRecords(items) {
+      elements.records.replaceChildren();
+      if (!items.length) {
+        const row = node("tr");
+        const empty = cell("No conversations match the current filters.");
+        empty.colSpan = 7;
+        row.append(empty);
+        elements.records.append(row);
+        return;
+      }
+
+      for (const record of items) {
+        const row = node("tr");
+        row.append(cell(formatDate(
+          record.conversation_created_at || record.first_seen_at
+        )));
+        row.append(cell(record.channel_name));
+
+        const titleCell = node("td", "conversation-title");
+        const title = node("strong");
+        const titleLink = externalLink(
+          record.message_link,
+          record.conversation_title
+        );
+        title.append(
+          titleLink || document.createTextNode(record.conversation_title)
+        );
+        titleCell.append(title);
+        titleCell.append(
+          node("div", "muted small", `${record.message_count} messages`)
+        );
+        row.append(titleCell);
+
+        const conversationStatus = node("td");
+        conversationStatus.append(conversationStatusBadge(record));
+        row.append(conversationStatus);
+
+        const evolutionStatus = node("td");
+        evolutionStatus.append(evolutionStatusBadge(record));
+        row.append(evolutionStatus);
+
+        const issue = node("td");
+        if (isAllowedIssueUrl(record.feedback?.issue_url)) {
+          const link = node("a", "", "Open issue");
+          link.href = record.feedback.issue_url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          issue.append(link);
+        } else {
+          issue.textContent = "—";
+        }
+        row.append(issue);
+
+        const details = node("td");
+        const button = node("button", "", "View timeline");
+        button.type = "button";
+        button.addEventListener("click", () => openDetails(record));
+        details.append(button);
+        row.append(details);
+        elements.records.append(row);
+      }
+    }
+
+    function populateChannels(channels) {
+      const selected = elements.channel.value;
+      const options = [new Option("All channels", "")];
+      for (const channel of channels) {
+        options.push(new Option(channel.name, channel.id));
+      }
+      elements.channel.replaceChildren(...options);
+      elements.channel.value = selected;
+    }
+
+    function metaItem(term, description) {
+      const wrapper = node("dl", "meta-item");
+      wrapper.append(node("dt", "", term));
+      wrapper.append(node("dd", "", description ?? "—"));
+      return wrapper;
+    }
+
+    function evidence(title, content) {
+      const wrapper = node("div", "evidence");
+      wrapper.append(node("h4", "", title));
+      wrapper.append(renderMarkdown(content || "—"));
+      return wrapper;
+    }
+
+    function timelineStep(title, timestamp, badge) {
+      const step = node("section", "timeline-step");
+      const heading = node("div", "step-heading");
+      const headingText = node("div");
+      headingText.append(node("h3", "", title));
+      if (timestamp) headingText.append(node("p", "muted small", formatDate(timestamp)));
+      heading.append(headingText);
+      if (badge) heading.append(badge);
+      step.append(heading);
+      return step;
+    }
+
+    function renderConversation(messages, record) {
+      const step = timelineStep(
+        "Conversation",
+        messages[0]?.created_at || record.first_seen_at,
+        conversationStatusBadge(record)
+      );
+      const messageList = node("div", "messages");
+      if (!messages.length) {
+        messageList.append(node("p", "muted", "Conversation messages were not found."));
+      }
+      for (const message of messages) {
+        const kind = message.role === "user"
+          ? "user"
+          : (["assistant", "system"].includes(message.role) ? "bot" : "system");
+        const bubble = node("article", `message ${kind}`);
+        const heading = node("div", "message-header");
+        heading.append(node("strong", "", message.sender_name || label(message.role)));
+        heading.append(node("span", "", formatDate(message.created_at)));
+        bubble.append(heading);
+        const content = renderMarkdown(message.content);
+        content.classList.add("message-content");
+        bubble.append(content);
+        if (message.trace_id) {
+          bubble.append(node("div", "muted small mono", `Trace: ${message.trace_id}`));
+        }
+        messageList.append(bubble);
+      }
+      step.append(messageList);
+      return step;
+    }
+
+    function renderAssessment(record) {
+      const assessment = answerAssessment(record);
+      const step = timelineStep(
+        "AI answer assessment",
+        record.evaluated_at,
+        statusBadge(assessment.value, assessment.text)
+      );
+      const metadata = node("div", "meta-grid");
+      metadata.append(metaItem("Conversation status", conversationStatus(record)));
+      metadata.append(metaItem("Answer assessment", assessment.text));
+      metadata.append(metaItem(
+        "Confidence",
+        record.confidence == null ? "—" : `${Math.round(record.confidence * 100)}%`
+      ));
+      step.append(metadata);
+      if (
+        record.reasoning
+        && record.feedback?.error !== "agent_remediation_failed"
+      ) {
+        step.append(evidence("Assessment reasoning", record.reasoning));
+      }
+      if (record.qa_status === "ongoing") {
+        step.append(evidence(
+          "Why no verdict yet",
+          "The conversation is still active, so answer correctness is not final."
+        ));
+      }
+      return step;
+    }
+
+    function renderDiagnosis(record) {
+      const classification = record.feedback?.classification;
+      const remediationFailed =
+        record.feedback?.error === "agent_remediation_failed";
+      if (!classification && !remediationFailed) return null;
+      const step = timelineStep(
+        "Diagnosis and remediation attempt",
+        record.feedback?.created_at,
+        classification ? statusBadge(classification) : null
+      );
+      const metadata = node("div", "meta-grid");
+      metadata.append(metaItem("Root-cause category", label(classification)));
+      metadata.append(metaItem(
+        "Evolution status",
+        label(record.feedback?.status ?? "not_started")
+      ));
+      metadata.append(metaItem("Processing error", record.feedback?.error || "None"));
+      step.append(metadata);
+      if (remediationFailed && record.reasoning) {
+        step.append(evidence("Agent report", record.reasoning));
+      }
+      return step;
+    }
+
+    function renderIssue(record) {
+      if (!record.feedback?.issue_url) {
+        if (!record.feedback) return null;
+        if (record.feedback.status === "failed") return null;
+        const step = timelineStep(
+          "Evolution result",
+          record.feedback.updated_at,
+          statusBadge(record.feedback.status)
+        );
+        step.append(evidence(
+          "Result",
+          record.qa_status === "finished"
+            ? "The Bot answer was accepted; no remediation issue was needed."
+            : (
+              record.reasoning
+              || record.feedback.error
+              || "No remediation issue was created."
+            )
+        ));
+        return step;
+      }
+
+      const step = timelineStep(
+        "Remediation issue",
+        record.feedback.created_at,
+        statusBadge(record.feedback.status)
+      );
+      const url = record.feedback.issue_url;
+      if (isAllowedIssueUrl(url)) {
+        const link = node("a", "", "Open remediation issue");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        step.append(link);
+      }
+      return step;
+    }
+
+    function renderValidation(record) {
+      const feedback = record.feedback;
+      if (!feedback || (
+        !feedback.validation_reasoning
+        && !feedback.validated_at
+        && feedback.status !== "pending_validation"
+      )) return null;
+
+      const waiting = feedback.status === "pending_validation";
+      const step = timelineStep(
+        waiting ? "Awaiting post-fix validation" : "Post-fix validation",
+        feedback.validated_at || feedback.updated_at,
+        statusBadge(feedback.status)
+      );
+      if (waiting) {
+        step.append(evidence(
+          "Next step",
+          "Validation starts after the remediation issue is closed."
+        ));
+      } else if (feedback.validation_reasoning) {
+        step.append(evidence("Validation result", feedback.validation_reasoning));
+      }
+      return step;
+    }
+
+    function renderDetails(detail) {
+      const record = detail.record;
+      setDetailsTitle(record);
+      elements.detailsSubtitle.textContent =
+        `${record.channel_name} · ${record.message_count} messages · ${record.conversation_id}`;
+
+      const overview = node("div", "detail-overview");
+      overview.append(conversationStatusBadge(record));
+      overview.append(evolutionStatusBadge(record));
+      const assessment = answerAssessment(record);
+      overview.append(statusBadge(assessment.value, assessment.text));
+      if (record.feedback?.classification) {
+        overview.append(statusBadge(record.feedback.classification));
+      }
+
+      const timeline = node("div", "timeline");
+      timeline.append(renderConversation(detail.messages, record));
+      timeline.append(renderAssessment(record));
+      const diagnosis = renderDiagnosis(record);
+      if (diagnosis) timeline.append(diagnosis);
+      const issue = renderIssue(record);
+      if (issue) timeline.append(issue);
+      const validation = renderValidation(record);
+      if (validation) timeline.append(validation);
+
+      elements.detailsContent.replaceChildren(overview, timeline);
+    }
+
+    async function openDetails(record) {
+      if (activeDetailRequest) activeDetailRequest.abort();
+      const request = new AbortController();
+      activeDetailRequest = request;
+      setDetailsTitle(record);
+      elements.detailsSubtitle.textContent = record.channel_name;
+      elements.detailsContent.replaceChildren(node("div", "loading", "Loading timeline..."));
+      if (!elements.details.open) elements.details.showModal();
+
+      const parameters = new URLSearchParams({
+        record_id: record.id,
+        tenant_id: record.tenant_id
+      });
+      try {
+        const response = await fetch(
+          `/api/dashboard/qa-record-details?${parameters}`,
+          {cache: "no-store", signal: request.signal}
+        );
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.detail ?? `Request failed (${response.status})`);
+        }
+        const detail = await response.json();
+        if (request === activeDetailRequest) renderDetails(detail);
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        elements.detailsContent.replaceChildren(
+          node("div", "loading error", error.message)
+        );
+      } finally {
+        if (request === activeDetailRequest) activeDetailRequest = null;
+      }
+    }
+
+    async function loadRecords() {
+      if (activeRequest) activeRequest.abort();
+      const request = new AbortController();
+      activeRequest = request;
+      elements.error.textContent = "";
+      elements.resultCount.textContent = "Loading...";
+      const parameters = new URLSearchParams({page: String(page)});
+      addParameter(parameters, "channel_id", elements.channel.value);
+      addParameter(parameters, "qa_status", elements.conversationStatus.value);
+      addParameter(parameters, "feedback_status", elements.evolutionStatus.value);
+      addParameter(parameters, "updated_from", toIso(elements.updatedFrom.value));
+      addParameter(parameters, "updated_to", toIso(elements.updatedTo.value));
+      addParameter(parameters, "conversation_id", elements.conversationId.value.trim());
+
+      try {
+        const response = await fetch(`/api/dashboard/qa-records?${parameters}`, {
+          cache: "no-store",
+          signal: request.signal
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.detail ?? `Request failed (${response.status})`);
+        }
+        const data = await response.json();
+        if (request !== activeRequest) return;
+        page = data.page;
+        total = data.total;
+        populateChannels(data.channels);
+        renderRecords(data.items);
+        const first = total ? (data.page - 1) * data.page_size + 1 : 0;
+        const last = Math.min(data.page * data.page_size, total);
+        elements.resultCount.textContent = `${first}-${last} of ${total} conversations`;
+        const totalPages = Math.max(1, Math.ceil(total / data.page_size));
+        elements.pageLabel.textContent = `Page ${data.page} of ${totalPages}`;
+        elements.previous.disabled = data.page <= 1;
+        elements.next.disabled = data.page >= totalPages;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        elements.error.textContent = error.message;
+        elements.resultCount.textContent = "Unable to load conversations";
+        elements.records.replaceChildren();
+        elements.previous.disabled = true;
+        elements.next.disabled = true;
+      } finally {
+        if (request === activeRequest) activeRequest = null;
+      }
+    }
+
+    async function loadIdentity() {
+      try {
+        const response = await fetch("/api/dashboard/me", {cache: "no-store"});
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        const identity = await response.json();
+        elements.userName.textContent = identity.display_name;
+        elements.signOut.hidden = !identity.authenticated;
+      } catch {
+        elements.userName.textContent = "Identity unavailable";
+        elements.signOut.hidden = true;
+      }
+    }
+
+    elements.form.addEventListener("submit", event => {
+      event.preventDefault();
+      page = 1;
+      loadRecords();
+    });
+    document.querySelector("#reset").addEventListener("click", () => {
+      elements.form.reset();
+      page = 1;
+      loadRecords();
+    });
+    document.querySelector("#refresh").addEventListener("click", loadRecords);
+    elements.previous.addEventListener("click", () => {
+      if (page > 1) {
+        page -= 1;
+        loadRecords();
+      }
+    });
+    elements.next.addEventListener("click", () => {
+      if (page * pageSize < total) {
+        page += 1;
+        loadRecords();
+      }
+    });
+    document.querySelector("#close-details").addEventListener("click", () => {
+      if (activeDetailRequest) activeDetailRequest.abort();
+      elements.details.close();
+    });
+
+    loadIdentity();
+    loadRecords();
+  </script>
+</body>
+</html>

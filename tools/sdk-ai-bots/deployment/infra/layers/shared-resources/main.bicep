@@ -134,7 +134,7 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
     }
     dataExfiltrationProtections: []
     semanticSearch: 'standard'
-    knowledgeRetrieval: 'free'
+    knowledgeRetrieval: 'standard'
   }
   sku: {
     name: 'standard'

@@ -223,6 +223,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);

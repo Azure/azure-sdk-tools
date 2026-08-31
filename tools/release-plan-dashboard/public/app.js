@@ -1813,6 +1813,12 @@
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
     }
+    // API version the SDK PR was generated against — visible to all users so drift (a
+    // service team publishes a newer version before the SDK PR is regenerated) is caught.
+    // Older release plans predating this field won't have it, so this row is omitted for them.
+    if (p.apiSpec && p.apiSpec.apiVersion) {
+      html += `<div class="detail-row detail-step-highlight"><strong>API Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
+    }
     if (
       p.typeSpecPath &&
       p.specProjectPath &&

@@ -271,6 +271,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                         languageName = languageName.Contains("csharp") ? ".NET" : languageName;
                         var language = SdkLanguageHelpers.GetSdkLanguage(languageName);
+                        if (language == SdkLanguage.Unknown)
+                        {
+                            continue;
+                        }
                         if (!string.IsNullOrEmpty(packageName))
                         {
                             if (language == SdkLanguage.Java && packageName.Contains(':'))

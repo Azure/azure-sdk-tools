@@ -16,10 +16,14 @@ parameters:
     - name: slot
       type: string
       default: 'default'
+    - name: condition
+      type: string
+      default: succeeded()
 
 steps:
     - task: AzureCLI@2
       displayName: 'Rollback ${{ parameters.component }} on ${{ parameters.appName }}/${{ parameters.slot }}'
+      condition: ${{ parameters.condition }}
       inputs:
           azureSubscription: $(SERVICE_CONNECTION)
           scriptType: bash

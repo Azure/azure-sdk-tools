@@ -1,8 +1,7 @@
 # Orchestrator pipeline — full preview deploy.
 # Deploys all component images (agent-server → function-app → agent → frontend) to
 # preview in dependency order. Assumes infra is already provisioned via
-# provision-all-preview.yml. Each component's cd.yml gates on the
-# 'sdk-ai-bots-preview' ADO environment approval.
+# provision-all-preview.yml. Service connection checks gate Azure operations.
 #
 # Shape delegated to templates/deploy-stage.yml.
 

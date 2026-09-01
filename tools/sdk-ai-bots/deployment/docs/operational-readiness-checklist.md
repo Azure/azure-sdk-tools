@@ -60,7 +60,7 @@ For each of `frontend`, `function-app`, `agent-server`,
 
 ## Process
 
-- [ ] Approval gate active on `sdk-ai-bots-prod` ADO environment
+- [ ] Required approval and branch-control checks active on the prod service connection
 - [ ] Approvers include both a senior engineer and the DRI
 - [ ] Operational readiness checklist itself is reviewed annually
 

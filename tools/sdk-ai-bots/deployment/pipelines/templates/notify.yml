@@ -12,11 +12,14 @@ parameters:
     - name: details
       type: string
       default: ''
+    - name: condition
+      type: string
+      default: always()
 
 steps:
     - task: AzureCLI@2
       displayName: 'Notify Teams (${{ parameters.status }})'
-      condition: always()
+      condition: ${{ parameters.condition }}
       inputs:
           azureSubscription: $(SERVICE_CONNECTION)
           scriptType: bash

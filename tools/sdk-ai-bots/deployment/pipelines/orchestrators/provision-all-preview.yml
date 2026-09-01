@@ -1,7 +1,5 @@
 # Orchestrator pipeline — full preview provision.
-# Runs bicep-validate + what-if, then applies with `azd provision`. Approval
-# gating comes from the `sdk-ai-bots-preview` ADO environment (which is
-# expected to have a manual approval policy configured).
+# Runs bicep-validate + what-if, then applies with `azd provision`.
 
 name: tools - sdk-ai-bots - provision-all-preview
 

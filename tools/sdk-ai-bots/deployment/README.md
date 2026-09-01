@@ -70,5 +70,6 @@ azd deploy agent --environment dev --no-prompt
 > runtime RBAC, environment variables, and Entra authorization.
 
 For preview / prod, use the Azure DevOps pipelines under
-`component-pipelines/<component>/<component>.cd.yml` (gated by the
-`sdk-ai-bots-<env>` ADO environment).
+`component-pipelines/<component>/<component>.cd.yml`. Configure approvals,
+branch controls, and pipeline permissions on the corresponding service
+connection.

@@ -17,7 +17,7 @@
 
 1. Confirm dev has been stable for at least 1 hour with the candidate tag.
 2. Trigger `<component>.cd.yml` with `environment=preview` and the same
-   `imageTag`. Approval gate fires.
+   `imageTag`. The preview service connection's configured checks run.
 3. Pipeline deploys to staging slot, smoke-tests, swaps to production slot,
    smoke-tests again.
 
@@ -27,8 +27,10 @@
    must be signed off.
 2. Trigger `pipelines/orchestrators/deploy-all-prod.yml` with all four image
    tags. The orchestrator runs:
-    - Preflight (`bicep what-if` + readiness reminder), waits for approval.
+    - Preflight (`bicep what-if` + readiness reminder).
    - Agent-server CD → 10-min watch → function-app → agent → frontend.
+   The prod service connection's configured approval and branch-control checks
+   protect Azure operations in these stages.
 3. Each stage records `Deployment:<component>:LastKnownGoodTag` in App
    Configuration on success.
 

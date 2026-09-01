@@ -124,21 +124,19 @@ consumption will block provisioning.
 - [ ] Register
       [provision-all-dev.yml](../pipelines/orchestrators/provision-all-dev.yml)
       as `tools - sdk-ai-bots - provision-all-dev`.
-- [ ] Ask a project administrator to create the `sdk-ai-bots-dev` Azure DevOps
-      environment. The current user does not have environment-creator access.
 - [ ] Create or share a workload-identity-federated service connection named
       `Azure SDK Engineering System`.
 - [ ] Give the service connection the required temporary Azure bootstrap roles,
       or create the resource group first and scope later runs to that group.
-- [ ] Grant the pipeline permission to use the service connection, ADO
-      environment, GitHub repository connection, and configured agent pool.
+- [ ] Grant the pipeline permission to use the service connection, GitHub
+      repository connection, and configured agent pool.
 - [ ] Confirm the service connection can run Bicep what-if and all seven
       provisioning layers.
 - [ ] Register the component provision and deployment pipelines needed after
       bootstrap.
 
-Local `azd` provisioning does not require an ADO environment or service
-connection, but it still requires the Azure and Entra permissions above.
+Local `azd` provisioning does not require a service connection, but it still
+requires the Azure and Entra permissions above.
 
 ## Infrastructure provision
 

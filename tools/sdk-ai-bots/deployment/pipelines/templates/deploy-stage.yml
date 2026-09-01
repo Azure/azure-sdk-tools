@@ -4,8 +4,8 @@
 #   AgentServer → [optional stabilization watch] → FunctionApp → Agent → Frontend
 # so the three deploy-all-<env>.yml orchestrators only supply parameters.
 #
-# Approval gating still lives on the ADO environment `sdk-ai-bots-<env>` used
-# by each component's cd.yml.
+# Azure authorization and deployment checks belong to each component's service
+# connection; component CD pipelines use normal jobs.
 
 parameters:
     - name: environment

@@ -20,26 +20,22 @@ stages:
     - stage: ProvisionLayer
       displayName: '${{ parameters.operation }} ${{ parameters.layer }} (${{ parameters.environment }})'
       jobs:
-          - deployment: AzdProvisionLayer
-            environment: 'sdk-ai-bots-${{ parameters.environment }}'
+          - job: AzdProvisionLayer
             pool:
                 name: $(LINUXPOOL)
                 image: $(LINUXVMIMAGE)
                 os: linux
-            strategy:
-                runOnce:
-                    deploy:
-                        steps:
-                            - checkout: self
-                            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
-                              parameters:
-                                  environment: ${{ parameters.environment }}
-                            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
-                            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
-                              parameters:
-                                  layer: ${{ parameters.layer }}
-                            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
-                              parameters:
-                                  operation: ${{ parameters.operation }}
-                                  layer: ${{ parameters.layer }}
-                                  dependencyLayers: ${{ parameters.dependencyLayers }}
+            steps:
+                - checkout: self
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                  parameters:
+                      layer: ${{ parameters.layer }}
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                  parameters:
+                      operation: ${{ parameters.operation }}
+                      layer: ${{ parameters.layer }}
+                      dependencyLayers: ${{ parameters.dependencyLayers }}

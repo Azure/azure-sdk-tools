@@ -16,8 +16,7 @@ parameters:
     stages:
         - stage: X
           jobs:
-              - deployment: Y
-                environment: 'sdk-ai-bots-<env>' # ADO env → approval gate
+                            - job: Y
                 steps:
                     - template: load-environment-suite.yml
                     - template: azd-auth.yml
@@ -25,11 +24,8 @@ parameters:
                     - template: smoke-test.yml
                     - template: swap-slot.yml # if preview/prod
                     - template: notify.yml
-                on:
-                    failure:
-                        steps:
-                            - template: rollback.yml
-                            - template: notify.yml
+                    - template: rollback.yml # condition: failed()
+                    - template: notify.yml
 ```
 
 ## Component → pipeline map

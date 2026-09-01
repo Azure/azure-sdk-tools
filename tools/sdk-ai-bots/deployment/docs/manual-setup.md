@@ -67,23 +67,20 @@ For each connection:
    subscription).
 2. Grant `User Access Administrator` on the same RG (required by Bicep
    role assignments).
-3. For prod, **deny** the service principal from being usable outside the
-   pipeline (Azure DevOps → Project Settings → Service connections →
-   Approvals & checks → "Pipeline permissions" → restrict to specific
-   pipelines).
+3. Under "Pipeline permissions", authorize only the intended pipeline
+  definitions to use the connection.
 
 ---
 
-## 3. Azure DevOps — environments (approval gates)
+## 3. Azure DevOps — service connection checks
 
-Create three ADO Environments under your ADO project. Each
-`deployment:` job in the pipelines targets `sdk-ai-bots-<env>` to enforce
-approval.
+The pipelines use normal jobs and do not require Azure DevOps Environments.
+Configure deployment controls directly on each service connection:
 
-- [ ] `sdk-ai-bots-dev` — no approvers needed
-- [ ] `sdk-ai-bots-preview` — add ≥ 1 reviewer
-- [ ] `sdk-ai-bots-prod` — add ≥ 2 reviewers; enable
-  "Required reviewers" check; enable "Branch control" → only `main`
+- [ ] Dev — restrict pipeline permissions to the dev pipelines; no approval.
+- [ ] Preview — add a required-approval check with at least one reviewer.
+- [ ] Prod — add at least two required reviewers and a branch-control check
+  that permits only `main`.
 
 ---
 
@@ -380,7 +377,7 @@ preview:
 | 0 | Install local CLIs | per-dev |
 | 1 | 3 Azure subscriptions + region quota | per ADO project |
 | 2 | 3 federated service connections | per ADO project |
-| 3 | 3 ADO Environments with approvers | per ADO project |
+| 3 | Service connection approvals and branch controls | per ADO project |
 | 4 | Replace `REPLACE_WITH_*` placeholders | per fork |
 | 5 | 3 Entra app registrations (agent EasyAuth audience) | per ADO project |
 | 6 | Register 22 pipelines + authorize cross-repo resources | per ADO project |

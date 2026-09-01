@@ -105,8 +105,8 @@ are unaffected — they read the suite directly via
 
 1. Add a top-level block under `environments:` in `environment-suite.yaml`.
 2. Add any existing-resource pins under the environment's `bicepOverrides`.
-3. Create an Azure DevOps Environment named `sdk-ai-bots-<env>` (used by
-   `deployment:` jobs for approval gates).
-4. Register an Azure service connection with the same alias as
+3. Register an Azure service connection with the same alias as
    `subscription:`.
+4. Restrict that connection to the intended pipelines and configure any
+    required approvals or branch-control checks on the connection.
 5. Re-run `validate-env-suite.ps1`.

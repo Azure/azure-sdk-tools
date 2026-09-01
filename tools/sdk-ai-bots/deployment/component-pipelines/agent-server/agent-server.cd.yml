@@ -33,57 +33,53 @@ extends:
             - stage: DeployAgentServer
               displayName: 'Deploy agent-server → ${{ parameters.environment }}'
               jobs:
-                  - deployment: Deploy
-                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                  - job: Deploy
                     pool:
                         name: $(LINUXPOOL)
                         image: $(LINUXVMIMAGE)
                         os: linux
-                    strategy:
-                        runOnce:
-                            deploy:
-                                steps:
-                                    - checkout: self
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
-                                      parameters:
-                                          environment: '${{ parameters.environment }}'
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                    steps:
+                        - checkout: self
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                          parameters:
+                              environment: '${{ parameters.environment }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
-                                      parameters:
-                                          service: agent-server
-                                          imageTag: '${{ parameters.imageTag }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
+                          parameters:
+                              service: agent-server
+                              imageTag: '${{ parameters.imageTag }}'
 
-                                    - task: AzureCLI@2
-                                      displayName: 'Record LastKnownGoodTag'
-                                      inputs:
-                                          azureSubscription: $(SERVICE_CONNECTION)
-                                          scriptType: bash
-                                          scriptLocation: inlineScript
-                                          inlineScript: |
-                                              az appconfig kv set --name "$APP_CONFIG_NAME" \
-                                                --key "Deployment:agent-server:LastKnownGoodTag" \
-                                                --value "${{ parameters.imageTag }}" --yes
+                        - task: AzureCLI@2
+                          displayName: 'Record LastKnownGoodTag'
+                          inputs:
+                              azureSubscription: $(SERVICE_CONNECTION)
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              inlineScript: |
+                                  az appconfig kv set --name "$APP_CONFIG_NAME" \
+                                    --key "Deployment:agent-server:LastKnownGoodTag" \
+                                    --value "${{ parameters.imageTag }}" --yes
 
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
-                                      parameters:
-                                          component: agent-server
-                                          environment: '${{ parameters.environment }}'
-                                          status: success
-                                          details: 'tag=${{ parameters.imageTag }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                          parameters:
+                              component: agent-server
+                              environment: '${{ parameters.environment }}'
+                              status: success
+                              details: 'tag=${{ parameters.imageTag }}'
+                              condition: succeeded()
 
-                            on:
-                                failure:
-                                    steps:
-                                        - ${{ if eq(parameters.rollbackOnFailure, true) }}:
-                                              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
-                                                parameters:
-                                                    component: agent-server
-                                                    appName: $(AGENT_SERVER_SITE_NAME)
-                                                    imageName: $(imageName)
-                                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
-                                          parameters:
-                                              component: agent-server
-                                              environment: '${{ parameters.environment }}'
-                                              status: failure
-                                              details: 'failed deploying tag=${{ parameters.imageTag }}'
+                        - ${{ if eq(parameters.rollbackOnFailure, true) }}:
+                              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
+                                parameters:
+                                    component: agent-server
+                                    appName: $(AGENT_SERVER_SITE_NAME)
+                                    imageName: $(imageName)
+                                    condition: failed()
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                          parameters:
+                              component: agent-server
+                              environment: '${{ parameters.environment }}'
+                              status: failure
+                              details: 'failed deploying tag=${{ parameters.imageTag }}'
+                              condition: failed()

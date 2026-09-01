@@ -30,5 +30,5 @@ steps:
     - bash: |
           set -euo pipefail
           command -v azd >/dev/null || curl -fsSL https://aka.ms/install-azd.sh | bash
-          azd version
-      displayName: 'Ensure azd is installed'
+          azd version && bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/install-azd-extensions.sh"
+      displayName: 'Ensure azd and required extensions are installed'

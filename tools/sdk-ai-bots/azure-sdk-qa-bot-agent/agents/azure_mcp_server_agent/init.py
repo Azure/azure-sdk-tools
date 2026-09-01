@@ -70,6 +70,7 @@ async def main() -> None:
     web_search_tool = agent_client.get_web_search_tool(search_context_size="medium")
     tools = [
         knowledge_tools.search_knowledge_base,
+        knowledge_tools.wiki_search,
         web_tools.web_fetch,
         web_search_tool,
     ]

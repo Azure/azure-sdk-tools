@@ -9,6 +9,20 @@ schedules:
 trigger: none
 pr: none
 
+parameters:
+  - name: scenario
+    displayName: Scenario to evaluate
+    type: string
+    default: all
+    values:
+      - all
+      - typespec
+      - onboarding
+      - python
+      - apispec
+      - authoring
+      - mcpserver
+
 #
 # Starts the agent server.py locally, then evaluates via completion mode:
 # evals_run.py calls the local /completion endpoint concurrently, collects answers,
@@ -32,18 +46,24 @@ extends:
             strategy:
               maxParallel: 2
               matrix:
-                typespec:
-                  scenario: typespec
-                onboarding:
-                  scenario: onboarding
-                python:
-                  scenario: python
-                apispec:
-                  scenario: apispec
-                authoring:
-                  scenario: authoring
-                mcpserver:
-                  scenario: mcpserver
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'typespec')) }}:
+                  typespec:
+                    scenario: typespec
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'onboarding')) }}:
+                  onboarding:
+                    scenario: onboarding
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'python')) }}:
+                  python:
+                    scenario: python
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'apispec')) }}:
+                  apispec:
+                    scenario: apispec
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'authoring')) }}:
+                  authoring:
+                    scenario: authoring
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'mcpserver')) }}:
+                  mcpserver:
+                    scenario: mcpserver
             steps:
               - task: UsePythonVersion@0
                 displayName: "Use Python 3.12"

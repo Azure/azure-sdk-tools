@@ -74,14 +74,11 @@ def test_azure_mcp_server_instruction_selects_sources_by_question() -> None:
     )
     instruction = instruction_path.read_text(encoding="utf-8")
 
-    assert "Use Microsoft Learn for public setup" in instruction
-    assert "Use GitHub MCP for source code" in instruction
-    assert "raw.githubusercontent.com" in instruction
-    assert "rather than `web_fetch`" in instruction
-    assert "Use the Azure MCP knowledge source for team guidance" in instruction
-    assert "Preserve concrete distinctions and requirements" in instruction
-    assert "answer from it" in instruction
-    assert "not to broaden the scope or introduce unsupported requirements" in instruction
+    assert "Use Microsoft Learn for public product documentation" in instruction
+    assert "Use GitHub MCP for current source code" in instruction
+    assert "Do not use `web_fetch` for GitHub content" in instruction
+    assert "Use the Azure MCP knowledge source for internal guidance" in instruction
+    assert "Prefer specific evidence about the user's case" in instruction
     assert "only details that materially affect the recommendation or next action" in instruction
     assert "instead of reproducing exhaustive checklists" in instruction
     assert "Lead with a direct answer in 1–3 sentences" in instruction
@@ -89,3 +86,21 @@ def test_azure_mcp_server_instruction_selects_sources_by_question() -> None:
     assert "under roughly 150 words unless the user asks for detail" in instruction
     assert "For broad or multi-part questions" in instruction
     assert "For under-specified questions, give a short answer first" in instruction
+    assert "use `wiki_search` when a synthesized view would help" in instruction
+    assert "Use the tenant context supplied by the preloaded skill" in instruction
+    assert "tenant_id=azure_mcp_server" not in instruction
+    assert "Resolve important evidence gaps before answering" in instruction
+    assert "Do not invent unsupported details or links" in instruction
+
+
+def test_azure_mcp_server_agent_registers_wiki_search() -> None:
+    init_path = (
+        Path(__file__).parents[1]
+        / "agents"
+        / "azure_mcp_server_agent"
+        / "init.py"
+    )
+    agent_source = init_path.read_text(encoding="utf-8")
+
+    assert "knowledge_tools.search_knowledge_base" in agent_source
+    assert "knowledge_tools.wiki_search" in agent_source

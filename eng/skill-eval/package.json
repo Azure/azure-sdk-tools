@@ -2,7 +2,10 @@
   "name": "azure-sdk-tools-skill-eval",
   "private": true,
   "description": "CI-only npm project that pins @microsoft/vally-cli and its transitive dependencies via the committed lockfile for reproducible skill-eval CI runs; not published.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "devDependencies": {
-    "@microsoft/vally-cli": "0.7.0"
+    "@microsoft/vally-cli": "0.14.0"
   }
 }

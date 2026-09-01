@@ -35,11 +35,11 @@ environments:
           # When the endpoint is overridden the CLI no longer applies the built-in preview
           # client id/scope, so the preview backend's client id and scope must be supplied
           # explicitly (values validated in issue #15675). The access token is requested
-          # as "{AZURE_SDK_KB_CLIENT_ID}/.default"; the ambient Azure credential is provided
+          # as "{AZURE_SDK_KB_CLIENT_ID}/user_impersonation"; the ambient Azure credential is provided
           # by the pipeline (AzureCLI@2 / azuresdkqabot-dev) or `az login` locally.
           AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net"
           AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
-          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/.default"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
   azsdk-mcp-local:
     files:
@@ -59,7 +59,7 @@ environments:
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
           AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net"
           AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
-          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/.default"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
   azsdk-mcp-mock-local:
     files:

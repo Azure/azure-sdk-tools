@@ -28,6 +28,16 @@ parameters:
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
 
 steps:
+    # 1ES Official blocks direct npmjs.org access. Install the TypeScript hook
+    # runner from the authenticated Azure SDK mirror before invoking azd.
+    - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+      parameters:
+          npmrcPath: $(Agent.TempDirectory)/sdk-ai-bots-deployment.npmrc
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+    - script: npm ci --omit=dev --userconfig "$(resolvedNpmrcPath)"
+      displayName: 'Install deployment hook dependencies'
+      workingDirectory: '${{ parameters.workingDirectory }}'
+
     - task: AzureCLI@2
       displayName: 'azd provision (${{ parameters.operation }})'
       inputs:
@@ -38,7 +48,7 @@ steps:
           inlineScript: |
               set -euo pipefail
               export AZD_AUTH_USE_FEDERATED_TOKEN=true
-              npm ci
+              export npm_config_userconfig="$(resolvedNpmrcPath)"
               if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
                 azd env new "$AZURE_ENV_NAME" \
                   --location "$AZURE_LOCATION" \

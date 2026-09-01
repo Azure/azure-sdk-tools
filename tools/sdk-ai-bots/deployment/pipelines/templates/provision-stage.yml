@@ -23,6 +23,9 @@ parameters:
     - name: serviceConnection
       type: string
       default: '$(SERVICE_CONNECTION)'
+    - name: authenticateBeforeEnvironmentLoad
+      type: boolean
+      default: false
     - name: stageName
       type: string
       default: 'Provision'
@@ -56,12 +59,18 @@ stages:
                 os: linux
             steps:
                 - checkout: self
+                - ${{ if parameters.authenticateBeforeEnvironmentLoad }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                        parameters:
+                            serviceConnection: ${{ parameters.serviceConnection }}
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
                   parameters:
                       environment: ${{ parameters.environment }}
-                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
-                  parameters:
-                      serviceConnection: ${{ parameters.serviceConnection }}
+                      loadServiceConnectionFromSuite: ${{ not(parameters.authenticateBeforeEnvironmentLoad) }}
+                - ${{ if not(parameters.authenticateBeforeEnvironmentLoad) }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                        parameters:
+                            serviceConnection: ${{ parameters.serviceConnection }}
 
                 - ${{ if parameters.bootstrapLayers }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml

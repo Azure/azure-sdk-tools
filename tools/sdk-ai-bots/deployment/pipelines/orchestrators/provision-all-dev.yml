@@ -26,6 +26,7 @@ extends:
               parameters:
                   environment: dev
                   serviceConnection: azure-sdk-tests-playground
+                  authenticateBeforeEnvironmentLoad: true
                   runValidateAndPreview: false
                   runProvision: true
                   bootstrapLayers: ${{ parameters.bootstrapLayers }}

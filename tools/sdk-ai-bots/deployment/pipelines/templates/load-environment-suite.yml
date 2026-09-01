@@ -32,6 +32,9 @@ parameters:
     - name: suitePath
       type: string
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml'
+    - name: loadServiceConnectionFromSuite
+      type: boolean
+      default: true
 
 steps:
     - bash: |
@@ -104,7 +107,9 @@ steps:
 
           echo "Loading environment-suite contract for '$ENV'..."
           set_var AZURE_ENV_NAME                    "$ENV"
-          export_var SERVICE_CONNECTION             ".environments.${ENV}.subscription"
+          if [ '${{ parameters.loadServiceConnectionFromSuite }}' = 'True' ]; then
+            export_var SERVICE_CONNECTION           ".environments.${ENV}.subscription"
+          fi
           export_var AZURE_SUBSCRIPTION_ID          ".environments.${ENV}.subscriptionId"
           export_var AZURE_TENANT_ID                ".environments.${ENV}.tenantId"
           export_var SERVICE_MANAGEMENT_REFERENCE   ".environments.${ENV}.serviceManagementReference"

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "azd lifecycle hooks and deployment scaffolding for the sdk-ai-bots tool",
   "private": true,
+  "dependencies": {
+    "tsx": "^4.19.0"
+  },
   "scripts": {
     "preprovision": "tsx hooks/preprovision.ts",
     "preprovision:logic-app": "tsx hooks/logic-app-preprovision.ts",
@@ -18,7 +21,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
 }

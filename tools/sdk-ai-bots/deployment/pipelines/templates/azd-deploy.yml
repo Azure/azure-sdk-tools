@@ -12,6 +12,16 @@ parameters:
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
 
 steps:
+    # 1ES Official blocks direct npmjs.org access. Install the TypeScript hook
+    # runner from the authenticated Azure SDK mirror before invoking azd.
+    - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+      parameters:
+          npmrcPath: $(Agent.TempDirectory)/sdk-ai-bots-deployment.npmrc
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+    - script: npm ci --omit=dev --userconfig "$(resolvedNpmrcPath)"
+      displayName: 'Install deployment hook dependencies'
+      workingDirectory: '${{ parameters.workingDirectory }}'
+
     - task: AzureCLI@2
       displayName: 'azd deploy ${{ parameters.service }} (tag ${{ parameters.imageTag }})'
       inputs:
@@ -21,6 +31,7 @@ steps:
           workingDirectory: '${{ parameters.workingDirectory }}'
           inlineScript: |
               set -euo pipefail
+              export npm_config_userconfig="$(resolvedNpmrcPath)"
               # Hard-enforce build-once: CD must never rebuild the image.
               export AZD_SKIP_IMAGE_BUILD=1
               export AZURE_ENV_NAME
@@ -31,7 +42,6 @@ steps:
                 agent)           export AGENT_IMAGE_TAG="${{ parameters.imageTag }}" ;;
                 agent-server)    export AGENT_SERVER_IMAGE_TAG="${{ parameters.imageTag }}" ;;
               esac
-              npm ci
               if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
                 azd env new "$AZURE_ENV_NAME" \
                   --location "$AZURE_LOCATION" \

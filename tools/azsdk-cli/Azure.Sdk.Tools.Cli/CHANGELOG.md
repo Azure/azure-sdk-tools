@@ -4,8 +4,8 @@
 
 ### Features Added
 
-- Skip SDK generation is SDK generation pipeline is already in progress for the release plan
-- Do not run SDK generation if another release plan is in progress for same package.
+- Skip SDK generation if an SDK generation pipeline is already in progress for the release plan.
+- Do not run SDK generation if another release plan is in progress for the same package.
 
 ## 0.6.41 (2026-08-31)
 

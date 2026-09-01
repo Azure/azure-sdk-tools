@@ -252,6 +252,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.Status = "Failed";
                 }
 
+                var effectiveApiVersion = string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase)
+                    ? releasePlan.SpecAPIVersion
+                    : apiVersion;
+                if (sdkReleaseType == "stable" && effectiveApiVersion.Contains("-preview", StringComparison.OrdinalIgnoreCase))
+                {
+                    response.ResponseErrors.Add($"Stable SDK generation is not allowed for preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
+                    response.Status = "Failed";
+                }
+
                 // Update SDK details in release plan if work item ID is provided
                 if (workItemId > 0)
                 {

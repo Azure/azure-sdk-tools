@@ -276,6 +276,73 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
+        [TestCase("2024-01-01-preview", "2024-01-01")]
+        [TestCase("", "2024-01-01-preview")]
+        [TestCase("none", "2024-01-01-preview")]
+        public async Task GenerateSdk_BlocksStableSdkForPreviewApiVersion(string apiVersion, string releasePlanApiVersion)
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
+            {
+                SpecAPIVersion = releasePlanApiVersion,
+                SDKInfo =
+                [
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                ]
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: apiVersion,
+                sdkReleaseType: "stable",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("Stable SDK generation is not allowed for preview API version"));
+        }
+
+        [Test]
+        public async Task GenerateSdk_AllowsBetaSdkForPreviewApiVersion()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = new ReleasePlanWorkItem
+            {
+                SDKInfo =
+                [
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                ]
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2024-01-01-preview",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline"));
+        }
+
         [Test]
         public async Task GenerateSdk_With_pr_and_no_workitem()
         {

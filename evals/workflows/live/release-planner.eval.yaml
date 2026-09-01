@@ -5,7 +5,8 @@ description: |
   Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
   real git worktree of azure-rest-api-specs. The MCP server runs with
   AZSDKTOOLS_AGENT_TESTING=true (set globally in .vally.yaml), so work items
-  route to the DevOps test area path and are safe to leave around / re-run.
+  route to the DevOps test area path. The nightly pipeline abandons plans and
+  closes linked SDK PRs after each shard.
 
   This scenario walks the agent through a multi-step chain that exercises
   multiple skills back-to-back in a single conversation:
@@ -153,6 +154,83 @@ stimuli:
 
             Answer "pass" only if BOTH are present. Otherwise answer "fail"
             and briefly say which one is missing.
+
+  # Forward-looking coverage for release-plan parameter inference from a spec
+  # PR. This may fail until the agent/tool can inspect a PR that introduces
+  # stable and preview API versions and derive the release-plan inputs.
+  - name: release-planner-infer-details-from-spec-pr
+    environment:
+      skills:
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+      git:
+        type: worktree
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Walk me through the full
+      release-plan + SDK-generation flow for the Contoso Widget Manager
+      end-to-end. Do every step below, in order, and use real tools (no
+      dry-run, no simulation):
+
+        1. Create the appropriate release plan using:
+             - TypeSpec project: "specification/contosowidgetmanager/Contoso.Management"
+             - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+             - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+             - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/45567"
+
+        2. Fetch the release plan you just created back from DevOps to confirm
+           it was saved, and tell me its work-item ID.
+
+        3. Kick off Java SDK generation only for that same TypeSpec project
+           via the generation pipeline. Do not generate another language.
+           Use the work-item ID from step 2.
+
+        4. Once the generation pipeline reports a pull request URL, link
+           that SDK pull request back to the release plan from step 2.
+
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 20
+      max_tokens: 30000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_create_release_plan
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+            - azsdk_link_sdk_pull_request_to_release_plan
+          disallowed:
+            - azsdk_verify_setup
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Did the final assistant message clearly state ALL THREE of the
+            following, consistent with the tools that were actually called?
+
+              1. A numeric DevOps work-item ID for the release plan that was
+                 created (or confirmed).
+
+              2. A GitHub pull request URL on
+                 github.com/Azure/azure-sdk-for-java that was linked back to
+                 that release plan, with no generation attempted for another
+                 language.
+
+              3. The Java SDK release type matches the package's library
+                 versioning convention. A beta release is valid and expected
+                 when the Java package does not yet have a stable release.
+
+            Answer "pass" only if ALL THREE are satisfied. Otherwise answer
+            "fail" and briefly explain the inference or workflow failure.
 
 scoring:
   weights:

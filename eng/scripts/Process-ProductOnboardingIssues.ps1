@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param()
+param(
+  [Parameter(Mandatory=$false)]
+  [bool] $IsTest = $false
+)
 
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
@@ -9,13 +12,20 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
 
 $issues_repo = "Azure/azure-sdk-pr"
 
+$label = "product-onboarding"
+$test_text = ""
+if ($IsTest) {
+  $label = "product-onboarding-test"
+  $test_text = " test"
+}
+
 # Should there be more than --limit issues at once (unlikely),
 # given that we close them after processing,
 # the next batch will be picked up during the next run.
 $issues = @(`
     gh issue list `
       --repo "$issues_repo" `
-      --label "product-onboarding" `
+      --label "$label" `
       --state open `
       --limit 300 `
       --json number `
@@ -27,7 +37,7 @@ $issues_count = 0
 if ($null -ne $issues) {
   $issues_count = $issues.Count
 }
-Write-Host "Found $issues_count issues to process."
+Write-Host "Found $issues_count$test_text issues to process."
 
 foreach ($issue_number in $issues) {
   $issue = gh issue view $issue_number --repo "$issues_repo"

@@ -83,12 +83,13 @@ try {
     --management-plane "$MgmtPlane" `
     --submitter "$Submitter"
 } finally {
-  Compare-Object -PassThru $originalEnv (Get-ChildItem Env:) -Property { '[{0}, {1}]' -f $_.Key, $_.Value } | 
-    ForEach-Object {
-      if ($_.SideIndicator -eq '=>') {
-        Remove-Item Env:$($_.Name)
-      } else {
-        Set-Item Env:$($_.Name) $($_.Value)
-      }
-    }
+  $envDiff = Compare-Object -PassThru $originalEnv (Get-ChildItem Env:) -Property { '[{0}, {1}]' -f $_.Key, $_.Value }
+
+  foreach ($item in $envDiff | Where-Object SideIndicator -eq '=>') {
+    Remove-Item "Env:$($item.Key)" -ErrorAction SilentlyContinue
+  }
+
+  foreach ($item in $envDiff | Where-Object SideIndicator -eq '<=') {
+    Set-Item "Env:$($item.Key)" $item.Value
+  }
 }

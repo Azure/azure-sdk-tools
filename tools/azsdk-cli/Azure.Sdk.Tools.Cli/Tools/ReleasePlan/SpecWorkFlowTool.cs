@@ -295,16 +295,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Check if another active (in progress) release plan exists for the same TypeSpec project that already
-                // has SDK pull request link(s). If so, block SDK generation for the current release plan to avoid
-                // conflicting/duplicate SDK pull requests for the same service.
+                // has an SDK pull request that has not been released yet. If so, block SDK generation for the current
+                // release plan to avoid conflicting/duplicate SDK pull requests for the same service.
                 var activeReleasePlans = await devopsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
                 var conflictingReleasePlan = activeReleasePlans?.FirstOrDefault(rp =>
                     rp.WorkItemId != workItemId &&
-                    rp.SDKInfo.Any(s => !string.IsNullOrEmpty(s.SdkPullRequestUrl)));
+                    rp.SDKInfo.Any(s => s.Language == language &&
+                        !string.IsNullOrEmpty(s.SdkPullRequestUrl) &&
+                        !string.Equals(s.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)));
                 if (conflictingReleasePlan != null)
                 {
                     var existingSdkPullRequests = conflictingReleasePlan.SDKInfo
-                        .Where(s => !string.IsNullOrEmpty(s.SdkPullRequestUrl))
+                        .Where(s => !string.IsNullOrEmpty(s.SdkPullRequestUrl) &&
+                            !string.Equals(s.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
                         .Select(s => $"{s.Language}: {s.SdkPullRequestUrl}");
                     logger.LogInformation(
                         "Another active release plan (work item {ConflictingWorkItemId}) with SDK pull request(s) already exists for TypeSpec project {TypeSpecProjectPath}. Blocking SDK generation for release plan {WorkItemId}.",

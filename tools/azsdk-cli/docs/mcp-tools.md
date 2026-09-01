@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.40.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.41.
 
 ## Tools list
 
@@ -99,7 +99,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
-|  | `azsdk eng evaluate` | Evaluate whether Copilot's pipeline-failure fixes worked and survived into merged PRs over the last N days |
+|  | `azsdk eng evaluate` | Evaluate whether Copilot's pipeline-failure fixes changed failing checks to passing over the last N days |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |

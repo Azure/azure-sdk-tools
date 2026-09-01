@@ -708,7 +708,7 @@
           }
         },
         {
-          "description": "Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs (docs/specs), and custom-agent and skills authoring guidelines.",
+          "description": "Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs (tools/azsdk-cli/docs/specs), and custom-agent and skills authoring guidelines.",
           "path": "/tools/azsdk-cli/docs",
           "folder": "azsdk_cli_docs",
           "relativeByRepoPath": true,

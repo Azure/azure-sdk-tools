@@ -4,7 +4,7 @@ Provides an MCP-based tool that connects to the Azure DevOps MCP server
 via stdio (``npx @azure-devops/mcp``).  Exposes read-only pipeline
 definition lookup and work-item reads so the agent can help users find
 release / CI pipeline links and inspect release plans (work items in the
-``release`` project).
+``Release`` project).
 
 Authentication: Azure DevOps does not accept Foundry agent identities
 as organization members, so the hosted agent cannot mint an ADO token
@@ -106,7 +106,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         description=(
             "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
             "pipeline definitions by name and get their links, and (2) read "
-            "release plans — work items in the 'release' project: resolve a "
+            "release plans — work items in the 'Release' project: resolve a "
             "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
             "then read the work item and its API Spec / Package children."
         ),

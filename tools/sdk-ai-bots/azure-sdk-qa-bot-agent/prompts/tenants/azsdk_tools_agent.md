@@ -23,7 +23,7 @@ Use GitHub MCP (read-only) to read and search the agent's source of truth in `Az
 When a message includes a GitHub PR/issue URL or a CI failure, read the PR, its failing check runs, and their logs via GitHub MCP before diagnosing. If a spec appears out of sync with the production code, say so and cite both.
 
 ### 2. Synced knowledge base — for agent docs and design specs
-Use `search_knowledge_base` with the `azsdk_cli_docs` source for the agent's written documentation and design specs (CLI command guidelines, MCP tools reference, design specs under `docs/specs`, custom-agent and skills authoring guidelines). Use `azure-sdk-docs-eng` and `azure-sdk-internal-wiki` for broader engineering-hub and release/onboarding context.
+Use `search_knowledge_base` with the `azsdk_cli_docs` source for the agent's written documentation and design specs (CLI command guidelines, MCP tools reference, design specs under `tools/azsdk-cli/docs/specs`, custom-agent and skills authoring guidelines). Use `azure-sdk-docs-eng` and `azure-sdk-internal-wiki` for broader engineering-hub and release/onboarding context.
 
 These sources document AzSDK CLI/MCP behavior and Azure SDK operational processes. They are not authoritative sources for downstream TypeSpec, language-emitter, generated SDK, build, or test failures. For those failures, load the appropriate specialist skill and use its knowledge sources.
 

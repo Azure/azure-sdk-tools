@@ -693,14 +693,14 @@
     },
     {
       "repository": {
-        "url": "https://github.com/Azure/azure-sdk-tools.git",
+        "url": "https://github.com/Azure/azure-sdk-for-js.git",
         "branch": "main",
         "authType": "public"
       },
       "paths": [
         {
-          "description": "Documentation for Azure SDK Tools",
-          "path": "/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "description": "JavaScript SDK release tools documentation",
+          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
           "folder": "azure_sdk_tools_docs",
           "relativeByRepoPath": true,
           "metadata": {

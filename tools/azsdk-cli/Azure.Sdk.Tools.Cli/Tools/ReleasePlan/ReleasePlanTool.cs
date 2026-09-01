@@ -759,6 +759,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         Language = p.Language.ToWorkItemString(),
                         PackageName = p.PackageName ?? string.Empty
                     }).ToList();
+
+                    var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
+                    sdkInfos = [.. sdkInfos.Where(sdk => supportedLanguages.Contains(sdk.Language))];
                     var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlan.WorkItemId, sdkInfos, ct);
                     if (!updated)
                     {

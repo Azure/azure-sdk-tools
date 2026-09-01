@@ -302,7 +302,7 @@ _register(
     KnowledgeSource(
         name=SRC_AZURE_SDK_TOOLS_DOCS,
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
-        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
+        base_url="https://github.com/Azure/azure-sdk-for-js/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_AZSDK_CLI_DOCS,

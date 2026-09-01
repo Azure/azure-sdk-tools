@@ -1,6 +1,20 @@
 # Release History
 
-## 0.6.39 (Unreleased)
+## 0.6.41 (2026-08-31)
+
+### Features Added
+
+- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
+
+## 0.6.40 (2026-08-31)
+
+### Bugs Fixed
+
+- `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
+- Ignore API version associated with unknown language emitter configuration in metadata output.
+- Ignore unsupported languages when updating the languages in release plan.
+
+## 0.6.39 (2026-08-31)
 
 ### Features Added
 
@@ -9,10 +23,6 @@
 ### Breaking Changes
 
 - Removed the option to force create a release plan to avoid duplicate release plan.
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 0.6.38 (2026-08-26)
 

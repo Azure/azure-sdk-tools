@@ -44,18 +44,6 @@
     "functionAppResourceId": {
       "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-function"
     },
-    "blobStorageAccountName": {
-      "value": "azuresdkqabotdevstorage"
-    },
-    "blobConnectionName": {
-      "value": "azureblob-1"
-    },
-    "blobConnectionResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/azureblob"
-    },
-    "blobIdentityResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-dev-identity"
-    },
     "teamsConnectionResourceId": {
       "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/teams"
     },

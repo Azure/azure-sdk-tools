@@ -2,9 +2,11 @@
 
 > Prerequisite: Steps 1 (Analyze Project) and 2 (Intake) must be complete.
 
-## 3.1 Retrieve knowledge
+## 3.1 General (All Cases)
 
-Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md) and the choose principle for **special cases** below:
+### 3.1.1 Retrieve knowledge
+
+Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
 
 1. **Case found in the reference doc → Agentic Search.** Run [agentic search](agentic-search.md) — you **MUST** call `web_fetch` on the matching URLs and follow their steps. Synthesize the extracted content into a concrete plan. Do **not** call the MCP tool.
 
@@ -14,7 +16,7 @@ Choose the grounding source based on whether the request's case is covered by [r
 
 For a request containing both covered and uncovered changes, use the MCP tool for the uncovered changes. Do not treat a related topic or keyword match as coverage.
 
-## 3.2 Generate Authoring Plan
+### 3.1.2 Generate Authoring Plan
 
 synthesize the result into a concrete plan derived from the retrieved context in step 3.1.
 
@@ -22,9 +24,9 @@ Document your final plan with references to supporting documents, and ensure the
 
 ---
 
-# Special Cases
+## 3.2 Case-Specific Authoring Plan
 
-## Case 1 — API Versioning
+### Case 1 — API Versioning
 
 > API Versioning **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [§3.1](#31-retrieve-knowledge)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_retrieve_knowledge` or `azsdk_typespec_generate_authoring_plan` for this case.
 

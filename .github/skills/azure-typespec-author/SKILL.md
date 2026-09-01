@@ -46,7 +46,7 @@ This includes but is not limited to:
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
 
-## Workflow
+## Steps
 
 > Analyze → Intake → Plan → Apply → Validate → Output reference links
 

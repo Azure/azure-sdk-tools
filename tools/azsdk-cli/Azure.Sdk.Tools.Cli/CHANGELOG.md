@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
 ### Bugs Fixed
 
 ### Other Changes

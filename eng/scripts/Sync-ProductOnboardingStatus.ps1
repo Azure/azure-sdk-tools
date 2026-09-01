@@ -58,7 +58,7 @@ if ($env:AZSDK) {
   $azsdk = $env:AZSDK
 }
 
-& "$azsdk" product-onboarding sync --debug `
+& "$azsdk" release-plan onboard-product --debug `
   --product-id "$ProductID" `
   --product-name "$ProductName" `
   --product-type "$ProductType" `

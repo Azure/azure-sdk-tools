@@ -1,24 +1,21 @@
-using Moq;
-using Moq.Protected;
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.ProductOnboarding;
-using System.Text.Json;
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using Microsoft.Extensions.Logging;
-using ModelContextProtocol;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Moq;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     internal class ProductOnboardingToolTests
     {
         private ProductOnboardingTool productOnboardingTool;
         private IDevOpsService devOpsService;
         private TestLogger<ProductOnboardingTool> logger;
+        private IEnvironmentHelper environmentHelper;
 
         [SetUp]
         public void Setup()
@@ -27,7 +24,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
             logger = new TestLogger<ProductOnboardingTool>();
             devOpsService = new MockDevOpsService();
 
-            productOnboardingTool = new ProductOnboardingTool(devOpsService, logger);
+            var environmentHelperMock = new Mock<IEnvironmentHelper>();
+            environmentHelperMock.Setup(x => x.GetBooleanVariable(ProductOnboardingTool.TestEnvVarName, false)).Returns(true);
+            environmentHelper = environmentHelperMock.Object;
+
+            productOnboardingTool = new ProductOnboardingTool(devOpsService, logger, environmentHelper);
         }
 
         private readonly static string MockProductId = "12345678-1234-5678-9012-123456789012";
@@ -42,11 +43,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
         private readonly static string MockSubmitter = "@handle";
 
         [Test]
-        public async Task Test_Sync_ProductOnboarding_New()
+        public async Task Test_OnboardProduct_New()
         {
             var NonexistentId = MockProductId; // When productId == serviceId, mock service falls into "does not exist" path.
 
-            var response = await productOnboardingTool.SyncProductOnboarding(
+            var response = await productOnboardingTool.OnboardProduct(
                 productId: Guid.Parse(NonexistentId),
                 productName: MockProductName,
                 productType: MockProductType,
@@ -57,8 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
                 dataPlane: MockDataPlane,
                 managementPlane: MockManagementPlane,
                 submitter: MockSubmitter,
-                ct: default,
-                isTest: true);
+                ct: default);
                 
             Assert.IsNotNull(response);
 
@@ -74,10 +74,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
         }
 
         [Test]
-        public async Task Test_Sync_ProductOnboarding_Existing()
+        public async Task Test_OnboardProduct_Existing()
         {
 
-            var response = await productOnboardingTool.SyncProductOnboarding(
+            var response = await productOnboardingTool.OnboardProduct(
                 productId: Guid.Parse(MockProductId),
                 productName: MockProductName,
                 productType: MockProductType,
@@ -88,8 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
                 dataPlane: MockDataPlane,
                 managementPlane: MockManagementPlane,
                 submitter: MockSubmitter,
-                ct: default,
-                isTest: true);
+                ct: default);
 
             Assert.IsNotNull(response);
 

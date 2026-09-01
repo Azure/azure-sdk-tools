@@ -283,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 if (responseContent == null)
                 {
-                    throw new InvalidOperationException("Received null response from AI completion endpoint");
+                    throw new InvalidOperationException("Received null response from AI endpoint");
                 }
 
                 if (_options.EnableDebugLogging)

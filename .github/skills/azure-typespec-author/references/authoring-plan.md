@@ -24,7 +24,7 @@ Document your final plan with references to supporting documents, and ensure the
 
 ### Case 3 — API Versioning
 
-> API Versioning **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_retrieve_knowledge` for this case.
+> API Versioning **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_retrieve_knowledge` or `azsdk_typespec_generate_authoring_plan` for this case.
 
 1. Create the new version's `examples/<new-version>/` folder by copying the latest retained version's `examples/` into it, and update `api-version` in each `.json` file.
 2. Update `readme.md`.

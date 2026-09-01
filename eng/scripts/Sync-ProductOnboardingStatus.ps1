@@ -82,14 +82,12 @@ try {
     --data-plane "$DataPlane" `
     --management-plane "$MgmtPlane" `
     --submitter "$Submitter"
-}
-finally {
+} finally {
   Compare-Object -PassThru $originalEnv (Get-ChildItem Env:) -Property { '[{0}, {1}]' -f $_.Key, $_.Value } | 
     ForEach-Object {
       if ($_.SideIndicator -eq '=>') {
         Remove-Item Env:$($_.Name)
-      }
-      else {
+      } else {
         Set-Item Env:$($_.Name) $($_.Value)
       }
     }

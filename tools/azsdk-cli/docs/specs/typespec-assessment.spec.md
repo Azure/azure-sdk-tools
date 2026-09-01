@@ -92,7 +92,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 **AI judgment:** Decide whether each candidate causes public or runtime SDK impact, including REST-compatible breaks, and explain the cross-language risk.
 
-#### 3. Azure Compliance
+#### 3. Azure Guidelines
 
 **Tooling:** `web_fetch`.
 

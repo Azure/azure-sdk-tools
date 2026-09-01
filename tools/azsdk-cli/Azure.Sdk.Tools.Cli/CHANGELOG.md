@@ -1,14 +1,28 @@
 # Release History
 
-## 0.6.39 (Unreleased)
+## 0.6.41 (2026-08-31)
 
 ### Features Added
 
-### Breaking Changes
+- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
+
+## 0.6.40 (2026-08-31)
 
 ### Bugs Fixed
 
-### Other Changes
+- `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
+- Ignore API version associated with unknown language emitter configuration in metadata output.
+- Ignore unsupported languages when updating the languages in release plan.
+
+## 0.6.39 (2026-08-31)
+
+### Features Added
+
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in release plan.
+
+### Breaking Changes
+
+- Removed the option to force create a release plan to avoid duplicate release plan.
 
 ## 0.6.38 (2026-08-26)
 
@@ -59,11 +73,16 @@
 
 ### Features Added
 
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in the release plan.
+
+### Breaking Changes
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
+
+- Removed the option to force-create a release plan to avoid duplicate release plans.
 
 ## 0.6.32 (2026-07-28)
 

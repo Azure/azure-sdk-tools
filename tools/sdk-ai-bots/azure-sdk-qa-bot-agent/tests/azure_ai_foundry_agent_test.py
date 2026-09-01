@@ -21,7 +21,11 @@ if _PROJECT_ROOT not in sys.path:
 
 from openai import BadRequestError, NotFoundError
 
-from utils.azure_ai_foundry_agent import CONTENT_SAFETY_MESSAGE, HostedAgentClient
+from utils.azure_ai_foundry_agent import (
+    CONTENT_SAFETY_MESSAGE,
+    HostedAgentClient,
+    ConversationBrokenError,
+)
 
 
 class _FakeResponse:
@@ -131,7 +135,7 @@ async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
 
 @pytest.mark.asyncio
 async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
-    """When every attempt is empty, retries exhaust and a RuntimeError is raised."""
+    """Stateless empty responses exhaust retries without history recovery."""
     client = _mock_client(
         lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
     )
@@ -146,6 +150,26 @@ async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
             )
 
     assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_invoke_recovers_thread_after_empty_response_polling_exhausted() -> None:
+    """An empty threaded response triggers recovery after polling is exhausted."""
+    client = _mock_client(
+        lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
+    )
+
+    with patch.object(
+        HostedAgentClient, "_poll_response", AsyncMock(side_effect=lambda r: r)
+    ):
+        with pytest.raises(ConversationBrokenError):
+            await HostedAgentClient(client, max_retries=2, retry_delay=0).invoke(
+                conversation_items=[],
+                agent_ref={},
+                agent_conversation_id="conv-broken",
+            )
+
+    assert client.responses.create.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -250,11 +274,16 @@ async def test_invoke_retries_when_malformed_sse_has_no_response_id() -> None:
     client.responses.retrieve.assert_not_awaited()
 
 
-def _api_error(error_cls, status_code: int):
+def _api_error(
+    error_cls,
+    status_code: int,
+    message: str = "rejected",
+    body=None,
+):
     """Build a real OpenAI ``APIStatusError`` subclass instance for tests."""
     request = httpx.Request("POST", "https://example.test/v1/responses")
     response = httpx.Response(status_code, request=request)
-    return error_cls("rejected", response=response, body=None)
+    return error_cls(message, response=response, body=body)
 
 
 @pytest.mark.parametrize(

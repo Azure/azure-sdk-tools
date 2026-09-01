@@ -457,6 +457,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             return workItem;
         }
 
+        private WorkItem CreateApiSpecWorkItemWithVersion(int id, string pullRequestUrl, string state, string apiVersion, int parentId = 100)
+        {
+            var workItem = CreateApiSpecWorkItem(id, pullRequestUrl, state, parentId);
+            workItem.Fields["Custom.APISpecversion"] = apiVersion;
+            return workItem;
+        }
+
+        /// <summary>
+        /// Creates a release plan work item with a Hierarchy-Forward relation pointing to a child API Spec work item.
+        /// Required so GetApiSpecWorkItemAsync can traverse the parent→child link to read the API version.
+        /// </summary>
+        private WorkItem CreateReleasePlanWorkItemWithApiSpecChild(int id, string state, int apiSpecChildId)
+        {
+            var workItem = CreateReleasePlanWorkItem(id, state);
+            workItem.Relations.Add(new WorkItemRelation
+            {
+                Rel = "System.LinkTypes.Hierarchy-Forward",
+                Url = $"https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/{apiSpecChildId}"
+            });
+            return workItem;
+        }
+
         private WorkItem CreateReleasePlanWorkItem(int id, string state)
         {
             var workItem = new WorkItem
@@ -625,6 +647,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region RunSDKGenerationPipelineAsync Tests
+
+        [Test]
+        public void RunSDKGenerationPipelineAsync_WhenRunningInAzurePipelines_DoesNotIncludeSdkReleaseTypeOrApiVersionTemplateParams()
+        {
+            // Arrange
+            var method = typeof(DevOpsService).GetMethod("BuildSdkGenerationTemplateParams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.That(method, Is.Not.Null);
+
+            // Act
+            var templateParams = (Dictionary<string, string>)method!.Invoke(null, ["specification/test/service", 0, "stable", "v1", "feature/sdk-branch", true])!;
+
+            // Assert
+            Assert.That(templateParams, Contains.Key("ConfigType"));
+            Assert.That(templateParams, Contains.Key("ConfigPath"));
+            Assert.That(templateParams, Contains.Key("CreatePullRequest"));
+            Assert.That(templateParams, Contains.Key("ReleasePlanWorkItemId"));
+            Assert.That(templateParams, Contains.Key("TriggerSource"));
+            Assert.That(templateParams, Contains.Key("SdkRepoBranch"));
+            Assert.That(templateParams["SdkRepoBranch"], Is.EqualTo("feature/sdk-branch"));
+            Assert.That(templateParams, Does.Not.ContainKey("SdkReleaseType"));
+            Assert.That(templateParams, Does.Not.ContainKey("ApiVersion"));
+        }
+
+        #endregion
+
         #region FindPackageWorkItemIdsAsync Tests
 
         [Test]
@@ -681,6 +729,143 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var capturedQuery = _connection.LastCapturedQuery;
             Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Python', 'python')"),
                 "Language query should search for both canonical and lowercase forms to handle ADO case inconsistency");
+        }
+
+        #endregion
+
+        #region GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync Tests
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ReturnsNullWhenNoReleasePlanExists()
+        {
+            // Arrange: no release plans in the system
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var apiVersion = "2024-01-01";
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(result, "Should return null when no release plans exist for the TypeSpec path");
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ReturnsNullWhenApiVersionDoesNotMatch()
+        {
+            // Arrange: release plan exists but with different API version
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var requestedApiVersion = "2024-01-01";
+            var existingApiVersion = "2023-06-01";
+            
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
+                existingApiVersion, parentId: 100);
+            
+            _connection.AddWorkItemToQuery(releasePlan);
+            _connection.AddWorkItem(releasePlan);
+            _connection.AddWorkItem(apiSpec);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(result, "Should return null when API version does not match");
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ReturnsReleasePlanWhenApiVersionMatches()
+        {
+            // Arrange: release plan with matching API version
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var apiVersion = "2024-01-01";
+            
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
+                apiVersion, parentId: 100);
+            releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            
+            _connection.AddWorkItemToQuery(releasePlan);
+            _connection.AddWorkItem(releasePlan);
+            _connection.AddWorkItem(apiSpec);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, CancellationToken.None);
+
+            // Assert
+            Assert.IsNotNull(result, "Should return release plan when API version matches");
+            Assert.That(result!.WorkItemId, Is.EqualTo(100));
+            Assert.That(result.SpecAPIVersion, Is.EqualTo(apiVersion));
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_LoopsToFindMatchingApiVersionWhenMultipleExist()
+        {
+            // Arrange: multiple release plans with different API versions
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var requestedApiVersion = "2024-01-01";
+            
+            var releasePlan1 = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            releasePlan1.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            var apiSpec1 = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
+                "2023-06-01", parentId: 100);
+            
+            var releasePlan2 = CreateReleasePlanWorkItemWithApiSpecChild(101, "In Progress", 201);
+            releasePlan2.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            var apiSpec2 = CreateApiSpecWorkItemWithVersion(201, "https://github.com/Azure/azure-rest-api-specs/pull/12346", "Active", 
+                requestedApiVersion, parentId: 101);
+            
+            _connection.AddWorkItemToQuery(releasePlan1);
+            _connection.AddWorkItemToQuery(releasePlan2);
+            _connection.AddWorkItem(releasePlan1);
+            _connection.AddWorkItem(releasePlan2);
+            _connection.AddWorkItem(apiSpec1);
+            _connection.AddWorkItem(apiSpec2);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, CancellationToken.None);
+
+            // Assert
+            Assert.IsNotNull(result, "Should find matching release plan even when multiple exist");
+            Assert.That(result!.WorkItemId, Is.EqualTo(101), "Should return the release plan with matching API version");
+            Assert.That(result.SpecAPIVersion, Is.EqualTo(requestedApiVersion));
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ApiVersionMatchingIsCaseInsensitive()
+        {
+            // Arrange: API version with different case
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var requestedApiVersion = "2024-01-01";
+            var existingApiVersion = "2024-01-01"; // same version
+            
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
+            var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
+                existingApiVersion, parentId: 100);
+            
+            _connection.AddWorkItemToQuery(releasePlan);
+            _connection.AddWorkItem(releasePlan);
+            _connection.AddWorkItem(apiSpec);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, requestedApiVersion, CancellationToken.None);
+
+            // Assert
+            Assert.IsNotNull(result, "Should match API version case-insensitively");
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ReturnsNullWhenApiVersionIsEmpty()
+        {
+            // Arrange
+            var typeSpecPath = "specification/contoso/Contoso.Management";
+            var apiVersion = "";
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecPath, apiVersion, CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(result, "Should return null when API version is empty");
         }
 
         #endregion
@@ -840,4 +1025,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
     }
 }
-

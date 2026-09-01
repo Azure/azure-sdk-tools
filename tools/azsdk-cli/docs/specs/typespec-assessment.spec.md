@@ -51,7 +51,7 @@ The purpose of `azure-typespec-assessment` skill is to:
 
 **User:** Assess the current TypeSpec changes in the `Microsoft.ServiceNetworking/ServiceNetworking` specification.
 
-**Agent:** Which branch should I compare the current TypeSpec changes against? The default is `origin/main`.
+**Agent:** Which commit should I compare the current TypeSpec changes against? The default is the latest commit id from `origin/main`.
 
 **User:** Use `origin/main`.
 

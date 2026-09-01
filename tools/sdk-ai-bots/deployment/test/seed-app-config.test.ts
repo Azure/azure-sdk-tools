@@ -21,6 +21,12 @@ test("honors the environment-specific chatbot evolution agent setting", () => {
   );
 });
 
+test("points the legacy Search agent key at the configured knowledge base", () => {
+  const values = fixedAppConfigValues({});
+
+  assert.equal(values.AI_SEARCH_AGENT, values.AI_SEARCH_KNOWLEDGE_BASE);
+});
+
 test("injects the chat agent Application Insights resource ID", () => {
   const resourceId =
     "/subscriptions/sub/resourceGroups/rg/providers/microsoft.insights/components/agent-insights";

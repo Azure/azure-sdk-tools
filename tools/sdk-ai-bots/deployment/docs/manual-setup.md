@@ -300,6 +300,18 @@ azd env set AI_SEARCH_INDEX my-custom-index
 azd provision --environment <env>
 ```
 
+Postprovision also reconciles the Azure AI Search data-plane objects consumed
+by these settings. Preview the planned creates and updates without writing:
+
+```bash
+npm run setup-search -- --dry-run
+```
+
+The postprovision hook applies the same plan after Bicep provisions the Search,
+Storage, and AI resources. It creates the synonym map, shared index, primary
+and wiki data sources, skillsets and indexers, knowledge source, and knowledge
+base in dependency order.
+
 ---
 
 ## 12. Bot Service — Teams channel

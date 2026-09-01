@@ -171,8 +171,9 @@ connection, but it still requires the Azure and Entra permissions above.
 - [ ] Confirm the provisioning hook seeded `AI-SEARCH-APIKEY` and
       `AOAI-CHAT-COMPLETIONS-API-KEY` in the environment Key Vault.
 - [ ] Confirm App Configuration contains all fixed and derived settings.
-- [ ] Create the configured Search index, indexer, knowledge source, knowledge
-      base, and knowledge agent. Bicep creates only the Search service.
+- [ ] Confirm postprovision created or updated the configured Search synonym
+      map, index, data sources, skillsets, indexers, knowledge source, and
+      knowledge base.
 - [ ] Add the shared managed identity to the required Azure DevOps organization
       and projects so the Function App can mint and store `ado-token`.
 - [ ] Grant the frontend and hosted-agent identities signing access to

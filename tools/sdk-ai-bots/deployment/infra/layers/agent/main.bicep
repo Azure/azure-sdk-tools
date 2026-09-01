@@ -6,6 +6,9 @@ param location string
 @description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
 param managedIdentityPrincipalId string
 
+@description('Principal (object) ID of the Search service system-assigned identity.')
+param searchServicePrincipalId string
+
 @description('Name of the shared storage account connected to the Foundry project.')
 param storageAccountName string
 
@@ -284,6 +287,18 @@ resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
     principalId: managedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Search uses its system-assigned identity for integrated vectorization and
+// knowledge-base model calls.
+resource searchCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: account
+  name: guid(account.id, searchServicePrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')
+    principalId: searchServicePrincipalId
     principalType: 'ServicePrincipal'
   }
 }

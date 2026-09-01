@@ -130,7 +130,7 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
 
     // ── AI Search data-plane names (created by the indexing setup, not ARM;
     //    values taken from the reference store, override per env if needed) ──
-    AI_SEARCH_AGENT: or("AI_SEARCH_AGENT", "azure-sdk-knowledge-agent"),
+    AI_SEARCH_AGENT: or("AI_SEARCH_AGENT", "azure-sdk-knowledgebase"),
     AI_SEARCH_INDEX: or("AI_SEARCH_INDEX", "azure-sdk-knowledge"),
     AI_SEARCH_INDEXER: or("AI_SEARCH_INDEXER", "azure-sdk-knowledge-indexer"),
     AI_SEARCH_KNOWLEDGE_BASE: or("AI_SEARCH_KNOWLEDGE_BASE", "azure-sdk-knowledgebase"),

@@ -13,6 +13,7 @@
     "predown": "tsx hooks/predown.ts",
     "postdown": "tsx hooks/postdown.ts",
     "check-quotas": "tsx scripts/check-quotas.ts",
+    "setup-search": "tsx scripts/setup-search.ts",
     "deploy:logic-app": "tsx scripts/deploy-logic-app.ts"
   },
   "devDependencies": {

@@ -78,7 +78,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 1. REST Breaking Changes
 
-**Tooling:** `@typespec/compiler`, `@azure-tools/typespec-autorest`, later switch to`@azure-tools/typespec-breaking-change`.
+**Tooling:** `@azure-tools/typespec-autorest`, later switch to`@azure-tools/typespec-breaking-change`.
 
 **Deterministic analysis:** Compare normalized baseline and current wire contracts for route, parameter, request, response, serialization, requiredness, enum, and API-version changes.
 
@@ -86,7 +86,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 2. Downstream Breaking Changes
 
-**Tooling:** `@typespec/compiler`, `@azure-tools/typespec-client-generator-core`.
+**Tooling:** `@azure-tools/typespec-client-generator-core`.
 
 **Deterministic analysis:** Compare generic client metadata and customization decorators for hierarchy, method location, signatures, naming, flattening, access, usage, reachability, paging, and LRO changes.
 
@@ -94,7 +94,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 3. Azure Compliance
 
-**Tooling:** `@typespec/compiler`, `web_fetch`.
+**Tooling:** `web_fetch`.
 
 **Deterministic analysis:** Capture changed declarations and retain fetched guidance with its URL, section, excerpt, example, and content identity.
 
@@ -110,13 +110,12 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 5. Document Quality
 
-**Planned tooling:** `@typespec/compiler`, Git diff, `source-index.mjs`, repository examples, and emitted AutoRest/client metadata.
+**Planned tooling:** Git diff, repository examples.
 
 **Deterministic analysis:** Collect changed comments, descriptions, examples, documentation diagnostics, and their associated API surface.
 
 **AI judgment:** Assess whether the documentation is accurate, complete, understandable, consistent with emitted behavior, and useful to consumers.
 
-This dimension is planned and not implemented on the current branch.
 
 ### Remediation Integration
 

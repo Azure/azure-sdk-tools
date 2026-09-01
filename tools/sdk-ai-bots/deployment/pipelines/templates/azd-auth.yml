@@ -5,16 +5,17 @@
 # (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID,
 # AZURE_FEDERATED_TOKEN_FILE).
 #
-# Required pipeline variables (typically set by load-environment-suite.yml):
-#   SERVICE_CONNECTION   — name of the Azure DevOps service connection
+# `serviceConnection` is a compile-time template parameter so Azure DevOps
+# selects the authorized endpoint before the task starts.
 
-parameters: []
+parameters:
+    - { name: serviceConnection, type: string, default: '$(SERVICE_CONNECTION)' }
 
 steps:
     - task: AzureCLI@2
       displayName: 'azd / az auth (federated)'
       inputs:
-          azureSubscription: $(SERVICE_CONNECTION)
+          azureSubscription: ${{ parameters.serviceConnection }}
           addSpnToEnvironment: true
           scriptType: bash
           scriptLocation: inlineScript

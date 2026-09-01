@@ -21,6 +21,9 @@ parameters:
     - name: environment
       type: string
       values: [dev, preview, prod]
+    - name: serviceConnection
+      type: string
+      default: '$(SERVICE_CONNECTION)'
     - name: stageName
       type: string
       default: 'Provision'
@@ -62,12 +65,15 @@ stages:
                               parameters:
                                   environment: ${{ parameters.environment }}
                             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                              parameters:
+                                  serviceConnection: ${{ parameters.serviceConnection }}
 
                             - ${{ if parameters.bootstrapLayers }}:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                     parameters:
                                         operation: bootstrap
+                                        serviceConnection: ${{ parameters.serviceConnection }}
                                         workingDirectory: ${{ parameters.workingDirectory }}
 
                             - ${{ if and(not(parameters.bootstrapLayers), parameters.runValidateAndPreview) }}:
@@ -75,12 +81,14 @@ stages:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                     parameters:
                                         operation: preview
+                                        serviceConnection: ${{ parameters.serviceConnection }}
                                         workingDirectory: ${{ parameters.workingDirectory }}
 
                             - ${{ if and(not(parameters.bootstrapLayers), parameters.runProvision) }}:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                     parameters:
                                         operation: apply
+                                        serviceConnection: ${{ parameters.serviceConnection }}
                                         workingDirectory: ${{ parameters.workingDirectory }}
 
                             - ${{ if parameters.showReadinessReminder }}:

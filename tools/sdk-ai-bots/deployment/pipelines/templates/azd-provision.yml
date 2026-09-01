@@ -1,13 +1,15 @@
 # Pipeline template — `azd provision` for preview or apply.
 #
-# Required pipeline variables: SERVICE_CONNECTION, AZURE_ENV_NAME,
-# AZURE_LOCATION, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID,
-# AZURE_FEDERATED_TOKEN_FILE.
+# Required pipeline variables: AZURE_ENV_NAME, AZURE_LOCATION,
+# AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE.
 #
 # Apply runs layer lifecycle hooks normally. Preview skips hooks, so this
 # template invokes each layer's preprovision hook before previewing that layer.
 
 parameters:
+    - name: serviceConnection
+      type: string
+      default: '$(SERVICE_CONNECTION)'
     - name: operation
       type: string
       default: apply
@@ -29,7 +31,7 @@ steps:
     - task: AzureCLI@2
       displayName: 'azd provision (${{ parameters.operation }})'
       inputs:
-          azureSubscription: $(SERVICE_CONNECTION)
+          azureSubscription: ${{ parameters.serviceConnection }}
           scriptType: bash
           scriptLocation: inlineScript
           workingDirectory: '${{ parameters.workingDirectory }}'

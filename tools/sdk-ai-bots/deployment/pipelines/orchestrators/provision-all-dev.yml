@@ -26,6 +26,7 @@ extends:
             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
               parameters:
                   environment: dev
+                  serviceConnection: azure-sdk-tests-playground
                   runValidateAndPreview: false
                   runProvision: true
                   bootstrapLayers: ${{ parameters.bootstrapLayers }}

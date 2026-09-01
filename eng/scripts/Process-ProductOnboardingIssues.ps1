@@ -137,7 +137,7 @@ foreach ($issue_number in $issues) {
         -NeedsSDK          $needs_sdk_bool `
         -DataPlane        "$data_plane" `
         -MgmtPlane        "$mgmt_plane" `
-        -Submitter        "$submitter"
+        -Submitter        "$submitter" `
         -IsTest            $IsTest
 
       $sync_success = $true

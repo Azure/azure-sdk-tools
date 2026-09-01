@@ -68,12 +68,15 @@
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
 /tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
-/.github/skills/                        @azure/azsdk-cli
+/.github/skills/                        @azure/azsdk-cli @helen229 @praveenkuttappan @azure/azure-sdk-eng
 /.github/skills/azure-typespec-author/  @azure/azsdk-cli @catalinaperalta
 /eng/pipelines/azure-typespec-author-eval/                      @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark-no-skill.yml     @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/templates/steps/typespec-author-eval-*.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
+/eng/common/scripts/eval/               @helen229 @praveenkuttappan @azure/azure-sdk-eng
+/eng/skill-eval/                        @helen229 @praveenkuttappan @azure/azure-sdk-eng
+/evals/                                 @helen229 @praveenkuttappan @azure/azure-sdk-eng
 
 
 ###########

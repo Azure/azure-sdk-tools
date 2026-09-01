@@ -138,6 +138,7 @@ foreach ($issue_number in $issues) {
         -DataPlane        "$data_plane" `
         -MgmtPlane        "$mgmt_plane" `
         -Submitter        "$submitter"
+        -IsTest            $IsTest
 
       $sync_success = $true
     } catch {

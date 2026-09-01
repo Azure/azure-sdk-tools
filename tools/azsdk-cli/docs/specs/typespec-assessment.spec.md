@@ -135,4 +135,3 @@ The breaking-change mitigation skill does not exist on the current branch. The i
 ## Architecture
 
 ![alt text](image.png)
-

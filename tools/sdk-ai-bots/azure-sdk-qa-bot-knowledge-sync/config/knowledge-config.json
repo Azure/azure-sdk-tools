@@ -165,17 +165,8 @@
       "paths": [
         {
           "description": "Documentation for Azure SDK for Python",
-          "path": "/doc/dev/mgmt/sdk-breaking-changes-guide.md",
+          "path": "/doc",
           "folder": "azure_sdk_for_python_docs",
-          "metadata": {
-            "scope": "branded",
-            "service_type": "management-plane"
-          }
-        },
-        {
-          "description": "TypeSpec client customization and authoring knowledge base",
-          "path": "/eng/common/knowledge",
-          "folder": "azure_sdk_customization_docs",
           "metadata": {
             "scope": "branded"
           }
@@ -702,22 +693,14 @@
     },
     {
       "repository": {
-        "url": "https://github.com/Azure/azure-sdk-tools.git",
+        "url": "https://github.com/Azure/azure-sdk-for-js.git",
         "branch": "main",
         "authType": "public"
       },
       "paths": [
         {
-          "description": "TypeSpec client customization and authoring knowledge base",
-          "path": "/eng/common/knowledge",
-          "folder": "azure_sdk_customization_docs",
-          "metadata": {
-            "scope": "branded"
-          }
-        },
-        {
-          "description": "Documentation for Azure SDK Tools",
-          "path": "/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "description": "JavaScript SDK release tools documentation",
+          "path": "/eng/tools/js-sdk-release-tools/docs/automation-pipeline.md",
           "folder": "azure_sdk_tools_docs",
           "relativeByRepoPath": true,
           "metadata": {

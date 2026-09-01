@@ -1813,10 +1813,8 @@
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
     }
-    // API version stored on the release plan when its SDK PRs were generated.
-    // Older release plans predating this field omit the row.
-    if (p.sdkApiVersion) {
-      html += `<div class="detail-row detail-step-highlight"><strong>API Version:</strong> ${esc(p.sdkApiVersion)}</div>`;
+    if (p.apiSpec && p.apiSpec.apiVersion) {
+      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK generated using API-Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
     }
     if (
       p.typeSpecPath &&

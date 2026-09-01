@@ -5,7 +5,6 @@ import {
   LANGUAGES,
   LANGUAGE_DISPLAY,
   LANGUAGE_PACKAGE_WI,
-  RELEASE_PLAN_FIELDS,
   extractChildIds,
   getField,
   mapReleasePlan,
@@ -37,10 +36,6 @@ describe("devops-api module", () => {
     test("LANGUAGE_PACKAGE_WI has correct mappings", () => {
       expect(LANGUAGE_PACKAGE_WI[".NET"]).toBe(".NET");
       expect(LANGUAGE_PACKAGE_WI["JavaScript"]).toBe("JavaScript");
-    });
-
-    test("requests the SDK API version from release plans", () => {
-      expect(RELEASE_PLAN_FIELDS).toContain("Custom.APISpecversion");
     });
   });
 
@@ -230,11 +225,7 @@ describe("devops-api module", () => {
     test("maps API spec from child work items", () => {
       const wi = {
         id: 400,
-        fields: {
-          "System.Title": "With Spec",
-          "System.State": "New",
-          "Custom.APISpecversion": "2025-01-01",
-        },
+        fields: { "System.Title": "With Spec", "System.State": "New" },
         relations: [
           {
             rel: "System.LinkTypes.Hierarchy-Forward",
@@ -260,7 +251,6 @@ describe("devops-api module", () => {
       expect(result.apiSpec.specPrUrl).toBe(
         "https://github.com/Azure/azure-rest-api-specs/pull/50",
       );
-      expect(result.sdkApiVersion).toBe("2025-01-01");
       expect(result.apiSpec.apiVersion).toBe("2024-01-01");
       expect(result.apiSpec.definitionType).toBe("TypeSpec");
     });

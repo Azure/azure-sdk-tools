@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T11:21:09.790Z",
+  "generatedAt": "2026-09-02T07:24:22.572Z",
   "title": "TypeSpec assessment: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43745\\head",
@@ -3150,6 +3150,39 @@
           "changedAspects": [],
           "title": "Make Cloud HSM SKU names extensible",
           "summary": "The TypeSpec change replaces the fixed CloudHsmClusterSkuName enum with an open string union while retaining both known service wire values.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [
+              "downstream-24adebf95043e303",
+              "downstream-d2b61f0e1a91d387"
+            ],
+            "complianceSearchRequestIds": [
+              "compliance-search-c52e2af49097ff78"
+            ],
+            "relatedOperationIds": [
+              "CloudHsmClusters_CreateOrUpdate",
+              "CloudHsmClusters_Get",
+              "CloudHsmClusters_Update"
+            ],
+            "coveredHunkIds": [
+              "hunk-b45fb303f8a4e2c9"
+            ],
+            "uncoveredHunkIds": [],
+            "classifications": [
+              {
+                "hunkId": "hunk-b45fb303f8a4e2c9",
+                "status": "candidate-generated",
+                "reason": "mapped-deterministic-candidate",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": [
+                  "downstream-24adebf95043e303",
+                  "downstream-d2b61f0e1a91d387"
+                ]
+              }
+            ],
+            "gaps": []
+          },
+          "inferenceRequired": false,
           "sources": [
             {
               "id": "source-9a813171a81d57c2",
@@ -3912,7 +3945,7 @@
           "relatedSemanticIntents": [
             "semantic-6c953bac4d5ca5b2"
           ],
-          "semanticMatchBasis": "unique-source"
+          "semanticMatchBasis": "declaration-identity"
         }
       ],
       "operationGroups": [],
@@ -3975,6 +4008,13 @@
       "intentAssessments": [
         {
           "semanticIntentId": "semantic-6c953bac4d5ca5b2",
+          "reviewUnitId": "semantic-6c953bac4d5ca5b2",
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/enums/",
+              "guidanceSection": "Enums"
+            }
+          ],
           "sourceChangeIds": [
             "source-9a813171a81d57c2"
           ],
@@ -3984,7 +4024,50 @@
           "declarationIds": [
             "declaration-6f59f326dfa59a93",
             "declaration-b248c9fd9eb008fb",
+            "declaration-d7759b7ca4dd59aa",
             "declaration-ec7b99f0e7bc0b26"
+          ],
+          "decision": "applicable-pass",
+          "expected": "Use an enum for a fixed collection of named numeric or string constants, and consider a union when the represented type set is not limited to those constants.",
+          "actual": "CloudHsmClusterSkuName is changed from a fixed enum to a union containing an unconstrained string arm plus named variants for the existing `Standard_B1` and `Standard B10` wire values.",
+          "rationale": "The changed declaration is no longer limited to a fixed collection of constants, so representing the open value set as a union follows the fetched enum guidance while preserving the known service values.",
+          "gap": "The changed declaration is no longer limited to a fixed collection of constants, so representing the open value set as a union follows the fetched enum guidance while preserving the known service values.",
+          "sourceLinks": [
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "startLine": 283,
+              "endLine": 294
+            },
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "startLine": 289,
+              "endLine": 290
+            },
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "startLine": 292,
+              "endLine": 293
+            }
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+              "hunkId": "hunk-b45fb303f8a4e2c9",
+              "lines": [
+                "-#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
+                "-enum CloudHsmClusterSkuName {",
+                "-  Standard_B1,",
+                "-  `Standard B10`,",
+                "+union CloudHsmClusterSkuName {",
+                "+  string,",
+                "+",
+                "+  /** Standard_B1 SKU */",
+                "+  Standard_B1: \"Standard_B1\",",
+                "+",
+                "+  /** Standard B10 SKU */",
+                "+  StandardB10: \"Standard B10\","
+              ]
+            }
           ],
           "catalogRanking": [
             {
@@ -4527,55 +4610,6 @@
               "contentHash": "sha256:6449d1308d358d4e29b1d1712a73f687cbfb6efd6b2098009b878cdca495ef1c"
             }
           ],
-          "reviewUnitId": "semantic-6c953bac4d5ca5b2",
-          "applicableGuidance": [
-            {
-              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/enums/",
-              "guidanceSection": "Enums"
-            }
-          ],
-          "decision": "applicable-pass",
-          "expected": "Use an enum for a fixed collection of named numeric or string constants, and consider a union when the represented type set is not limited to those constants.",
-          "actual": "CloudHsmClusterSkuName is changed from a fixed enum to a union containing an unconstrained string arm plus named variants for the existing `Standard_B1` and `Standard B10` wire values.",
-          "rationale": "The changed declaration is no longer limited to a fixed collection of constants, so representing the open value set as a union follows the fetched enum guidance while preserving the known service values.",
-          "gap": "The changed declaration is no longer limited to a fixed collection of constants, so representing the open value set as a union follows the fetched enum guidance while preserving the known service values.",
-          "sourceLinks": [
-            {
-              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-              "startLine": 283,
-              "endLine": 294
-            },
-            {
-              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-              "startLine": 289,
-              "endLine": 290
-            },
-            {
-              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-              "startLine": 292,
-              "endLine": 293
-            }
-          ],
-          "codeSnippets": [
-            {
-              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-              "hunkId": "hunk-b45fb303f8a4e2c9",
-              "lines": [
-                "-#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
-                "-enum CloudHsmClusterSkuName {",
-                "-  Standard_B1,",
-                "-  `Standard B10`,",
-                "+union CloudHsmClusterSkuName {",
-                "+  string,",
-                "+",
-                "+  /** Standard_B1 SKU */",
-                "+  Standard_B1: \"Standard_B1\",",
-                "+",
-                "+  /** Standard B10 SKU */",
-                "+  StandardB10: \"Standard B10\","
-              ]
-            }
-          ],
           "blockers": []
         }
       ],
@@ -4800,8 +4834,8 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 17405,
-    "estimatedTokens": 4352,
+    "bytes": 18368,
+    "estimatedTokens": 4592,
     "retained": {
       "sourceChanges": 1,
       "facts": 2,
@@ -4810,7 +4844,8 @@
       "downstreamCandidates": 2,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 1,
-      "complianceSearchSourceBytes": 10133
+      "inferenceRequests": 0,
+      "complianceSearchSourceBytes": 10182
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
@@ -4832,9 +4867,5 @@
     "restAnalysisMs": 29,
     "downstreamAnalysisMs": 1298
   },
-  "pr": 43745,
-  "pullRequest": {
-    "number": 43745,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/43745"
-  }
+  "pr": 43745
 }

@@ -43,9 +43,9 @@
     "sparseRoots": ["specification/chaos"],
     "projects": ["specification/chaos/resource-manager/Microsoft.Chaos/Chaos"],
     "expected": {
-      "semanticIntents": 1,
+      "semanticIntents": 3,
       "restBreakingFindings": 0,
-      "downstreamFindings": 0,
+      "downstreamFindings": 6,
       "complianceFindings": 0
     }
   },
@@ -103,10 +103,10 @@
     "sparseRoots": ["specification/storage/data-plane"],
     "projects": ["specification/storage/data-plane/FileStorage"],
     "expected": {
-      "semanticIntents": 1,
-      "restBreakingFindings": 3,
-      "downstreamFindings": 1,
-      "complianceFindings": 1
+      "semanticIntents": 4,
+      "restBreakingFindings": 22,
+      "downstreamFindings": 19,
+      "complianceFindings": 4
     }
   },
   {
@@ -120,7 +120,7 @@
       "semanticIntents": 1,
       "restBreakingFindings": 0,
       "downstreamFindings": 0,
-      "complianceFindings": 1
+      "complianceFindings": 0
     }
   },
   {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T11:37:27.838Z",
+  "generatedAt": "2026-09-02T07:24:22.418Z",
   "title": "TypeSpec assessment: specification/cognitiveservices/CognitiveServices.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\42435\\head",
@@ -91,6 +91,37 @@
           "changedAspects": [],
           "title": "Mark the batch outbound-rules action as paged",
           "summary": "The TypeSpec change adds `@list` to `ManagedNetworkSettingsPropertiesBasicResources.post` so its existing list-result response is generated as a paged long-running operation.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [
+              "downstream-14526f8120d34ecd",
+              "downstream-7a1abbfd0db76351",
+              "downstream-ca97936fe9a11510"
+            ],
+            "complianceSearchRequestIds": [
+              "compliance-search-774a9978fd1c52de"
+            ],
+            "relatedOperationIds": [],
+            "coveredHunkIds": [
+              "hunk-fb0a715dd0f0909b"
+            ],
+            "uncoveredHunkIds": [],
+            "classifications": [
+              {
+                "hunkId": "hunk-fb0a715dd0f0909b",
+                "status": "candidate-generated",
+                "reason": "mapped-deterministic-candidate",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": [
+                  "downstream-14526f8120d34ecd",
+                  "downstream-7a1abbfd0db76351",
+                  "downstream-ca97936fe9a11510"
+                ]
+              }
+            ],
+            "gaps": []
+          },
+          "inferenceRequired": false,
           "sources": [
             {
               "id": "source-dd5d3368a3071e94",
@@ -1663,7 +1694,7 @@
           "relatedSemanticIntents": [
             "semantic-1e7d20fcf8db2c04"
           ],
-          "semanticMatchBasis": "unique-source"
+          "semanticMatchBasis": "declaration-identity"
         },
         {
           "id": "downstream-7a1abbfd0db76351",
@@ -2919,7 +2950,7 @@
           "relatedSemanticIntents": [
             "semantic-1e7d20fcf8db2c04"
           ],
-          "semanticMatchBasis": "unique-source"
+          "semanticMatchBasis": "declaration-identity"
         },
         {
           "id": "downstream-ca97936fe9a11510",
@@ -4175,7 +4206,7 @@
           "relatedSemanticIntents": [
             "semantic-1e7d20fcf8db2c04"
           ],
-          "semanticMatchBasis": "unique-source"
+          "semanticMatchBasis": "declaration-identity"
         }
       ],
       "operationGroups": [
@@ -6366,7 +6397,7 @@
               "relatedSemanticIntents": [
                 "semantic-1e7d20fcf8db2c04"
               ],
-              "semanticMatchBasis": "unique-source"
+              "semanticMatchBasis": "declaration-identity"
             },
             {
               "id": "downstream-7a1abbfd0db76351",
@@ -7622,7 +7653,7 @@
               "relatedSemanticIntents": [
                 "semantic-1e7d20fcf8db2c04"
               ],
-              "semanticMatchBasis": "unique-source"
+              "semanticMatchBasis": "declaration-identity"
             },
             {
               "id": "downstream-ca97936fe9a11510",
@@ -8878,7 +8909,7 @@
               "relatedSemanticIntents": [
                 "semantic-1e7d20fcf8db2c04"
               ],
-              "semanticMatchBasis": "unique-source"
+              "semanticMatchBasis": "declaration-identity"
             }
           ],
           "method": "post",
@@ -9797,8 +9828,8 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 25263,
-    "estimatedTokens": 6316,
+    "bytes": 27007,
+    "estimatedTokens": 6752,
     "retained": {
       "sourceChanges": 1,
       "facts": 4,
@@ -9807,7 +9838,8 @@
       "downstreamCandidates": 3,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 1,
-      "complianceSearchSourceBytes": 8819
+      "inferenceRequests": 0,
+      "complianceSearchSourceBytes": 8868
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
@@ -9829,9 +9861,5 @@
     "restAnalysisMs": 129,
     "downstreamAnalysisMs": 5899
   },
-  "pr": 42435,
-  "pullRequest": {
-    "number": 42435,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/42435"
-  }
+  "pr": 42435
 }

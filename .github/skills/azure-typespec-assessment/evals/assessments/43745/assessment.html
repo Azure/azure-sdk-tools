@@ -26,12 +26,13 @@
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The language-neutral public enum member identity changes from `Standard B10` to `StandardB10`. Existing generated-SDK source that refers to the prior member can require migration even though its wire value remains `Standard B10`.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (3)</strong></summary>
 <div class="affected-operation-list"><div class="affected-operation"><strong>CloudHsmClusters_CreateOrUpdate</strong><span class="http-method">PUT</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code></div><div class="affected-operation"><strong>CloudHsmClusters_Get</strong><span class="http-method">GET</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code></div><div class="affected-operation"><strong>CloudHsmClusters_Update</strong><span class="http-method">PATCH</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code></div></div></details>
-<div class="contract-footer"><span><strong>Changed TypeSpec:</strong> <code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp:283</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-6c953bac4d5ca5b2"><code>semantic-6c953bac4d5ca5b2</code></a></span></div>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-6c953bac4d5ca5b2"><code>semantic-6c953bac4d5ca5b2</code></a></span></div>
 </div></details></section>
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-6c953bac4d5ca5b2"><summary><strong><span class="action">modify</span> Make Cloud HSM SKU names extensible</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-2c9bf3a182588490">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>The TypeSpec change replaces the fixed CloudHsmClusterSkuName enum with an open string union while retaining both known service wire values.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div><pre><span class="context"> /**</span>
 <span class="context">  * Sku name of the Cloud HSM Cluster</span>
@@ -67,9 +68,9 @@
 <p id="related-findings-semantic-6c953bac4d5ca5b2"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-2c9bf3a182588490">shared-type-impact-2c9bf3a182588490</a></p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules</code></td><td>existing-api-version</td><td><code>a6887d2260f26285d4b1f5fba97da370be9200b4@2025-03-31</code><br><small>base · affected-existing-version</small></td><td><code>71ce7d0c524c4bea7bc737836684acd53f343147@2025-03-31</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/43745">#43745</a></p>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules</code></td><td>existing-api-version</td><td><code>a6887d2260f26285d4b1f5fba97da370be9200b4@2025-03-31</code><br><small>base · affected-existing-version</small></td><td><code>71ce7d0c524c4bea7bc737836684acd53f343147@2025-03-31</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
 <section><h4>Make Cloud HSM SKU names extensible</h4>
 <div class="diff"><div class="diff-path">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div><pre><span class="context"> /**</span>
@@ -108,8 +109,8 @@
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 17405,
-    &quot;estimatedTokens&quot;: 4352,
+    &quot;bytes&quot;: 18368,
+    &quot;estimatedTokens&quot;: 4592,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 1,
       &quot;facts&quot;: 2,
@@ -118,7 +119,8 @@
       &quot;downstreamCandidates&quot;: 2,
       &quot;downstreamRootCauses&quot;: 1,
       &quot;complianceSearchRequests&quot;: 1,
-      &quot;complianceSearchSourceBytes&quot;: 10133
+      &quot;inferenceRequests&quot;: 0,
+      &quot;complianceSearchSourceBytes&quot;: 10182
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,

@@ -24,12 +24,13 @@
 <h4>Breaking changes</h4>
 <table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>Paging</code></td><td class="contract-before"><code class="contract-value before">none</code></td><td class="contract-after"><code class="contract-value after">{}</code></td></tr><tr><td class="contract-member"><code>Response type</code></td><td class="contract-before"><code class="contract-value before">Microsoft.CognitiveServices.OutboundRuleListResult</code></td><td class="contract-after"><code class="contract-value after">array</code></td></tr><tr><td class="contract-member"><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">lro</code></td><td class="contract-after"><code class="contract-value after">lropaging</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> TCGC changes the public method from a non-pageable LRO result to pageable iteration with `value` items and a GET `nextLink`. Existing SDK code that consumes one `OutboundRuleListResult` must change to use the generated paging flow. The public generated response changes from `OutboundRuleListResult` to an array of `OutboundRuleBasicResource`. That changes the method&#39;s language-neutral return contract and breaks existing callers compiled or written against the list-result model. The public method kind changes from `lro` to `lropaging`, altering the generated invocation and result-consumption pattern even though its parameters and LRO polling metadata remain stable.</div>
-<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Changed TypeSpec:</strong> <code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-1e7d20fcf8db2c04"><code>semantic-1e7d20fcf8db2c04</code></a></span></div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-1e7d20fcf8db2c04"><code>semantic-1e7d20fcf8db2c04</code></a></span></div>
 </div></details></section>
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-1e7d20fcf8db2c04"><summary><strong><span class="action">modify</span> Mark the batch outbound-rules action as paged</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-2a67076bb3eb0443">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>The TypeSpec change adds `@list` to `ManagedNetworkSettingsPropertiesBasicResources.post` so its existing list-result response is generated as a paged long-running operation.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</div><pre><span class="context">    */</span>
 <span class="context">   @tag(&quot;ManagedNetwork&quot;)</span>
@@ -45,9 +46,9 @@
 <p id="related-findings-semantic-1e7d20fcf8db2c04"><strong>Related findings:</strong> <a href="#downstream-downstream-group-2a67076bb3eb0443">downstream-group-2a67076bb3eb0443</a></p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/cognitiveservices/CognitiveServices.Management</code></td><td>existing-api-version</td><td><code>2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904@2026-03-01</code><br><small>base · affected-existing-version</small></td><td><code>96eae0e7d5c7ede040ee0cc646d397e5d8375912@2026-03-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/42435">#42435</a></p>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/cognitiveservices/CognitiveServices.Management</code></td><td>existing-api-version</td><td><code>2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904@2026-03-01</code><br><small>base · affected-existing-version</small></td><td><code>96eae0e7d5c7ede040ee0cc646d397e5d8375912@2026-03-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
 <section><h4>Mark the batch outbound-rules action as paged</h4>
 <div class="diff"><div class="diff-path">specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</div><pre><span class="context">    */</span>
@@ -75,8 +76,8 @@
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 25263,
-    &quot;estimatedTokens&quot;: 6316,
+    &quot;bytes&quot;: 27007,
+    &quot;estimatedTokens&quot;: 6752,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 1,
       &quot;facts&quot;: 4,
@@ -85,7 +86,8 @@
       &quot;downstreamCandidates&quot;: 3,
       &quot;downstreamRootCauses&quot;: 1,
       &quot;complianceSearchRequests&quot;: 1,
-      &quot;complianceSearchSourceBytes&quot;: 8819
+      &quot;inferenceRequests&quot;: 0,
+      &quot;complianceSearchSourceBytes&quot;: 8868
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,

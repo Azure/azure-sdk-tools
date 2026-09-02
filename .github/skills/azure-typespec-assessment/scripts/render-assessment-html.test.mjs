@@ -1189,7 +1189,7 @@ test("renderer shows one intent example and keeps complete appendix evidence", (
   assert.equal((appendixHtml.match(/class="diff"/g) ?? []).length, 2);
 });
 
-test("legacy renderer preserves semantic intents and REST-derived downstream findings", () => {
+test("refreshed baseline preserves semantic and REST-derived downstream links", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1197,31 +1197,23 @@ test("legacy renderer preserves semantic intents and REST-derived downstream fin
     ),
   );
   const html = renderAssessmentHtml(assessment);
-  const complianceFinding = assessment.dimensions.azureCompliance.findings[0];
-  const complianceIntent =
-    assessment.dimensions.semanticUnderstanding.items.find((item) =>
-      item.changes.some((change) =>
-        change.linkedFindingIds?.includes(complianceFinding.id),
-      ),
-    );
-  assert.match(
-    html,
-    /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
+  const complianceFinding = assessment.dimensions.compliance.findings[0];
+  const complianceIntent = assessment.dimensions.semantic.items.find(
+    (item) => item.id === complianceFinding.semanticIntentId,
   );
   assert.ok(
     html.includes(`href="#compliance-finding-${complianceFinding.id}"`),
   );
   assert.ok(html.includes(`href="#intent-${complianceIntent.id}"`));
 
-  assert.match(html, /Semantic intents \(1\)/);
-  assert.match(html, /Remove special NFS item contracts from 2026-12-06/);
-  assert.match(html, /4 REST operations are affected/);
+  assert.match(html, /Semantic intents \(4\)/);
+  assert.match(html, /Remove NFS file and handle response fields/);
   assert.doesNotMatch(
     html,
     /REST contract changes require generated-client updates/,
   );
-  assert.match(html, /Downstream breaking changes \(3\)/);
-  assert.match(html, /3 from REST breaking/);
+  assert.match(html, /Downstream breaking changes \(17\)/);
+  assert.match(html, /6 from REST breaking/);
   assert.match(
     html,
     /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/,
@@ -1300,41 +1292,30 @@ test("downstream section lists and links REST breaking changes without duplicati
   const html = renderAssessmentHtml(assessment);
   assert.match(
     html,
-    /<dt>Affected operation<\/dt><dd><code>Directory_ListFilesAndDirectoriesSegment<\/code><\/dd>/,
+    /<div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment<\/code><\/strong><span>2026-12-06<\/span><code>GET \?restype=directory&amp;comp=list<\/code><\/div>/,
   );
-  assert.match(html, /<dt>API version<\/dt><dd><code>2026-12-06<\/code><\/dd>/);
-  assert.match(
-    html,
-    /<dt>HTTP request<\/dt><dd><code>GET \/\?restype=directory&amp;comp=list<\/code><\/dd>/,
-  );
-  assert.match(
-    html,
-    /<dt>Contract impact<\/dt><dd>1 parameter contract changed<\/dd>/,
-  );
+  assert.match(html, /1 contract changes — 1 affected REST operations/);
   assert.doesNotMatch(html, /contract\(s\)|Compared REST operation:/);
   const downstream = html.slice(
     html.indexOf('<section id="downstream-breaking">'),
     html.indexOf('<section id="azure-compliance">'),
   );
 
-  assert.match(downstream, /<h2>Downstream breaking changes \(3\)<\/h2>/);
+  assert.match(downstream, /<h2>Downstream breaking changes \(17\)<\/h2>/);
   assert.equal(
     (
       downstream.match(
         /class="origin-tag rest-breaking-tag">REST breaking<\/span>/g,
       ) ?? []
     ).length,
-    3,
+    6,
   );
-  for (const finding of assessment.dimensions.restBreakingChanges.findings) {
-    assert.ok(downstream.includes(`href="#finding-${finding.id}"`));
-    assert.ok(downstream.includes(finding.title));
-  }
+  assert.equal((downstream.match(/href="#rest-contract-/g) ?? []).length, 6);
   assert.doesNotMatch(downstream, /Approved REST finding/);
   assert.doesNotMatch(downstream, /REST-compatible downstream changes/);
 });
 
-test("legacy renderer keeps API versions in the appendix", () => {
+test("renderer keeps API versions in the appendix", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/42853/assessment.json", import.meta.url),
@@ -1384,7 +1365,7 @@ test("renderer presents assessment blockers as potential limits in the appendix"
   );
 });
 
-test("legacy renderer derives overall code quality from assessed dimensions", () => {
+test("renderer derives overall code quality from assessed dimensions", () => {
   const highAssessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/45348/assessment.json", import.meta.url),
@@ -1397,6 +1378,22 @@ test("legacy renderer derives overall code quality from assessed dimensions", ()
       "utf8",
     ),
   );
+  const compliance = mediumAssessment.dimensions.compliance;
+  compliance.status = "not-assessed";
+  compliance.summary = "Compliance evidence is incomplete.";
+  compliance.coverage.assessedIntentCount = 0;
+  compliance.coverage.unassessedIntentIds = compliance.intentAssessments.map(
+    (item) => item.semanticIntentId,
+  );
+  compliance.blockers = compliance.intentAssessments.map((item) => ({
+    reviewUnitId: item.semanticIntentId,
+    message: "test evidence blocker",
+  }));
+  for (const item of compliance.intentAssessments) {
+    item.decision = "not-assessed";
+    item.applicableGuidance = [];
+    item.blockers = ["test evidence blocker"];
+  }
 
   assert.match(
     renderAssessmentHtml(highAssessment),

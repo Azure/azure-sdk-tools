@@ -5,11 +5,11 @@
 :root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#fee2e2;color:#991b1b}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
 .tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
 </style></head><body>
-<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Add a stable API version and reorder Go delete parameters</h1>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Publish the stable New Relic API and preserve Go delete ordering</h1>
 <p class="hero-meta">TypeSpec source diff: <code>9eb0993333857ef0ffb2863ccc76f8b123cae90b</code> → <code>22bc88578fb1f253688e8a5bf127ef3a4502745a</code></p>
 <div class="summary-grid">
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 findings<br>2 documents assessed</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">35 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
@@ -19,33 +19,11 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding medium" id="compliance-finding-newrelic-preview-retained">
-<summary><span class="severity medium">medium</span><strong>Replaced preview remains in the version enum</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The new Versions enum retains 2025-05-01-preview alongside 2026-06-01 instead of removing the replaced preview.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>Remove the replaced preview version from the version enum.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</a></p>
-
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path"><a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">specification/newrelic/NewRelicObservability.Management/main.tsp:38-48</a></div><pre><span class=""><span class="line-number">38</span>enum Versions {</span>
-<span class=""><span class="line-number">39</span>  /**</span>
-<span class=""><span class="line-number">40</span>   * The 2025-05-01-preview API version.</span>
-<span class=""><span class="line-number">41</span>   */</span>
-<span class=""><span class="line-number">42</span>  v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
-<span class=""><span class="line-number">43</span></span>
-<span class=""><span class="line-number">44</span>  /**</span>
-<span class=""><span class="line-number">45</span>   * The 2026-06-01 API version.</span>
-<span class=""><span class="line-number">46</span>   */</span>
-<span class=""><span class="line-number">47</span>  v2026_06_01: &quot;2026-06-01&quot;,</span>
-<span class=""><span class="line-number">48</span>}</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-add-stable-version-and-go-delete-signature"><code>add-stable-version-and-go-delete-signature</code></a></p>
-</div></details>
-</div></details>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
-<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-add-stable-version-and-go-delete-signature"><summary><strong><span class="action">modify</span> Add a stable API version and reorder Go delete parameters</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-newrelic-preview-retained">Azure Guidelines</a></span></summary><div class="intent-body">
-<p>The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</p>
+<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-689d93649516029d"><summary><strong><span class="action">modify</span> Publish the stable New Relic API and preserve Go delete ordering</strong></summary><div class="intent-body">
+<p>The change publishes the 2026-06-01 New Relic API projection and adds a Go-only delete override that retains the legacy SDK parameter order while leaving the bounded REST and language-neutral SDK compatibility candidates empty.</p>
+<p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/client.tsp</div><pre><span class="context"> @@usage(AccountProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
 <span class="context"> @@usage(OrganizationProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
@@ -80,28 +58,37 @@
 <span class="add">+  NewRelicMonitorResources.delete,</span>
 <span class="add">+  newRelicMonitorResourceDelete,</span>
 <span class="add">+  &quot;go&quot;</span>
-<span class="add">+);</span></pre></div>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354">specification/newrelic/NewRelicObservability.Management/client.tsp:321</a>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<span class="add">+);</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/newrelic/NewRelicObservability.Management/client.tsp:327</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (35)</h4>
 <p><strong>Operation impact:</strong> 35 REST operations are affected; 3 representative operation(s) are shown below and 32 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
-<details class="operation"><summary><strong>Operations_List</strong> <code>GET /providers/NewRelic.Observability/operations</code> <span>2026-06-01</span></summary>
-<div class="operation-body"><p class="good"><strong>The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</strong></p>
-<p><strong>Change outcome:</strong> The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</p></div></details>
 <details class="operation"><summary><strong>Accounts_List</strong> <code>GET /subscriptions/{subscriptionId}/providers/NewRelic.Observability/accounts</code> <span>2026-06-01</span></summary>
-<div class="operation-body"><p class="good"><strong>The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</strong></p>
-<p><strong>Change outcome:</strong> The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</p></div></details>
-<details class="operation"><summary><strong>SaaS_ActivateResource</strong> <code>POST /subscriptions/{subscriptionId}/providers/NewRelic.Observability/activateSaaS</code> <span>2026-06-01</span></summary>
-<div class="operation-body"><p class="good"><strong>The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</strong></p>
-<p><strong>Change outcome:</strong> The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</p></div></details>
-<p id="related-findings-add-stable-version-and-go-delete-signature"><strong>Related findings:</strong> <a href="#compliance-finding-newrelic-preview-retained">newrelic-preview-retained</a></p>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<details class="operation"><summary><strong>BillingInfo_Get</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getBillingInfo</code> <span>2026-06-01</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<details class="operation"><summary><strong>ConnectedPartnerResources_List</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listConnectedPartnerResources</code> <span>2026-06-01</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
+<p id="related-findings-semantic-689d93649516029d"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/newrelic/NewRelicObservability.Management</code></td><td>new-api-version</td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2025-05-01-preview</code><br><small>current · previous-latest-preview</small></td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2026-06-01</code><br><small>current · newest-added-version</small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44882">#44882</a></p>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/newrelic/NewRelicObservability.Management</code></td><td>new-api-version</td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2025-05-01-preview</code><br><small>current · previous-latest-preview</small></td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2026-06-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-<section><h4>Add a stable API version and reorder Go delete parameters</h4>
-<div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/client.tsp</div><pre><span class="context"> @@usage(AccountProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<section><h4>Publish the stable New Relic API and preserve Go delete ordering</h4>
+<div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/client.tsp</div><pre><span class="context"> using Azure.ClientGenerator.Core;</span>
+<span class="context"> using Azure.ClientGenerator.Core.Legacy;</span>
+<span class="context"> using Azure.Core;</span>
+<span class="add">+using Azure.ResourceManager;</span>
+<span class="context"> using Azure.ResourceManager.Foundations;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="context"> using NewRelic.Observability;</span>
+<span class="context"> </span>
+<span class="context"> @@clientName(</span></pre></div><div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/client.tsp</div><pre><span class="context"> @@usage(AccountProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
 <span class="context"> @@usage(OrganizationProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
 <span class="context"> @@usage(PlanDataProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
 <span class="add">+</span>
@@ -134,7 +121,8 @@
 <span class="add">+  NewRelicMonitorResources.delete,</span>
 <span class="add">+  newRelicMonitorResourceDelete,</span>
 <span class="add">+  &quot;go&quot;</span>
-<span class="add">+);</span></pre></div><div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/main.tsp</div><pre><span class="context">    * The 2025-05-01-preview API version.</span>
+<span class="add">+);</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/main.tsp</div><pre><span class="context">    * The 2025-05-01-preview API version.</span>
 <span class="context">    */</span>
 <span class="context">   v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
 <span class="add">+</span>
@@ -144,23 +132,54 @@
 <span class="add">+  v2026_06_01: &quot;2026-06-01&quot;,</span>
 <span class="context"> }</span>
 <span class="context"> </span>
-<span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span></pre></div><div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/main.tsp</div><pre><span class="context">    * The 2025-05-01-preview API version.</span>
-<span class="context">    */</span>
-<span class="context">   v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The 2026-06-01 API version.</span>
-<span class="add">+   */</span>
-<span class="add">+  v2026_06_01: &quot;2026-06-01&quot;,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span></pre></div>
-<p class="sources"><strong>Sources:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354">specification/newrelic/NewRelicObservability.Management/client.tsp:321</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L40-L50">specification/newrelic/NewRelicObservability.Management/main.tsp:40</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L23-L50">specification/newrelic/NewRelicObservability.Management/main.tsp:23</a></p></section></details>
+<span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/newrelic/NewRelicObservability.Management/client.tsp:327</code>, <code>specification/newrelic/NewRelicObservability.Management/main.tsp:35</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<details class="panel"><summary><strong>Official documents</strong></summary><ul><li><a href="https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/">TypeSpec Client Generator Core decorators</a> · Retained authoritative evidence<blockquote>Customize a method&#39;s signature in the generated client SDK. Currently, only parameter signature customization is supported.</blockquote></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview</a> · Retained authoritative evidence<blockquote>Remove the replaced preview version from the version enum.</blockquote></li></ul></details>
-<h3>Changed files</h3><ul><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/main.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/main.tsp</code> (historical)</li><li><code>specification/newrelic/NewRelicObservability.Management/main.tsp</code> (historical)</li></ul>
-<h3>Timing and model input</h3><pre>{}</pre>
-<p><strong>Provenance:</strong> legacy assessment adapter</p></div></details></section>
+<details class="compliance-intent" id="compliance-intent-semantic-689d93649516029d"><summary><strong><a href="#intent-semantic-689d93649516029d">Publish the stable New Relic API and preserve Go delete ordering</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/">Azure.ResourceManager interface reference</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Add stable after preview</a></li></ul>
+</div></details>
+<h3>Changed files</h3><ul><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (committed)</li><li><code>specification/newrelic/NewRelicObservability.Management/main.tsp</code> (committed)</li></ul>
+<h3>Timing and model input</h3><pre>{
+  &quot;timings&quot;: {
+    &quot;totalMs&quot;: 143165,
+    &quot;semanticAnalysisMs&quot;: 208,
+    &quot;restAnalysisMs&quot;: 82,
+    &quot;downstreamAnalysisMs&quot;: 2478
+  },
+  &quot;inputAccounting&quot;: {
+    &quot;budgetTier&quot;: &quot;small&quot;,
+    &quot;budgetBytes&quot;: 131072,
+    &quot;bytes&quot;: 13456,
+    &quot;estimatedTokens&quot;: 3364,
+    &quot;retained&quot;: {
+      &quot;sourceChanges&quot;: 2,
+      &quot;facts&quot;: 0,
+      &quot;semanticReviewUnits&quot;: 1,
+      &quot;restCandidates&quot;: 0,
+      &quot;downstreamCandidates&quot;: 0,
+      &quot;downstreamRootCauses&quot;: 0,
+      &quot;complianceSearchRequests&quot;: 1,
+      &quot;inferenceRequests&quot;: 0,
+      &quot;complianceSearchSourceBytes&quot;: 8291
+    },
+    &quot;omittedRedundant&quot;: {
+      &quot;rawEmitterArtifacts&quot;: true,
+      &quot;compilerLogs&quot;: true,
+      &quot;unchangedInventories&quot;: true,
+      &quot;unreferencedFacts&quot;: true
+    },
+    &quot;compliance&quot;: {
+      &quot;catalogEntriesScored&quot;: 32,
+      &quot;documentsFetched&quot;: 4,
+      &quot;documentBytesFetched&quot;: 2110890,
+      &quot;guidanceExcerptsRetained&quot;: 3,
+      &quot;guidanceExcerptBytesRetained&quot;: 513
+    }
+  }
+}</pre>
+<p><strong>Provenance:</strong> model-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

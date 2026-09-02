@@ -9,7 +9,7 @@
 <p class="hero-meta">TypeSpec source diff: <code>519e87e016492a37ce9ea6ac0fdf80d26767f47d</code> → <code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i</span> Not assessed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>2/3 intents assessed</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>3/3 intents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 3</div><div class="summary-label">Semantic intents</div><div class="summary-detail">88 operations<br>0 Added, 3 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 1</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">1 direct · 0 from REST breaking</div></a>
@@ -27,8 +27,8 @@
 <p class="mapping-unavailable"><strong>Affected REST operations (0):</strong> mapping unavailable</p>
 <div class="contract-footer"><span><strong>Changed TypeSpec:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-74cbdf542ff995de"><code>semantic-74cbdf542ff995de</code></a></span></div>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty not-assessed">Azure Guidelines were not assessed.</p>
-<div class="panel"><strong>Unassessed intents:</strong> <code>semantic-74cbdf542ff995de</code></div></section>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. They passed for the other intents, and no applicable guideline was found for intent <a href="#intent-semantic-74cbdf542ff995de">Extend compatibility scopes to Go</a>.</p>
+</section>
 <section id="semantic-intents"><h2>Semantic intents (3)</h2><details class="intent" id="intent-semantic-74cbdf542ff995de"><summary><strong><span class="action">modify</span> Extend compatibility scopes to Go</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-d9f146e576a25dc9">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>Updates four back-compatibility scope filters from !csharp to !csharp,!go, extending their language-specific treatment to Go without a deterministically linked REST operation.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 2 changed hunks classified. AI inference used for 2 requests.</p>
@@ -104,7 +104,7 @@
 <p id="related-findings-semantic-831f19ce86ef8b65"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel"><ul><li>Compliance for semantic-74cbdf542ff995de is not assessed because the bounded request has no material declaration IDs and the selected catalog documents do not govern its language scope strings.</li></ul></div></section>
+<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>

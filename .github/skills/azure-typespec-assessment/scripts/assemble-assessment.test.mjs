@@ -9,6 +9,7 @@ import {
 } from "./assemble-assessment.mjs";
 import { readJson, writeJson } from "./cli.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
+import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
 test("validator rejects passed dimensions with blockers", () => {
@@ -566,6 +567,76 @@ test("assembler requires and joins active Compliance evidence", () => {
     "compliance-search-evidence.json",
   );
   assert.deepEqual(validateAssessment(assessment), []);
+});
+
+test("assembler treats no applicable guidance as assessed and links its intent", () => {
+  const work = fixture();
+  const complianceDecisions = addComplianceInput(work);
+  const evidencePath = path.join(work, "compliance-search-evidence.json");
+  const evidence = readJson(evidencePath);
+  for (const document of evidence.intents[0].rankedDocuments) {
+    document.guidance = [];
+    document.noRelevantGuidance = true;
+  }
+  evidence.inputAccounting.guidanceExcerptsRetained = 0;
+  evidence.inputAccounting.guidanceExcerptBytesRetained = 0;
+  writeJson(evidencePath, evidence);
+  complianceDecisions[0] = {
+    reviewUnitId: "semantic-1",
+    applicableGuidance: [],
+    sourceChangeIds: ["source-1"],
+    hunkIds: ["hunk-1"],
+    declarationIds: ["declaration-1"],
+    decision: "no-applicable-guidance",
+    actual: "The intent uses a generator-specific decorator.",
+    rationale: "None of the fetched documents governs this decorator.",
+  };
+  const assessment = assembleAssessment({
+    work,
+    judgment: {
+      schemaVersion: 1,
+      semanticIntents: [
+        {
+          reviewUnitId: "semantic-1",
+          title: "Change Widget SDK customization",
+          summary: "Changes a generator-specific customization.",
+        },
+      ],
+      restDecisions: [
+        {
+          candidateId: "rest-1",
+          decision: "reject",
+          rationale: "The REST contract remains compatible.",
+        },
+      ],
+      downstreamDecisions: [],
+      complianceDecisions,
+      overallConfidence: "high",
+      blockers: [],
+    },
+  });
+
+  assert.equal(assessment.dimensions.compliance.status, "passed");
+  assert.equal(
+    assessment.dimensions.compliance.coverage.assessedIntentCount,
+    1,
+  );
+  assert.deepEqual(
+    assessment.dimensions.compliance.coverage.unassessedIntentIds,
+    [],
+  );
+  assert.deepEqual(assessment.dimensions.compliance.blockers, []);
+  assert.deepEqual(validateAssessment(assessment), []);
+  const html = renderAssessmentHtml(assessment);
+  const complianceHtml = html.slice(
+    html.indexOf('<section id="azure-compliance">'),
+    html.indexOf('<section id="semantic-intents">'),
+  );
+  assert.match(
+    complianceHtml,
+    /Azure Guidelines were assessed\. No applicable guideline was found for intent <a href="#intent-semantic-1">Change Widget SDK customization<\/a>\./,
+  );
+  assert.doesNotMatch(complianceHtml, /<code>semantic-1<\/code>/);
 });
 
 test("aggregates direct SDK deltas by method and links them to semantic REST operations", () => {

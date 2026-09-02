@@ -335,7 +335,17 @@ function complianceEvidenceAppendix(dimension, semanticItems) {
   );
 }
 
-function renderCompliance(dimension) {
+function intentTitleLinks(ids, semanticItems) {
+  const titles = new Map(semanticItems.map((item) => [item.id, item.title]));
+  return ids
+    .map(
+      (id) =>
+        `<a href="#intent-${anchor(id)}">${escapeHtml(titles.get(id) ?? "Semantic intent")}</a>`,
+    )
+    .join(", ");
+}
+
+function renderCompliance(dimension, semanticItems) {
   const coverage = dimension.coverage ?? {};
   const activeFindings = (dimension.findings ?? [])
     .map((finding) => {
@@ -371,13 +381,18 @@ function renderCompliance(dimension) {
     })
     .join("");
   const uncovered = coverage.unassessedIntentIds ?? [];
+  const noApplicableGuidanceIds = (dimension.intentAssessments ?? [])
+    .filter((item) => item.decision === "no-applicable-guidance")
+    .map((item) => item.semanticIntentId);
   const findings = activeFindings || legacyFindings;
   const empty =
     dimension.status === "not-assessed"
-      ? '<p class="empty not-assessed">Azure Guidelines were not assessed.</p>'
-      : '<p class="empty good">No Azure Guidelines findings.</p>';
+      ? '<p class="empty not-assessed">Azure Guidelines could not be fully assessed.</p>'
+      : noApplicableGuidanceIds.length
+        ? `<p class="empty good">Azure Guidelines were assessed. ${dimension.intentAssessments.length > noApplicableGuidanceIds.length ? "They passed for the other intents, and no" : "No"} applicable guideline was found for ${noApplicableGuidanceIds.length === 1 ? "intent" : "intents"} ${intentTitleLinks(noApplicableGuidanceIds, semanticItems)}.</p>`
+        : '<p class="empty good">No Azure Guidelines findings.</p>';
   return `${findings || empty}
-${uncovered.length ? `<div class="panel"><strong>Unassessed intents:</strong> ${uncovered.map((id) => `<code>${escapeHtml(id)}</code>`).join(", ")}</div>` : ""}`;
+${uncovered.length ? `<div class="panel"><strong>Compliance not assessed for:</strong> ${intentTitleLinks(uncovered, semanticItems)}</div>` : ""}`;
 }
 
 function headerComparison(assessment) {
@@ -1438,7 +1453,7 @@ function renderCurrent(assessment) {
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (${summary.restCount})</h2>${rest}</section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (${summary.downstreamCount})</h2>${downstreamItems}</section>
-<section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceFindingCount})</h2>${renderCompliance(dimensions.compliance)}</section>
+<section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceFindingCount})</h2>${renderCompliance(dimensions.compliance, dimensions.semantic.items)}</section>
 <section id="semantic-intents"><h2>Semantic intents (${dimensions.semantic.items.length})</h2>${semantic || '<div class="panel">No semantic review units.</div>'}</section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — ${escapeHtml(dimensions.documentQuality.summary)}</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel">${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "None"}</div></section>

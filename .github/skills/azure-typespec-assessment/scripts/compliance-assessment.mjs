@@ -21,7 +21,12 @@ const SCORE_VALUES = {
   servicePlane: [0, 2],
   changeContext: [0, 1],
 };
-const DECISIONS = ["applicable-pass", "applicable-fail", "not-assessed"];
+const DECISIONS = [
+  "applicable-pass",
+  "applicable-fail",
+  "no-applicable-guidance",
+  "not-assessed",
+];
 
 function duplicates(values) {
   const seen = new Set();
@@ -425,14 +430,7 @@ export function assembleCompliance({
         }
       }
     });
-    const intentBlockers = [
-      ...intent.blockers,
-      ...(request.declarationIds.length
-        ? []
-        : [
-            "no-material-declarations: no changed declaration could be compared.",
-          ]),
-    ];
+    const intentBlockers = [...intent.blockers];
     blockersByIntent.set(intent.reviewUnitId, intentBlockers);
     blockers.push(
       ...intentBlockers.map((message) => ({
@@ -518,6 +516,15 @@ export function assembleCompliance({
     ) {
       throw new Error(
         `Compliance decision ${decision.reviewUnitId} lacks finding presentation.`,
+      );
+    }
+    if (
+      decision.decision === "no-applicable-guidance" &&
+      (decision.applicableGuidance.length ||
+        blockersByIntent.get(decision.reviewUnitId).length)
+    ) {
+      throw new Error(
+        `Compliance decision ${decision.reviewUnitId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
       );
     }
     const request = requestMap.get(decision.reviewUnitId);
@@ -627,7 +634,8 @@ export function assembleCompliance({
     .filter(
       (item) =>
         item.decision === "applicable-pass" ||
-        item.decision === "applicable-fail",
+        item.decision === "applicable-fail" ||
+        item.decision === "no-applicable-guidance",
     )
     .map((item) => item.reviewUnitId);
   const unassessedIntentIds = requests
@@ -644,7 +652,9 @@ export function assembleCompliance({
       status === "failed"
         ? `${findings.length} documentation-grounded compliance finding(s).`
         : status === "passed"
-          ? "All Semantic intents match applicable fetched guidance."
+          ? decisions.some((item) => item.decision === "no-applicable-guidance")
+            ? "All Semantic intents were assessed; no applicable guidance was found for one or more intents."
+            : "All Semantic intents match applicable fetched guidance."
           : "Compliance evidence or Semantic intent coverage is incomplete.",
     coverage: {
       semanticIntentCount: requests.length,

@@ -2,6 +2,10 @@
 
 ## 0.6.42 (2026-09-01)
 
+### Breaking Changes
+
+- Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
 ### Bugs Fixed
 
 - `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.

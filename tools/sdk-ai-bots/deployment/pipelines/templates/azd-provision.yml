@@ -40,6 +40,7 @@ steps:
 
     - task: AzureCLI@2
       displayName: 'azd provision (${{ parameters.operation }})'
+      env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
       inputs:
           azureSubscription: ${{ parameters.serviceConnection }}
           scriptType: bash
@@ -47,7 +48,6 @@ steps:
           workingDirectory: '${{ parameters.workingDirectory }}'
           inlineScript: |
               set -euo pipefail
-              export AZD_AUTH_USE_FEDERATED_TOKEN=true
               export npm_config_userconfig="$(resolvedNpmrcPath)"
               if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
                 azd env new "$AZURE_ENV_NAME" \

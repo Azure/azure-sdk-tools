@@ -24,6 +24,7 @@ steps:
 
     - task: AzureCLI@2
       displayName: 'azd deploy ${{ parameters.service }} (tag ${{ parameters.imageTag }})'
+      env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
       inputs:
           azureSubscription: $(SERVICE_CONNECTION)
           scriptType: bash

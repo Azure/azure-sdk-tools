@@ -1,9 +1,7 @@
 # Pipeline template — Azure auth for both `az` and `azd`.
 #
-# Uses an AzureCLI@2 task to obtain a federated token from the service
-# connection, then exports the standard env vars consumed by azd
-# (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID,
-# AZURE_FEDERATED_TOKEN_FILE).
+# Installs azd and its required extensions, then uses AzureCLI@2 service
+# connection metadata to establish azd's Azure Pipelines federated login.
 #
 # `serviceConnection` is a compile-time template parameter so Azure DevOps
 # selects the authorized endpoint before the task starts.
@@ -12,6 +10,12 @@ parameters:
     - { name: serviceConnection, type: string, default: '$(SERVICE_CONNECTION)' }
 
 steps:
+    - bash: |
+          set -euo pipefail
+          command -v azd >/dev/null || curl -fsSL https://aka.ms/install-azd.sh | bash
+          azd version && bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/install-azd-extensions.sh"
+      displayName: 'Ensure azd and required extensions are installed'
+
     - task: AzureCLI@2
       displayName: 'azd / az auth (federated)'
       inputs:
@@ -21,14 +25,17 @@ steps:
           scriptLocation: inlineScript
           inlineScript: |
               set -euo pipefail
+              azd auth login --client-id "$servicePrincipalId" --tenant-id "$tenantId" --federated-credential-provider azure-pipelines --no-prompt
+                            AZD_AUTH_STATUS=$(azd auth login --check-status --output json)
+                            echo "$AZD_AUTH_STATUS"
+                            jq -e '.status == "success"' <<< "$AZD_AUTH_STATUS" >/dev/null || {
+                                echo "##[error]azd federated authentication did not succeed."
+                                exit 1
+                            }
               echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
               echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
               echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
               echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
               echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
-
-    - bash: |
-          set -euo pipefail
-          command -v azd >/dev/null || curl -fsSL https://aka.ms/install-azd.sh | bash
-          azd version && bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/install-azd-extensions.sh"
-      displayName: 'Ensure azd and required extensions are installed'
+      env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)

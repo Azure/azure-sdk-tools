@@ -252,14 +252,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.Status = "Failed";
                 }
 
-                var effectiveApiVersion = string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase)
-                    ? releasePlan.SpecAPIVersion
-                    : apiVersion;
-                if (sdkReleaseType == "stable" && effectiveApiVersion.Contains("-preview", StringComparison.OrdinalIgnoreCase))
-                {
-                    response.ResponseErrors.Add($"Stable SDK generation is not allowed for preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
-                    response.Status = "Failed";
-                }
+var effectiveApiVersion = string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase)
+    ? releasePlan.SpecAPIVersion
+    : apiVersion;
+
+// Ensure downstream calls (including the pipeline run) use the resolved value.
+apiVersion = effectiveApiVersion;
+
+if (sdkReleaseType == "stable")
+{
+    if (string.IsNullOrWhiteSpace(effectiveApiVersion) || effectiveApiVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+    {
+        response.ResponseErrors.Add("Stable SDK generation requires an explicit stable API version (set it on the release plan or pass --api-version).");
+        response.Status = "Failed";
+    }
+    else if (effectiveApiVersion.Contains("-preview", StringComparison.OrdinalIgnoreCase))
+    {
+        response.ResponseErrors.Add($"Stable SDK generation is not allowed for preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
+        response.Status = "Failed";
+    }
+}
 
                 // Update SDK details in release plan if work item ID is provided
                 if (workItemId > 0)

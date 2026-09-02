@@ -501,7 +501,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             );
 
             Assert.That(result.Status, Is.EqualTo("Failed"));
-            Assert.That(result.ResponseErrors, Has.Some.Contains("Stable SDK generation is not allowed for preview API version"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("Stable SDK generation is not allowed from preview API version"));
         }
 
         [TestCase("")]

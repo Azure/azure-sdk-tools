@@ -108,11 +108,13 @@ Dimension statuses are derived, not authored:
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
 - Azure Compliance: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
-- Document Quality: `not-assessed` with `Document quality is not assessed.`;
+- Document Quality and Agent Friendliness: `not-assessed` with
+  `Document Quality and Agent Friendliness is not assessed.`;
 - safety scope: `rest-and-downstream-only`, never compliance or document quality.
 
-A blocked implemented dimension cannot pass. Document Quality cannot pass or
-report zero findings as if assessed; it remains explicitly `not-assessed`.
+A blocked implemented dimension cannot pass. Document Quality and Agent
+Friendliness cannot pass or report zero findings as if assessed; it remains
+explicitly `not-assessed`.
 A completed Compliance search with no governing guidance is represented by an
 intent-level `no-applicable-guidance` decision. It counts as assessed and does
 not create a blocker. `not-assessed` is reserved for missing evidence,
@@ -126,12 +128,12 @@ Compliance.
 intents, active Compliance status
 and coverage, four ranked documents per intent, fetched guidance beside changed
 TypeSpec, expanded failures, collapsed passes, retrieval blockers, explicit
-not-assessed Document Quality, and complete provenance. Present top-level
-assessment blockers only in the appendix under **Potential limits**, not as a
-standalone main-report section. The appendix must include a clickable pull
-request link when a PR number is available, deriving the URL from
-`repository.remoteUrl` when no dedicated pull-request URL is present. Escape
-all source- and Agent-controlled text.
+not-assessed Document Quality and Agent Friendliness, and complete provenance.
+Present top-level assessment blockers only in the appendix under
+**Potential limits**, not as a standalone main-report section. The appendix
+must include a clickable pull request link when a PR number is available,
+deriving the URL from `repository.remoteUrl` when no dedicated pull-request URL
+is present. Escape all source- and Agent-controlled text.
 
 REST breaking findings must use the shared contract-card hierarchy: contract
 identity and `REST contract` tag in the summary; a styled

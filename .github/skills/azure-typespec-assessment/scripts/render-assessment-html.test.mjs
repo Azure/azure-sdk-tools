@@ -229,7 +229,7 @@ test("renders SDK contract changes with collapsed affected operations", () => {
       compliance: notAssessedCompliance(),
       documentQuality: {
         status: "not-assessed",
-        summary: "Document quality is not assessed.",
+        summary: "Document Quality and Agent Friendliness is not assessed.",
       },
     },
     changedFiles: [source],
@@ -723,7 +723,7 @@ test("renderer labels active Compliance and scoped safety", () => {
   });
   assert.match(html, /Azure Guidelines/);
   assert.match(html, /Not assessed/);
-  assert.match(html, /Document Quality/);
+  assert.match(html, /Document Quality and Agent Friendliness/);
   assert.match(html, /class="eyebrow">TypeSpec Assessment/);
   assert.match(html, /class="summary-grid"/);
   assert.match(html, /<a class="summary-card" href="#rest-breaking">/);
@@ -751,7 +751,7 @@ test("renderer labels active Compliance and scoped safety", () => {
   assert.match(html, /0\/0 intents assessed/);
   assert.match(
     html,
-    /<section id="document-quality"><h2>Document Quality<\/h2><div class="panel not-assessed"><strong>Not assessed<\/strong>/,
+    /<section id="document-quality"><h2>Document Quality and Agent Friendliness<\/h2><div class="panel not-assessed"><strong>Not assessed<\/strong>/,
   );
   assert.match(
     html,

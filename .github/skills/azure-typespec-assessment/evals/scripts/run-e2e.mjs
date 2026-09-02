@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -71,7 +66,7 @@ function assertMajorReportPoints(html, assessment, description) {
     "Downstream breaking changes",
     "Semantic intents",
     "Azure Guidelines",
-    "Document Quality",
+    "Document Quality and Agent Friendliness",
     "Not assessed",
     "Appendix",
   ];
@@ -129,9 +124,15 @@ export function replayCase(testCase, options = {}) {
   assertMajorReportPoints(html, assessment, `PR ${testCase.pr} HTML`);
   if (options.checkCanonicalHtml !== false && existsSync(htmlPath)) {
     const acceptedHtml = readFileSync(htmlPath, "utf8");
-    for (const section of ["REST breaking changes", "Semantic intents", "Appendix"]) {
+    for (const section of [
+      "REST breaking changes",
+      "Semantic intents",
+      "Appendix",
+    ]) {
       if (!acceptedHtml.includes(section)) {
-        throw new Error(`PR ${testCase.pr} accepted HTML is missing ${section}`);
+        throw new Error(
+          `PR ${testCase.pr} accepted HTML is missing ${section}`,
+        );
       }
     }
   }

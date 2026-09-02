@@ -470,7 +470,9 @@ export function validateAssessment(assessment) {
     if (!dimensions[name]) errors.push(`dimensions.${name} is required.`);
   }
   if (dimensions.documentQuality?.status !== "not-assessed") {
-    errors.push("Document Quality must remain not-assessed.");
+    errors.push(
+      "Document Quality and Agent Friendliness must remain not-assessed.",
+    );
   }
   uniqueIds(dimensions.semantic?.items ?? [], "semantic items", errors);
   uniqueIds(dimensions.rest?.findings ?? [], "REST findings", errors);

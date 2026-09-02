@@ -17,6 +17,6 @@ Follow the [complete workflow](references/workflow.md). Apply the [classificatio
 - Check deterministic hunk coverage in `model-input.json`. Skip inference when all hunks have candidates or explicit deterministic classifications. For `unknown` hunks only, write and validate `inference.json` before final judgment.
 - In the final bounded Agent phase, summarize each Semantic intent once, judge every deterministic and inferred REST/downstream candidate, rank and fetch four official documents per intent, record search evidence, then assess Compliance once per intent. Do not assess each operation or invent URLs, operations, symbols, sources, or guidance.
 - Treat a completed search with no governing guidance as `no-applicable-guidance`; count it as assessed and do not create a blocker. Reserve `not-assessed` for incomplete or blocked Compliance.
-- Report Azure Compliance as `passed`, `failed`, or `not-assessed`. Report Document Quality as a separate `not-assessed` dimension.
+- Report Azure Compliance as `passed`, `failed`, or `not-assessed`. Report Document Quality and Agent Friendliness as a separate `not-assessed` dimension.
 - Overall safety covers REST and downstream SDK impact only.
 - Retain blockers as **Potential limits** in the report appendix and stop after assessment. Do not author fixes or remediate TypeSpec.

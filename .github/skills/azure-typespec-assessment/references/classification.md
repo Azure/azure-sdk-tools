@@ -45,5 +45,5 @@ List concrete blockers already supported by the input. Blocked dimensions
 remain `not-assessed`; do not turn missing evidence into a pass. Azure
 Compliance follows the fetched-document evidence contract. A completed search
 with no governing document is assessed as `no-applicable-guidance`, not blocked
-or `not-assessed`. Document Quality is a separate dimension with status
-`not-assessed`.
+or `not-assessed`. Document Quality and Agent Friendliness is a separate
+dimension with status `not-assessed`.

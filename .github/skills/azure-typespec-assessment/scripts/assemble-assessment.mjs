@@ -1233,7 +1233,7 @@ export function assembleAssessment({ work, judgment }) {
       compliance: complianceDimension,
       documentQuality: {
         status: "not-assessed",
-        summary: "Document quality is not assessed.",
+        summary: "Document Quality and Agent Friendliness is not assessed.",
       },
     },
     changedFiles: manifest.changedFiles,

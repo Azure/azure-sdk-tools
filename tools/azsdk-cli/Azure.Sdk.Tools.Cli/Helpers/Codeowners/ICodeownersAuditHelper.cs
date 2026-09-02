@@ -14,15 +14,8 @@ public interface ICodeownersAuditHelper
     /// <summary>
     /// Runs every audit rule against the ownership YAML under <paramref name="repoRoot"/>.
     /// </summary>
+    /// <param name="repo">Owner/name of the repository whose cached labels the YAML is validated against.</param>
     /// <param name="fix">When true, rules that support automated repair rewrite the offending YAML.</param>
     /// <param name="force">Overrides the safety threshold that caps how many owners a single run may remove.</param>
-    Task<CodeownersAuditResponse> RunAudit(string repoRoot, bool fix, bool force, CancellationToken ct);
-}
-
-public class CodeownersAuditHelper : ICodeownersAuditHelper
-{
-    public Task<CodeownersAuditResponse> RunAudit(string repoRoot, bool fix, bool force, CancellationToken ct)
-        => throw new NotImplementedException(
-            "The YAML-backed CODEOWNERS audit is not implemented yet. " +
-            "See tools/azsdk-cli/docs/specs/8-operations-codeowners-ownership-audit.spec.md.");
+    Task<CodeownersAuditResponse> RunAudit(string repoRoot, string repo, bool fix, bool force, CancellationToken ct);
 }

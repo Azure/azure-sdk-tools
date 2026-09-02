@@ -8,6 +8,7 @@
 
 - Removed the Azure DevOps work item backed ownership commands in favor of in-repo ownership YAML: `config codeowners view`, `config codeowners add-package-owner`, `add-package-label`, `add-label-owner`, `remove-package-owner`, `remove-package-label`, `remove-label-owner`, and `config github-label sync-ado`.
 - `config codeowners generate`, `audit`, and `check-package` now read ownership from `.github/owners.config.yaml` and `owners.yaml` fragments. `generate` gains `--check`; `audit` and `check-package` gain `--repo-root`; `generate --package-types`, `--section`, `--invalid-owner-lookback-days`, and `check-package --codeowners-cache` are removed.
+- `config codeowners audit` gains `--repo`, defaulting to the repository the checkout points at. Its `--fix` now edits `owners.yaml` in place instead of updating work items, and leaves `.github/CODEOWNERS` for `generate` to re-render.
 
 ### Bugs Fixed
 

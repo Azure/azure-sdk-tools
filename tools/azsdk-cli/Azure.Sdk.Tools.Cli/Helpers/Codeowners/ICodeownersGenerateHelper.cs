@@ -39,11 +39,3 @@ public class CodeownersGenerateResult
     /// <summary>CFG-* validation errors. Non-empty means nothing was written.</summary>
     public List<string> Errors { get; } = [];
 }
-
-public class CodeownersGenerateHelper : ICodeownersGenerateHelper
-{
-    public Task<CodeownersGenerateResult> Generate(string repoRoot, bool check, CancellationToken ct)
-        => throw new NotImplementedException(
-            "CODEOWNERS generation from ownership YAML is not implemented yet. " +
-            "See tools/azsdk-cli/docs/specs/8-operations-codeowners-management.spec.md.");
-}

@@ -358,16 +358,15 @@ public class CheckPackageHelperTests
     }
 
     [Test]
-    public void CheckPackage_EmptyEntries_Throws()
+    public void CheckPackage_NoGoverningFragment_ReportsUnowned()
     {
-        var ex = Assert.Throws<ArgumentException>(() =>
-            helper.Evaluate(
-                "sdk/test/Azure.Test",
-                "Azure/azure-sdk-for-net",
-                [],
-                ownersFilePath: null));
+        var result = helper.Evaluate(
+            "sdk/test/Azure.Test",
+            "Azure/azure-sdk-for-net",
+            [],
+            ownersFilePath: null);
 
-        Assert.That(ex!.Message, Does.Contain("empty"));
+        AssertFailure(result, CheckPackageIssue.Codes.NoMatchingPath, "No owners.yaml entry matches path");
     }
 
     [Test]

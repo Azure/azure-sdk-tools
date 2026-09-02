@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
@@ -35,14 +36,89 @@ public class CheckPackageHelper : ICheckPackageHelper
     private const string PrLabelPlaceholder = "<pr-label>";
     private const string ServiceAttentionLabel = "Service Attention";
 
+    private static readonly string[] FragmentFileNames = ["owners.yaml", "owners.yml"];
+
+    /// <summary>
+    /// Resolves ownership from the fragment that governs <paramref name="directoryPath"/> and applies
+    /// the package rules to it.
+    /// <para>
+    /// This deliberately reads one fragment instead of rendering the whole repository. A package's
+    /// owners and PR labels are always declared in the fragment above it, so a full render would add
+    /// a repo-wide walk and repo-wide failure modes to answer a question local to one directory. The
+    /// accepted consequence is that a package owned only by a static entry in the owners config
+    /// reports as unowned -- which is the signal that it still needs to be migrated to a fragment.
+    /// </para>
+    /// </summary>
     public Task<CheckPackageResponse> CheckPackage(
         string directoryPath,
         string repoRoot,
         string? repo,
         CancellationToken ct)
-        => throw new NotImplementedException(
-            "Resolving package ownership from owners.yaml is not implemented yet. " +
-            "See Component 11 of tools/azsdk-cli/docs/specs/8-operations-codeowners-management.spec.md.");
+    {
+        var fragment = FindGoverningFragment(directoryPath, repoRoot);
+        var entries = fragment == null ? [] : ProjectToCodeownersEntries(fragment, repoRoot);
+
+        return Task.FromResult(Evaluate(directoryPath, repo, entries, fragment?.FilePath));
+    }
+
+    /// <summary>
+    /// Walks up from <paramref name="directoryPath"/> looking for the <c>owners.yaml</c> that governs
+    /// it. Returns null when there is none, or when the one found is too malformed to deserialize --
+    /// both mean "this package has no usable ownership declaration", which is the message the caller
+    /// already knows how to deliver. Schema errors themselves are reported by generate and audit.
+    /// </summary>
+    private static OwnersFragment? FindGoverningFragment(string directoryPath, string repoRoot)
+    {
+        var current = directoryPath.Trim('/');
+
+        while (!string.IsNullOrEmpty(current))
+        {
+            foreach (var fileName in FragmentFileNames)
+            {
+                var relativePath = $"{current}/{fileName}";
+                var file = Path.Combine(repoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+                if (!File.Exists(file))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    return OwnersYamlLoader.LoadFragment(File.ReadAllText(file), relativePath);
+                }
+                catch (OwnersYamlException)
+                {
+                    return null;
+                }
+            }
+
+            var separator = current.LastIndexOf('/');
+            current = separator < 0 ? string.Empty : current[..separator];
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Projects a fragment onto the entry shape the package rules are written against. Path entries
+    /// that fail path validation are dropped rather than reported: generate and audit are where a
+    /// malformed fragment gets explained.
+    /// </summary>
+    private static List<CodeownersEntry> ProjectToCodeownersEntries(OwnersFragment fragment, string repoRoot)
+    {
+        var ignored = new List<OwnersValidationError>();
+
+        var entries = fragment.Paths
+            .Select(path => (path, expression: OwnersPathResolver.ResolveFragmentPath(fragment, path, repoRoot, ignored)))
+            .Where(resolved => resolved.expression != null)
+            .Select(resolved => resolved.path.ToCodeownersEntry(resolved.expression!))
+            .ToList();
+
+        entries.AddRange(fragment.LabelOwners.Select(labelOwner => labelOwner.ToCodeownersEntry()));
+
+        return entries;
+    }
 
     /// <summary>
     /// Applies the four package-ownership rules to a set of entries already resolved from an
@@ -50,7 +126,7 @@ public class CheckPackageHelper : ICheckPackageHelper
     /// </summary>
     /// <param name="ownersFilePath">
     /// Repo-relative path of the fragment the entries came from. Used to tell the caller which file
-    /// to edit; null when the entries did not come from a fragment.
+    /// to edit; null when no fragment governs the directory.
     /// </param>
     public CheckPackageResponse Evaluate(
         string directoryPath,
@@ -61,10 +137,6 @@ public class CheckPackageHelper : ICheckPackageHelper
         if (string.IsNullOrWhiteSpace(directoryPath))
         {
             throw new ArgumentException("Directory path is required.", nameof(directoryPath));
-        }
-        if (codeownersEntries == null || codeownersEntries.Count == 0)
-        {
-            throw new ArgumentException("CODEOWNERS entries list is empty.", nameof(codeownersEntries));
         }
 
         var packageName = ResolvePackageName(directoryPath);

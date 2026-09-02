@@ -150,7 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
             new(auditCommandName, "Audit the repository's ownership YAML for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command.")
             {
-                repoRootOption, fixOption, forceOption,
+                repoRootOption, repoOption, fixOption, forceOption,
             },
         ];
 
@@ -184,11 +184,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     return await UpdateCache(ct);
 
                 case auditCommandName:
+                {
+                    var repoRoot = await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct);
+
                     return await Audit(
-                        await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct),
+                        repoRoot,
+                        parseResult.GetValue(repoOption)
+                            ?? await gitHelper.GetRepoFullNameAsync(repoRoot, findUpstreamParent: true, ct),
                         parseResult.GetValue(fixOption),
                         parseResult.GetValue(forceOption),
                         ct);
+                }
 
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -336,11 +342,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// The CODEOWNERS cache MUST be updated before running audit.
         /// </summary>
         [McpServerTool(Name = CodeownerAuditToolName), Description("Audit the repository's ownership YAML against cached org, team, and label data. Update the CODEOWNERS cache before calling this.")]
-        public async Task<CommandResponse> Audit(string repoRoot, bool fix = false, bool force = false, CancellationToken ct = default)
+        public async Task<CommandResponse> Audit(string repoRoot, string repo, bool fix = false, bool force = false, CancellationToken ct = default)
         {
             try
             {
-                return await codeownersAuditHelper.RunAudit(repoRoot, fix, force, ct);
+                return await codeownersAuditHelper.RunAudit(repoRoot, repo, fix, force, ct);
             }
             catch (Exception ex)
             {

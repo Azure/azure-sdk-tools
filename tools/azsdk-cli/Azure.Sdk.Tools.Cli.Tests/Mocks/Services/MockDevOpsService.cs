@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForSpecPrUrl { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPath { get; set; }
         public string? ConfiguredReleasePlanForTypeSpecPathKey { get; set; }
+        public List<ReleasePlanWorkItem> ConfiguredActiveReleasePlansForTypeSpecPath { get; set; } = [];
         public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPathAndApiVersion { get; set; }
         public string? ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey { get; set; }
         public string? ConfiguredApiVersionForTypeSpecPathAndApiVersion { get; set; }
@@ -368,6 +369,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             }
 
             return Task.FromResult<ReleasePlanWorkItem?>(null);
+        }
+
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(string typeSpecProjectPath, ApiReleaseType apiReleaseType, CancellationToken ct)
+        {
+            return Task.FromResult(ConfiguredActiveReleasePlansForTypeSpecPath);
         }
 
         Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct)

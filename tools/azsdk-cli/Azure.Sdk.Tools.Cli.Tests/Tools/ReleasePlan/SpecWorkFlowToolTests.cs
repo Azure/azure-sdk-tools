@@ -200,6 +200,240 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
+        [TestCase("In progress")]
+        [TestCase("Pending")]
+        [TestCase("PENDING")]
+        public async Task GenerateSDK_WhenGenerationAlreadyInProgress_SkipsNewRun(string generationStatus)
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test",
+                        GenerationStatus = generationStatus,
+                        GenerationPipelineUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("was not triggered to avoid duplicate generation"));
+            Assert.That(result.ToString(), Does.Contain("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99"));
+            // A new generation run should not have been triggered.
+            Assert.That(result.ToString(), Does.Not.Contain("has been initiated to generate the SDK"));
+        }
+
+        [Test]
+        public async Task GenerateSDK_WhenAnotherActiveReleasePlanHasSdkPullRequest_BlocksGeneration()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            // Another active release plan for the same TypeSpec project that already has an SDK pull request.
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
+            {
+                releasePlan,
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    ReleasePlanId = 999,
+                    SDKInfo = new List<SDKInfo>
+                    {
+                        new SDKInfo
+                        {
+                            Language = "Java",
+                            PackageName = "azure-test",
+                            SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/123",
+                            ReleaseStatus = "In progress"
+                        }
+                    }
+                }
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ToString(), Does.Contain("Another active release plan"));
+            Assert.That(result.ToString(), Does.Contain("999"));
+            Assert.That(result.ToString(), Does.Not.Contain("has been initiated to generate the SDK"));
+        }
+
+        [Test]
+        public async Task GenerateSDK_WhenAnotherReleasePlanSdkPullRequestIsReleased_AllowsGeneration()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            // Another active release plan whose SDK pull request has already been released should not block generation.
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
+            {
+                releasePlan,
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    ReleasePlanId = 999,
+                    SDKInfo = new List<SDKInfo>
+                    {
+                        new SDKInfo
+                        {
+                            Language = "Java",
+                            PackageName = "azure-test",
+                            SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/123",
+                            ReleaseStatus = "Released"
+                        }
+                    }
+                }
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("has been initiated to generate the SDK"));
+        }
+
+        [Test]
+        public async Task GenerateSDK_WhenCurrentReleasePlanHasSdkPullRequestForSameLanguage_AllowsRegeneration()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            // Current release plan already has an SDK pull request for the requested language (regeneration scenario).
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test",
+                        SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/456"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            // Another active release plan with an unreleased SDK pull request also exists, but regeneration of the
+            // current release plan should still be allowed because it already has its own SDK pull request.
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
+            {
+                releasePlan,
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    ReleasePlanId = 999,
+                    SDKInfo = new List<SDKInfo>
+                    {
+                        new SDKInfo
+                        {
+                            Language = "Java",
+                            PackageName = "azure-test",
+                            SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/123",
+                            ReleaseStatus = "In progress"
+                        }
+                    }
+                }
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("has been initiated to generate the SDK"));
+        }
+
         [Test]
         public async Task GenerateSdk_Without_pr_and_workitem()
         {

@@ -273,6 +273,63 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
+                // Check the current SDK generation status for the language in the release plan.
+                // If a generation is already in progress or pending, skip triggering a new run to avoid duplicate SDK generation.
+                var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => s.Language == language);
+                var currentGenerationStatus = sdkInfo?.GenerationStatus ?? string.Empty;
+                if (currentGenerationStatus.Equals("In progress", StringComparison.OrdinalIgnoreCase) ||
+                    currentGenerationStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation(
+                        "SDK generation for {Language} is already in status '{GenerationStatus}'. Skipping new generation run to avoid a duplicate.",
+                        language,
+                        currentGenerationStatus);
+                    response.Status = "Success";
+                    var duplicateMessage = $"SDK generation for {language} is already '{currentGenerationStatus}' for release plan work item {workItemId}. A new SDK generation run was not triggered to avoid duplicate generation.";
+                    if (!string.IsNullOrEmpty(sdkInfo?.GenerationPipelineUrl))
+                    {
+                        duplicateMessage += $" Previous SDK generation pipeline: {sdkInfo.GenerationPipelineUrl}.";
+                    }
+                    response.Details.Add(duplicateMessage);
+                    return response;
+                }
+
+                // Check if another active (in progress) release plan exists for the same TypeSpec project that already
+                // has an SDK pull request that has not been released yet. If so, block SDK generation for the current
+                // release plan to avoid conflicting/duplicate SDK pull requests for the same service.
+                // Skip this check when the current release plan already has an SDK pull request for the same language,
+                // so that regenerating the SDK for the current release plan is allowed.
+                var currentSdkPullRequestUrl = sdkInfo?.SdkPullRequestUrl;
+                if (string.IsNullOrEmpty(currentSdkPullRequestUrl))
+                {
+                    var activeReleasePlans = await devopsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
+                    var conflictingReleasePlan = activeReleasePlans?.FirstOrDefault(rp =>
+                        rp.WorkItemId != workItemId &&
+                        rp.SDKInfo.Any(s => s.Language == language &&
+                            !string.IsNullOrEmpty(s.SdkPullRequestUrl) &&
+                            !string.Equals(s.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)));
+                    if (conflictingReleasePlan != null)
+                    {
+                        var existingSdkPullRequests = conflictingReleasePlan.SDKInfo
+                            .Where(s => !string.IsNullOrEmpty(s.SdkPullRequestUrl) &&
+                                !string.Equals(s.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+                            .Select(s => $"{s.Language}: {s.SdkPullRequestUrl}");
+                        logger.LogInformation(
+                            "Another active release plan (work item {ConflictingWorkItemId}) with SDK pull request(s) already exists for TypeSpec project {TypeSpecProjectPath}. Blocking SDK generation for release plan {WorkItemId}.",
+                            conflictingReleasePlan.WorkItemId,
+                            typeSpecProjectPath,
+                            workItemId);
+                        response.Status = "Failed";
+                        var blockMessage = $"Another active release plan (work item {conflictingReleasePlan.WorkItemId}) with an SDK pull request already exists for this service. " +
+                            "SDK can be generated for the current release plan only after completing the previous release plan or after abandoning it.";
+                        response.ResponseErrors.Add(blockMessage);
+                        response.Details.Add($"Existing release plan: {conflictingReleasePlan.ReleasePlanLink}");
+                        response.Details.AddRange(existingSdkPullRequests.Select(pr => $"Existing SDK pull request: {pr}"));
+                        response.NextSteps = ["Complete or abandon the previous release plan before generating the SDK for the current release plan."];
+                        return response;
+                    }
+                }
+
                 string apiSpecBranchRef = "main";
                 if (pullRequestNumber > 0)
                 {

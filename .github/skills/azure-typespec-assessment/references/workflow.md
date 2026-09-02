@@ -28,15 +28,30 @@ node (Join-Path $Skill "scripts\run-assessment-analysis.mjs") `
 
 Do not replace this with a full checkout or run the dimension analyzers against different inputs. If there is no changed TypeSpec in scope, stop with the coordinator's no-change result. If every active dimension is blocked, skip Agent judgment and preserve the blocked, `not-assessed` result. If only some dimensions are blocked, judge only the ready items and retain all blocker reasons.
 
-## One Agent judgment
+## Compliance search and one Agent judgment
 
 Read only:
 
 - `<work-directory>\model-input.json`;
 - [classification guidance](classification.md), including [downstream cases](downstream-breaking-cases.md);
+- the [agentic search procedure](agentic-search.md);
+- the [official document catalog](reference-document-links.md);
+- `scripts\compliance-search-evidence.schema.json`;
 - `scripts\assessment-judgment.schema.json`.
 
-Do not read raw AutoRest/TCGC output, compiler logs, unchanged source, or prior answers. Write `<work-directory>\assessment-judgment.json` with exact coverage of every supplied semantic review unit and candidate.
+For every `complianceSearchRequests` entry, score the complete catalog, fetch
+the four highest-ranked retrievable documents with `web_fetch`, and write
+`<work-directory>\compliance-search-evidence.json`. Preserve failed retrievals
+and use the next-ranked catalog entry as specified by the search procedure.
+The main Agent writes this file directly; no Node.js script produces it.
+`compliance-search-request.mjs` only creates the requests in `model-input.json`,
+and `compliance-assessment.mjs` later consumes and validates the evidence.
+
+Then write `<work-directory>\assessment-judgment.json` with one concise result
+per supplied Semantic review unit, exact REST/downstream candidate coverage,
+and one Compliance decision per Semantic intent. Do not read raw
+AutoRest/TCGC output, compiler logs, unchanged source, prior answers, or use
+catalog descriptions as guidance.
 
 ## Assemble, validate, and render
 
@@ -54,4 +69,9 @@ node (Join-Path $Skill "scripts\render-assessment-html.mjs") `
   (Join-Path $Work "assessment.html")
 ```
 
-If assembly rejects schema or coverage, send only its compact errors to the same Agent for **one correction turn**. Correct `assessment-judgment.json` only, then rerun the three commands above; do not rerun preparation, compilation, analyzers, or create a second independent judgment. If correction still fails, stop and report the blocker.
+If assembly rejects schema or coverage, send only its compact errors to the
+same Agent for **one correction turn**. Correct
+`compliance-search-evidence.json` and/or `assessment-judgment.json`, then rerun
+the three commands above; do not rerun preparation, compilation, analyzers, or
+create a second independent judgment. If correction still fails, stop and
+report the blocker.

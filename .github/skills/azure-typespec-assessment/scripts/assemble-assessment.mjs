@@ -9,6 +9,7 @@ import {
   semanticLroContract,
   typeIdentity,
 } from "./sdk-method-delta.mjs";
+import { assembleCompliance } from "./compliance-assessment.mjs";
 
 function duplicates(values) {
   const seen = new Set();
@@ -34,7 +35,7 @@ function validateDecision(decision, candidate) {
   }
   if (!decision.rationale?.trim()) throw new Error(`Missing rationale for ${candidate.id}.`);
   if (decision.decision === "approve" && !["high", "medium", "low"].includes(decision.severity)) {
-    throw new Error(`Approved candidate ${candidate.id} requires severity.`);
+    throw new Error(`An approve decision for candidate ${candidate.id} requires severity.`);
   }
   if (decision.decision === "reject" && decision.severity !== undefined) {
     throw new Error(`Rejected candidate ${candidate.id} must omit severity.`);
@@ -57,13 +58,20 @@ function validateJudgment(answer) {
       "semanticIntents",
       "restDecisions",
       "downstreamDecisions",
+      "complianceDecisions",
       "overallConfidence",
       "blockers",
     ],
     "Judgment",
   );
   if (answer.schemaVersion !== 1) throw new Error("Unsupported judgment schemaVersion.");
-  for (const field of ["semanticIntents", "restDecisions", "downstreamDecisions", "blockers"]) {
+  for (const field of [
+    "semanticIntents",
+    "restDecisions",
+    "downstreamDecisions",
+    "complianceDecisions",
+    "blockers",
+  ]) {
     if (!Array.isArray(answer[field])) throw new Error(`Judgment.${field} must be an array.`);
   }
   if (!["high", "medium", "low"].includes(answer.overallConfidence)) {
@@ -75,14 +83,11 @@ function validateJudgment(answer) {
   for (const intent of answer.semanticIntents) {
     assertKeys(
       intent,
-      ["reviewUnitId", "title", "summary", "sourceChangeIds", "operationIds"],
+      ["reviewUnitId", "title", "summary"],
       `Semantic intent ${intent.reviewUnitId ?? "<unknown>"}`,
     );
     if (!intent.title?.trim() || !intent.summary?.trim()) {
       throw new Error(`Semantic intent ${intent.reviewUnitId ?? "<unknown>"} is incomplete.`);
-    }
-    if (!Array.isArray(intent.sourceChangeIds) || !Array.isArray(intent.operationIds)) {
-      throw new Error(`Semantic intent ${intent.reviewUnitId ?? "<unknown>"} has invalid ID arrays.`);
     }
   }
   for (const decision of [...answer.restDecisions, ...answer.downstreamDecisions]) {
@@ -90,6 +95,25 @@ function validateJudgment(answer) {
       decision,
       ["candidateId", "decision", "severity", "rationale"],
       `Decision ${decision.candidateId ?? "<unknown>"}`,
+    );
+  }
+  for (const decision of answer.complianceDecisions) {
+    assertKeys(
+      decision,
+      [
+        "reviewUnitId",
+        "applicableGuidance",
+        "sourceChangeIds",
+        "hunkIds",
+        "declarationIds",
+        "decision",
+        "title",
+        "severity",
+        "expected",
+        "actual",
+        "rationale",
+      ],
+      `Compliance decision ${decision.reviewUnitId ?? "<unknown>"}`,
     );
   }
 }
@@ -299,6 +323,26 @@ function matchMethodOperation(finding, semanticOperations) {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
+export function matchTypeFindingIntents(finding, semanticItems) {
+  const typeNames = new Set([
+    finding.crossLanguageDefinitionId?.split(".").at(-1),
+    finding.symbol?.split(".").at(-1),
+    ...(finding.evidence ?? []).map((fact) => fact.name),
+  ].filter(Boolean));
+  if (!typeNames.size) return [];
+  return semanticItems.filter((intent) => {
+    const declarationIds = new Set(intent.declarationIds ?? []);
+    return (intent.sources ?? []).some((source) =>
+      (source.declarations ?? []).some((declaration) => {
+        if (declarationIds.size && !declarationIds.has(declaration.id)) {
+          return false;
+        }
+        const declarationSegments = declaration.qualifiedName?.split(".") ?? [];
+        return declarationSegments.some((segment) => typeNames.has(segment));
+      }));
+  });
+}
+
 function findingRelations(restFindings, downstreamFindings, semanticItems) {
   const semanticOperations = semanticOperationIndex(semanticItems);
   for (const finding of restFindings) {
@@ -315,6 +359,12 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
     if (match) {
       finding.relatedSemanticIntents = [match.intent.id];
       finding.semanticMatchBasis = "http-method-path";
+      continue;
+    }
+    const declarationMatches = matchTypeFindingIntents(finding, semanticItems);
+    if (declarationMatches.length) {
+      finding.relatedSemanticIntents = declarationMatches.map((intent) => intent.id);
+      finding.semanticMatchBasis = "declaration-identity";
       continue;
     }
     const sourceIds = new Set(finding.sourceChangeIds);
@@ -499,6 +549,14 @@ export function assembleAssessment({ work, judgment }) {
   const answer = typeof judgment === "string" ? readJson(judgment) : judgment;
   const modelInputPath = path.join(work, "model-input.json");
   const modelInput = fs.existsSync(modelInputPath) ? readJson(modelInputPath) : {};
+  const complianceEvidencePath = path.join(work, "compliance-search-evidence.json");
+  const hasComplianceInput = Array.isArray(modelInput.complianceSearchRequests);
+  if (hasComplianceInput && !fs.existsSync(complianceEvidencePath)) {
+    throw new Error("Missing compliance-search-evidence.json.");
+  }
+  const complianceEvidence = hasComplianceInput
+    ? readJson(complianceEvidencePath)
+    : undefined;
   validateJudgment(answer);
   exactCoverage(
     semantic.reviewUnits.map((item) => item.id),
@@ -520,14 +578,6 @@ export function assembleAssessment({ work, judgment }) {
   const semanticUnits = new Map(semantic.reviewUnits.map((unit) => [unit.id, unit]));
   const semanticItems = answer.semanticIntents.map((intent) => {
     const unit = semanticUnits.get(intent.reviewUnitId);
-    const allowedSources = new Set(unit.sourceChangeIds);
-    const allowedOperations = new Set(unit.operationIds);
-    if (intent.sourceChangeIds.some((id) => !allowedSources.has(id))) {
-      throw new Error(`Semantic result ${unit.id} invented a source ID.`);
-    }
-    if (intent.operationIds.some((id) => !allowedOperations.has(id))) {
-      throw new Error(`Semantic result ${unit.id} invented an operation ID.`);
-    }
     const operations = (unit.operations ?? unit.operationIds.map((id) => ({
       operationId: semantic.facts[id]?.operationId,
       beforeFactId: unit.beforeFactIds?.find((factId) =>
@@ -537,8 +587,6 @@ export function assembleAssessment({ work, judgment }) {
         ((semantic.facts[id]?.comparisonRole ?? semantic.facts[id]?.revision) === "baseline" ||
           semantic.facts[id]?.revision === "base" ? undefined : id),
     })))
-      .filter((operation) =>
-        intent.operationIds.includes(operation.afterFactId ?? operation.beforeFactId))
       .map((operation) => ({
         ...operationPresentation(operation, semantic.facts),
         sources: sourcesForOperation(
@@ -599,11 +647,40 @@ export function assembleAssessment({ work, judgment }) {
       .length,
     blockers: downstream.blockers,
   };
+  const complianceDimension = hasComplianceInput
+    ? assembleCompliance({
+        requests: modelInput.complianceSearchRequests,
+        evidence: complianceEvidence,
+        decisions: answer.complianceDecisions,
+        sourceChanges: sourceIndex.sourceChanges,
+        initialBlockers: semantic.status === "blocked"
+          ? semantic.blockers.length
+            ? semantic.blockers
+            : ["semantic-analysis-blocked: Compliance requires Semantic intents."]
+          : [],
+      })
+    : {
+        status: "not-assessed",
+        summary: "Compliance search input was not available.",
+        coverage: {
+          semanticIntentCount: 0,
+          assessedIntentCount: 0,
+          selectedDocumentCount: 0,
+          unassessedIntentIds: [],
+        },
+        intentAssessments: [],
+        findings: [],
+        retrievalFailures: [],
+        blockers: [{
+          message: "compliance-search-input-missing: rerun deterministic analysis.",
+        }],
+      };
   return {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     title: `TypeSpec assessment: ${manifest.projects.map((project) => project.path).join(", ")}`,
     repository: manifest.repository,
+    ...(manifest.pullRequest ? { pullRequest: manifest.pullRequest } : {}),
     comparison: {
       baseRef: manifest.comparison.baseRef,
       baseCommit: manifest.comparison.mergeBaseCommit,
@@ -641,10 +718,10 @@ export function assembleAssessment({ work, judgment }) {
       },
       rest: restDimension,
       downstream: downstreamDimension,
-      compliance: { status: "planned", summary: "Deferred from the MVP." },
+      compliance: complianceDimension,
       documentQuality: {
-        status: "planned",
-        summary: "Planned by the design document.",
+        status: "not-assessed",
+        summary: "Document quality is not assessed.",
       },
     },
     changedFiles: manifest.changedFiles,
@@ -652,10 +729,18 @@ export function assembleAssessment({ work, judgment }) {
     blockers: [...manifest.blockers, ...answer.blockers],
     provenance: {
       modelInput: "model-input.json",
+      ...(hasComplianceInput
+        ? { complianceSearchEvidence: "compliance-search-evidence.json" }
+        : {}),
       judgment: "assessment-judgment.json",
       preparationManifest: "preparation-manifest.json",
     },
-    inputAccounting: modelInput.inputAccounting,
+    inputAccounting: {
+      ...modelInput.inputAccounting,
+      ...(hasComplianceInput
+        ? { compliance: complianceEvidence.inputAccounting }
+        : {}),
+    },
     timings: manifest.timings,
   };
 }

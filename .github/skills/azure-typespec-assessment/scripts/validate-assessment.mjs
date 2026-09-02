@@ -1,6 +1,7 @@
 import path from "node:path";
 import { isMain, readJson, runMain } from "./cli.mjs";
 import { deriveSafety, dimensionStatus } from "./assessment-display.mjs";
+import { readComplianceCatalog } from "./compliance-assessment.mjs";
 
 function uniqueIds(items, pathName, errors) {
   const seen = new Set();
@@ -60,11 +61,212 @@ function validateLegacy(assessment) {
   return errors;
 }
 
+function validateComplianceDimension(compliance, semanticItems, errors) {
+  if (!["passed", "failed", "not-assessed"].includes(compliance?.status)) {
+    errors.push("Compliance status is invalid.");
+    return;
+  }
+  for (const field of ["intentAssessments", "findings", "retrievalFailures", "blockers"]) {
+    if (!Array.isArray(compliance[field])) errors.push(`Compliance ${field} must be an array.`);
+  }
+  if (!compliance.coverage || typeof compliance.coverage !== "object") {
+    errors.push("Compliance coverage is required.");
+    return;
+  }
+  const catalog = readComplianceCatalog();
+  const catalogUrls = new Set(catalog.map((item) => item.canonicalUrl));
+  const catalogByUrl = new Map(catalog.map((item) => [item.canonicalUrl, item]));
+  const semanticMap = new Map(semanticItems.map((item) => [item.id, item]));
+  const assessments = compliance.intentAssessments ?? [];
+  const assessmentIds = assessments.map((item) => item.semanticIntentId);
+  if (duplicateValues(assessmentIds).length) {
+    errors.push("Compliance contains duplicate intent assessments.");
+  }
+  const migrationBlocked = (compliance.blockers ?? []).some((item) =>
+    String(item?.message ?? item).startsWith("compliance-search-input-missing:"));
+  const semanticIds = semanticItems.map((item) => item.id);
+  if (!migrationBlocked &&
+      (semanticIds.some((id) => !assessmentIds.includes(id)) ||
+        assessmentIds.some((id) => !semanticIds.includes(id)))) {
+    errors.push("Compliance intent coverage does not match Semantic intents.");
+  }
+
+  let selectedDocumentCount = 0;
+  const assessedIntentIds = [];
+  const failedIntentIds = [];
+  let incompleteEvidence = (compliance.blockers ?? []).length > 0;
+  for (const item of assessments) {
+    if (!semanticMap.has(item.semanticIntentId)) {
+      errors.push(`Compliance references unknown semantic intent ${item.semanticIntentId}.`);
+      continue;
+    }
+    const documents = item.documents ?? [];
+    const ranking = item.catalogRanking ?? [];
+    selectedDocumentCount += documents.length;
+    const hasExhaustion = (item.blockers ?? []).some((value) =>
+      value.startsWith("catalog-exhausted:"));
+    if (documents.length !== 4 && !hasExhaustion) {
+      errors.push(`Compliance intent ${item.semanticIntentId} requires four documents.`);
+      incompleteEvidence = true;
+    }
+    if (ranking.length !== catalog.length ||
+        duplicateValues(ranking.map((entry) => entry.canonicalUrl)).length) {
+      errors.push(`Compliance intent ${item.semanticIntentId} has incomplete catalog ranking.`);
+    }
+    const sortedRanking = [...ranking].sort((left, right) =>
+      right.score.total - left.score.total || left.catalogOrder - right.catalogOrder);
+    if (ranking.some((entry, index) => {
+      const catalogEntry = catalogByUrl.get(entry.canonicalUrl);
+      const score = entry.score ?? {};
+      return entry.rank !== index + 1 ||
+        !catalogEntry ||
+        entry.catalogOrder !== catalogEntry.catalogOrder ||
+        entry.title !== catalogEntry.title ||
+        ![0, 4].includes(score.exactSymbol) ||
+        ![0, 3].includes(score.patternCategory) ||
+        ![0, 2].includes(score.servicePlane) ||
+        ![0, 1].includes(score.changeContext) ||
+        score.total !== score.exactSymbol + score.patternCategory +
+          score.servicePlane + score.changeContext;
+    }) || JSON.stringify(sortedRanking.map((entry) => entry.canonicalUrl)) !==
+      JSON.stringify(ranking.map((entry) => entry.canonicalUrl))) {
+      errors.push(`Compliance intent ${item.semanticIntentId} has invalid catalog ranking.`);
+    }
+    const failedUrls = new Set((compliance.retrievalFailures ?? [])
+      .filter((failure) => failure.reviewUnitId === item.semanticIntentId)
+      .map((failure) => failure.canonicalUrl));
+    const expectedUrls = ranking
+      .filter((entry) => !failedUrls.has(entry.canonicalUrl))
+      .slice(0, 4)
+      .map((entry) => entry.canonicalUrl);
+    const urls = documents.map((document) => document.canonicalUrl);
+    if (duplicateValues(urls).length ||
+        JSON.stringify(expectedUrls) !== JSON.stringify(urls)) {
+      errors.push(`Compliance intent ${item.semanticIntentId} selected invalid documents.`);
+    }
+    for (const document of documents) {
+      if (!catalogUrls.has(document.canonicalUrl) ||
+          !document.retrievedAt ||
+          !/^sha256:[0-9a-f]{64}$/i.test(document.contentHash ?? "") ||
+          typeof document.noRelevantGuidance !== "boolean" ||
+          document.noRelevantGuidance === ((document.guidance ?? []).length > 0)) {
+        errors.push(`Compliance document ${document.canonicalUrl} is invalid.`);
+      }
+      for (const guidance of document.guidance ?? []) {
+        if (!guidance.section?.trim() ||
+            !guidance.excerpt?.trim() ||
+            !Array.isArray(guidance.queryTerms) ||
+            !Array.isArray(guidance.applicableDeclarationIds) ||
+            !guidance.applicableDeclarationIds.length ||
+            guidance.applicableDeclarationIds.some((id) =>
+              !(item.declarationIds ?? []).includes(id))) {
+          errors.push(`Compliance document ${document.canonicalUrl} has incomplete guidance.`);
+        }
+      }
+    }
+    if (!["applicable-pass", "applicable-fail", "not-assessed"].includes(item.decision) ||
+        !item.actual?.trim() ||
+        !item.gap?.trim() ||
+        !Array.isArray(item.applicableGuidance)) {
+      errors.push(`Compliance intent ${item.semanticIntentId} has an invalid decision.`);
+      incompleteEvidence = true;
+      continue;
+    }
+    if (item.decision === "applicable-pass" || item.decision === "applicable-fail") {
+      assessedIntentIds.push(item.semanticIntentId);
+      if (!item.expected?.trim() ||
+          !item.applicableGuidance.length ||
+          !(item.sourceLinks ?? []).length ||
+          !(item.codeSnippets ?? []).length) {
+        errors.push(`Compliance intent ${item.semanticIntentId} lacks applicable evidence.`);
+      }
+      for (const applicable of item.applicableGuidance) {
+        const document = documents.find((candidate) =>
+          candidate.canonicalUrl === applicable.canonicalDocumentUrl);
+        if (!document?.guidance?.some((guidance) =>
+          guidance.section === applicable.guidanceSection)) {
+          errors.push(`Compliance intent ${item.semanticIntentId} uses unknown guidance.`);
+        }
+      }
+    } else {
+      incompleteEvidence = true;
+    }
+    if (item.decision === "applicable-fail") {
+      failedIntentIds.push(item.semanticIntentId);
+      if (!item.title?.trim() || !["high", "medium", "low"].includes(item.severity)) {
+        errors.push(`Compliance intent ${item.semanticIntentId} lacks finding presentation.`);
+      }
+    }
+    if ((item.blockers ?? []).length) incompleteEvidence = true;
+  }
+
+  for (const failure of compliance.retrievalFailures ?? []) {
+    if (!semanticMap.has(failure.reviewUnitId) ||
+        !catalogUrls.has(failure.canonicalUrl) ||
+        failure.status !== "failed" ||
+        !failure.error?.trim()) {
+      errors.push("Compliance contains an invalid retrieval failure.");
+    }
+  }
+  const findingIntentIds = (compliance.findings ?? []).map((item) => item.semanticIntentId);
+  if (duplicateValues(findingIntentIds).length ||
+      failedIntentIds.some((id) => !findingIntentIds.includes(id)) ||
+      findingIntentIds.some((id) => !failedIntentIds.includes(id))) {
+    errors.push("Compliance findings must exactly match failed intent assessments.");
+  }
+  for (const finding of compliance.findings ?? []) {
+    if (!finding.expected?.trim() ||
+        !finding.actual?.trim() ||
+        !finding.gap?.trim() ||
+        !finding.title?.trim() ||
+        !["high", "medium", "low"].includes(finding.severity) ||
+        !Array.isArray(finding.applicableGuidance) ||
+        !finding.applicableGuidance.length ||
+        !(finding.sourceLinks ?? []).length ||
+        !(finding.codeSnippets ?? []).length) {
+      errors.push(`Compliance finding ${finding.id ?? "<unknown>"} is incomplete.`);
+    }
+  }
+  uniqueIds(compliance.findings ?? [], "Compliance findings", errors);
+  const coverageSemanticIds = migrationBlocked ? [] : semanticIds;
+  const unassessedIntentIds = coverageSemanticIds.filter((id) =>
+    !assessedIntentIds.includes(id));
+  const coverage = compliance.coverage;
+  if (coverage.semanticIntentCount !== coverageSemanticIds.length ||
+      coverage.assessedIntentCount !== assessedIntentIds.length ||
+      coverage.selectedDocumentCount !== selectedDocumentCount ||
+      JSON.stringify([...(coverage.unassessedIntentIds ?? [])].sort()) !==
+        JSON.stringify(unassessedIntentIds.sort())) {
+    errors.push("Compliance coverage counts are inconsistent.");
+  }
+  const expectedStatus = failedIntentIds.length
+    ? "failed"
+    : incompleteEvidence || unassessedIntentIds.length
+      ? "not-assessed"
+      : "passed";
+  if (compliance.status !== expectedStatus) {
+    errors.push(`Compliance status must be ${expectedStatus}.`);
+  }
+}
 export function validateAssessment(assessment) {
   if (assessment?.schemaVersion !== 1) return validateLegacy(assessment);
   const errors = [];
   if (!assessment.comparison?.baseCommit) errors.push("comparison.baseCommit is required.");
   if (!assessment.comparison?.headCommit) errors.push("comparison.headCommit is required.");
+  if (assessment.pullRequest) {
+    if (!Number.isInteger(assessment.pullRequest.number) ||
+        assessment.pullRequest.number < 1) {
+      errors.push("pullRequest.number must be a positive integer.");
+    }
+    try {
+      const url = new URL(assessment.pullRequest.url);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        errors.push("pullRequest.url must use HTTP or HTTPS.");
+      }
+    } catch {
+      errors.push("pullRequest.url must be a valid URL.");
+    }
+  }
   const projectIds = new Set((assessment.projects ?? []).map((project) => project.id));
   if ((assessment.artifactComparisons ?? []).length !== projectIds.size) {
     errors.push("artifactComparisons must contain exactly one entry per project.");
@@ -110,11 +312,8 @@ export function validateAssessment(assessment) {
   for (const name of ["semantic", "rest", "downstream", "compliance", "documentQuality"]) {
     if (!dimensions[name]) errors.push(`dimensions.${name} is required.`);
   }
-  if (dimensions.compliance?.status !== "planned") {
-    errors.push("Compliance must be planned in the MVP.");
-  }
-  if (dimensions.documentQuality?.status !== "planned") {
-    errors.push("Document Quality must be planned in the MVP.");
+  if (dimensions.documentQuality?.status !== "not-assessed") {
+    errors.push("Document Quality must remain not-assessed.");
   }
   uniqueIds(dimensions.semantic?.items ?? [], "semantic items", errors);
   uniqueIds(dimensions.rest?.findings ?? [], "REST findings", errors);
@@ -161,6 +360,7 @@ export function validateAssessment(assessment) {
   const downstreamGroupIds = new Set((dimensions.downstream?.operationGroups ?? []).map((item) => item.id));
   uniqueIds(dimensions.downstream?.operationGroups ?? [], "downstream operation groups", errors);
   uniqueIds(dimensions.downstream?.sharedTypeImpacts ?? [], "shared type impacts", errors);
+  validateComplianceDimension(dimensions.compliance, dimensions.semantic?.items ?? [], errors);
   for (const impact of dimensions.downstream?.sharedTypeImpacts ?? []) {
     downstreamGroupIds.add(impact.id);
   }
@@ -172,7 +372,12 @@ export function validateAssessment(assessment) {
       if (!semanticIds.has(id)) errors.push(`Finding ${finding.id} links unknown semantic intent ${id}.`);
     }
     if (finding.semanticMatchBasis &&
-        !["operation-identity", "http-method-path", "unique-source"].includes(finding.semanticMatchBasis)) {
+        ![
+          "operation-identity",
+          "http-method-path",
+          "declaration-identity",
+          "unique-source",
+        ].includes(finding.semanticMatchBasis)) {
       errors.push(`Finding ${finding.id} has unsupported semantic match basis.`);
     }
   }

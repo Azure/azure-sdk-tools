@@ -1,107 +1,28 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PR #44454 — Mitigate operation group casing breaking changes for azure-mgmt-elastic | TypeSpec Assessment</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TypeSpec Assessment</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--accent-soft:#eff6ff;--good:#047857;--warn:#b45309;--danger:#b91c1c;--code:#111827;--code-text:#e5e7eb;--add-bg:#163d2b;--add:#9ae6b4;--remove-bg:#4a2028;--remove:#feb2b2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.container{width:min(1180px,calc(100% - 32px));margin:auto}.hero{background:linear-gradient(125deg,#172554,#1d4ed8);color:#fff;padding:44px 0 34px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;opacity:.8}.hero h1{font-size:clamp(26px,4vw,42px);line-height:1.15;margin:8px 0 12px}.hero-meta{opacity:.82}.preview-notice{padding:18px 0;background:#fffbeb;border-bottom:1px solid #fde68a;color:#713f12}.preview-notice h2{margin:0 0 6px;font-size:18px}.preview-notice p{margin:5px 0} .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:28px}.metric{display:block;background:#ffffff16;border:1px solid #ffffff2b;border-radius:12px;padding:14px;color:inherit;text-decoration:none}.metric:hover{background:#ffffff24;text-decoration:none}.metric strong{display:block;font-size:24px}.metric span{font-size:12px;opacity:.8}nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}nav .container{display:flex;gap:22px;padding:12px 0;overflow:auto}main{padding:30px 0 60px}section{scroll-margin-top:64px;margin-bottom:34px}h2{font-size:25px;margin:0 0 16px}h3{line-height:1.3}.panel,.change-card,.finding{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 18px #0f172a0a}.panel{padding:20px}.intent-details{margin-bottom:12px}.intent-details>summary{display:flex;align-items:center;gap:14px;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 18px 0 0;font-size:18px;font-weight:750;box-shadow:0 4px 18px #0f172a0a}.intent-details>summary .change-number{align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:48px;padding:14px 10px}.intent-kind-icon,.intent-impact-icon{font-size:15px}.intent-details[open]>summary{border-radius:14px 14px 0 0}.intent-details[open]>.change-card{border-top:0;border-radius:0 0 14px 14px}.more-intents{margin-top:12px}.more-intents>summary{cursor:pointer;width:max-content;color:var(--accent);font-weight:700;padding:8px 2px}.more-intents-body{margin-top:8px}.change-card{display:grid;grid-template-columns:1fr;margin-bottom:18px;overflow:visible}.change-number{background:var(--accent-soft);color:var(--accent);font-size:18px;font-weight:800;text-align:center;padding-top:22px}.change-content{min-width:0;padding:20px 22px}.change-content>h3{margin:0 0 18px;font-size:18px}.change-table,.impact-table{width:100%;border-collapse:collapse}.change-table th,.change-table td,.impact-table th,.impact-table td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.change-badge,.severity,.impact{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}.added{background:#dcfce7;color:#166534}.modified{background:#fef3c7;color:#92400e}.removed{background:#fee2e2;color:#991b1b}.typespec-summary{margin:20px 0 6px}.versioning-summary{margin:6px 0 12px;color:var(--muted)}.diff{border:1px solid #334155;border-radius:10px;overflow:hidden;margin:12px 0;background:var(--code)}.diff-file{padding:8px 12px;color:#cbd5e1;background:#1e293b;font:12px ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.diff pre{margin:0;padding:12px;overflow:auto;color:var(--code-text);font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.diff span{display:block;min-height:1.5em}.diff .add{background:var(--add-bg);color:var(--add)}.diff .remove{background:var(--remove-bg);color:var(--remove)}.diff .meta{color:#93c5fd}.diff .omitted{color:#94a3b8;font-style:italic}.diff .version-decorator{background:#713f12;color:#fef08a;font-weight:800;border-left:3px solid #facc15;padding-left:8px}.table-impacts{display:flex;flex-wrap:wrap;gap:6px;min-width:180px}.impact{border:1px solid currentColor}.severity-high{color:var(--danger);background:#fee2e2}.severity-medium{color:var(--warn);background:#fef3c7}.severity-low{color:#475569;background:#e2e8f0}.sources,.omitted-note,.empty{color:var(--muted);font-size:13px}.operation-changes{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}.operation-changes h4{margin:0 0 10px}.operation-details{border:1px solid var(--line);border-radius:9px;margin:8px 0;background:var(--bg)}.operation-details>summary{display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;font-weight:650}.operation-details>summary span{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.operation-details>summary .operation-version{margin-left:auto;background:var(--line);border-radius:999px;padding:2px 8px}.tooltip{position:relative}.tooltip::before,.tooltip::after{position:absolute;z-index:20;pointer-events:none;visibility:hidden;opacity:0;transition:opacity .12s ease,transform .12s ease}.tooltip::before{content:"";left:18px;top:calc(100% + 3px);border:5px solid transparent;border-bottom-color:var(--line);transform:translateY(-3px)}.tooltip::after{content:attr(data-tooltip);left:0;top:calc(100% + 13px);width:max-content;max-width:min(620px,72vw);padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 6px 18px #0f172a1f;white-space:normal;overflow-wrap:anywhere;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transform:translateY(-3px)}.tooltip:hover{overflow:visible}.tooltip:hover::before,.tooltip:hover::after{visibility:visible;opacity:1;transform:translateY(0)}.operation-version.tooltip::before{left:auto;right:18px}.operation-version.tooltip::after{left:auto;right:0}.operation-body{padding:0 12px 12px}.rest-signature{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}.rest-signature strong{white-space:nowrap}.rest-signature code{overflow-wrap:anywhere}.rest-signature-change{display:block;min-width:0;max-width:100%;overflow:hidden}.rest-signature-change pre{max-width:100%;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}.rest-signature-change span{display:block;max-width:100%;padding:2px 7px;overflow-wrap:anywhere;word-break:break-word}.rest-signature-change .add{background:#dcfce7;color:#166534}.rest-signature-change .remove{background:#fee2e2;color:#991b1b}.lro-service-behavior{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.lro-service-behavior>strong{margin-right:8px}.behavior-status{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700}.behavior-status.unchanged{background:#dcfce7;color:#166534}.behavior-status.changed{background:#fef3c7;color:#92400e}.lro-service-behavior dl{display:grid;grid-template-columns:max-content 1fr;gap:5px 12px;margin:10px 0 0}.lro-service-behavior dt{font-weight:700}.lro-service-behavior dd{margin:0;color:var(--muted)}.operation-body .diff{margin-top:4px}.finding-group>h3{margin:20px 0 10px}.count{display:inline-block;background:var(--line);border-radius:999px;padding:1px 8px;font-size:12px}.finding{padding:16px 18px;margin:10px 0}.compliance-status{display:inline-block;margin-left:8px;border-radius:999px;padding:3px 9px;font-size:12px;text-transform:uppercase}.compliance-status.passed{background:#dcfce7;color:#166534}.compliance-status.failed{background:#fee2e2;color:#991b1b}.compliance-status.not-assessed{background:#fef3c7;color:#92400e}.finding-heading{display:flex;gap:10px;align-items:center}.finding-heading h3{margin:0}.severity-border-high{border-left:4px solid var(--danger)}.severity-border-medium{border-left:4px solid var(--warn)}.severity-border-low{border-left:4px solid #64748b}.empty-state{color:var(--muted)}.empty-state.good{color:var(--good);font-weight:600}.appendix-details{background:var(--panel);border:1px solid var(--line);border-radius:14px}.appendix-details>summary{cursor:pointer;padding:16px 20px;font-size:22px;font-weight:750}.appendix-body{padding:0 20px 20px}.appendix-body h3{margin:24px 0 10px}.appendix-table-scroll{overflow:auto}.appendix-table{width:100%;border-collapse:collapse}.appendix-table th,.appendix-table td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid var(--line)}.appendix-body dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px}.appendix-body dt{font-weight:700}.appendix-body dd{margin:0}.status-high{color:#86efac}.status-medium{color:#fde68a}.status-low{color:#fecaca}.metric-icon{display:inline-flex;align-items:center;justify-content:center;width:1.25em;margin-right:.3em;font-size:.85em}.metric-good{color:#86efac}.metric-info{color:#bfdbfe}.metric-warn{color:#fde68a}.metric-danger{color:#fecaca}@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.change-card{grid-template-columns:1fr}.change-number{text-align:left;padding:10px 20px}.hero{padding-top:28px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--accent:#93c5fd;--accent-soft:#1e3a5f}.preview-notice{background:#422006;border-bottom-color:#854d0e;color:#fde68a}.added{background:#163d2b;color:#9ae6b4}.modified{background:#473b16;color:#fde68a}.removed{background:#4a2028;color:#fecaca}.severity-high{background:#4a2028}.severity-medium{background:#473b16}.severity-low{background:#334155;color:#cbd5e1}}
-.behavior-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.behavior-section:first-of-type{border-top:0}.behavior-title{margin-right:8px;font-weight:700}.compliance-finding>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.compliance-finding>summary::-webkit-details-marker{display:none}.compliance-finding>summary::after{content:"▸";margin-left:auto;color:var(--muted);font-size:18px}.compliance-finding[open]>summary::after{content:"▾"}.compliance-finding>summary h3{margin:0}.finding-body{padding-top:12px}.comparison-details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.comparison-details>summary{cursor:pointer;padding:11px 13px;font-weight:750}.comparison-body{padding:0 13px 13px}.compliance-code{margin-top:12px}.compliance-code h4{margin:14px 0 6px}.source-code .line-number{display:inline-block;min-width:3.5em;margin-right:12px;color:#64748b;text-align:right;user-select:none}.source-code pre>.context{white-space:pre}
-.metric strong{display:flex;align-items:center}.metric strong .metric-icon{width:1.15em;margin-right:.4em;font-size:1.05em;opacity:1}.metric>span.metric-title{display:block;font-size:15px;font-weight:650;opacity:.9}.metric>span.metric-detail{display:block;margin-top:4px;font-size:12px;opacity:.75}
-.finding-source-diff{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow:hidden}.finding-source-diff>summary{cursor:pointer;padding:11px 13px;font-weight:750}.finding-source-diff>summary span{margin-left:6px;color:var(--muted);font-size:12px;font-weight:400}.finding-source-diff>.diff{margin:0;border-width:1px 0 0;border-radius:0}.finding-source-diff .diff pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
-.disposition{display:inline-flex;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}.disposition.blocking{background:#fee2e2;color:#991b1b}.disposition.preview-allowed{background:#dcfce7;color:#166534}.finding-heading{flex-wrap:wrap}.finding-heading h3{flex-basis:100%}
-</style>
-</head>
-<body>
-<header class="hero"><div class="container">
-<div class="eyebrow">TypeSpec Assessment</div>
-<h1><a href="https://github.com/Azure/azure-rest-api-specs/pull/44454" style="color:inherit">PR #44454 — Mitigate operation group casing breaking changes for azure-mgmt-elastic</a></h1>
-<div class="hero-meta">Overall confidence: <strong class="status-high">High</strong> · Baseline <code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6</code> → Head <code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2</code></div>
-<div class="metrics">
-<div class="metric safety-metric"><strong class="status-medium"><span class="metric-icon metric-warn" role="img" aria-label="Review" title="Review">⚠</span>Medium</strong><span class="metric-title">Overall code safety</span></div>
-<a class="metric" href="#rest-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">REST breaking changes</span></a>
-<a class="metric" href="#downstream-breaking"><strong><span class="metric-icon metric-good" role="img" aria-label="Passed" title="Passed">✓</span>0</strong><span class="metric-title">Downstream breaking changes</span></a>
-<a class="metric" href="#azure-compliance"><strong><span class="metric-icon metric-danger" role="img" aria-label="Failed" title="Failed">✕</span>1</strong><span class="metric-title">Azure compliance</span><span class="metric-detail">1 finding</span></a>
-<a class="metric" href="#semantic-intents"><strong><span class="metric-icon metric-info" role="img" aria-label="Information" title="Information">ℹ</span>1</strong><span class="metric-title">Semantic intents</span><span class="metric-detail">3 operations<br>0 Added, 3 Modified, 0 Removed</span></a>
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#fee2e2;color:#991b1b}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
+.tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
+</style></head><body>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>2 TypeSpec changes for Elastic.Management</h1>
+<p class="hero-meta">TypeSpec source diff: <code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6</code> → <code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2</code></p>
+<div class="summary-grid">
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i</span> Not assessed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">0 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i</span> Not assessed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>0/2 intents assessed</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
-<aside class="preview-notice"><div class="container">
-<h2>Preview Notice</h2>
-<p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
-<p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p>
-</div></aside>
-<nav><div class="container"><a href="#api-versions">Compared API versions</a><a href="#rest-breaking">REST breaking changes</a><a href="#downstream-breaking">Downstream breaking changes</a><a href="#azure-compliance">Azure compliance</a><a href="#semantic-intents">Semantic intents</a><a href="#appendix">Appendix</a></div></nav>
+<aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
 <main class="container">
-<section id="api-versions"><h2>Compared API versions</h2><div class="panel"><p class="empty-state">No explicit API version comparison was recorded.</p></div></section>
-<section id="rest-breaking"><h2>REST breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No REST breaking changes detected.</p></div></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes <span class="count">0</span></h2><div class="panel"><p class="empty-state good">No downstream breaking changes detected.</p></div></section>
-<section id="azure-compliance"><h2>Azure compliance <span class="compliance-status failed">failed</span></h2><details class="finding compliance-finding severity-border-medium" id="finding-elastic-client-customizations-wrong-file">
-<summary><span class="severity severity-medium">medium</span><h3>Client customizations are outside client.tsp</h3></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The five @@clientLocation customizations are in back-compatible.tsp instead of the documented client.tsp file.</p>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102">back-compatible.tsp:L97-L102</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113">back-compatible.tsp:L108-L113</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127">back-compatible.tsp:L122-L127</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/e8420e45fdaf12e2c72417d379c454f1fc8ce1e6/specification/elastic/Elastic.Management/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L1-L1">back-compatible.tsp:L1-L1</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131">back-compatible.tsp:L94-L131</a></p>
-<details class="comparison-details expected-details">
-<summary>Expected</summary>
-<div class="comparison-body">
-<p>Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/">Clients — Retained authoritative evidence</a></p>
-<div class="diff expected-code">
-<div class="diff-file"><a href="https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/">Documented TypeSpec example</a></div>
-<pre><span class="context">import &quot;@azure-tools/typespec-client-generator-core&quot;;</span>
-<span class="context">using Azure.ClientGenerator.Core;</span>
-<span class="context"></span>
-<span class="context">@@clientLocation(Feeds.feed, PetStore);</span>
-<span class="context">@@clientLocation(Pets.pet, PetStore);</span></pre>
-</div>
-</div>
-</details>
-<details class="comparison-details actual-details">
-<summary>Actual</summary>
-<div class="comparison-body">
-<p>The only changed source is specification/elastic/Elastic.Management/back-compatible.tsp.</p>
-<div class="compliance-code"><h4>TypeSpec code</h4><div class="diff source-code">
-<div class="diff-file"><a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102">specification/elastic/Elastic.Management/back-compatible.tsp:L97-L102</a></div>
-<pre><span class="context"><span class="line-number">97</span>  &quot;!csharp,!python&quot;</span>
-<span class="context"><span class="line-number">98</span>);</span>
-<span class="context"><span class="line-number">99</span>@@clientLocation(</span>
-<span class="context"><span class="line-number">100</span>  ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
-<span class="context"><span class="line-number">101</span>  &quot;ListAssociatedTrafficFilters&quot;,</span>
-<span class="context"><span class="line-number">102</span>  &quot;python&quot;</span></pre>
-</div></div>
-</div>
-</details>
-</div>
-</details></section>
-<section id="semantic-intents"><h2>Semantic intents <span class="count">1</span></h2><details class="intent-details" id="change-1">
-<summary><span class="change-number">1</span><span><span class="intent-kind-icon" title="Modified">✏️</span><span class="intent-impact-icon" title="Has linked impact">⚠️</span> Assign Elastic operations to explicit generated clients <span class="count">3 operations</span></span></summary>
-<article class="change-card">
-<div class="change-content">
-<p class="intent-summary">Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p>
-<p class="intent-api-surface"><strong>API surface:</strong> 3 existing operations affected</p>
-<table class="change-table">
-<thead><tr><th>Change</th><th>Aspect</th><th>Before</th><th>After</th><th>Impact</th></tr></thead>
-<tbody><tr>
-<td><span class="change-badge modified">✏️ Modified</span></td>
-<td>generated client location</td>
-<td>The affected operations used default client placement.</td>
-<td>Five operations use explicit clientLocation customizations.</td>
-<td><div class="table-impacts"><a class="impact severity-medium" href="#finding-elastic-client-customizations-wrong-file">Client customizations are outside client.tsp</a></div></td>
-</tr></tbody>
-</table>
-<p class="typespec-summary"><strong>TypeSpec change:</strong> Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
-<div class="operation-changes">
-<h4>All affected operations <span class="count">3</span></h4>
-<details class="operation-details">
-<summary><code>ElasticMonitors_ListAssociatedTrafficFilters</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters</span><span class="operation-version tooltip" data-tooltip="2024-03-01">2024-03-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p></div>
-<div class="diff">
-<div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">@@ -94,13 +94,23 @@ using Microsoft.Elastic;</span>
-<span class="context"> @@clientLocation(</span>
+<section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
+<section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
+<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-3d8a84ab0984f292"><summary><strong><span class="action">modify</span> Preserve Python operation-group casing for traffic-filter methods</strong></summary><div class="intent-body">
+<p>The compatibility customizations exclude Python from the existing client-location rules for listAssociatedTrafficFilters and createAndAssociateIPFilter, then add Python-specific placements under PascalCase operation-group names.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
 <span class="context">   &quot;listAssociatedTrafficFilters&quot;,</span>
 <span class="remove">-  &quot;!csharp&quot;</span>
@@ -113,13 +34,28 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
-<span class="omitted"> ... 13 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">@@ -109,7 +119,12 @@ using Microsoft.Elastic;</span>
 <span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
+<span class="context">   &quot;createAndAssociateIPFilter&quot;,</span>
+<span class="remove">-  &quot;!csharp,!java&quot;</span>
+<span class="add">+  &quot;!csharp,!java,!python&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientLocation(</span>
+<span class="add">+  ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
+<span class="add">+  &quot;CreateAndAssociateIPFilter&quot;,</span>
+<span class="add">+  &quot;python&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientName(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (0)</h4>
+<p class="empty">No directly affected REST operation.</p>
+<p id="related-findings-semantic-3d8a84ab0984f292"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-a3ce2a2ef2e5fba3"><summary><strong><span class="action">modify</span> Preserve Python operation-group casing for PL-filter creation</strong></summary><div class="intent-body">
+<p>The compatibility customization excludes Python from the existing createAndAssociatePLFilter client-location rule and adds a Python-specific placement under the PascalCase CreateAndAssociatePLFilter operation-group name.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
 <span class="context">   &quot;createAndAssociatePLFilter&quot;,</span>
 <span class="remove">-  &quot;!csharp&quot;</span>
@@ -131,21 +67,22 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
-<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
-</div>
-</details><details class="operation-details">
-<summary><code>ElasticMonitors_CreateAndAssociateIPFilter</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter</span><span class="operation-version tooltip" data-tooltip="2024-03-01">2024-03-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p></div>
-<div class="diff">
-<div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">@@ -94,13 +94,23 @@ using Microsoft.Elastic;</span>
-<span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (0)</h4>
+<p class="empty">No directly affected REST operation.</p>
+<p id="related-findings-semantic-a3ce2a2ef2e5fba3"><strong>Related findings:</strong> None</p>
+</div></details></section>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty not-assessed">Azure Guidelines were not assessed.</p>
+<div class="panel"><strong>Unassessed intents:</strong> <code>semantic-3d8a84ab0984f292</code>, <code>semantic-a3ce2a2ef2e5fba3</code></div></section>
+<section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
+<section id="blockers"><h2>Blockers</h2><div class="panel"><ul><li>The official document catalog contains no guidance for @clientLocation or generated Python operation-group casing, so Azure Compliance is not assessed for either semantic intent.</li></ul></div></section>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/elastic/Elastic.Management</code></td><td>existing-api-version</td><td><code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6@2025-06-01</code><br><small>base · affected-existing-version</small></td><td><code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2@2025-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44454">#44454</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Preserve Python operation-group casing for traffic-filter methods</h4>
+<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
 <span class="context">   &quot;listAssociatedTrafficFilters&quot;,</span>
 <span class="remove">-  &quot;!csharp&quot;</span>
@@ -157,13 +94,21 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
-<span class="omitted"> ... 13 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">@@ -109,7 +119,12 @@ using Microsoft.Elastic;</span>
 <span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
+<span class="context">   &quot;createAndAssociateIPFilter&quot;,</span>
+<span class="remove">-  &quot;!csharp,!java&quot;</span>
+<span class="add">+  &quot;!csharp,!java,!python&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientLocation(</span>
+<span class="add">+  ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
+<span class="add">+  &quot;CreateAndAssociateIPFilter&quot;,</span>
+<span class="add">+  &quot;python&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientName(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code></p></section><section><h4>Preserve Python operation-group casing for PL-filter creation</h4>
+<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
 <span class="context">   &quot;createAndAssociatePLFilter&quot;,</span>
 <span class="remove">-  &quot;!csharp&quot;</span>
@@ -175,78 +120,72 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
-<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
-</div>
-</details><details class="operation-details">
-<summary><code>ElasticMonitors_CreateAndAssociatePLFilter</code><span class="operation-path tooltip" data-tooltip="POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter</span><span class="operation-version tooltip" data-tooltip="2024-03-01">2024-03-01</span></summary>
-<div class="operation-body">
-<div class="rest-signature rest-signature-unchanged"><strong>HTTP signature and represented payload contract unchanged</strong><code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter</code></div>
-<div class="lro-service-behavior"><strong>Change outcomes</strong><p>Five @@clientLocation applications move affected operations from their default generated locations to explicit clients. The bounded evidence reports no REST operation change.</p></div>
-<div class="diff">
-<div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">@@ -94,13 +94,23 @@ using Microsoft.Elastic;</span>
-<span class="context"> @@clientLocation(</span>
-<span class="context">   ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
-<span class="context">   &quot;listAssociatedTrafficFilters&quot;,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!python&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@clientLocation(</span>
-<span class="add">+  ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
-<span class="add">+  &quot;ListAssociatedTrafficFilters&quot;,</span>
-<span class="add">+  &quot;python&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
-<span class="omitted"> ... 13 later diff lines omitted ...</span></pre>
-</div><div class="diff">
-<div class="diff-file">specification/elastic/Elastic.Management/back-compatible.tsp</div>
-<pre><span class="meta">--- a/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">+++ b/specification/elastic/Elastic.Management/back-compatible.tsp</span>
-<span class="meta">@@ -109,7 +119,12 @@ using Microsoft.Elastic;</span>
-<span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
-<span class="context">   &quot;createAndAssociatePLFilter&quot;,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!python&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@clientLocation(</span>
-<span class="add">+  ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
-<span class="add">+  &quot;CreateAndAssociatePLFilter&quot;,</span>
-<span class="add">+  &quot;python&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientName(</span>
-<span class="omitted"> ... 1 later diff lines omitted ...</span></pre>
-</div>
-<p class="sources"><strong>TypeSpec source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L116">back-compatible.tsp:L94-L116</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L119-L130">back-compatible.tsp:L119-L130</a></p>
-</div>
-</details>
-</div>
-</div>
-</article>
-</details></section>
-<section id="appendix"><details class="appendix-details">
-<summary>Appendix</summary>
-<div class="appendix-body">
-<h3>Assessment Errors</h3>
-<p class="empty-state">None.</p>
-<h3>Tooling Used</h3>
-<ul><li><code>@azure-tools/typespec-autorest</code></li><li><code>@azure-tools/typespec-client-generator-core</code></li></ul>
-<h3>Version-scoped compiler options</h3>
-<p class="empty-state">No explicit API version options recorded.</p>
-<h3>Artifact Evidence</h3>
-<dl><dt>autorest</dt><dd>base/head succeeded with no wire artifact diff</dd><dt>tcgc</dt><dd>base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence</dd></dl>
-<h3>Execution time breakdown</h3>
-<div class="panel timing-panel">
-<div class="appendix-table-scroll"><table class="appendix-table"><thead><tr><th>Phase</th><th>Duration</th><th>Timing quality</th></tr></thead><tbody><tr><td>Semantic understanding</td><td>3s</td><td>estimated</td></tr><tr><td>REST breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Downstream breaking</td><td>0s</td><td>estimated</td></tr><tr><td>Compliance</td><td>19s</td><td>estimated/measured</td></tr><tr><td>Overhead</td><td>0s</td><td>measured</td></tr><tr><td>Total</td><td>22s</td><td>measured</td></tr></tbody></table></div>
-<p><strong>Documentation search:</strong> bounded official document evidence</p>
-<p class="sources">Deterministic preparation, aggregate judgment, assembly, and renderer timings are measured. Judgment time is allocated across dimensions by serialized evidence size and labeled estimated.</p>
-</div>
-</div>
-</details></section>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code></p></section></details>
+<h3 id="compliance-search-evidence">Guidance fetched</h3>
+<details class="compliance-intent" id="compliance-intent-semantic-3d8a84ab0984f292"><summary><strong><a href="#intent-semantic-3d8a84ab0984f292">Preserve Python operation-group casing for traffic-filter methods</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/">Content negotiation</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-a3ce2a2ef2e5fba3"><summary><strong><a href="#intent-semantic-a3ce2a2ef2e5fba3">Preserve Python operation-group casing for PL-filter creation</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/">Content negotiation</a></li></ul>
+</div></details>
+<h3>Changed files</h3><ul><li><code>specification/elastic/Elastic.Management/back-compatible.tsp</code> (committed)</li></ul>
+<h3>Timing and model input</h3><pre>{
+  &quot;timings&quot;: {
+    &quot;totalMs&quot;: 159800,
+    &quot;semanticAnalysisMs&quot;: 60,
+    &quot;restAnalysisMs&quot;: 57,
+    &quot;downstreamAnalysisMs&quot;: 3003
+  },
+  &quot;inputAccounting&quot;: {
+    &quot;budgetTier&quot;: &quot;small&quot;,
+    &quot;budgetBytes&quot;: 131072,
+    &quot;bytes&quot;: 6476,
+    &quot;estimatedTokens&quot;: 1619,
+    &quot;retained&quot;: {
+      &quot;sourceChanges&quot;: 1,
+      &quot;facts&quot;: 0,
+      &quot;semanticReviewUnits&quot;: 2,
+      &quot;restCandidates&quot;: 0,
+      &quot;downstreamCandidates&quot;: 0,
+      &quot;downstreamRootCauses&quot;: 0,
+      &quot;complianceSearchRequests&quot;: 2,
+      &quot;complianceSearchSourceBytes&quot;: 3590
+    },
+    &quot;omittedRedundant&quot;: {
+      &quot;rawEmitterArtifacts&quot;: true,
+      &quot;compilerLogs&quot;: true,
+      &quot;unchangedInventories&quot;: true,
+      &quot;unreferencedFacts&quot;: true
+    },
+    &quot;compliance&quot;: {
+      &quot;catalogEntriesScored&quot;: 64,
+      &quot;documentsFetched&quot;: 8,
+      &quot;documentBytesFetched&quot;: 3238578,
+      &quot;guidanceExcerptsRetained&quot;: 0,
+      &quot;guidanceExcerptBytesRetained&quot;: 0
+    }
+  }
+}</pre>
+<p><strong>Provenance:</strong> model-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
 </main>
-</body>
-</html>
+<script>
+function revealHashTarget() {
+  const target = document.getElementById(location.hash.slice(1));
+  if (!target) return;
+  for (let element = target; element; element = element.parentElement) {
+    if (element.tagName === "DETAILS") element.open = true;
+  }
+  target.scrollIntoView({ block: "start" });
+}
+window.addEventListener("hashchange", revealHashTarget);
+document.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.closest('a[href^="#"]')) {
+    window.setTimeout(revealHashTarget);
+  }
+});
+revealHashTarget();
+</script>
+</body></html>

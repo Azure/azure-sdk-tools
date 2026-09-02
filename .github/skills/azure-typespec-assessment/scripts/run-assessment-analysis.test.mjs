@@ -49,7 +49,12 @@ test("model input keeps only transitively referenced facts and sources", () => {
     },
   });
   assert.deepEqual(Object.keys(input.sourceChanges), ["source-1"]);
-  assert.deepEqual(Object.keys(input.facts), ["operation-1"]);
+  assert.deepEqual(Object.keys(input.facts), []);
+  assert.equal(input.semanticReviewUnits[0].affectedOperationCount, 1);
+  assert.deepEqual(input.semanticReviewUnits[0].representativeOperationIds, ["operation-1"]);
+  assert.equal(input.complianceSearchRequests.length, 1);
+  assert.equal(input.complianceSearchRequests[0].reviewUnitId, "semantic-1");
+  assert.deepEqual(input.deferredDimensions, { documentQuality: "not-assessed" });
   assert.equal(input.inputAccounting.budgetTier, "small");
   assert.equal(input.inputAccounting.omittedRedundant.rawEmitterArtifacts, true);
 });

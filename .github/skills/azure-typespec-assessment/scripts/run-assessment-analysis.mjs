@@ -7,6 +7,7 @@ import { analyzeRestBreaking } from "./analyze-rest-breaking.mjs";
 import { analyzeDownstreamBreaking } from "./analyze-downstream-breaking.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
 
 const BUDGET_TIERS = [
   ["small", 128 * 1024],
@@ -198,13 +199,6 @@ function compactFact(id, fact) {
 
 function referencedFacts(semantic, rest, downstream) {
   const ids = new Set();
-  for (const unit of semantic.reviewUnits) {
-    for (const id of [
-      ...unit.operationIds,
-      ...unit.beforeFactIds,
-      ...unit.afterFactIds,
-    ]) ids.add(id);
-  }
   for (const candidate of [...rest.candidates, ...downstream.candidates]) {
     for (const id of candidate.evidenceFactIds) ids.add(id);
   }
@@ -215,6 +209,77 @@ function referencedFacts(semantic, rest, downstream) {
       .sort()
       .map((id) => [id, compactFact(id, available[id])]),
   );
+}
+
+function semanticSourceExcerpts(unit, sourceChanges) {
+  const allowed = new Set(unit.hunkIds ?? []);
+  return unit.sourceChangeIds
+    .flatMap((sourceId) => {
+      const source = sourceChanges[sourceId];
+      return (source?.hunks ?? [])
+        .filter((hunk) => allowed.has(hunk.id))
+        .map((hunk) => ({
+          sourceChangeId: sourceId,
+          hunkId: hunk.id,
+          path: source.path,
+          text: (hunk.lines ?? [])
+            .filter((line) => /^[+-](?![+-])/.test(line))
+            .slice(0, 12)
+            .join("\n"),
+        }));
+    })
+    .filter((excerpt) => excerpt.text)
+    .sort((left, right) => {
+      const score = (excerpt) => {
+        const compatibilityFile = /(?:^|\/)(?:client|back-compatible)\.tsp$/i
+          .test(excerpt.path);
+        const substantive = /\b(model|interface|op|enum|union|scalar|alias)\b/
+          .test(excerpt.text);
+        return (compatibilityFile ? 2 : 0) + (substantive ? 0 : 1);
+      };
+      return score(left) - score(right) ||
+        left.path.localeCompare(right.path) ||
+        left.hunkId.localeCompare(right.hunkId);
+    })
+    .slice(0, 3);
+}
+
+function compactSemanticReviewUnit(unit, sourceChanges) {
+  const declarations = unit.sourceChangeIds.flatMap((sourceId) => {
+    const source = sourceChanges[sourceId];
+    const allowed = new Set(unit.hunkIds ?? []);
+    return (source?.declarations ?? []).filter((declaration) =>
+      declaration.hunkIds?.some((hunkId) => allowed.has(hunkId)),
+    );
+  });
+  const operations = [...(unit.operations ?? (unit.operationIds ?? []).map((id) => ({
+    operationId: id,
+  })))]
+    .sort((left, right) => left.operationId.localeCompare(right.operationId));
+  return {
+    reviewUnitId: unit.id,
+    action: unit.action ?? unit.changeKind ?? "modify",
+    declarationKinds: [...new Set(declarations.map((item) => item.kind).filter(Boolean))].sort(),
+    qualifiedNames: [...new Set(
+      declarations.map((item) => item.qualifiedName).filter(Boolean),
+    )].sort(),
+    changedConstructs: [...new Set(
+      declarations.flatMap((item) => [
+        ...(item.decorators ?? []).map((decorator) =>
+          typeof decorator === "string" ? decorator : decorator?.name),
+        item.baseType,
+        ...(item.compilerEvidence?.referencedNames ?? []),
+      ]).filter(Boolean),
+    )].sort(),
+    representativeSourceExcerpts: semanticSourceExcerpts(unit, sourceChanges),
+    affectedOperationCount: operations.length,
+    representativeOperationIds: operations.slice(0, 3).map((item) => item.operationId),
+    restChangedOperationCount: operations.filter((item) => item.restChanged).length,
+    groupingSummaries: (unit.groupingEvidence?.edges ?? [])
+      .map((item) => item.summary)
+      .filter(Boolean)
+      .slice(0, 3),
+  };
 }
 
 function compactSources(sourceIndex, semantic, rest, downstream) {
@@ -265,6 +330,12 @@ function accountInput(input, maximumBytes) {
         semanticReviewUnits: input.semanticReviewUnits.length,
         restCandidates: input.restCandidates.length,
         downstreamCandidates: input.downstreamCandidates.length,
+        downstreamRootCauses: input.downstreamRootCauses.length,
+        complianceSearchRequests: input.complianceSearchRequests.length,
+        complianceSearchSourceBytes: Buffer.byteLength(JSON.stringify({
+          sourceChanges: input.sourceChanges,
+          complianceSearchRequests: input.complianceSearchRequests,
+        })),
       },
       omittedRedundant: {
         rawEmitterArtifacts: true,
@@ -296,6 +367,10 @@ export function buildModelInput({
   downstream,
   maximumBytes,
 }) {
+  const sourceChanges = compactSources(sourceIndex, semantic, rest, downstream);
+  const semanticUnits = semantic.status === "ready" ? semantic.reviewUnits : [];
+  const semanticReviewUnits = semanticUnits.map((unit) =>
+    compactSemanticReviewUnit(unit, sourceChanges));
   const input = {
     schemaVersion: 1,
     context: {
@@ -325,15 +400,18 @@ export function buildModelInput({
         },
       })),
     },
-    sourceChanges: compactSources(sourceIndex, semantic, rest, downstream),
+    sourceChanges,
     facts: referencedFacts(semantic, rest, downstream),
-    semanticReviewUnits: semantic.status === "ready" ? semantic.reviewUnits : [],
+    semanticReviewUnits,
     restCandidates: rest.status === "ready" ? rest.candidates : [],
     downstreamCandidates: downstream.status === "ready" ? downstream.candidates : [],
     downstreamRootCauses: downstream.status === "ready" ? downstream.rootCauses ?? [] : [],
+    complianceSearchRequests: buildComplianceSearchRequests({
+      semanticReviewUnits: semanticUnits,
+      sourceChanges,
+    }),
     deferredDimensions: {
-      compliance: "planned",
-      documentQuality: "planned",
+      documentQuality: "not-assessed",
     },
     blockers: [...manifest.blockers, ...semantic.blockers, ...rest.blockers, ...downstream.blockers],
     inputAccounting: {},
@@ -377,8 +455,24 @@ function blockedAssessment(manifest, semantic, rest, downstream) {
       semantic: { status: "not-assessed", items: [], blockers: semantic.blockers },
       rest: { status: "not-assessed", findings: [], blockers: rest.blockers },
       downstream: { status: "not-assessed", findings: [], blockers: downstream.blockers },
-      compliance: { status: "planned", summary: "Deferred from the MVP." },
-      documentQuality: { status: "planned", summary: "Planned by the design document." },
+      compliance: {
+        status: "not-assessed",
+        summary: "Compliance could not run because deterministic analysis was blocked.",
+        coverage: {
+          semanticIntentCount: 0,
+          assessedIntentCount: 0,
+          selectedDocumentCount: 0,
+          unassessedIntentIds: [],
+        },
+        intentAssessments: [],
+        findings: [],
+        retrievalFailures: [],
+        blockers: [...manifest.blockers, ...semantic.blockers],
+      },
+      documentQuality: {
+        status: "not-assessed",
+        summary: "Document quality is not assessed.",
+      },
     },
     changedFiles: manifest.changedFiles,
     projects: manifest.projects,

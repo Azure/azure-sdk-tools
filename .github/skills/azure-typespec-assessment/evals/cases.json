@@ -11,7 +11,7 @@
     "expected": {
       "semanticIntents": 1,
       "restBreakingFindings": 0,
-      "downstreamFindings": 1,
+      "downstreamFindings": 3,
       "complianceFindings": 0
     }
   },
@@ -77,8 +77,8 @@
     "expected": {
       "semanticIntents": 2,
       "restBreakingFindings": 0,
-      "downstreamFindings": 1,
-      "complianceFindings": 4
+      "downstreamFindings": 0,
+      "complianceFindings": 1
     }
   },
   {
@@ -89,10 +89,10 @@
     "sparseRoots": ["specification/elastic"],
     "projects": ["specification/elastic/Elastic.Management"],
     "expected": {
-      "semanticIntents": 1,
+      "semanticIntents": 2,
       "restBreakingFindings": 0,
       "downstreamFindings": 0,
-      "complianceFindings": 1
+      "complianceFindings": 0
     }
   },
   {
@@ -138,8 +138,8 @@
     "expected": {
       "semanticIntents": 11,
       "restBreakingFindings": 0,
-      "downstreamFindings": 1,
-      "complianceFindings": 4
+      "downstreamFindings": 7,
+      "complianceFindings": 3
     }
   },
   {

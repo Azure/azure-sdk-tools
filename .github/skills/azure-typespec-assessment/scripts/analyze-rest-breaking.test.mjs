@@ -88,6 +88,7 @@ test("emits explicit REST candidates for parameters, required properties, enums,
     assert.ok(rules.has(rule), `missing ${rule}`);
   }
   assert.ok(result.candidates.every((item) => item.sourceChangeIds[0] === "source-authoritative"));
+  assert.ok(result.candidates.every((item) => item.contractChange?.rule === item.rule));
   assert.deepEqual(result.candidates.map((item) => item.id), result.candidates.map((item) => item.id).sort());
 });
 

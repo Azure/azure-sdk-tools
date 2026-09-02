@@ -7,7 +7,7 @@ area: "longrunningoperation"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution

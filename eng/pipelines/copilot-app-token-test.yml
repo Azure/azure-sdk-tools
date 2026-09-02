@@ -32,6 +32,16 @@ jobs:
             $installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase "https://api.github.com" -ApiVersion "2022-11-28" -InstallationTokenOwner "Azure"
             Write-Host "Installation ID: $installationId"
 
+            # Confirm the install actually grants All-repositories access - a Selected-repositories
+            # install does not satisfy the Copilot API's parent-install permission check even when
+            # the mint response below shows copilot_requests=write.
+            $ghHeaders = @{ Authorization = "Bearer $jwt"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
+            $installation = Invoke-RestMethod -Uri "https://api.github.com/app/installations/$installationId" -Headers $ghHeaders
+            Write-Host "Installation repository_selection: $($installation.repository_selection) (target_type: $($installation.target_type))"
+            if ($installation.repository_selection -ne "all") {
+              Write-Host "##vso[task.logissue type=warning]Installation is NOT set to All repositories - this alone can cause Copilot API rejection even with copilot_requests=write on the minted token."
+            }
+
             # The JWT is only valid for App-level endpoints (/app, /app/installations/*) - it
             # is rejected with "Bad credentials" on generic /repos/ lookups. azure-sdk-tools is
             # public, so this one lookup needs no auth at all.
@@ -39,8 +49,7 @@ jobs:
             $repoId = $repo.id
             Write-Host "Repo ID: $repoId"
 
-            $ghHeaders = @{ Authorization = "Bearer $jwt"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
-            $body = @{ repository_ids = @($repoId); permissions = @{ copilot_requests = "write" } } | ConvertTo-Json
+            $body = @{ repository_ids = @($repoId); permissions = @{ copilot_requests = "write"; metadata = "read" } } | ConvertTo-Json
             $resp = Invoke-RestMethod -Method Post -Headers $ghHeaders -Uri "https://api.github.com/app/installations/$installationId/access_tokens" -Body $body -ContentType "application/json"
 
             # Mask immediately - never Write-Host the raw token.

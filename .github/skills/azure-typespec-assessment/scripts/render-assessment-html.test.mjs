@@ -1350,6 +1350,30 @@ test("legacy renderer keeps API versions in the appendix", () => {
   assert.match(html, /newest-added-version/);
 });
 
+test("renderer presents assessment blockers as potential limits in the appendix", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  assessment.blockers = [
+    "Before/after evidence is incomplete for <one> candidate.",
+  ];
+  const html = renderAssessmentHtml(assessment);
+
+  assert.doesNotMatch(html, /<section id="blockers">/);
+  assert.doesNotMatch(html, /<h2>Blockers<\/h2>/);
+  assert.match(
+    html,
+    /<section id="appendix"><details class="dimension-details"><summary><h2>Appendix<\/h2><\/summary><div class="panel"><h3 id="potential-limits">Potential limits<\/h3>/,
+  );
+  assert.match(
+    html,
+    /Before\/after evidence is incomplete for &lt;one&gt; candidate\./,
+  );
+});
+
 test("legacy renderer derives overall code quality from assessed dimensions", () => {
   const highAssessment = JSON.parse(
     readFileSync(

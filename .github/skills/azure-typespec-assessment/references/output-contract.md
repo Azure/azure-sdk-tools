@@ -118,5 +118,6 @@ Compliance.
 intents, active Compliance status
 and coverage, four ranked documents per intent, fetched guidance beside changed
 TypeSpec, expanded failures, collapsed passes, retrieval blockers, explicit
-not-assessed Document Quality, and complete provenance. Escape all source- and
-Agent-controlled text.
+not-assessed Document Quality, and complete provenance. Present top-level
+assessment blockers only in the appendix under **Potential limits**, not as a
+standalone main-report section. Escape all source- and Agent-controlled text.

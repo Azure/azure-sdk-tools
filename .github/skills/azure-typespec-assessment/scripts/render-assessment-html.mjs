@@ -1456,8 +1456,8 @@ function renderCurrent(assessment) {
 <section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceFindingCount})</h2>${renderCompliance(dimensions.compliance, dimensions.semantic.items)}</section>
 <section id="semantic-intents"><h2>Semantic intents (${dimensions.semantic.items.length})</h2>${semantic || '<div class="panel">No semantic review units.</div>'}</section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — ${escapeHtml(dimensions.documentQuality.summary)}</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "None"}</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment.pullRequest)}</p>
 ${completeTypeSpecEvidence(dimensions.semantic.items)}
 <h3 id="compliance-search-evidence">Guidance fetched</h3>

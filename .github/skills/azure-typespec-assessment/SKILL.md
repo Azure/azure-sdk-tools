@@ -19,4 +19,4 @@ Follow the [complete workflow](references/workflow.md). Apply the [classificatio
 - Treat a completed search with no governing guidance as `no-applicable-guidance`; count it as assessed and do not create a blocker. Reserve `not-assessed` for incomplete or blocked Compliance.
 - Report Azure Compliance as `passed`, `failed`, or `not-assessed`. Report Document Quality as a separate `not-assessed` dimension.
 - Overall safety covers REST and downstream SDK impact only.
-- Report blockers and stop after assessment. Do not author fixes or remediate TypeSpec.
+- Retain blockers as **Potential limits** in the report appendix and stop after assessment. Do not author fixes or remediate TypeSpec.

@@ -104,7 +104,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 4. Semantic Intents
 
-**Tooling:** Git diff, `@azure-tools/typespec-autorest`, later switch to http diff detected in `@azure-tools/typespec-breaking-change`.
+**Tooling:** Git diff, `@azure-tools/typespec-autorest`, later try to reuse the http diff detected in `@azure-tools/typespec-breaking-change`.
 
 **Deterministic analysis:** Collect source hunks, changed declarations, versioned members, affected operations, REST signatures, paging/LRO metadata, and bounded review units.
 

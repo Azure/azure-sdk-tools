@@ -99,9 +99,9 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://x-access-token:$(GH_TOKEN_${{ repo.RepoOwner }})@github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN_${{ repo.RepoOwner }})`@github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
-          -SkipCommit $${{parameters.SkipCheckingForChanges}}
+          -SkipCommit $${{ parameters.SkipCheckingForChanges }}
 
     - task: PowerShell@2
       displayName: Push changes for Queueing Test Pipeline
@@ -113,7 +113,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://x-access-token:$(GH_TOKEN_${{ repo.RepoOwner }})@github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN_${{ repo.RepoOwner }})`@github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 

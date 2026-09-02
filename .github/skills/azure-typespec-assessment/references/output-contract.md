@@ -97,6 +97,8 @@ Every confirmed REST finding must contain actual and expected behavior, rational
 Downstream SDK method and SDK type cards must not repeat `Changed TypeSpec`
 source links. Keep that evidence in `assessment.json`, Semantic intents, and
 the appendix; retain only related Semantic intent links in the cards.
+Their `SDK method` and `SDK type` tags must use the blue informational tag
+style; red is reserved for REST-breaking tags and failure indicators.
 
 HTML finding cards must not display `high`, `medium`, or `low` severity labels
 or severity-colored borders. Severity remains available in `assessment.json`

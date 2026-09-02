@@ -24,7 +24,7 @@
 <h4>Breaking changes</h4>
 <table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>afcManagedSync</code></td><td class="contract-before"><code class="contract-value before">not present</code><span class="contract-detail">Existing generated method signature</span></td><td class="contract-after"><code class="contract-value after">boolean?</code><span class="contract-detail">Optional method parameter</span></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The optional afcManagedSync parameter is inserted before the existing request parameter, changing ordered generated method signatures for existing SDK callers.</div>
-<div class="contract-footer"><span><strong>Parameters:</strong> 1 added, 3 unchanged</span><span><strong>Changed TypeSpec:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/back-compatible.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:1492</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp:54</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp:45</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp:138</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/client.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp:16</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/main.tsp:152</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-4ebd789676a2e275"><code>semantic-4ebd789676a2e275</code></a></span></div>
+<div class="contract-footer"><span><strong>Parameters:</strong> 1 added, 3 unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-4ebd789676a2e275"><code>semantic-4ebd789676a2e275</code></a></span></div>
 </div></details>
 <details class="finding sdk-method-card high" id="downstream-downstream-group-aa1b7b0342cdca50"><summary><span class="severity high">high</span><strong>ServiceGateways_UpdateAddressLocations</strong><span class="contract-tag">SDK method</span><span class="finding-summary">3 SDK contract changes</span></summary>
 <div class="finding-body">
@@ -32,7 +32,7 @@
 <h4>Breaking changes</h4>
 <table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">lro</code></td><td class="contract-after"><code class="contract-value after">basic</code></td></tr><tr><td class="contract-member"><code>Long-running behavior</code></td><td class="contract-before"><code class="contract-value before">{&quot;finalStateVia&quot;:&quot;location&quot;,&quot;logicalResult&quot;:&quot;Azure.ResourceManager.ArmOperationStatus&quot;,&quot;pollingStep&quot;:&quot;model&quot;,&quot;finalStep&quot;:&quot;finalOperationLink&quot;,&quot;statusMonitorStep&quot;:&quot;nextOperationLink&quot;}</code></td><td class="contract-after"><code class="contract-value after">none</code></td></tr><tr><td class="contract-member"><code>Response type</code></td><td class="contract-before"><code class="contract-value before">void</code></td><td class="contract-after"><code class="contract-value after">Microsoft.Network.ServiceGatewayActionOkResponseBody</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The existing Microsoft.Network.ServiceGateways.updateAddressLocationsLro generated method changes its invocation or result contract as shown by the bounded before/after TCGC facts.</div>
-<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Changed TypeSpec:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/back-compatible.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:1492</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp:54</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp:45</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp:138</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/client.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp:16</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/main.tsp:152</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
 </div></details>
 <details class="finding sdk-method-card high" id="downstream-downstream-group-fc78bb40fa130e57"><summary><span class="severity high">high</span><strong>ServiceGateways_UpdateServices</strong><span class="contract-tag">SDK method</span><span class="finding-summary">3 SDK contract changes</span></summary>
 <div class="finding-body">
@@ -40,7 +40,7 @@
 <h4>Breaking changes</h4>
 <table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">lro</code></td><td class="contract-after"><code class="contract-value after">basic</code></td></tr><tr><td class="contract-member"><code>Long-running behavior</code></td><td class="contract-before"><code class="contract-value before">{&quot;finalStateVia&quot;:&quot;location&quot;,&quot;logicalResult&quot;:&quot;Azure.ResourceManager.ArmOperationStatus&quot;,&quot;pollingStep&quot;:&quot;model&quot;,&quot;finalStep&quot;:&quot;finalOperationLink&quot;,&quot;statusMonitorStep&quot;:&quot;nextOperationLink&quot;}</code></td><td class="contract-after"><code class="contract-value after">none</code></td></tr><tr><td class="contract-member"><code>Response type</code></td><td class="contract-before"><code class="contract-value before">void</code></td><td class="contract-after"><code class="contract-value after">Microsoft.Network.ServiceGatewayActionOkResponseBody</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The existing Microsoft.Network.ServiceGateways.updateServicesLro generated method changes its invocation or result contract as shown by the bounded before/after TCGC facts.</div>
-<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Changed TypeSpec:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/back-compatible.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:1492</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp:54</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp:45</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp:138</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/client.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp:16</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/main.tsp:152</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
 </div></details></section>
 <section id="azure-compliance"><h2>Azure Guidelines (3)</h2><details class="finding compliance-finding medium" id="compliance-finding-compliance-669a010d2fb35c4b">
 <summary><span class="severity medium">medium</span><strong>Legacy suppression retains a placeholder justification</strong></summary>
@@ -118,6 +118,7 @@
 </section>
 <section id="semantic-intents"><h2>Semantic intents (11)</h2><details class="intent" id="intent-semantic-23cf6865c336a2a8"><summary><strong><span class="action">modify</span> Publish shared Network contracts for the 2025-09-01 API</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-669a010d2fb35c4b">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>Updates shared Network models, enums, resource shapes, and paging contracts that flow into the 2025-09-01 operation surface, including load-balancer mode and IP-configuration movement support.</p>
+<p><strong>Deterministic coverage:</strong> 34 of 34 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp</div><pre><span class="context">    * The 2025-07-01 API version.</span>
 <span class="context">    */</span>
@@ -146,6 +147,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-39306d50134f94c0"><summary><strong><span class="action">modify</span> Introduce synchronous Service Gateway update actions</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-aa1b7b0342cdca50">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>Adds synchronous service and address-location update actions for 2025-09-01 while retaining the prior long-running operation variants for earlier API versions.</p>
+<p><strong>Deterministic coverage:</strong> 7 of 7 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div><pre><span class="context">    *</span>
 <span class="context">    * For address-level partial updates, if no services are provided, the existing services will be considered for deletion.</span>
@@ -171,6 +173,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-4ebd789676a2e275"><summary><strong><span class="action">modify</span> Allow AFC-managed Firewall Policy synchronization</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-cba76aa475e394f2">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>Adds the optional afcManagedSync query parameter to FirewallPolicies.createOrUpdate starting in 2025-09-01.</p>
+<p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp</div><pre><span class="context">   @tag(&quot;FirewallPolicies&quot;)</span>
 <span class="context">   createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
@@ -197,6 +200,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-9e1ae8c664f60144"><summary><strong><span class="action">add</span> Add Connection Analyzer and related Network diagnostic contracts</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-1767678c13fd37d9">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>Adds the Connection Analyzer resource and routed operations, together with supporting diagnostic, service-gateway, and virtual-appliance models.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</div><pre><span class="context">     ArmResponse&lt;PacketCaptureListResult&gt;,</span>
 <span class="context">     Error = ErrorResponse</span>
@@ -327,6 +331,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-c407807c969d3377"><summary><strong><span class="action">add</span> Add First-Party Service Tags and compatibility customizations</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-6c4e771f22b3d619">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>Adds First-Party Service Tag resources and operations and applies operation-ID and combined-client customizations needed to preserve established SDK and wire identities.</p>
+<p><strong>Deterministic coverage:</strong> 4 of 4 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
 <span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
@@ -511,6 +516,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-19b6a61a83d34134"><summary><strong><span class="action">add</span> Add Network Virtual Appliance migration actions</strong></summary><div class="intent-body">
 <p>Adds versioned prepare, execute, commit, and abort actions for Network Virtual Appliance migration workflows, plus boot-diagnostic retrieval inputs.</p>
+<p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</div><pre><span class="context">     NetworkVirtualApplianceInstanceId,</span>
 <span class="context">     Error = CloudError</span>
@@ -590,6 +596,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-6c82b99519c5512d"><summary><strong><span class="action">add</span> Add Virtual Network Gateway route and resiliency actions</strong></summary><div class="intent-body">
 <p>Adds versioned actions that retrieve advertised routes, effective routes, and resiliency information for virtual network gateways.</p>
+<p><strong>Deterministic coverage:</strong> 2 of 2 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp</div><pre><span class="context">     Error = CloudError</span>
 <span class="context">   &gt;;</span>
@@ -620,6 +627,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-719ad7123f9b3ae0"><summary><strong><span class="action">add</span> Add Network Manager, IPAM, and virtual-network workflow contracts</strong></summary><div class="intent-body">
 <p>Introduces the models and resource actions needed for active configuration queries, IPAM pool usage, and moving virtual-network IP configurations in 2025-09-01.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp</div><pre><span class="context">   weight?: int32;</span>
 <span class="context"> }</span>
@@ -713,6 +721,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-7871d3941bf461df"><summary><strong><span class="action">add</span> Add Firewall Policy Kubernetes selector-group child resources</strong></summary><div class="intent-body">
 <p>Adds the Kubernetes selector-group resource model and its create, read, delete, and list operations beneath Firewall Policy.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
 <span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
@@ -828,6 +837,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-a5f89c525f92f8f5"><summary><strong><span class="action">add</span> Add ExpressRoute LAG resource family</strong></summary><div class="intent-body">
 <p>Adds ExpressRoute LAG resources, links, members, operations, request models, enums, and paged list results for 2025-09-01.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
 <span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
@@ -1148,6 +1158,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-ba5c64982aa9eea2"><summary><strong><span class="action">add</span> Add Address Prefix Set child resources</strong></summary><div class="intent-body">
 <p>Adds Address Prefix Set models and create, read, delete, and list operations as a new Network child-resource surface.</p>
+<p><strong>Deterministic coverage:</strong> 2 of 2 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
 <span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
@@ -1265,9 +1276,9 @@
 <p id="related-findings-semantic-ba5c64982aa9eea2"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Network</code></td><td>new-api-version</td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-07-01</code><br><small>current · previous-latest-stable</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-09-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Vmss</code></td><td>existing-api-version</td><td><code>9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5@2018-10-01</code><br><small>base · affected-existing-version</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2018-10-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44988">#44988</a></p>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Network</code></td><td>new-api-version</td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-07-01</code><br><small>current · previous-latest-stable</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-09-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Vmss</code></td><td>existing-api-version</td><td><code>9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5@2018-10-01</code><br><small>base · affected-existing-version</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2018-10-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
 <section><h4>Publish shared Network contracts for the 2025-09-01 API</h4>
 <div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp</div><pre><span class="context">    * Local</span>
@@ -8738,9 +8749,9 @@
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;configured-maximum&quot;,
-    &quot;budgetBytes&quot;: 4000000,
-    &quot;bytes&quot;: 2390482,
-    &quot;estimatedTokens&quot;: 597621,
+    &quot;budgetBytes&quot;: 8388608,
+    &quot;bytes&quot;: 2417623,
+    &quot;estimatedTokens&quot;: 604406,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 16,
       &quot;facts&quot;: 12,
@@ -8749,7 +8760,8 @@
       &quot;downstreamCandidates&quot;: 10,
       &quot;downstreamRootCauses&quot;: 3,
       &quot;complianceSearchRequests&quot;: 11,
-      &quot;complianceSearchSourceBytes&quot;: 1706475
+      &quot;inferenceRequests&quot;: 0,
+      &quot;complianceSearchSourceBytes&quot;: 1707014
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,

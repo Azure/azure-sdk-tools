@@ -5,62 +5,273 @@
 :root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#fee2e2;color:#991b1b}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
 .tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
 </style></head><body>
-<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Use TypeSpec-native metadata for Location-based LROs</h1>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>3 TypeSpec changes for Chaos</h1>
 <p class="hero-meta">TypeSpec source diff: <code>232dfa71843fd574be49ba91a918ee7d3e7bfec3</code> → <code>a3b8933eb6ce030faa6abc6d354fc97e30f02e96</code></p>
 <div class="summary-grid">
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>2 documents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">6 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>3/3 intents assessed</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 3</div><div class="summary-label">Semantic intents</div><div class="summary-detail">2 operations<br>0 Added, 3 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 2</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">2 direct · 0 from REST breaking</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
+<section id="downstream-breaking"><h2>Downstream breaking changes (2)</h2><details class="finding sdk-method-card high" id="downstream-downstream-group-b3fd338076b896e8"><summary><span class="severity high">high</span><strong>Microsoft.Chaos.ScenarioConfigurations.execute</strong><span class="contract-tag">SDK method</span><span class="finding-summary">3 SDK contract changes</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>Microsoft.Chaos.ScenarioConfigurations.execute</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">POST</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute</code></span></dd><dt>Change:</dt><dd>3 generated SDK method contract members changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">basic</code></td><td class="contract-after"><code class="contract-value after">lro</code></td></tr><tr><td class="contract-member"><code>Response type</code></td><td class="contract-before"><code class="contract-value before">void</code></td><td class="contract-after"><code class="contract-value after">Microsoft.Chaos.ScenarioRun</code></td></tr><tr><td class="contract-member"><code>Long-running behavior</code></td><td class="contract-before"><code class="contract-value before">none</code></td><td class="contract-after"><code class="contract-value after">{&quot;finalStateVia&quot;:&quot;location&quot;,&quot;logicalResult&quot;:&quot;Microsoft.Chaos.ScenarioRun&quot;,&quot;pollingStep&quot;:&quot;model&quot;,&quot;finalStep&quot;:&quot;finalOperationLink&quot;,&quot;statusMonitorStep&quot;:&quot;nextOperationLink&quot;}</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show ScenarioConfigurations.execute changing from a basic method with no response type to an LRO returning ScenarioRun. Existing generated SDK calls therefore change invocation and result handling. ScenarioConfigurations.execute previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract. ScenarioConfigurations.execute gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.</div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-c7e95ecf235ee418"><code>semantic-c7e95ecf235ee418</code></a></span></div>
+</div></details>
+<details class="finding sdk-method-card high" id="downstream-downstream-group-e5c51b2794bebaf5"><summary><span class="severity high">high</span><strong>Microsoft.Chaos.ScenarioRuns.cancel</strong><span class="contract-tag">SDK method</span><span class="finding-summary">3 SDK contract changes</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>Microsoft.Chaos.ScenarioRuns.cancel</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">POST</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel</code></span></dd><dt>Change:</dt><dd>3 generated SDK method contract members changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>Response type</code></td><td class="contract-before"><code class="contract-value before">void</code></td><td class="contract-after"><code class="contract-value after">Microsoft.Chaos.ScenarioRun</code></td></tr><tr><td class="contract-member"><code>Long-running behavior</code></td><td class="contract-before"><code class="contract-value before">none</code></td><td class="contract-after"><code class="contract-value after">{&quot;finalStateVia&quot;:&quot;location&quot;,&quot;logicalResult&quot;:&quot;Microsoft.Chaos.ScenarioRun&quot;,&quot;pollingStep&quot;:&quot;model&quot;,&quot;finalStep&quot;:&quot;finalOperationLink&quot;,&quot;statusMonitorStep&quot;:&quot;nextOperationLink&quot;}</code></td></tr><tr><td class="contract-member"><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">basic</code></td><td class="contract-after"><code class="contract-value after">lro</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> ScenarioRuns.cancel previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract. ScenarioRuns.cancel gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior. The supplied TCGC facts show ScenarioRuns.cancel changing from a basic method with no response type to an LRO returning ScenarioRun, requiring existing SDK consumers to use a poller/result workflow.</div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-c7e95ecf235ee418"><code>semantic-c7e95ecf235ee418</code></a></span></div>
+</div></details></section>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. They passed for the other intents, and no applicable guideline was found for intent <a href="#intent-semantic-88b01455dd806f7b">Add C# client-name customizations</a>.</p>
 </section>
-<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-describe-location-lros-with-typespec-metadata"><summary><strong><span class="action">modify</span> Use TypeSpec-native metadata for Location-based LROs</strong></summary><div class="intent-body">
-<p>The shared helpers replace raw OpenAPI long-running-operation extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), while operation declarations remove legacy polling links and related suppressions. The retained GET response contracts are unchanged; the change affects generated-client understanding of polling and final results.</p>
+<section id="semantic-intents"><h2>Semantic intents (3)</h2><details class="intent" id="intent-semantic-c7e95ecf235ee418"><summary><strong><span class="action">modify</span> Model Location-based ARM LRO polling with native TypeSpec constructs</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-b3fd338076b896e8">Downstream breaking changes</a></span></summary><div class="intent-body">
+<p>Replace raw OpenAPI LRO extensions with Azure.Core.useFinalStateVia(&quot;location&quot;), model the ScenarioRuns.get 202 polling response, and connect the existing 2026-05-01-preview actions to a final ScenarioRun result.</p>
+<p><strong>Deterministic coverage:</strong> 13 of 13 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
-<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div><pre><span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/documentation-required&quot; &quot;template&quot;</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;template&quot;</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;Custom LRO operation with specific response codes&quot;</span>
-<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;Required for LRO extensions in OpenAPI output&quot;</span>
-<span class="context"> @autoRoute</span>
-<span class="context"> @armResourceAction(Resource)</span>
-<span class="context"> @post</span>
-<span class="remove">-@extension(&quot;x-ms-long-running-operation&quot;, true)</span>
-<span class="remove">-@extension(</span>
-<span class="remove">-  &quot;x-ms-long-running-operation-options&quot;,</span>
-<span class="remove">-  #{ `final-state-via`: &quot;location&quot; }</span>
-<span class="remove">-)</span>
-<span class="add">+@Azure.Core.useFinalStateVia(&quot;location&quot;)</span>
-<span class="context"> op ArmResourceActionAsyncWithLocation&lt;</span>
-<span class="context">   Resource extends Azure.ResourceManager.Foundations.Resource,</span>
-<span class="context">   Request extends TypeSpec.Reflection.Model | void,</span></pre></div>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L31">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp:22</a>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
-<h4>Affected REST operations (6)</h4>
-<p><strong>Operation impact:</strong> 6 REST operations are affected; 3 representative operation(s) are shown below and 3 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
-<details class="operation"><summary><strong>ScenarioConfigurations_Execute</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute</code> <span>2026-05-01-preview</span></summary>
-<div class="operation-body"><p class="good"><strong>Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(&quot;location&quot;), and obsolete polling-operation links and suppressions are removed.</strong></p>
-<p><strong>Change outcome:</strong> Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(&quot;location&quot;), and obsolete polling-operation links and suppressions are removed.</p></div></details>
-<details class="operation"><summary><strong>ScenarioConfigurations_Validate</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate</code> <span>2026-05-01-preview</span></summary>
-<div class="operation-body"><p class="good"><strong>Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(&quot;location&quot;), and obsolete polling-operation links and suppressions are removed.</strong></p>
-<p><strong>Change outcome:</strong> Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(&quot;location&quot;), and obsolete polling-operation links and suppressions are removed.</p></div></details>
-<details class="operation"><summary><strong>ScenarioConfigurations_Cancel</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel</code> <span>2024-11-01-preview</span></summary>
-<div class="operation-body"><p class="good"><strong>Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(&quot;location&quot;), and obsolete polling-operation links and suppressions are removed.</strong></p>
-<p><strong>Change outcome:</strong> Six existing operations retain the same REST and generated SDK long-running behavior. The helpers replace raw OpenAPI extensions with @Azure.Core.useFinalStateVia(&quot;location&quot;), and obsolete polling-operation links and suppressions are removed.</p></div></details>
-<p id="related-findings-describe-location-lros-with-typespec-metadata"><strong>Related findings:</strong> None</p>
+<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</div><pre><span class="context"> using TypeSpec.Versioning;</span>
+<span class="context"> using TypeSpec.Http;</span>
+<span class="context"> using TypeSpec.Rest;</span>
+<span class="remove">-using TypeSpec.OpenAPI;</span>
+<span class="context"> </span>
+<span class="context"> namespace Microsoft.Chaos;</span>
+<span class="context"> </span>
+<span class="context"> @added(Microsoft.Chaos.Versions.v2026_05_01_preview)</span>
+<span class="add">+@removed(Microsoft.Chaos.Versions.v2025_01_01)</span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface ScenarioRuns {</span>
+<span class="context">   /**</span>
+<span class="context">    * Get a scenario run.</span>
+<span class="add">+   *</span>
+<span class="add">+   * This endpoint is also the polling target for ScenarioConfigurations.execute</span>
+<span class="add">+   * and ScenarioRuns.cancel (final-state-via: location). While the run is in</span>
+<span class="add">+   * progress the service returns 202 with a Location header pointing back to</span>
+<span class="add">+   * this URL; clients must keep polling until they receive 200, which carries</span>
+<span class="add">+   * the final ScenarioRun body.</span>
+<span class="context">    */</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;LRO polling endpoint that returns body in both 200 and 202&quot;</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/no-response-body&quot; &quot;LRO polling endpoint returns body in 202 to reflect current status&quot;</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-core/polling-operation-no-status-monitor&quot; &quot;LRO uses final-state-via:location pattern, not status monitor&quot;</span>
+<span class="remove">-  @summary(&quot;Get a scenario run.&quot;)</span>
+<span class="remove">-  @autoRoute</span>
+<span class="remove">-  @armResourceRead(ScenarioRun)</span>
+<span class="remove">-  @get</span>
+<span class="remove">-  get(...ResourceInstanceParameters&lt;ScenarioRun&gt;):</span>
+<span class="remove">-    | ArmResponse&lt;ScenarioRun&gt;</span>
+<span class="remove">-    | (AcceptedResponse &amp; {</span>
+<span class="remove">-        @doc(&quot;The Location header contains the URL where the status of the long running operation can be checked.&quot;)</span>
+<span class="remove">-        @header(&quot;Location&quot;)</span>
+<span class="remove">-        location: string;</span>
+<span class="remove">-</span>
+<span class="remove">-        @doc(&quot;The Retry-After header can indicate how long the client should wait before polling the operation status.&quot;)</span>
+<span class="remove">-        @header(&quot;Retry-After&quot;)</span>
+<span class="remove">-        retryAfter?: int32;</span>
+<span class="remove">-</span>
+<span class="remove">-        @bodyRoot body: ScenarioRun;</span>
+<span class="remove">-      })</span>
+<span class="remove">-    | ErrorResponse;</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;LRO polling endpoint that returns body in both 200 and 202 responses.&quot;</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/no-response-body&quot; &quot;LRO polling endpoint returns body in 202 to reflect the current run state.&quot;</span>
+<span class="add">+  get is ArmResourceRead&lt;</span>
+<span class="add">+    ScenarioRun,</span>
+<span class="add">+    Response = ArmResponse&lt;ScenarioRun&gt; | ScenarioRunInProgressResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * Get a list of scenario runs.</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp:16</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (2)</h4>
+<p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>ScenarioRuns_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}</code> <span>2026-05-01-preview</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, 202, default</td><td>200, 202, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<details class="operation"><summary><strong>ScenarioRuns_ListAll</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs</code> <span>2026-05-01-preview</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<p id="related-findings-semantic-c7e95ecf235ee418"><strong>Related findings:</strong> <a href="#downstream-downstream-group-b3fd338076b896e8">downstream-group-b3fd338076b896e8</a>, <a href="#downstream-downstream-group-e5c51b2794bebaf5">downstream-group-e5c51b2794bebaf5</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-6b421b1ce7dd8d19"><summary><strong><span class="action">modify</span> Use ARM resource identifier scalars for resource ID properties</strong></summary><div class="intent-body">
+<p>Replace plain string types with Azure.Core.armResourceIdentifier for resourceId, targetResourceId, roleAssignmentId, and workspaceId response properties while preserving their visibility and optionality.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</div><pre><span class="context">    * The resource id for the affected resource.</span>
+<span class="context">    */</span>
+<span class="context">   @visibility(Lifecycle.Read)</span>
+<span class="remove">-  resourceId: string;</span>
+<span class="add">+  resourceId: Azure.Core.armResourceIdentifier;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * The missing permissions.</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:218</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (0)</h4>
+<p class="empty">No directly affected REST operation.</p>
+<p id="related-findings-semantic-6b421b1ce7dd8d19"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-88b01455dd806f7b"><summary><strong><span class="action">modify</span> Add C# client-name customizations</strong></summary><div class="intent-body">
+<p>Add @@clientName customizations for C# model and property symbols, including private-access, configuration filter, permission, recommendation, validation, and workspace-evaluation types.</p>
+<p><strong>Deterministic coverage:</strong> 0 of 2 changed hunks classified. AI inference used for 2 requests.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</div><pre><span class="context"> @@clientName(Scenario, &quot;ChaosScenario&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ScenarioRun, &quot;ChaosScenarioRun&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ScenarioConfiguration, &quot;ChaosScenarioConfiguration&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(DiscoveredResource, &quot;ChaosDiscovered&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PrivateAccess, &quot;ChaosPrivateAccess&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PrivateAccessPatch, &quot;ChaosPrivateAccessPatch&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PrivateAccessProperties, &quot;ChaosPrivateAccessProperties&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ExperimentExecution, &quot;ChaosExperimentExecution&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(Experiment, &quot;ChaosExperiment&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ExperimentExecution, &quot;ChaosExperimentExecution&quot;, &quot;csharp&quot;);</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (0)</h4>
+<p class="empty">No directly affected REST operation.</p>
+<p id="related-findings-semantic-88b01455dd806f7b"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos</code></td><td>legacy</td><td><code>unknown commit@unversioned</code><br><small>base · </small></td><td><code>unknown commit@unversioned</code><br><small>current · </small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/43308">#43308</a></p>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos</code></td><td>existing-api-version</td><td><code>232dfa71843fd574be49ba91a918ee7d3e7bfec3@2026-05-01-preview</code><br><small>base · affected-existing-version</small></td><td><code>a3b8933eb6ce030faa6abc6d354fc97e30f02e96@2026-05-01-preview</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-<section><h4>Use TypeSpec-native metadata for Location-based LROs</h4>
-<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div><pre><span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/documentation-required&quot; &quot;template&quot;</span>
+<section><h4>Use ARM resource identifier scalars for resource ID properties</h4>
+<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</div><pre><span class="context">    * The resource id for the affected resource.</span>
+<span class="context">    */</span>
+<span class="context">   @visibility(Lifecycle.Read)</span>
+<span class="remove">-  resourceId: string;</span>
+<span class="add">+  resourceId: Azure.Core.armResourceIdentifier;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * The missing permissions.</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</div><pre><span class="context">    * The resource id for the affected resource.</span>
+<span class="context">    */</span>
+<span class="context">   @visibility(Lifecycle.Read)</span>
+<span class="remove">-  resourceId: string;</span>
+<span class="add">+  resourceId: Azure.Core.armResourceIdentifier;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * The error code.</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</div><pre><span class="context">    * The target Azure resource ID.</span>
+<span class="context">    */</span>
+<span class="context">   @visibility(Lifecycle.Read)</span>
+<span class="remove">-  targetResourceId: string;</span>
+<span class="add">+  targetResourceId: Azure.Core.armResourceIdentifier;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * The managed identity principal ID.</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</div><pre><span class="context">    * The created role assignment resource ID (null if failed or what-if mode).</span>
+<span class="context">    */</span>
+<span class="context">   @visibility(Lifecycle.Read)</span>
+<span class="remove">-  roleAssignmentId?: string;</span>
+<span class="add">+  roleAssignmentId?: Azure.Core.armResourceIdentifier;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * Error details if the assignment failed.</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp</div><pre><span class="context">    * The workspace ID this evaluation belongs to.</span>
+<span class="context">    */</span>
+<span class="context">   @visibility(Lifecycle.Read)</span>
+<span class="remove">-  workspaceId: string;</span>
+<span class="add">+  workspaceId: Azure.Core.armResourceIdentifier;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * The number of scenarios to evaluate.</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:218</code>, <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp:29</code></p></section><section><h4>Add C# client-name customizations</h4>
+<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</div><pre><span class="context"> @@clientName(Scenario, &quot;ChaosScenario&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ScenarioRun, &quot;ChaosScenarioRun&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ScenarioConfiguration, &quot;ChaosScenarioConfiguration&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(DiscoveredResource, &quot;ChaosDiscovered&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PrivateAccess, &quot;ChaosPrivateAccess&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PrivateAccessPatch, &quot;ChaosPrivateAccessPatch&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PrivateAccessProperties, &quot;ChaosPrivateAccessProperties&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ExperimentExecution, &quot;ChaosExperimentExecution&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(Experiment, &quot;ChaosExperiment&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ExperimentExecution, &quot;ChaosExperimentExecution&quot;, &quot;csharp&quot;);</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</div><pre><span class="context"> @@clientName(Action, &quot;ChaosAction&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ActionVersion, &quot;ChaosActionVersion&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(ActionKind, &quot;ChaosActionKind&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(</span>
+<span class="add">+  ConfigurationExclusions,</span>
+<span class="add">+  &quot;ChaosScenarioConfigurationExclusions&quot;,</span>
+<span class="add">+  &quot;csharp&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientName(</span>
+<span class="add">+  ConfigurationFilters,</span>
+<span class="add">+  &quot;ChaosScenarioConfigurationFilters&quot;,</span>
+<span class="add">+  &quot;csharp&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientName(OperationError, &quot;ChaosOperationError&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(ScenarioParameter.required, &quot;IsRequired&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(ParameterType, &quot;ChaosScenarioParameterType&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(FixResourcePermissionsRequest.whatIf, &quot;IsWhatIf&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PermissionsFix, &quot;ChaosPermissionsFixData&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(PermissionsFixProperties.whatIfMode, &quot;IsWhatIfMode&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(Recommendation, &quot;ChaosScenarioRecommendation&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(Validation, &quot;ChaosScenarioValidationData&quot;, &quot;csharp&quot;);</span>
+<span class="add">+@@clientName(WorkspaceEvaluation, &quot;ChaosWorkspaceEvaluationData&quot;, &quot;csharp&quot;);</span>
+<span class="context"> @@clientName(</span>
+<span class="context">   ActionSupportedTargetType,</span>
+<span class="context">   &quot;ChaosActionSupportedTargetType&quot;,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</code></p></section><section><h4>Model Location-based ARM LRO polling with native TypeSpec constructs</h4>
+<div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp</div><pre><span class="context"> import &quot;./scenario.models.tsp&quot;;</span>
+<span class="context"> </span>
+<span class="context"> using TypeSpec.Rest;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="context"> using Azure.ResourceManager;</span>
+<span class="context"> using Azure.Core;</span>
+<span class="context"> using Azure.Core.Traits;</span>
+<span class="context"> </span>
+<span class="context"> namespace Microsoft.Chaos;</span>
+<span class="context"> </span>
+<span class="add">+/**</span>
+<span class="add">+ * Indicates the scenario run is still in progress. Clients polling via the</span>
+<span class="add">+ * Location header should continue polling until a 200 response is returned.</span>
+<span class="add">+ * The body reflects the current run state at the time of the poll.</span>
+<span class="add">+ */</span>
+<span class="add">+model ScenarioRunInProgressResponse {</span>
+<span class="add">+  ...AcceptedResponse;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The URL where the status of the long-running operation can be polled.</span>
+<span class="add">+   */</span>
+<span class="add">+  @header(&quot;Location&quot;)</span>
+<span class="add">+  location: url;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The number of seconds the client should wait before polling again.</span>
+<span class="add">+   */</span>
+<span class="add">+  @minValue(0)</span>
+<span class="add">+  @maxValue(2147483647)</span>
+<span class="add">+  @header(&quot;Retry-After&quot;)</span>
+<span class="add">+  retryAfter?: int32;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The current scenario run state at the time of the poll.</span>
+<span class="add">+   */</span>
+<span class="add">+  @bodyRoot body: ScenarioRun;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="context"> /**</span>
+<span class="context">  * Model that represents the scenario run.</span>
+<span class="context">  */</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div><pre><span class="context"> import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
+<span class="context"> import &quot;@typespec/http&quot;;</span>
+<span class="context"> import &quot;@typespec/rest&quot;;</span>
+<span class="remove">-import &quot;@typespec/openapi&quot;;</span>
+<span class="context"> </span>
+<span class="context"> using Azure.ResourceManager;</span>
+<span class="context"> using Azure.Core;</span>
+<span class="context"> using TypeSpec.Http;</span>
+<span class="context"> using TypeSpec.Rest;</span>
+<span class="remove">-using TypeSpec.OpenAPI;</span>
+<span class="context"> </span>
+<span class="context"> namespace Microsoft.Chaos;</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</div><pre><span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/documentation-required&quot; &quot;template&quot;</span>
 <span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;template&quot;</span>
 <span class="context"> #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;Custom LRO operation with specific response codes&quot;</span>
 <span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;Required for LRO extensions in OpenAPI output&quot;</span>
@@ -105,7 +316,73 @@
 <span class="add">+@Azure.Core.useFinalStateVia(&quot;location&quot;)</span>
 <span class="context"> op ArmResourceActionNoBodyAsyncWithLocation&lt;</span>
 <span class="context">   Resource extends Azure.ResourceManager.Foundations.Resource,</span>
-<span class="context">   Request extends TypeSpec.Reflection.Model | void,</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div><pre><span class="context">   /**</span>
+<span class="context">   Request extends TypeSpec.Reflection.Model | void,</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</div><pre><span class="context"> import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
+<span class="context"> import &quot;@typespec/rest&quot;;</span>
+<span class="context"> import &quot;@typespec/http&quot;;</span>
+<span class="remove">-import &quot;@typespec/openapi&quot;;</span>
+<span class="context"> import &quot;./scenarioRun.models.tsp&quot;;</span>
+<span class="context"> import &quot;./lro-helpers.tsp&quot;;</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</div><pre><span class="context"> using TypeSpec.Versioning;</span>
+<span class="context"> using TypeSpec.Http;</span>
+<span class="context"> using TypeSpec.Rest;</span>
+<span class="remove">-using TypeSpec.OpenAPI;</span>
+<span class="context"> </span>
+<span class="context"> namespace Microsoft.Chaos;</span>
+<span class="context"> </span>
+<span class="context"> @added(Microsoft.Chaos.Versions.v2026_05_01_preview)</span>
+<span class="add">+@removed(Microsoft.Chaos.Versions.v2025_01_01)</span>
+<span class="context"> @armResourceOperations</span>
+<span class="context"> interface ScenarioRuns {</span>
+<span class="context">   /**</span>
+<span class="context">    * Get a scenario run.</span>
+<span class="add">+   *</span>
+<span class="add">+   * This endpoint is also the polling target for ScenarioConfigurations.execute</span>
+<span class="add">+   * and ScenarioRuns.cancel (final-state-via: location). While the run is in</span>
+<span class="add">+   * progress the service returns 202 with a Location header pointing back to</span>
+<span class="add">+   * this URL; clients must keep polling until they receive 200, which carries</span>
+<span class="add">+   * the final ScenarioRun body.</span>
+<span class="context">    */</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;LRO polling endpoint that returns body in both 200 and 202&quot;</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/no-response-body&quot; &quot;LRO polling endpoint returns body in 202 to reflect current status&quot;</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-core/polling-operation-no-status-monitor&quot; &quot;LRO uses final-state-via:location pattern, not status monitor&quot;</span>
+<span class="remove">-  @summary(&quot;Get a scenario run.&quot;)</span>
+<span class="remove">-  @autoRoute</span>
+<span class="remove">-  @armResourceRead(ScenarioRun)</span>
+<span class="remove">-  @get</span>
+<span class="remove">-  get(...ResourceInstanceParameters&lt;ScenarioRun&gt;):</span>
+<span class="remove">-    | ArmResponse&lt;ScenarioRun&gt;</span>
+<span class="remove">-    | (AcceptedResponse &amp; {</span>
+<span class="remove">-        @doc(&quot;The Location header contains the URL where the status of the long running operation can be checked.&quot;)</span>
+<span class="remove">-        @header(&quot;Location&quot;)</span>
+<span class="remove">-        location: string;</span>
+<span class="remove">-</span>
+<span class="remove">-        @doc(&quot;The Retry-After header can indicate how long the client should wait before polling the operation status.&quot;)</span>
+<span class="remove">-        @header(&quot;Retry-After&quot;)</span>
+<span class="remove">-        retryAfter?: int32;</span>
+<span class="remove">-</span>
+<span class="remove">-        @bodyRoot body: ScenarioRun;</span>
+<span class="remove">-      })</span>
+<span class="remove">-    | ErrorResponse;</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;LRO polling endpoint that returns body in both 200 and 202 responses.&quot;</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/no-response-body&quot; &quot;LRO polling endpoint returns body in 202 to reflect the current run state.&quot;</span>
+<span class="add">+  get is ArmResourceRead&lt;</span>
+<span class="add">+    ScenarioRun,</span>
+<span class="add">+    Response = ArmResponse&lt;ScenarioRun&gt; | ScenarioRunInProgressResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * Get a list of scenario runs.</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</div><pre><span class="context">   /**</span>
+<span class="context">    * Cancel the currently running scenario execution.</span>
+<span class="context">    */</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL&quot;</span>
+<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-core/polling-operation-no-status-monitor&quot; &quot;LRO uses final-state-via:location pattern&quot;</span>
+<span class="context">   @added(Microsoft.Chaos.Versions.v2026_05_01_preview)</span>
+<span class="remove">-  @pollingOperation(ScenarioRuns.get)</span>
+<span class="context">   cancel is ArmResourceActionNoContentAsyncWithLocationResult&lt;</span>
+<span class="context">     ScenarioRun,</span>
+<span class="context">     void,</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</div><pre><span class="context">   /**</span>
 <span class="context">    * Execute the scenario execution with the given scenario configuration.</span>
 <span class="context">    */</span>
 <span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL&quot;</span>
@@ -132,28 +409,73 @@
 <span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL&quot;</span>
 <span class="context">   fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult&lt;</span>
 <span class="context">     ScenarioConfiguration,</span>
-<span class="context">     FixResourcePermissionsRequest,</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</div><pre><span class="context">   /**</span>
-<span class="context">    * Cancel the currently running scenario execution.</span>
-<span class="context">    */</span>
-<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL&quot;</span>
-<span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-core/polling-operation-no-status-monitor&quot; &quot;LRO uses final-state-via:location pattern&quot;</span>
-<span class="context">   @added(Microsoft.Chaos.Versions.v2026_05_01_preview)</span>
-<span class="remove">-  @pollingOperation(ScenarioRuns.get)</span>
-<span class="context">   cancel is ArmResourceActionNoContentAsyncWithLocationResult&lt;</span>
-<span class="context">     ScenarioRun,</span>
-<span class="context">     void,</span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</div><pre><span class="context">   /**</span>
+<span class="context">     FixResourcePermissionsRequest,</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</div><pre><span class="context">   /**</span>
 <span class="context">    * Refreshes recommendation status for all scenarios in a given workspace.</span>
 <span class="context">    */</span>
 <span class="remove">-  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes&quot; &quot;Async LRO POST returning 202 + Location, not a synchronous POST&quot;</span>
 <span class="context">   refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult&lt;</span>
 <span class="context">     Workspace,</span>
-<span class="context">     void,</span></pre></div>
-<p class="sources"><strong>Sources:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L31">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp:22</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L60-L69">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp:60</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L95-L104">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp:95</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L53">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp:48</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L57-L63">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp:57</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L67-L72">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp:67</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L76-L81">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp:76</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L50">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp:44</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L71-L76">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp:71</a></p></section></details>
+<span class="context">     void,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp:15</code>, <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp:46</code>, <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp:16</code>, <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp:22</code>, <code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp:17</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<details class="panel"><summary><strong>Official documents</strong></summary><ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/">Azure.Core long-running operations</a> · Long-Running Operations (LRO)<blockquote>Deep Dive: Long-running (Asynchronous) Operations | TypeSpec Azure Skip to content TypeSpec Azure Docs Playground TypeSpec Core Docs Can I Use (Azure Client) Benchmarks Search... Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running</blockquote></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/">ARM long-running operations</a> · Long-Running Operations (LRO)<blockquote>Customizing Long-Running Operations | TypeSpec Azure Skip to content TypeSpec Azure Docs Playground TypeSpec Core Docs Can I Use (Azure Client) Benchmarks Search... Introduction Get started Installation Creating a project Versioning Azure Data Plane Service 1. Writing Your First Service 2. Create the service namespace 3. Defining your first resource 4. Defining standard resource operations 5. Defining long-running resource opera</blockquote></li></ul></details>
-<h3>Changed files</h3><ul><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</code> (historical)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</code> (historical)</li></ul>
-<h3>Timing and model input</h3><pre>{}</pre>
-<p><strong>Provenance:</strong> legacy assessment adapter</p></div></details></section>
+<details class="compliance-intent" id="compliance-intent-semantic-6b421b1ce7dd8d19"><summary><strong><a href="#intent-semantic-6b421b1ce7dd8d19">Use ARM resource identifier scalars for resource ID properties</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://typespec.io/docs/language-basics/scalars/">Scalars</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-88b01455dd806f7b"><summary><strong><a href="#intent-semantic-88b01455dd806f7b">Add C# client-name customizations</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/">Change provider namespace</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-c7e95ecf235ee418"><summary><strong><a href="#intent-semantic-c7e95ecf235ee418">Model Location-based ARM LRO polling with native TypeSpec constructs</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/">ARM long-running operations</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/">Azure.ResourceManager interface reference</a></li></ul>
+</div></details>
+<h3>Changed files</h3><ul><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp</code> (committed)</li><li><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp</code> (committed)</li></ul>
+<h3>Timing and model input</h3><pre>{
+  &quot;timings&quot;: {
+    &quot;totalMs&quot;: 211635,
+    &quot;semanticAnalysisMs&quot;: 206,
+    &quot;restAnalysisMs&quot;: 92,
+    &quot;downstreamAnalysisMs&quot;: 4748
+  },
+  &quot;inputAccounting&quot;: {
+    &quot;budgetTier&quot;: &quot;medium&quot;,
+    &quot;budgetBytes&quot;: 262144,
+    &quot;bytes&quot;: 171074,
+    &quot;estimatedTokens&quot;: 42769,
+    &quot;retained&quot;: {
+      &quot;sourceChanges&quot;: 8,
+      &quot;facts&quot;: 24,
+      &quot;semanticReviewUnits&quot;: 3,
+      &quot;restCandidates&quot;: 0,
+      &quot;downstreamCandidates&quot;: 16,
+      &quot;downstreamRootCauses&quot;: 1,
+      &quot;complianceSearchRequests&quot;: 3,
+      &quot;inferenceRequests&quot;: 2,
+      &quot;complianceSearchSourceBytes&quot;: 81479
+    },
+    &quot;omittedRedundant&quot;: {
+      &quot;rawEmitterArtifacts&quot;: true,
+      &quot;compilerLogs&quot;: true,
+      &quot;unchangedInventories&quot;: true,
+      &quot;unreferencedFacts&quot;: true
+    },
+    &quot;inference&quot;: {
+      &quot;requestCount&quot;: 2,
+      &quot;inferredCandidateCount&quot;: 0,
+      &quot;noImpactCount&quot;: 2,
+      &quot;blockedCount&quot;: 0
+    },
+    &quot;compliance&quot;: {
+      &quot;catalogEntriesScored&quot;: 96,
+      &quot;documentsFetched&quot;: 12,
+      &quot;documentBytesFetched&quot;: 5130665,
+      &quot;guidanceExcerptsRetained&quot;: 6,
+      &quot;guidanceExcerptBytesRetained&quot;: 1234
+    }
+  }
+}</pre>
+<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

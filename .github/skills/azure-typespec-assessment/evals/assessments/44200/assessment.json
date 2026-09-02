@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T10:34:11.713Z",
+  "generatedAt": "2026-09-02T07:24:22.607Z",
   "title": "TypeSpec assessment: specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\network-pilot\\44200\\workspaces\\44200\\head",
@@ -702,6 +702,102 @@
           },
           "title": "Preserve SDK compatibility for private frontend changes",
           "summary": "Adds language-specific names, alternate types, and legacy flattening controls so the private frontend additions preserve established generated SDK shapes.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [],
+            "complianceSearchRequestIds": [
+              "compliance-search-9b265fbe769f0156"
+            ],
+            "relatedOperationIds": [
+              "AssociationsInterface_Update"
+            ],
+            "coveredHunkIds": [],
+            "uncoveredHunkIds": [
+              "hunk-3ffde1b0b84033b7",
+              "hunk-876f824a2e4f4d22",
+              "hunk-b605dbbad3368559",
+              "hunk-c547e2ee8efcd857"
+            ],
+            "classifications": [
+              {
+                "hunkId": "hunk-3ffde1b0b84033b7",
+                "status": "unknown",
+                "reason": "unsupported-customization-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-876f824a2e4f4d22",
+                "status": "unknown",
+                "reason": "language-specific-sdk-customization-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-b605dbbad3368559",
+                "status": "unknown",
+                "reason": "language-specific-sdk-customization-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-c547e2ee8efcd857",
+                "status": "unknown",
+                "reason": "language-specific-sdk-customization-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              }
+            ],
+            "gaps": [
+              {
+                "hunkId": "hunk-3ffde1b0b84033b7",
+                "reason": "unsupported-customization-not-represented"
+              },
+              {
+                "hunkId": "hunk-876f824a2e4f4d22",
+                "reason": "language-specific-sdk-customization-not-represented"
+              },
+              {
+                "hunkId": "hunk-b605dbbad3368559",
+                "reason": "language-specific-sdk-customization-not-represented"
+              },
+              {
+                "hunkId": "hunk-c547e2ee8efcd857",
+                "reason": "language-specific-sdk-customization-not-represented"
+              }
+            ]
+          },
+          "inferenceRequired": true,
+          "inferenceResults": [
+            {
+              "requestId": "inference-request-0ebc2c7852cc44f0",
+              "hunkId": "hunk-b605dbbad3368559",
+              "decision": "no-impact",
+              "rationale": "The emitter- and language-specific compatibility customization preserves the existing SDK shape rather than changing it.",
+              "candidateIds": []
+            },
+            {
+              "requestId": "inference-request-26650180b6ca0309",
+              "hunkId": "hunk-c547e2ee8efcd857",
+              "decision": "no-impact",
+              "rationale": "The emitter- and C#-specific compatibility customizations preserve existing SDK shapes rather than changing them.",
+              "candidateIds": []
+            },
+            {
+              "requestId": "inference-request-c811f7c19aa8949e",
+              "hunkId": "hunk-876f824a2e4f4d22",
+              "decision": "no-impact",
+              "rationale": "The emitter- and C#-specific compatibility customizations preserve existing SDK shapes rather than changing them.",
+              "candidateIds": []
+            },
+            {
+              "requestId": "inference-request-f9b67ecdf7633fc0",
+              "hunkId": "hunk-3ffde1b0b84033b7",
+              "decision": "no-impact",
+              "rationale": "The emitter- and C#-specific compatibility customizations preserve existing SDK shapes rather than changing them.",
+              "candidateIds": []
+            }
+          ],
           "sources": [
             {
               "id": "source-3fd52476fb442743",
@@ -13920,6 +14016,93 @@
           },
           "title": "Add private frontend and private endpoint support",
           "summary": "Adds private frontends, private endpoint connections, private link resources, public network access controls, and their ARM lifecycle operations in new API versions.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [],
+            "complianceSearchRequestIds": [
+              "compliance-search-908b88d898b50a56"
+            ],
+            "relatedOperationIds": [
+              "AssociationsInterface_CreateOrUpdate",
+              "AssociationsInterface_Get",
+              "AssociationsInterface_ListByTrafficController",
+              "AssociationsInterface_Update",
+              "FrontendsInterface_CreateOrUpdate",
+              "FrontendsInterface_Get",
+              "FrontendsInterface_ListByTrafficController",
+              "FrontendsInterface_Update",
+              "PrivateEndpointConnectionsInterface_Delete",
+              "PrivateEndpointConnectionsInterface_Get",
+              "PrivateEndpointConnectionsInterface_ListByTrafficController",
+              "PrivateEndpointConnectionsInterface_Update",
+              "PrivateLinkResourcesInterface_Get",
+              "PrivateLinkResourcesInterface_ListByTrafficController",
+              "SecurityPoliciesInterface_CreateOrUpdate",
+              "SecurityPoliciesInterface_Get",
+              "SecurityPoliciesInterface_ListByTrafficController",
+              "SecurityPoliciesInterface_Update",
+              "TrafficControllerInterface_CreateOrUpdate",
+              "TrafficControllerInterface_Get",
+              "TrafficControllerInterface_ListByResourceGroup",
+              "TrafficControllerInterface_ListBySubscription",
+              "TrafficControllerInterface_Update"
+            ],
+            "coveredHunkIds": [
+              "hunk-497a8bdb0c830a39",
+              "hunk-4d79cd328e677e9f",
+              "hunk-9092eb2047098c0c",
+              "hunk-d2e77d6a73b6758a",
+              "hunk-efad1596b4410deb",
+              "hunk-f0be91f7314a4338"
+            ],
+            "uncoveredHunkIds": [],
+            "classifications": [
+              {
+                "hunkId": "hunk-497a8bdb0c830a39",
+                "status": "no-impact",
+                "reason": "declaration-mapped-and-contracts-compared",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-4d79cd328e677e9f",
+                "status": "no-impact",
+                "reason": "declaration-mapped-and-contracts-compared",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-9092eb2047098c0c",
+                "status": "no-impact",
+                "reason": "declaration-mapped-and-contracts-compared",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-d2e77d6a73b6758a",
+                "status": "no-impact",
+                "reason": "declaration-mapped-and-contracts-compared",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-efad1596b4410deb",
+                "status": "no-impact",
+                "reason": "declaration-mapped-and-contracts-compared",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              },
+              {
+                "hunkId": "hunk-f0be91f7314a4338",
+                "status": "no-impact",
+                "reason": "declaration-mapped-and-contracts-compared",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              }
+            ],
+            "gaps": []
+          },
+          "inferenceRequired": false,
           "sources": [
             {
               "id": "source-9dc5452d38ced6b6",
@@ -17093,6 +17276,17 @@
       "intentAssessments": [
         {
           "semanticIntentId": "semantic-7edb1932c040044d",
+          "reviewUnitId": "semantic-7edb1932c040044d",
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "guidanceSection": "Augment decorators"
+            },
+            {
+              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/directives/",
+              "guidanceSection": "Suppress directive"
+            }
+          ],
           "sourceChangeIds": [
             "source-3fd52476fb442743",
             "source-9dc5452d38ced6b6",
@@ -17108,6 +17302,88 @@
             "declaration-178118f203b06955",
             "declaration-900e6b3d46dd46a6",
             "declaration-e3f98ecdd70d44b9"
+          ],
+          "decision": "applicable-pass",
+          "expected": "Apply out-of-line customizations with augment decorators and provide an explicit diagnostic code and justification for each suppression.",
+          "actual": "The compatibility intent uses @@ augment decorators for client names, alternate types, and legacy flattening, and its suppressions include the diagnostic code and a back-compatibility justification.",
+          "rationale": "The changed compatibility syntax follows the fetched decorator and directive requirements.",
+          "gap": "The changed compatibility syntax follows the fetched decorator and directive requirements.",
+          "sourceLinks": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "startLine": 206,
+              "endLine": 210
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 119,
+              "endLine": 127
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 123,
+              "endLine": 126
+            }
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "hunkId": "hunk-c547e2ee8efcd857",
+              "lines": [
+                "+@@alternateType(",
+                "+  TrafficControllerProperties.privateEndpointConnections,",
+                "+  Azure.ResourceManager.Models.SubResource[],",
+                "+  \"csharp\"",
+                "+);",
+                "+@@alternateType(",
+                "+  FrontendAssociation.id,",
+                "+  Azure.Core.armResourceIdentifier,",
+                "+  \"csharp\"",
+                "+);",
+                "+@@alternateType(",
+                "+  FrontendAssociationUpdate.id,"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "hunkId": "hunk-876f824a2e4f4d22",
+              "lines": [
+                "+@@clientName(",
+                "+  Versions.v2025_10_01_preview,",
+                "+  \"$DO_NOT_NORMALIZE$V2025_10_01_preview\",",
+                "+  \"javascript\"",
+                "+);",
+                "+@@clientName(",
+                "+  Versions.v2026_03_01,",
+                "+  \"$DO_NOT_NORMALIZE$V2026_03_01\",",
+                "+  \"javascript\"",
+                "+);"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-b605dbbad3368559",
+              "lines": [
+                "-  @Azure.ClientGenerator.Core.Legacy.flattenProperty",
+                "+  @Azure.ClientGenerator.Core.Legacy.flattenProperty(\"!javascript\")"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
+              "hunkId": "hunk-3ffde1b0b84033b7",
+              "lines": [
+                "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+                "+  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,",
+                "+  \"autorest\"",
+                "+);",
+                "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
+                "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
+                "+  Microsoft.ServiceNetworking.PrivateLinkResource.properties,",
+                "+  \"autorest\"",
+                "+);",
+                "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\""
+              ]
+            }
           ],
           "catalogRanking": [
             {
@@ -17670,103 +17946,29 @@
               "contentHash": "sha256:681e7182fe663842c3cd8f9ec2fda5951d2f28e190c6f73f6df9cb5b36f50930"
             }
           ],
-          "reviewUnitId": "semantic-7edb1932c040044d",
-          "applicableGuidance": [
-            {
-              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "guidanceSection": "Augment decorators"
-            },
-            {
-              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/directives/",
-              "guidanceSection": "Suppress directive"
-            }
-          ],
-          "decision": "applicable-pass",
-          "expected": "Apply out-of-line customizations with augment decorators and provide an explicit diagnostic code and justification for each suppression.",
-          "actual": "The compatibility intent uses @@ augment decorators for client names, alternate types, and legacy flattening, and its suppressions include the diagnostic code and a back-compatibility justification.",
-          "rationale": "The changed compatibility syntax follows the fetched decorator and directive requirements.",
-          "gap": "The changed compatibility syntax follows the fetched decorator and directive requirements.",
-          "sourceLinks": [
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
-              "startLine": 206,
-              "endLine": 210
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 119,
-              "endLine": 127
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 123,
-              "endLine": 126
-            }
-          ],
-          "codeSnippets": [
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
-              "hunkId": "hunk-c547e2ee8efcd857",
-              "lines": [
-                "+@@alternateType(",
-                "+  TrafficControllerProperties.privateEndpointConnections,",
-                "+  Azure.ResourceManager.Models.SubResource[],",
-                "+  \"csharp\"",
-                "+);",
-                "+@@alternateType(",
-                "+  FrontendAssociation.id,",
-                "+  Azure.Core.armResourceIdentifier,",
-                "+  \"csharp\"",
-                "+);",
-                "+@@alternateType(",
-                "+  FrontendAssociationUpdate.id,"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
-              "hunkId": "hunk-876f824a2e4f4d22",
-              "lines": [
-                "+@@clientName(",
-                "+  Versions.v2025_10_01_preview,",
-                "+  \"$DO_NOT_NORMALIZE$V2025_10_01_preview\",",
-                "+  \"javascript\"",
-                "+);",
-                "+@@clientName(",
-                "+  Versions.v2026_03_01,",
-                "+  \"$DO_NOT_NORMALIZE$V2026_03_01\",",
-                "+  \"javascript\"",
-                "+);"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-b605dbbad3368559",
-              "lines": [
-                "-  @Azure.ClientGenerator.Core.Legacy.flattenProperty",
-                "+  @Azure.ClientGenerator.Core.Legacy.flattenProperty(\"!javascript\")"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
-              "hunkId": "hunk-3ffde1b0b84033b7",
-              "lines": [
-                "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
-                "+  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,",
-                "+  \"autorest\"",
-                "+);",
-                "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\"",
-                "+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(",
-                "+  Microsoft.ServiceNetworking.PrivateLinkResource.properties,",
-                "+  \"autorest\"",
-                "+);",
-                "+#suppress \"@azure-tools/typespec-azure-core/no-legacy-usage\" \"Back compatibility\""
-              ]
-            }
-          ],
           "blockers": []
         },
         {
           "semanticIntentId": "semantic-d5ac0f513678b267",
+          "reviewUnitId": "semantic-d5ac0f513678b267",
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "guidanceSection": "Private endpoint connection resources"
+            },
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "guidanceSection": "Private link resources"
+            },
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "guidanceSection": "Proxy and child resources"
+            },
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "guidanceSection": "ARM resource operation templates"
+            }
+          ],
           "sourceChangeIds": [
             "source-9dc5452d38ced6b6"
           ],
@@ -17841,6 +18043,418 @@
             "declaration-f3c7d267b6d65a52",
             "declaration-fa89799b73d2a454",
             "declaration-fbe48e4883a5c521"
+          ],
+          "decision": "applicable-fail",
+          "title": "Private endpoint resources bypass standard ARM templates",
+          "severity": "medium",
+          "expected": "Use the standard PrivateEndpointConnectionResource, PrivateEndpoints, PrivateLink, and PrivateLinks patterns for ARM private endpoint and private link surfaces.",
+          "actual": "The intent manually models PrivateEndpointConnection and PrivateLinkResource as ProxyResource types and manually declares their lifecycle interfaces.",
+          "rationale": "The emitted operations use standard ARM lifecycle templates, but the resource and operation-group composition does not use the dedicated private endpoint and private link templates documented for this scenario.",
+          "gap": "The emitted operations use standard ARM lifecycle templates, but the resource and operation-group composition does not use the dedicated private endpoint and private link templates documented for this scenario.",
+          "sourceLinks": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 17,
+              "endLine": 36
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 57,
+              "endLine": 78
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 59,
+              "endLine": 61
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 63,
+              "endLine": 65
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 63,
+              "endLine": 65
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 67,
+              "endLine": 69
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 67,
+              "endLine": 69
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 71,
+              "endLine": 73
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 75,
+              "endLine": 77
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 80,
+              "endLine": 90
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 85,
+              "endLine": 86
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 88,
+              "endLine": 89
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 92,
+              "endLine": 97
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 95,
+              "endLine": 96
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 99,
+              "endLine": 104
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 102,
+              "endLine": 103
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 107,
+              "endLine": 117
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 291,
+              "endLine": 322
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 305,
+              "endLine": 308
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 310,
+              "endLine": 313
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 315,
+              "endLine": 317
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 315,
+              "endLine": 317
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 351,
+              "endLine": 355
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 353,
+              "endLine": 354
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 358,
+              "endLine": 370
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 363,
+              "endLine": 369
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 363,
+              "endLine": 369
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 372,
+              "endLine": 385
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 375,
+              "endLine": 377
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 379,
+              "endLine": 380
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 382,
+              "endLine": 384
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 387,
+              "endLine": 393
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 390,
+              "endLine": 392
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 395,
+              "endLine": 406
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 398,
+              "endLine": 399
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 401,
+              "endLine": 402
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 404,
+              "endLine": 405
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 408,
+              "endLine": 424
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 413,
+              "endLine": 414
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 416,
+              "endLine": 417
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 419,
+              "endLine": 420
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 422,
+              "endLine": 423
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 427,
+              "endLine": 438
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 431,
+              "endLine": 437
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 431,
+              "endLine": 437
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 440,
+              "endLine": 458
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 443,
+              "endLine": 445
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 447,
+              "endLine": 449
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 451,
+              "endLine": 453
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 455,
+              "endLine": 457
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 461,
+              "endLine": 473
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 520,
+              "endLine": 541
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 540,
+              "endLine": 540
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 543,
+              "endLine": 550
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 546,
+              "endLine": 546
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 547,
+              "endLine": 547
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 548,
+              "endLine": 548
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 549,
+              "endLine": 549
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 552,
+              "endLine": 557
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 555,
+              "endLine": 555
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 556,
+              "endLine": 556
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "startLine": 559,
+              "endLine": 559
+            }
+          ],
+          "codeSnippets": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-497a8bdb0c830a39",
+              "lines": [
+                "+",
+                "+  /** 2025-10-01 preview version */",
+                "+  v2025_10_01_preview: \"2025-10-01-preview\",",
+                "+",
+                "+  /** 2026-03-01 stable version */",
+                "+  v2026_03_01: \"2026-03-01\","
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-efad1596b4410deb",
+              "lines": [
+                "+  /** Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend. */",
+                "+  @added(Versions.v2025_10_01_preview)",
+                "+  publicNetworkAccess?: PublicNetworkAccess;",
+                "+",
+                "+  /** Reference to an Association resource that contains the subnet where the private frontend should be deployed. */",
+                "+  @added(Versions.v2025_10_01_preview)",
+                "+  association?: FrontendAssociation;",
+                "+"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-9092eb2047098c0c",
+              "lines": [
+                "+/** Whether public network access is allowed for the frontend. */",
+                "+@added(Versions.v2025_10_01_preview)",
+                "+union PublicNetworkAccess {",
+                "+  string,",
+                "+",
+                "+  /** Public network access is enabled (public frontend accessible via a public IP address). */",
+                "+  Enabled: \"Enabled\",",
+                "+",
+                "+  /** Public network access is disabled (private frontend accessible only through a private endpoint). */",
+                "+  Disabled: \"Disabled\",",
+                "+}",
+                "+"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-d2e77d6a73b6758a",
+              "lines": [
+                "+  /** Private Endpoint Connections List */",
+                "+  @visibility(Lifecycle.Read)",
+                "+  @added(Versions.v2025_10_01_preview)",
+                "+  privateEndpointConnections?: ResourceId[];",
+                "+"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-4d79cd328e677e9f",
+              "lines": [
+                "+//----------------------- PrivateEndpointConnection -----------------------",
+                "+/** Private Endpoint Connection resource of Traffic Controller. */",
+                "+@added(Versions.v2025_10_01_preview)",
+                "+@parentResource(TrafficController)",
+                "+model PrivateEndpointConnection",
+                "+  is ProxyResource<PrivateEndpointConnectionProperties> {",
+                "+  /** Private Endpoint Connection */",
+                "+  @key(\"privateEndpointConnectionName\")",
+                "+  @visibility(Lifecycle.Read)",
+                "+  @path",
+                "+  @segment(\"privateEndpointConnections\")",
+                "+  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")"
+              ]
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "hunkId": "hunk-f0be91f7314a4338",
+              "lines": [
+                "+@added(Versions.v2025_10_01_preview)",
+                "+@armResourceOperations",
+                "+interface PrivateEndpointConnectionsInterface {",
+                "+  get is ArmResourceRead<PrivateEndpointConnection>;",
+                "+  update is ArmResourceCreateOrReplaceSync<PrivateEndpointConnection>;",
+                "+  delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>;",
+                "+  listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>;",
+                "+}",
+                "+",
+                "+@added(Versions.v2025_10_01_preview)",
+                "+@armResourceOperations",
+                "+interface PrivateLinkResourcesInterface {"
+              ]
+            }
           ],
           "catalogRanking": [
             {
@@ -18679,437 +19293,6 @@
               "contentHash": "sha256:135fa1d040e2c4abe3428a5cd52df63025b691e26697cff2ef3bf10f9963c2ac"
             }
           ],
-          "reviewUnitId": "semantic-d5ac0f513678b267",
-          "applicableGuidance": [
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
-              "guidanceSection": "Private endpoint connection resources"
-            },
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
-              "guidanceSection": "Private link resources"
-            },
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
-              "guidanceSection": "Proxy and child resources"
-            },
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-              "guidanceSection": "ARM resource operation templates"
-            }
-          ],
-          "decision": "applicable-fail",
-          "title": "Private endpoint resources bypass standard ARM templates",
-          "severity": "medium",
-          "expected": "Use the standard PrivateEndpointConnectionResource, PrivateEndpoints, PrivateLink, and PrivateLinks patterns for ARM private endpoint and private link surfaces.",
-          "actual": "The intent manually models PrivateEndpointConnection and PrivateLinkResource as ProxyResource types and manually declares their lifecycle interfaces.",
-          "rationale": "The emitted operations use standard ARM lifecycle templates, but the resource and operation-group composition does not use the dedicated private endpoint and private link templates documented for this scenario.",
-          "gap": "The emitted operations use standard ARM lifecycle templates, but the resource and operation-group composition does not use the dedicated private endpoint and private link templates documented for this scenario.",
-          "sourceLinks": [
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 17,
-              "endLine": 36
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 57,
-              "endLine": 78
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 59,
-              "endLine": 61
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 63,
-              "endLine": 65
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 63,
-              "endLine": 65
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 67,
-              "endLine": 69
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 67,
-              "endLine": 69
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 71,
-              "endLine": 73
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 75,
-              "endLine": 77
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 80,
-              "endLine": 90
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 85,
-              "endLine": 86
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 88,
-              "endLine": 89
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 92,
-              "endLine": 97
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 95,
-              "endLine": 96
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 99,
-              "endLine": 104
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 102,
-              "endLine": 103
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 107,
-              "endLine": 117
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 291,
-              "endLine": 322
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 305,
-              "endLine": 308
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 310,
-              "endLine": 313
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 315,
-              "endLine": 317
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 315,
-              "endLine": 317
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 351,
-              "endLine": 355
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 353,
-              "endLine": 354
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 358,
-              "endLine": 370
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 363,
-              "endLine": 369
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 363,
-              "endLine": 369
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 372,
-              "endLine": 385
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 375,
-              "endLine": 377
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 379,
-              "endLine": 380
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 382,
-              "endLine": 384
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 387,
-              "endLine": 393
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 390,
-              "endLine": 392
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 395,
-              "endLine": 406
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 398,
-              "endLine": 399
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 401,
-              "endLine": 402
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 404,
-              "endLine": 405
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 408,
-              "endLine": 424
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 413,
-              "endLine": 414
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 416,
-              "endLine": 417
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 419,
-              "endLine": 420
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 422,
-              "endLine": 423
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 427,
-              "endLine": 438
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 431,
-              "endLine": 437
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 431,
-              "endLine": 437
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 440,
-              "endLine": 458
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 443,
-              "endLine": 445
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 447,
-              "endLine": 449
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 451,
-              "endLine": 453
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 455,
-              "endLine": 457
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 461,
-              "endLine": 473
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 520,
-              "endLine": 541
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 540,
-              "endLine": 540
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 543,
-              "endLine": 550
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 546,
-              "endLine": 546
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 547,
-              "endLine": 547
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 548,
-              "endLine": 548
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 549,
-              "endLine": 549
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 552,
-              "endLine": 557
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 555,
-              "endLine": 555
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 556,
-              "endLine": 556
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "startLine": 559,
-              "endLine": 559
-            }
-          ],
-          "codeSnippets": [
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-497a8bdb0c830a39",
-              "lines": [
-                "+",
-                "+  /** 2025-10-01 preview version */",
-                "+  v2025_10_01_preview: \"2025-10-01-preview\",",
-                "+",
-                "+  /** 2026-03-01 stable version */",
-                "+  v2026_03_01: \"2026-03-01\","
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-efad1596b4410deb",
-              "lines": [
-                "+  /** Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend. */",
-                "+  @added(Versions.v2025_10_01_preview)",
-                "+  publicNetworkAccess?: PublicNetworkAccess;",
-                "+",
-                "+  /** Reference to an Association resource that contains the subnet where the private frontend should be deployed. */",
-                "+  @added(Versions.v2025_10_01_preview)",
-                "+  association?: FrontendAssociation;",
-                "+"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-9092eb2047098c0c",
-              "lines": [
-                "+/** Whether public network access is allowed for the frontend. */",
-                "+@added(Versions.v2025_10_01_preview)",
-                "+union PublicNetworkAccess {",
-                "+  string,",
-                "+",
-                "+  /** Public network access is enabled (public frontend accessible via a public IP address). */",
-                "+  Enabled: \"Enabled\",",
-                "+",
-                "+  /** Public network access is disabled (private frontend accessible only through a private endpoint). */",
-                "+  Disabled: \"Disabled\",",
-                "+}",
-                "+"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-d2e77d6a73b6758a",
-              "lines": [
-                "+  /** Private Endpoint Connections List */",
-                "+  @visibility(Lifecycle.Read)",
-                "+  @added(Versions.v2025_10_01_preview)",
-                "+  privateEndpointConnections?: ResourceId[];",
-                "+"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-4d79cd328e677e9f",
-              "lines": [
-                "+//----------------------- PrivateEndpointConnection -----------------------",
-                "+/** Private Endpoint Connection resource of Traffic Controller. */",
-                "+@added(Versions.v2025_10_01_preview)",
-                "+@parentResource(TrafficController)",
-                "+model PrivateEndpointConnection",
-                "+  is ProxyResource<PrivateEndpointConnectionProperties> {",
-                "+  /** Private Endpoint Connection */",
-                "+  @key(\"privateEndpointConnectionName\")",
-                "+  @visibility(Lifecycle.Read)",
-                "+  @path",
-                "+  @segment(\"privateEndpointConnections\")",
-                "+  @pattern(\"^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$\")"
-              ]
-            },
-            {
-              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
-              "hunkId": "hunk-f0be91f7314a4338",
-              "lines": [
-                "+@added(Versions.v2025_10_01_preview)",
-                "+@armResourceOperations",
-                "+interface PrivateEndpointConnectionsInterface {",
-                "+  get is ArmResourceRead<PrivateEndpointConnection>;",
-                "+  update is ArmResourceCreateOrReplaceSync<PrivateEndpointConnection>;",
-                "+  delete is ArmResourceDeleteWithoutOkAsync<PrivateEndpointConnection>;",
-                "+  listByTrafficController is ArmResourceListByParent<PrivateEndpointConnection>;",
-                "+}",
-                "+",
-                "+@added(Versions.v2025_10_01_preview)",
-                "+@armResourceOperations",
-                "+interface PrivateLinkResourcesInterface {"
-              ]
-            }
-          ],
           "blockers": []
         }
       ],
@@ -19879,6 +20062,7 @@
   "blockers": [],
   "provenance": {
     "modelInput": "model-input.json",
+    "inference": "inference.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
     "preparationManifest": "preparation-manifest.json"
@@ -19886,23 +20070,30 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 103792,
-    "estimatedTokens": 25948,
+    "bytes": 115329,
+    "estimatedTokens": 28833,
     "retained": {
       "sourceChanges": 3,
-      "facts": 2,
+      "facts": 4,
       "semanticReviewUnits": 2,
       "restCandidates": 0,
       "downstreamCandidates": 1,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 2,
-      "complianceSearchSourceBytes": 86133
+      "inferenceRequests": 4,
+      "complianceSearchSourceBytes": 86231
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true
+    },
+    "inference": {
+      "requestCount": 4,
+      "inferredCandidateCount": 0,
+      "noImpactCount": 4,
+      "blockedCount": 0
     },
     "compliance": {
       "catalogEntriesScored": 64,
@@ -19918,9 +20109,5 @@
     "restAnalysisMs": 60,
     "downstreamAnalysisMs": 1380
   },
-  "pr": 44200,
-  "pullRequest": {
-    "number": 44200,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44200"
-  }
+  "pr": 44200
 }

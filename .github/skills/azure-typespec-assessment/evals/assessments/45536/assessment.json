@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T11:23:17.751Z",
+  "generatedAt": "2026-09-02T07:24:23.374Z",
   "title": "TypeSpec assessment: specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45536\\head",
@@ -79,6 +79,43 @@
           "changedAspects": [],
           "title": "Preserve Java enum member names",
           "summary": "Adds Java-specific @@clientName augment decorators to six existing Consumption enum members so generated Java SDK symbols retain their released uppercase names without changing REST operations.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [],
+            "complianceSearchRequestIds": [
+              "compliance-search-d60881e7d2a3f496"
+            ],
+            "relatedOperationIds": [],
+            "coveredHunkIds": [],
+            "uncoveredHunkIds": [
+              "hunk-eecc1413cf4aeedb"
+            ],
+            "classifications": [
+              {
+                "hunkId": "hunk-eecc1413cf4aeedb",
+                "status": "unknown",
+                "reason": "language-specific-sdk-customization-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              }
+            ],
+            "gaps": [
+              {
+                "hunkId": "hunk-eecc1413cf4aeedb",
+                "reason": "language-specific-sdk-customization-not-represented"
+              }
+            ]
+          },
+          "inferenceRequired": true,
+          "inferenceResults": [
+            {
+              "requestId": "inference-request-5944e22ab7ab5f44",
+              "hunkId": "hunk-eecc1413cf4aeedb",
+              "decision": "no-impact",
+              "rationale": "The Java client names preserve released enum member names; no breaking SDK symbol change is inferred.",
+              "candidateIds": []
+            }
+          ],
           "sources": [
             {
               "id": "source-c1e2c387eea01645",
@@ -146,19 +183,19 @@
       "blockers": []
     },
     "compliance": {
-      "status": "not-assessed",
-      "summary": "Compliance evidence or Semantic intent coverage is incomplete.",
+      "status": "passed",
+      "summary": "All Semantic intents were assessed; no applicable guidance was found for one or more intents.",
       "coverage": {
         "semanticIntentCount": 1,
-        "assessedIntentCount": 0,
+        "assessedIntentCount": 1,
         "selectedDocumentCount": 4,
-        "unassessedIntentIds": [
-          "semantic-5c37e529c22fc782"
-        ]
+        "unassessedIntentIds": []
       },
       "intentAssessments": [
         {
           "semanticIntentId": "semantic-5c37e529c22fc782",
+          "reviewUnitId": "semantic-5c37e529c22fc782",
+          "applicableGuidance": [],
           "sourceChangeIds": [
             "source-c1e2c387eea01645"
           ],
@@ -166,6 +203,27 @@
             "hunk-eecc1413cf4aeedb"
           ],
           "declarationIds": [],
+          "decision": "no-applicable-guidance",
+          "actual": "The change adds six Java-specific @@clientName augment decorators to existing enum members in client.tsp.",
+          "rationale": "The four highest-ranked fetched catalog documents do not provide @clientName-specific normative guidance, and the bounded deterministic request contains no declaration IDs to support a source-linked applicability judgment.",
+          "gap": "The four highest-ranked fetched catalog documents do not provide @clientName-specific normative guidance, and the bounded deterministic request contains no declaration IDs to support a source-linked applicability judgment.",
+          "sourceLinks": [],
+          "codeSnippets": [
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "hunkId": "hunk-eecc1413cf4aeedb",
+              "lines": [
+                "+",
+                "+// Preserve Java enum value names from the released SDK.",
+                "+@@clientName(Metrictype.ActualCostMetricType, \"ACTUALCOST\", \"java\");",
+                "+@@clientName(Metrictype.AmortizedCostMetricType, \"AMORTIZEDCOST\", \"java\");",
+                "+@@clientName(Metrictype.UsageMetricType, \"USAGE\", \"java\");",
+                "+@@clientName(Datagrain.DailyGrain, \"DAILY\", \"java\");",
+                "+@@clientName(Datagrain.MonthlyGrain, \"MONTHLY\", \"java\");",
+                "+@@clientName(LookBackPeriod.Last07Days, \"LAST7DAYS\", \"java\");"
+              ]
+            }
+          ],
           "catalogRanking": [
             {
               "rank": 1,
@@ -690,42 +748,12 @@
               "contentHash": "sha256:9b82a56ecf5d3502dc8a638878d4ed20c9c98236acf74158c6046e82da75e0a4"
             }
           ],
-          "reviewUnitId": "semantic-5c37e529c22fc782",
-          "applicableGuidance": [],
-          "decision": "not-assessed",
-          "actual": "The change adds six Java-specific @@clientName augment decorators to existing enum members in client.tsp.",
-          "rationale": "The four highest-ranked fetched catalog documents do not provide @clientName-specific normative guidance, and the bounded deterministic request contains no declaration IDs to support a source-linked applicability judgment.",
-          "gap": "The four highest-ranked fetched catalog documents do not provide @clientName-specific normative guidance, and the bounded deterministic request contains no declaration IDs to support a source-linked applicability judgment.",
-          "sourceLinks": [],
-          "codeSnippets": [
-            {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
-              "hunkId": "hunk-eecc1413cf4aeedb",
-              "lines": [
-                "+",
-                "+// Preserve Java enum value names from the released SDK.",
-                "+@@clientName(Metrictype.ActualCostMetricType, \"ACTUALCOST\", \"java\");",
-                "+@@clientName(Metrictype.AmortizedCostMetricType, \"AMORTIZEDCOST\", \"java\");",
-                "+@@clientName(Metrictype.UsageMetricType, \"USAGE\", \"java\");",
-                "+@@clientName(Datagrain.DailyGrain, \"DAILY\", \"java\");",
-                "+@@clientName(Datagrain.MonthlyGrain, \"MONTHLY\", \"java\");",
-                "+@@clientName(LookBackPeriod.Last07Days, \"LAST7DAYS\", \"java\");"
-              ]
-            }
-          ],
-          "blockers": [
-            "no-material-declarations: no changed declaration could be compared."
-          ]
+          "blockers": []
         }
       ],
       "findings": [],
       "retrievalFailures": [],
-      "blockers": [
-        {
-          "reviewUnitId": "semantic-5c37e529c22fc782",
-          "message": "no-material-declarations: no changed declaration could be compared."
-        }
-      ]
+      "blockers": []
     },
     "documentQuality": {
       "status": "not-assessed",
@@ -938,11 +966,10 @@
       }
     }
   ],
-  "blockers": [
-    "Azure Compliance is not assessed because the official catalog provides no @clientName-specific normative guidance for the changed Java enum-member customization."
-  ],
+  "blockers": [],
   "provenance": {
     "modelInput": "model-input.json",
+    "inference": "inference.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
     "preparationManifest": "preparation-manifest.json"
@@ -950,8 +977,8 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 4801,
-    "estimatedTokens": 1201,
+    "bytes": 6295,
+    "estimatedTokens": 1574,
     "retained": {
       "sourceChanges": 1,
       "facts": 0,
@@ -960,13 +987,20 @@
       "downstreamCandidates": 0,
       "downstreamRootCauses": 0,
       "complianceSearchRequests": 1,
-      "complianceSearchSourceBytes": 2279
+      "inferenceRequests": 1,
+      "complianceSearchSourceBytes": 2328
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true
+    },
+    "inference": {
+      "requestCount": 1,
+      "inferredCandidateCount": 0,
+      "noImpactCount": 1,
+      "blockedCount": 0
     },
     "compliance": {
       "catalogEntriesScored": 32,
@@ -982,9 +1016,5 @@
     "restAnalysisMs": 27,
     "downstreamAnalysisMs": 2444
   },
-  "pr": 45536,
-  "pullRequest": {
-    "number": 45536,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45536"
-  }
+  "pr": 45536
 }

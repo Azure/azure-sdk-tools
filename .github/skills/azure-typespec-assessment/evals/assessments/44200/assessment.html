@@ -58,6 +58,7 @@
 </section>
 <section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-d5ac0f513678b267"><summary><strong><span class="action">modify</span> Add private frontend and private endpoint support</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-6741ad7c2b22f12d">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>Adds private frontends, private endpoint connections, private link resources, public network access controls, and their ARM lifecycle operations in new API versions.</p>
+<p><strong>Deterministic coverage:</strong> 6 of 6 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context"> </span>
 <span class="context">   /** 2025-03-01 preview version */</span>
@@ -87,6 +88,7 @@
 </div></details>
 <details class="intent" id="intent-semantic-7edb1932c040044d"><summary><strong><span class="action">modify</span> Preserve SDK compatibility for private frontend changes</strong></summary><div class="intent-body">
 <p>Adds language-specific names, alternate types, and legacy flattening controls so the private frontend additions preserve established generated SDK shapes.</p>
+<p><strong>Deterministic coverage:</strong> 0 of 4 changed hunks classified. AI inference used for 4 requests.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context"> </span>
 <span class="context">   /** The resource-specific properties for this resource. */</span>
@@ -105,9 +107,9 @@
 <p id="related-findings-semantic-7edb1932c040044d"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking</code></td><td>new-api-version</td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2025-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2026-03-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44200">#44200</a></p>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking</code></td><td>new-api-version</td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2025-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2026-03-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
 <details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
 <section><h4>Preserve SDK compatibility for private frontend changes</h4>
 <div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</div><pre><span class="context">   Azure.ResourceManager.Models.SubResource[],</span>
@@ -407,23 +409,30 @@
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 103792,
-    &quot;estimatedTokens&quot;: 25948,
+    &quot;bytes&quot;: 115329,
+    &quot;estimatedTokens&quot;: 28833,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 3,
-      &quot;facts&quot;: 2,
+      &quot;facts&quot;: 4,
       &quot;semanticReviewUnits&quot;: 2,
       &quot;restCandidates&quot;: 0,
       &quot;downstreamCandidates&quot;: 1,
       &quot;downstreamRootCauses&quot;: 1,
       &quot;complianceSearchRequests&quot;: 2,
-      &quot;complianceSearchSourceBytes&quot;: 86133
+      &quot;inferenceRequests&quot;: 4,
+      &quot;complianceSearchSourceBytes&quot;: 86231
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
       &quot;unreferencedFacts&quot;: true
+    },
+    &quot;inference&quot;: {
+      &quot;requestCount&quot;: 4,
+      &quot;inferredCandidateCount&quot;: 0,
+      &quot;noImpactCount&quot;: 4,
+      &quot;blockedCount&quot;: 0
     },
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 64,
@@ -434,7 +443,7 @@
     }
   }
 }</pre>
-<p><strong>Provenance:</strong> model-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
+<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

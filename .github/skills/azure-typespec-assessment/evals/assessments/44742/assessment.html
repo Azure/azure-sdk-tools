@@ -5,243 +5,306 @@
 :root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#fee2e2;color:#991b1b}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
 .tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
 </style></head><body>
-<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Remove special NFS item contracts from 2026-12-06</h1>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>4 TypeSpec changes for FileStorage</h1>
 <p class="hero-meta">TypeSpec source diff: <code>e75a07cd7ea1b2207190a362305db02b639715ec</code> → <code>656ca8b0741973760f8a60ee0fd293ba9c31e708</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 findings<br>1 documents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">2 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 3 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">4 findings<br>4/4 intents assessed</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 4</div><div class="summary-label">Semantic intents</div><div class="summary-detail">10 operations<br>0 Added, 4 Modified, 0 Removed</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> 6</div><div class="summary-label">REST breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 17</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">11 direct · 6 from REST breaking</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
 <main class="container">
-<section id="rest-breaking"><h2>REST breaking changes (3)</h2><details class="finding high" id="finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">
-<summary><span class="severity high">high</span><strong>Operation parameter contract changes</strong></summary>
-<div class="finding-body">
-<p>The compact type remains array&lt;string&gt;, but the source removes special-file include values from the existing API contract.</p>
-<dl class="legacy-operation-evidence">
-<dt>Affected operation</dt><dd><code>Directory_ListFilesAndDirectoriesSegment</code></dd>
-<dt>API version</dt><dd><code>2026-12-06</code></dd>
-<dt>HTTP request</dt><dd><code>GET /?restype=directory&amp;comp=list</code></dd>
-<dt>Contract impact</dt><dd>1 parameter contract changed</dd>
-</dl>
-
-<p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-remove-special-nfs-items"><code>version-lineage-remove-special-nfs-items</code></a></p>
-<p class="sources"><strong>Changed TypeSpec:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">specification/storage/data-plane/FileStorage/models.tsp:284</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">specification/storage/data-plane/FileStorage/models.tsp:389</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">specification/storage/data-plane/FileStorage/models.tsp:525</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">specification/storage/data-plane/FileStorage/models.tsp:544</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">specification/storage/data-plane/FileStorage/models.tsp:590</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">specification/storage/data-plane/FileStorage/models.tsp:609</a></p>
+<section id="rest-breaking"><h2>REST breaking changes (6)</h2><details class="finding high" id="rest-contract-Directory_ListFilesAndDirectoriesSegment"><summary><span class="severity high">high</span><strong>Directory_ListFilesAndDirectoriesSegment</strong><span class="tag rest-breaking-tag">REST contract</span><span class="finding-summary-meta">1 contract changes — 1 affected REST operations</span></summary>
+<div class="finding-body"><span id="finding-rest-814ae5ff671ca56d"></span>
+<p><strong>REST contract:</strong> <code>Directory_ListFilesAndDirectoriesSegment</code></p>
+<h4>Breaking changes</h4>
+<table><thead><tr><th>Contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><code>include</code></td><td><code class="delta-before">query:include · ListFilesIncludeType { All | Attributes | Etag | LinkCount | NfsAttributes | PermissionKey | Permissions | Timestamps }[]</code></td><td><code class="delta-after">query:include · ListFilesIncludeType { Attributes | Etag | PermissionKey | Timestamps }[]</code></td></tr></tbody></table>
+<p><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Parameter include has a different wire type. Existing clients or response consumers can fail without migration.</p>
+<h4>Affected REST operations (1)</h4>
+<div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
+<p class="sources"><strong>Changed TypeSpec:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p>
 </div></details>
-<details class="finding high" id="finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">
-<summary><span class="severity high">high</span><strong>Operation response contract changes</strong></summary>
-<div class="finding-body">
-<p>The top-level schema name is stable, but its XML payload loses five collections and their item models, breaking consumers of existing 2026-12-06 responses.</p>
-<dl class="legacy-operation-evidence">
-<dt>Affected operation</dt><dd><code>Directory_ListFilesAndDirectoriesSegment</code></dd>
-<dt>API version</dt><dd><code>2026-12-06</code></dd>
-<dt>HTTP request</dt><dd><code>GET /?restype=directory&amp;comp=list</code></dd>
-<dt>Contract impact</dt><dd>Existing response contract changed</dd>
-</dl>
-
-<p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-remove-special-nfs-items"><code>version-lineage-remove-special-nfs-items</code></a></p>
-<p class="sources"><strong>Changed TypeSpec:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">specification/storage/data-plane/FileStorage/models.tsp:284</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">specification/storage/data-plane/FileStorage/models.tsp:389</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">specification/storage/data-plane/FileStorage/models.tsp:525</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">specification/storage/data-plane/FileStorage/models.tsp:544</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">specification/storage/data-plane/FileStorage/models.tsp:590</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">specification/storage/data-plane/FileStorage/models.tsp:609</a></p>
+<details class="finding high" id="rest-contract-DirectoryItem"><summary><span class="severity high">high</span><strong>DirectoryItem</strong><span class="tag rest-breaking-tag">REST contract</span><span class="finding-summary-meta">1 contract changes — 1 affected REST operations</span></summary>
+<div class="finding-body"><span id="finding-rest-fdb35eba9b4a437b"></span>
+<p><strong>REST contract:</strong> <code>DirectoryItem</code></p>
+<h4>Breaking changes</h4>
+<table><thead><tr><th>Contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><code>response 200.segment.directoryItems[].linkCount</code></td><td><code class="delta-before">integer int64</code></td><td><span class="not-assessed">removed</span></td></tr></tbody></table>
+<p><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.directoryItems[].linkCount. Existing clients or response consumers can fail without migration.</p>
+<h4>Affected REST operations (1)</h4>
+<div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
+<p class="sources"><strong>Changed TypeSpec:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p>
 </div></details>
-<details class="finding high" id="finding-rest-3-parameter-contract-changed-2026-12-06-put">
-<summary><span class="severity high">high</span><strong>Operation parameter contract changes</strong></summary>
-<div class="finding-body">
-<p>The header remains summarized as string, but previously supported x-ms-file-file-type values are removed.</p>
-<dl class="legacy-operation-evidence">
-<dt>Affected operation</dt><dd><code>File_Create</code></dd>
-<dt>API version</dt><dd><code>2026-12-06</code></dd>
-<dt>HTTP request</dt><dd><code>PUT /</code></dd>
-<dt>Contract impact</dt><dd>1 parameter contract changed</dd>
-</dl>
-
-<p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-remove-special-nfs-items"><code>version-lineage-remove-special-nfs-items</code></a></p>
-<p class="sources"><strong>Changed TypeSpec:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">specification/storage/data-plane/FileStorage/models.tsp:284</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">specification/storage/data-plane/FileStorage/models.tsp:389</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">specification/storage/data-plane/FileStorage/models.tsp:525</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">specification/storage/data-plane/FileStorage/models.tsp:544</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">specification/storage/data-plane/FileStorage/models.tsp:590</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">specification/storage/data-plane/FileStorage/models.tsp:609</a></p>
+<details class="finding high" id="rest-contract-FileItem"><summary><span class="severity high">high</span><strong>FileItem</strong><span class="tag rest-breaking-tag">REST contract</span><span class="finding-summary-meta">1 contract changes — 1 affected REST operations</span></summary>
+<div class="finding-body"><span id="finding-rest-0cd75525200e9511"></span>
+<p><strong>REST contract:</strong> <code>FileItem</code></p>
+<h4>Breaking changes</h4>
+<table><thead><tr><th>Contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><code>response 200.segment.fileItems[].linkCount</code></td><td><code class="delta-before">integer int64</code></td><td><span class="not-assessed">removed</span></td></tr></tbody></table>
+<p><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].linkCount. Existing clients or response consumers can fail without migration.</p>
+<h4>Affected REST operations (1)</h4>
+<div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
+<p class="sources"><strong>Changed TypeSpec:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p>
+</div></details>
+<details class="finding high" id="rest-contract-FileProperty"><summary><span class="severity high">high</span><strong>FileProperty</strong><span class="tag rest-breaking-tag">REST contract</span><span class="finding-summary-meta">6 contract changes — 1 affected REST operations</span></summary>
+<div class="finding-body"><span id="finding-rest-402a485ae3b32abc"></span><span id="finding-rest-535074d4c7f1658d"></span><span id="finding-rest-7caacb2c7618b491"></span><span id="finding-rest-80d136d55e4f5925"></span><span id="finding-rest-916e14457028acee"></span><span id="finding-rest-cfe1b4f6736a23a2"></span>
+<p><strong>REST contract:</strong> <code>FileProperty</code></p>
+<h4>Breaking changes</h4>
+<table><thead><tr><th>Contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><code>response 200.segment.fileItems[].properties.group</code></td><td><code class="delta-before">string</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.directoryItems[].properties.group</code></td><td><code class="delta-before">string</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.fileItems[].properties.owner</code></td><td><code class="delta-before">string</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.fileItems[].properties.fileMode</code></td><td><code class="delta-before">string</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.directoryItems[].properties.owner</code></td><td><code class="delta-before">string</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.directoryItems[].properties.fileMode</code></td><td><code class="delta-before">string</code></td><td><span class="not-assessed">removed</span></td></tr></tbody></table>
+<p><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].properties.group. Existing clients or response consumers can fail without migration.</p>
+<h4>Affected REST operations (1)</h4>
+<div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
+<p class="sources"><strong>Changed TypeSpec:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p>
+</div></details>
+<details class="finding high" id="rest-contract-FilesAndDirectoriesListSegment"><summary><span class="severity high">high</span><strong>FilesAndDirectoriesListSegment</strong><span class="tag rest-breaking-tag">REST contract</span><span class="finding-summary-meta">5 contract changes — 1 affected REST operations</span></summary>
+<div class="finding-body"><span id="finding-rest-1ce4c2e3d9fc4a70"></span><span id="finding-rest-482965ab982d78d0"></span><span id="finding-rest-4b444afe702899ca"></span><span id="finding-rest-4e240c81b037a8d8"></span><span id="finding-rest-ef7444f1bbc4fa0f"></span>
+<p><strong>REST contract:</strong> <code>FilesAndDirectoriesListSegment</code></p>
+<h4>Breaking changes</h4>
+<table><thead><tr><th>Contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><code>response 200.segment.fifoItems</code></td><td><code class="delta-before">FifoItem[]</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.charDeviceItems</code></td><td><code class="delta-before">CharDeviceItem[]</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.socketItems</code></td><td><code class="delta-before">SocketItem[]</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.symLinkItems</code></td><td><code class="delta-before">SymLinkItem[]</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>response 200.segment.blockDeviceItems</code></td><td><code class="delta-before">BlockDeviceItem[]</code></td><td><span class="not-assessed">removed</span></td></tr></tbody></table>
+<p><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fifoItems. Existing clients or response consumers can fail without migration.</p>
+<h4>Affected REST operations (1)</h4>
+<div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
+<p class="sources"><strong>Changed TypeSpec:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p>
+</div></details>
+<details class="finding high" id="rest-contract-NfsFileType"><summary><span class="severity high">high</span><strong>NfsFileType</strong><span class="tag rest-breaking-tag">REST contract</span><span class="finding-summary-meta">8 contract changes — 7 affected REST operations</span></summary>
+<div class="finding-body"><span id="finding-rest-00534218fd96f5ec"></span><span id="finding-rest-602755e363934a01"></span><span id="finding-rest-7cb939c12a3a0829"></span><span id="finding-rest-b9b027f2659bd666"></span><span id="finding-rest-c6f13c7a797667ec"></span><span id="finding-rest-dfd9ab5766765c21"></span><span id="finding-rest-e1dddfbaea78586f"></span><span id="finding-rest-e44caa5e57a6060c"></span>
+<p><strong>REST contract:</strong> <code>NfsFileType</code></p>
+<h4>Breaking changes</h4>
+<table><thead><tr><th>Contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><code>response 200.segment.fileItems[].fileType</code></td><td><code class="delta-before">NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><span class="not-assessed">removed</span></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">header:x-ms-file-file-type · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">header:x-ms-file-file-type · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td><code>x-ms-file-file-type</code></td><td><code class="delta-before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td><code class="delta-after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr></tbody></table>
+<p><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].fileType. Existing clients or response consumers can fail without migration.</p>
+<h4>Affected REST operations (7)</h4>
+<div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div><div class="rest-operation-line"><strong><code>Directory_GetProperties</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;_overload=getProperties</code></div><div class="rest-operation-line"><strong><code>File_Create</code></strong><span>2026-12-06</span><code>PUT /</code></div><div class="rest-operation-line"><strong><code>Directory_Create</code></strong><span>2026-12-06</span><code>PUT ?restype=directory</code></div><div class="rest-operation-line"><strong><code>File_CreateHardLink</code></strong><span>2026-12-06</span><code>PUT ?restype=hardlink</code></div><div class="rest-operation-line"><strong><code>File_GetProperties</code></strong><span>2026-12-06</span><code>HEAD /</code></div><div class="rest-operation-line"><strong><code>File_CreateSymbolicLink</code></strong><span>2026-12-06</span><code>PUT ?restype=symboliclink</code></div></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a>, <a href="#intent-semantic-eed96d1f60797ccb"><code>semantic-eed96d1f60797ccb</code></a></p>
+<p class="sources"><strong>Changed TypeSpec:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p>
 </div></details></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes (3)</h2><div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Operation parameter contract changes</strong></a></div>
-<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Operation response contract changes</strong></a></div>
-<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#finding-rest-3-parameter-contract-changed-2026-12-06-put"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Operation parameter contract changes</strong></a></div></section>
-<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding high" id="compliance-finding-delete-existing-versioned-nfs-surface">
-<summary><span class="severity high">high</span><strong>Existing versioned API surface is removed</strong></summary>
+<section id="downstream-breaking"><h2>Downstream breaking changes (17)</h2><div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#rest-contract-Directory_ListFilesAndDirectoriesSegment"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Directory_ListFilesAndDirectoriesSegment</strong></a></div>
+<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#rest-contract-DirectoryItem"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>DirectoryItem</strong></a></div>
+<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#rest-contract-FileItem"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>FileItem</strong></a></div>
+<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#rest-contract-FileProperty"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>FileProperty</strong></a></div>
+<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#rest-contract-FilesAndDirectoriesListSegment"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>FilesAndDirectoriesListSegment</strong></a></div>
+<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#rest-contract-NfsFileType"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>NfsFileType</strong></a></div>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-BlockDeviceItem"><summary><span class="severity high">high</span><strong>BlockDeviceItem</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body"><span id="downstream-shared-type-impact-ab51f5de14b65807"></span>
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.BlockDeviceItem</code></dd><dt>Change:</dt><dd>public-surface-changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>public-surface-changed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.BlockDeviceItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.BlockDeviceItem changed public access, usage, or reachability.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.BlockDeviceItem changed public access, usage, or reachability. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-CharDeviceItem"><summary><span class="severity high">high</span><strong>CharDeviceItem</strong><span class="contract-tag">SDK type</span></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The change deletes 2026-12-06 NFS models, XML properties, and values rather than versioning their removal.</p>
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.CharDeviceItem</code></dd><dt>Change:</dt><dd>public-surface-changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>public-surface-changed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.CharDeviceItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.CharDeviceItem changed public access, usage, or reachability.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.CharDeviceItem changed public access, usage, or reachability. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-DirectoryItem"><summary><span class="severity high">high</span><strong>DirectoryItem</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body"><span id="downstream-shared-type-impact-b3f1f16037920111"></span>
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.DirectoryItem</code></dd><dt>Change:</dt><dd>model-property-removed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.DirectoryItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.DirectoryItem no longer exposes property linkCount.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.DirectoryItem no longer exposes property linkCount. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListFilesAndDirectoriesSegment</strong><span class="http-method">GET</span><code>?restype=directory&amp;comp=list</code></div><div class="affected-operation"><strong>Service_ListSharesSegment</strong><span class="http-method">GET</span><code>/?comp=list</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-FifoItem"><summary><span class="severity high">high</span><strong>FifoItem</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.FifoItem</code></dd><dt>Change:</dt><dd>public-surface-changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>public-surface-changed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FifoItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FifoItem changed public access, usage, or reachability.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FifoItem changed public access, usage, or reachability. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-FileItem"><summary><span class="severity high">high</span><strong>FileItem</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.FileItem</code></dd><dt>Change:</dt><dd>model-property-removed, model-property-removed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FileItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FileItem no longer exposes property fileType.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FileItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FileItem no longer exposes property linkCount.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FileItem no longer exposes property fileType. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FileItem no longer exposes property linkCount. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a>, <a href="#intent-semantic-bdd43786bf6adae0"><code>semantic-bdd43786bf6adae0</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-FileProperty"><summary><span class="severity high">high</span><strong>FileProperty</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.FileProperty</code></dd><dt>Change:</dt><dd>model-property-removed, model-property-removed, model-property-removed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FileProperty preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FileProperty no longer exposes property group.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FileProperty preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FileProperty no longer exposes property fileMode.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FileProperty preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FileProperty no longer exposes property owner.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FileProperty no longer exposes property group. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FileProperty no longer exposes property fileMode. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FileProperty no longer exposes property owner. Existing generated-code consumers must migrate.</div>
+<p class="mapping-unavailable"><strong>Affected REST operations (0):</strong> mapping unavailable</p>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-bdd43786bf6adae0"><code>semantic-bdd43786bf6adae0</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-FilesAndDirectoriesListSegment"><summary><span class="severity high">high</span><strong>FilesAndDirectoriesListSegment</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.FilesAndDirectoriesListSegment</code></dd><dt>Change:</dt><dd>model-property-removed, model-property-removed, model-property-removed, model-property-removed, model-property-removed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FilesAndDirectoriesListSegment preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FilesAndDirectoriesListSegment no longer exposes property socketItems.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FilesAndDirectoriesListSegment preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FilesAndDirectoriesListSegment no longer exposes property blockDeviceItems.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FilesAndDirectoriesListSegment preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FilesAndDirectoriesListSegment no longer exposes property charDeviceItems.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FilesAndDirectoriesListSegment preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FilesAndDirectoriesListSegment no longer exposes property fifoItems.</code></td></tr><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.FilesAndDirectoriesListSegment preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.FilesAndDirectoriesListSegment no longer exposes property symLinkItems.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FilesAndDirectoriesListSegment no longer exposes property socketItems. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FilesAndDirectoriesListSegment no longer exposes property blockDeviceItems. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FilesAndDirectoriesListSegment no longer exposes property charDeviceItems. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FilesAndDirectoriesListSegment no longer exposes property fifoItems. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.FilesAndDirectoriesListSegment no longer exposes property symLinkItems. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListFilesAndDirectoriesSegment</strong><span class="http-method">GET</span><code>?restype=directory&amp;comp=list</code></div><div class="affected-operation"><strong>Service_ListSharesSegment</strong><span class="http-method">GET</span><code>/?comp=list</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-ListFilesIncludeType"><summary><span class="severity high">high</span><strong>ListFilesIncludeType</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.ListFilesIncludeType</code></dd><dt>Change:</dt><dd>4 generated member changes</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>ListFilesIncludeType.All</code></td><td class="contract-before"><code class="contract-value before">All</code><span class="contract-detail">Wire value &quot;All&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>ListFilesIncludeType.LinkCount</code></td><td class="contract-before"><code class="contract-value before">LinkCount</code><span class="contract-detail">Wire value &quot;LinkCount&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>ListFilesIncludeType.NfsAttributes</code></td><td class="contract-before"><code class="contract-value before">NfsAttributes</code><span class="contract-detail">Wire value &quot;NfsAttributes&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>ListFilesIncludeType.Permissions</code></td><td class="contract-before"><code class="contract-value before">Permissions</code><span class="contract-detail">Wire value &quot;Permissions&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.ListFilesIncludeType removed enum values: All, LinkCount, NfsAttributes, Permissions. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListFilesAndDirectoriesSegment</strong><span class="http-method">GET</span><code>?restype=directory&amp;comp=list</code></div><div class="affected-operation"><strong>Service_ListSharesSegment</strong><span class="http-method">GET</span><code>/?comp=list</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-NfsFileType"><summary><span class="severity high">high</span><strong>NfsFileType</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.NfsFileType</code></dd><dt>Change:</dt><dd>4 generated member changes</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>NfsFileType.BlockDevice</code></td><td class="contract-before"><code class="contract-value before">BlockDevice</code><span class="contract-detail">Wire value &quot;BlockDevice&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>NfsFileType.CharacterDevice</code></td><td class="contract-before"><code class="contract-value before">CharacterDevice</code><span class="contract-detail">Wire value &quot;CharacterDevice&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>NfsFileType.Fifo</code></td><td class="contract-before"><code class="contract-value before">Fifo</code><span class="contract-detail">Wire value &quot;Fifo&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>NfsFileType.Socket</code></td><td class="contract-before"><code class="contract-value before">Socket</code><span class="contract-detail">Wire value &quot;Socket&quot;.</span></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.NfsFileType removed enum values: BlockDevice, CharacterDevice, Fifo, Socket. Existing generated-code consumers must migrate. The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.NfsFileType changed public access, usage, or reachability. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (6)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_Create</strong><span class="http-method">PUT</span><code>?restype=directory</code></div><div class="affected-operation"><strong>Directory_GetProperties</strong><span class="http-method">GET</span><code>?restype=directory&amp;_overload=getProperties</code></div><div class="affected-operation"><strong>File_Create</strong><span class="http-method">PUT</span><code>/</code></div><div class="affected-operation"><strong>File_CreateHardLink</strong><span class="http-method">PUT</span><code>?restype=hardlink</code></div><div class="affected-operation"><strong>File_CreateSymbolicLink</strong><span class="http-method">PUT</span><code>?restype=symboliclink</code></div><div class="affected-operation"><strong>File_GetProperties</strong><span class="http-method">HEAD</span><code>/</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-eed96d1f60797ccb"><code>semantic-eed96d1f60797ccb</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-SocketItem"><summary><span class="severity high">high</span><strong>SocketItem</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.SocketItem</code></dd><dt>Change:</dt><dd>public-surface-changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>public-surface-changed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.SocketItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.SocketItem changed public access, usage, or reachability.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.SocketItem changed public access, usage, or reachability. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
+</div></details>
+<details class="finding sdk-contract-card high" id="downstream-type-Storage-File-SymLinkItem"><summary><span class="severity high">high</span><strong>SymLinkItem</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>Storage.File.SymLinkItem</code></dd><dt>Change:</dt><dd>public-surface-changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>public-surface-changed</code></td><td class="contract-before"><code class="contract-value before">Storage.File.SymLinkItem preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">Storage.File.SymLinkItem changed public access, usage, or reachability.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied TCGC facts show that a previously public and reachable SDK shape is removed or narrowed: Storage.File.SymLinkItem changed public access, usage, or reachability. Existing generated-code consumers must migrate.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (2)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
+</div></details></section>
+<section id="azure-compliance"><h2>Azure Guidelines (4)</h2><details class="finding compliance-finding high" id="compliance-finding-compliance-e780fc908e1002f9">
+<summary><span class="severity high">high</span><strong>Existing stable API members are deleted without versioned removal</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
 <details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs — API Versioning</a></p>
-<div class="diff"><div class="diff-path"><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Documented TypeSpec example</a></div><pre><span class="">/** Contoso API versions */enum Versions {  /** 2021-10-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v1,</span>
-<span class="">  /** 2022-11-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v2,}</span></pre></div>
+<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+
 </div></details>
 <details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path"><a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302">specification/storage/data-plane/FileStorage/models.tsp:287-298</a></div><pre><span class=""><span class="line-number">287</span></span>
-<span class=""><span class="line-number">288</span>  /** BlockDevice */</span>
-<span class=""><span class="line-number">289</span>  @added(Versions.v2026_12_06)</span>
-<span class=""><span class="line-number">290</span>  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class=""><span class="line-number">291</span></span>
-<span class=""><span class="line-number">292</span>  /** CharacterDevice */</span>
-<span class=""><span class="line-number">293</span>  @added(Versions.v2026_12_06)</span>
-<span class=""><span class="line-number">294</span>  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class=""><span class="line-number">295</span></span>
-<span class=""><span class="line-number">296</span>  /** Socket */</span>
-<span class=""><span class="line-number">297</span>  @added(Versions.v2026_12_06)</span>
-<span class=""><span class="line-number">298</span>  Socket: &quot;Socket&quot;,</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-remove-special-nfs-items"><code>version-lineage-remove-special-nfs-items</code></a></p>
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:595-612</div><pre><span class="remove"><span class="line-number">595</span>-</span>
+<span class="remove"><span class="line-number">596</span>-  /** NFS only. The link count of the file. */</span>
+<span class="remove"><span class="line-number">597</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">598</span>-  @Xml.name(&quot;LinkCount&quot;)</span>
+<span class="remove"><span class="line-number">599</span>-  linkCount?: int64;</span>
+<span class="remove"><span class="line-number">600</span>-</span>
+<span class="remove"><span class="line-number">601</span>-  /** NFS only. The type of the file. */</span>
+<span class="remove"><span class="line-number">602</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">603</span>-  @Xml.name(&quot;FileType&quot;)</span>
+<span class="remove"><span class="line-number">604</span>-  fileType?: NfsFileType;</span>
+<span class="remove"><span class="line-number">605</span>-}</span>
+<span class="remove"><span class="line-number">606</span>-</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding high" id="compliance-finding-compliance-174c61a785e3c0bf">
+<summary><span class="severity high">high</span><strong>Existing stable API members are deleted without versioned removal</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:378-392</div><pre><span class="remove"><span class="line-number">378</span>-</span>
+<span class="remove"><span class="line-number">379</span>-  /** NFS only. The link count of the directory. */</span>
+<span class="remove"><span class="line-number">380</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">381</span>-  @Xml.name(&quot;LinkCount&quot;)</span>
+<span class="remove"><span class="line-number">382</span>-  linkCount?: int64;</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:378-392</div><pre><span class="remove"><span class="line-number">378</span>-</span>
+<span class="remove"><span class="line-number">379</span>-  /** Permissions */</span>
+<span class="remove"><span class="line-number">380</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">381</span>-  Permissions,</span>
+<span class="remove"><span class="line-number">382</span>-</span>
+<span class="remove"><span class="line-number">383</span>-  /** LinkCount */</span>
+<span class="remove"><span class="line-number">384</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">385</span>-  LinkCount,</span>
+<span class="remove"><span class="line-number">386</span>-</span>
+<span class="remove"><span class="line-number">387</span>-  /** NfsAttributes */</span>
+<span class="remove"><span class="line-number">388</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">389</span>-  NfsAttributes,</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding high" id="compliance-finding-compliance-e82f62dade6a8f8e">
+<summary><span class="severity high">high</span><strong>Existing stable API members are deleted without versioned removal</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:560-593</div><pre><span class="remove"><span class="line-number">560</span>-</span>
+<span class="remove"><span class="line-number">561</span>-  /** NFS only. The owner user identifier (UID) of the file. */</span>
+<span class="remove"><span class="line-number">562</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">563</span>-  @Xml.name(&quot;Uid&quot;)</span>
+<span class="remove"><span class="line-number">564</span>-  owner?: string;</span>
+<span class="remove"><span class="line-number">565</span>-</span>
+<span class="remove"><span class="line-number">566</span>-  /** NFS only. The owner group identifier (GID) of the file. */</span>
+<span class="remove"><span class="line-number">567</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">568</span>-  @Xml.name(&quot;Gid&quot;)</span>
+<span class="remove"><span class="line-number">569</span>-  group?: string;</span>
+<span class="remove"><span class="line-number">570</span>-</span>
+<span class="remove"><span class="line-number">571</span>-  /** NFS only. The file mode of the file. */</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-bdd43786bf6adae0"><code>semantic-bdd43786bf6adae0</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding high" id="compliance-finding-compliance-feb2640a19ddd738">
+<summary><span class="severity high">high</span><strong>Existing stable API members are deleted without versioned removal</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:275-287</div><pre><span class="remove"><span class="line-number">275</span>-</span>
+<span class="remove"><span class="line-number">276</span>-  /** BlockDevice */</span>
+<span class="remove"><span class="line-number">277</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">278</span>-  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class="remove"><span class="line-number">279</span>-</span>
+<span class="remove"><span class="line-number">280</span>-  /** CharacterDevice */</span>
+<span class="remove"><span class="line-number">281</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">282</span>-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class="remove"><span class="line-number">283</span>-</span>
+<span class="remove"><span class="line-number">284</span>-  /** Socket */</span>
+<span class="remove"><span class="line-number">285</span>-  @added(Versions.v2026_12_06)</span>
+<span class="remove"><span class="line-number">286</span>-  Socket: &quot;Socket&quot;,</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-eed96d1f60797ccb"><code>semantic-eed96d1f60797ccb</code></a></p>
 </div></details>
 </div></details>
 </section>
-<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-version-lineage-remove-special-nfs-items"><summary><strong><span class="action">modify</span> Remove special NFS item contracts from 2026-12-06</strong><span class="intent-finding-badges"><a class="intent-finding-badge rest" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">REST breaking changes</a><a class="intent-finding-badge downstream" href="#downstream-derived-rest-contract-sdk-impact">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-delete-existing-versioned-nfs-surface">Azure Guidelines</a></span></summary><div class="intent-body">
-<p>The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p>
+<section id="semantic-intents"><h2>Semantic intents (4)</h2><details class="intent" id="intent-semantic-106722e15dc2d25d"><summary><strong><span class="action">modify</span> Remove NFS file and handle response fields</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-ab51f5de14b65807">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-e780fc908e1002f9">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Removes NFS file item link count and file type fields plus related special-file item models from the 2026-12-06 surface, affecting handle-list response reachability.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** SymLink */</span>
-<span class="context">   SymLink: &quot;SymLink&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** BlockDevice */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** CharacterDevice */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Socket */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Socket: &quot;Socket&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Fifo */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Fifo: &quot;Fifo&quot;,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** The file property semantics. */</span></pre></div>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">specification/storage/data-plane/FileStorage/models.tsp:284</a>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
-<h4>Affected REST operations (4)</h4>
-<p><strong>Operation impact:</strong> 4 REST operations are affected; 3 representative operation(s) are shown below and 1 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
-<details class="operation"><summary><strong>Directory_ListFilesAndDirectoriesSegment</strong> <code>GET /{filesystem}/{directoryPath}</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><p class="good"><strong>The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</strong></p>
-<p><strong>Change outcome:</strong> The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p></div></details>
-<details class="operation"><summary><strong>Directory_ListFilesAndDirectoriesSegment</strong> <code>GET /{filesystem}/{directoryPath}</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><p class="good"><strong>The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</strong></p>
-<p><strong>Change outcome:</strong> The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p></div></details>
-<details class="operation"><summary><strong>File_Create</strong> <code>PUT /</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><p class="good"><strong>The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</strong></p>
-<p><strong>Change outcome:</strong> The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p></div></details>
-<p id="related-findings-version-lineage-remove-special-nfs-items"><strong>Related findings:</strong> <a href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list</a>, <a href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list</a>, <a href="#finding-rest-3-parameter-contract-changed-2026-12-06-put">rest-3-parameter-contract-changed-2026-12-06-put</a>, <a href="#downstream-derived-rest-contract-sdk-impact">derived-rest-contract-sdk-impact</a>, <a href="#compliance-finding-delete-existing-versioned-nfs-surface">delete-existing-versioned-nfs-surface</a></p>
-</div></details></section>
-<section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
-<section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/storage/data-plane/FileStorage</code></td><td>legacy</td><td><code>unknown commit@unversioned</code><br><small>base · </small></td><td><code>unknown commit@unversioned</code><br><small>current · </small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>
-<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44742">#44742</a></p>
-<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-<section><h4>Remove special NFS item contracts from 2026-12-06</h4>
-<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** SymLink */</span>
-<span class="context">   SymLink: &quot;SymLink&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** BlockDevice */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** CharacterDevice */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Socket */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Socket: &quot;Socket&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Fifo */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Fifo: &quot;Fifo&quot;,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** The file property semantics. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** PermissionKey */</span>
-<span class="context">   PermissionKey,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Permissions */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Permissions,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** LinkCount */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  LinkCount,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NfsAttributes */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  NfsAttributes,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** All */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  All,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** The type of share information to include in the listing. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context">   @Xml.unwrapped</span>
-<span class="context">   @Xml.name(&quot;File&quot;)</span>
-<span class="context">   fileItems: FileItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The symbolic link items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
-<span class="remove">-  symLinkItems?: SymLinkItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The block device items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;BlockDevice&quot;)</span>
-<span class="remove">-  blockDeviceItems?: BlockDeviceItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The character device items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;CharDevice&quot;)</span>
-<span class="remove">-  charDeviceItems?: CharDeviceItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The FIFO items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;Fifo&quot;)</span>
-<span class="remove">-  fifoItems?: FifoItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The socket items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;Socket&quot;)</span>
-<span class="remove">-  socketItems?: SocketItem[];</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** A listed directory item. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** The permission key. */</span>
-<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the directory. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
-<span class="remove">-  linkCount?: int64;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** An encoded string value. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** The ETag of the file. */</span>
-<span class="context">   @Xml.name(&quot;Etag&quot;) eTag?: Azure.Core.eTag;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The owner user identifier (UID) of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;Uid&quot;)</span>
-<span class="remove">-  owner?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The owner group identifier (GID) of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;Gid&quot;)</span>
-<span class="remove">-  group?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The file mode of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;Mode&quot;)</span>
-<span class="remove">-  fileMode?: string;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** A listed file item. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
 <span class="context">   /** The permission key. */</span>
 <span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
 <span class="remove">-</span>
@@ -356,13 +419,417 @@
 <span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
 <span class="context"> }</span>
 <span class="context"> </span>
-<span class="context"> /** A listed Azure Storage handle item. */</span></pre></div>
-<p class="sources"><strong>Sources:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L284-L289">specification/storage/data-plane/FileStorage/models.tsp:284</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L389-L394">specification/storage/data-plane/FileStorage/models.tsp:389</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L525-L530">specification/storage/data-plane/FileStorage/models.tsp:525</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L544-L549">specification/storage/data-plane/FileStorage/models.tsp:544</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L590-L595">specification/storage/data-plane/FileStorage/models.tsp:590</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/656ca8b0741973760f8a60ee0fd293ba9c31e708/specification/storage/data-plane/FileStorage/models.tsp#L609-L614">specification/storage/data-plane/FileStorage/models.tsp:609</a></p></section></details>
+<span class="context"> /** A listed Azure Storage handle item. */</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:595</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (2)</h4>
+<p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>Directory_ListHandles</strong> <code>GET ?comp=listhandles</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<details class="operation"><summary><strong>File_ListHandles</strong> <code>GET ?comp=listhandles&amp;_overload=listHandles</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<p id="related-findings-semantic-106722e15dc2d25d"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-ab51f5de14b65807">shared-type-impact-ab51f5de14b65807</a>, <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-e780fc908e1002f9">compliance-e780fc908e1002f9</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-259f67bc56ae9c3d"><summary><strong><span class="action">modify</span> Remove NFS directory listing shapes and include values</strong><span class="intent-finding-badges"><a class="intent-finding-badge rest" href="#finding-rest-00534218fd96f5ec">REST breaking changes</a><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-b3f1f16037920111">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-174c61a785e3c0bf">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Removes directory link metadata, special-file collections, and NFS include enum values from the 2026-12-06 directory and share listing models.</p>
+<p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** PermissionKey */</span>
+<span class="context">   PermissionKey,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Permissions */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Permissions,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** LinkCount */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  LinkCount,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NfsAttributes */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  NfsAttributes,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** All */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  All,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** The type of share information to include in the listing. */</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:378</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (2)</h4>
+<p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>Directory_ListFilesAndDirectoriesSegment</strong> <code>GET ?restype=directory&amp;comp=list</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<details class="operation"><summary><strong>Service_ListSharesSegment</strong> <code>GET /?comp=list</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<p id="related-findings-semantic-259f67bc56ae9c3d"><strong>Related findings:</strong> <a href="#finding-rest-00534218fd96f5ec">rest-00534218fd96f5ec</a>, <a href="#finding-rest-0cd75525200e9511">rest-0cd75525200e9511</a>, <a href="#finding-rest-1ce4c2e3d9fc4a70">rest-1ce4c2e3d9fc4a70</a>, <a href="#finding-rest-402a485ae3b32abc">rest-402a485ae3b32abc</a>, <a href="#finding-rest-482965ab982d78d0">rest-482965ab982d78d0</a>, <a href="#finding-rest-4b444afe702899ca">rest-4b444afe702899ca</a>, <a href="#finding-rest-4e240c81b037a8d8">rest-4e240c81b037a8d8</a>, <a href="#finding-rest-535074d4c7f1658d">rest-535074d4c7f1658d</a>, <a href="#finding-rest-7caacb2c7618b491">rest-7caacb2c7618b491</a>, <a href="#finding-rest-80d136d55e4f5925">rest-80d136d55e4f5925</a>, <a href="#finding-rest-814ae5ff671ca56d">rest-814ae5ff671ca56d</a>, <a href="#finding-rest-916e14457028acee">rest-916e14457028acee</a>, <a href="#finding-rest-cfe1b4f6736a23a2">rest-cfe1b4f6736a23a2</a>, <a href="#finding-rest-ef7444f1bbc4fa0f">rest-ef7444f1bbc4fa0f</a>, <a href="#finding-rest-fdb35eba9b4a437b">rest-fdb35eba9b4a437b</a>, <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-174c61a785e3c0bf">compliance-174c61a785e3c0bf</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-bdd43786bf6adae0"><summary><strong><span class="action">modify</span> Remove NFS ownership and mode properties</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-b3f1f16037920111">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-e82f62dade6a8f8e">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Removes owner, group, and file-mode properties from FileProperty in the existing 2026-12-06 API version.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** The ETag of the file. */</span>
+<span class="context">   @Xml.name(&quot;Etag&quot;) eTag?: Azure.Core.eTag;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The owner user identifier (UID) of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;Uid&quot;)</span>
+<span class="remove">-  owner?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The owner group identifier (GID) of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;Gid&quot;)</span>
+<span class="remove">-  group?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The file mode of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;Mode&quot;)</span>
+<span class="remove">-  fileMode?: string;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** A listed file item. */</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:560</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (0)</h4>
+<p class="empty">No directly affected REST operation.</p>
+<p id="related-findings-semantic-bdd43786bf6adae0"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-e82f62dade6a8f8e">compliance-e82f62dade6a8f8e</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-eed96d1f60797ccb"><summary><strong><span class="action">modify</span> Remove NFS file-type variants</strong><span class="intent-finding-badges"><a class="intent-finding-badge rest" href="#finding-rest-602755e363934a01">REST breaking changes</a><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-b3f1f16037920111">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-feb2640a19ddd738">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Removes BlockDevice, CharacterDevice, Fifo, and Socket variants from NfsFileType in the existing 2026-12-06 API version, changing six operation contracts.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** SymLink */</span>
+<span class="context">   SymLink: &quot;SymLink&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** BlockDevice */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** CharacterDevice */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Socket */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Socket: &quot;Socket&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Fifo */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Fifo: &quot;Fifo&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** The file property semantics. */</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (6)</h4>
+<p><strong>Operation impact:</strong> 6 REST operations are affected; 3 representative operation(s) are shown below and 3 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>Directory_Create</strong> <code>PUT ?restype=directory</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>201, default</td><td>201, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<details class="operation"><summary><strong>Directory_GetProperties</strong> <code>GET ?restype=directory&amp;_overload=getProperties</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<details class="operation"><summary><strong>File_Create</strong> <code>PUT /</code> <span>2026-12-06</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>201, default</td><td>201, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<p id="related-findings-semantic-eed96d1f60797ccb"><strong>Related findings:</strong> <a href="#finding-rest-602755e363934a01">rest-602755e363934a01</a>, <a href="#finding-rest-7cb939c12a3a0829">rest-7cb939c12a3a0829</a>, <a href="#finding-rest-b9b027f2659bd666">rest-b9b027f2659bd666</a>, <a href="#finding-rest-c6f13c7a797667ec">rest-c6f13c7a797667ec</a>, <a href="#finding-rest-dfd9ab5766765c21">rest-dfd9ab5766765c21</a>, <a href="#finding-rest-e1dddfbaea78586f">rest-e1dddfbaea78586f</a>, <a href="#finding-rest-e44caa5e57a6060c">rest-e44caa5e57a6060c</a>, <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-feb2640a19ddd738">compliance-feb2640a19ddd738</a></p>
+</div></details></section>
+<section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/storage/data-plane/FileStorage</code></td><td>existing-api-version</td><td><code>e75a07cd7ea1b2207190a362305db02b639715ec@2026-12-06</code><br><small>base · affected-existing-version</small></td><td><code>656ca8b0741973760f8a60ee0fd293ba9c31e708@2026-12-06</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> Not available for this local pre-PR assessment.</p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Remove NFS file and handle response fields</h4>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** The permission key. */</span>
+<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
+<span class="remove">-  linkCount?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The type of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;FileType&quot;)</span>
+<span class="remove">-  fileType?: NfsFileType;</span>
+<span class="remove">-}</span>
+<span class="remove">-</span>
+<span class="remove">-/** A listed symbolic link item. */</span>
+<span class="remove">-@added(Versions.v2026_12_06)</span>
+<span class="remove">-@Xml.name(&quot;SymLink&quot;)</span>
+<span class="remove">-model SymLinkItem {</span>
+<span class="remove">-  /** The symbolic link name. */</span>
+<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The file ID. */</span>
+<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** File properties. */</span>
+<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the symbolic link. */</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The path to the original file, the symbolic link is pointing to. */</span>
+<span class="remove">-  @Xml.name(&quot;LinkText&quot;) linkText?: string;</span>
+<span class="remove">-}</span>
+<span class="remove">-</span>
+<span class="remove">-/** A listed block device item. */</span>
+<span class="remove">-@added(Versions.v2026_12_06)</span>
+<span class="remove">-@Xml.name(&quot;BlockDevice&quot;)</span>
+<span class="remove">-model BlockDeviceItem {</span>
+<span class="remove">-  /** The block device name. */</span>
+<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The file ID. */</span>
+<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** File properties. */</span>
+<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the block device. */</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The major device number of the block device. */</span>
+<span class="remove">-  @Xml.name(&quot;DeviceMajor&quot;) deviceMajor?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The minor device number of the block device. */</span>
+<span class="remove">-  @Xml.name(&quot;DeviceMinor&quot;) deviceMinor?: int64;</span>
+<span class="remove">-}</span>
+<span class="remove">-</span>
+<span class="remove">-/** A listed character device item. */</span>
+<span class="remove">-@added(Versions.v2026_12_06)</span>
+<span class="remove">-@Xml.name(&quot;CharDevice&quot;)</span>
+<span class="remove">-model CharDeviceItem {</span>
+<span class="remove">-  /** The character device name. */</span>
+<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The file ID. */</span>
+<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** File properties. */</span>
+<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the character device. */</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The major device number of the character device. */</span>
+<span class="remove">-  @Xml.name(&quot;DeviceMajor&quot;) deviceMajor?: int64;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The minor device number of the character device. */</span>
+<span class="remove">-  @Xml.name(&quot;DeviceMinor&quot;) deviceMinor?: int64;</span>
+<span class="remove">-}</span>
+<span class="remove">-</span>
+<span class="remove">-/** A listed FIFO item. */</span>
+<span class="remove">-@added(Versions.v2026_12_06)</span>
+<span class="remove">-@Xml.name(&quot;Fifo&quot;)</span>
+<span class="remove">-model FifoItem {</span>
+<span class="remove">-  /** The FIFO name. */</span>
+<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The file ID. */</span>
+<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** File properties. */</span>
+<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the FIFO. */</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
+<span class="remove">-}</span>
+<span class="remove">-</span>
+<span class="remove">-/** A listed socket item. */</span>
+<span class="remove">-@added(Versions.v2026_12_06)</span>
+<span class="remove">-@Xml.name(&quot;Socket&quot;)</span>
+<span class="remove">-model SocketItem {</span>
+<span class="remove">-  /** The socket name. */</span>
+<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The file ID. */</span>
+<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** File properties. */</span>
+<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the socket. */</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** A listed Azure Storage handle item. */</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:595</code></p></section><section><h4>Remove NFS directory listing shapes and include values</h4>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** PermissionKey */</span>
+<span class="context">   PermissionKey,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Permissions */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Permissions,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** LinkCount */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  LinkCount,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NfsAttributes */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  NfsAttributes,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** All */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  All,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** The type of share information to include in the listing. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context">   @Xml.unwrapped</span>
+<span class="context">   @Xml.name(&quot;File&quot;)</span>
+<span class="context">   fileItems: FileItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The symbolic link items. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
+<span class="remove">-  symLinkItems?: SymLinkItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The block device items. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="remove">-  @Xml.name(&quot;BlockDevice&quot;)</span>
+<span class="remove">-  blockDeviceItems?: BlockDeviceItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The character device items. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="remove">-  @Xml.name(&quot;CharDevice&quot;)</span>
+<span class="remove">-  charDeviceItems?: CharDeviceItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The FIFO items. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="remove">-  @Xml.name(&quot;Fifo&quot;)</span>
+<span class="remove">-  fifoItems?: FifoItem[];</span>
+<span class="remove">-</span>
+<span class="remove">-  /** The socket items. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.unwrapped</span>
+<span class="remove">-  @Xml.name(&quot;Socket&quot;)</span>
+<span class="remove">-  socketItems?: SocketItem[];</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** A listed directory item. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** The permission key. */</span>
+<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The link count of the directory. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
+<span class="remove">-  linkCount?: int64;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** An encoded string value. */</span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:378</code></p></section><section><h4>Remove NFS ownership and mode properties</h4>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** The ETag of the file. */</span>
+<span class="context">   @Xml.name(&quot;Etag&quot;) eTag?: Azure.Core.eTag;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The owner user identifier (UID) of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;Uid&quot;)</span>
+<span class="remove">-  owner?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The owner group identifier (GID) of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;Gid&quot;)</span>
+<span class="remove">-  group?: string;</span>
+<span class="remove">-</span>
+<span class="remove">-  /** NFS only. The file mode of the file. */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  @Xml.name(&quot;Mode&quot;)</span>
+<span class="remove">-  fileMode?: string;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** A listed file item. */</span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:560</code></p></section><section><h4>Remove NFS file-type variants</h4>
+<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** SymLink */</span>
+<span class="context">   SymLink: &quot;SymLink&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** BlockDevice */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** CharacterDevice */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Socket */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Socket: &quot;Socket&quot;,</span>
+<span class="remove">-</span>
+<span class="remove">-  /** Fifo */</span>
+<span class="remove">-  @added(Versions.v2026_12_06)</span>
+<span class="remove">-  Fifo: &quot;Fifo&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /** The file property semantics. */</span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<details class="panel"><summary><strong>Official documents</strong></summary><ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a> · API Versioning<blockquote>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</blockquote></li></ul></details>
-<h3>Changed files</h3><ul><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (historical)</li></ul>
-<h3>Timing and model input</h3><pre>{}</pre>
-<p><strong>Provenance:</strong> legacy assessment adapter</p></div></details></section>
+<details class="compliance-intent" id="compliance-intent-semantic-106722e15dc2d25d"><summary><strong><a href="#intent-semantic-106722e15dc2d25d">Remove NFS file and handle response fields</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-259f67bc56ae9c3d"><summary><strong><a href="#intent-semantic-259f67bc56ae9c3d">Remove NFS directory listing shapes and include values</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-bdd43786bf6adae0"><summary><strong><a href="#intent-semantic-bdd43786bf6adae0">Remove NFS ownership and mode properties</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-eed96d1f60797ccb"><summary><strong><a href="#intent-semantic-eed96d1f60797ccb">Remove NFS file-type variants</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
+</div></details>
+<h3>Changed files</h3><ul><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (committed)</li></ul>
+<h3>Timing and model input</h3><pre>{
+  &quot;timings&quot;: {
+    &quot;totalMs&quot;: 125296,
+    &quot;semanticAnalysisMs&quot;: 178,
+    &quot;restAnalysisMs&quot;: 106,
+    &quot;downstreamAnalysisMs&quot;: 4922
+  },
+  &quot;inputAccounting&quot;: {
+    &quot;budgetTier&quot;: &quot;large&quot;,
+    &quot;budgetBytes&quot;: 524288,
+    &quot;bytes&quot;: 282109,
+    &quot;estimatedTokens&quot;: 70528,
+    &quot;retained&quot;: {
+      &quot;sourceChanges&quot;: 1,
+      &quot;facts&quot;: 31,
+      &quot;semanticReviewUnits&quot;: 4,
+      &quot;restCandidates&quot;: 22,
+      &quot;downstreamCandidates&quot;: 19,
+      &quot;downstreamRootCauses&quot;: 1,
+      &quot;complianceSearchRequests&quot;: 4,
+      &quot;inferenceRequests&quot;: 0,
+      &quot;complianceSearchSourceBytes&quot;: 66306
+    },
+    &quot;omittedRedundant&quot;: {
+      &quot;rawEmitterArtifacts&quot;: true,
+      &quot;compilerLogs&quot;: true,
+      &quot;unchangedInventories&quot;: true,
+      &quot;unreferencedFacts&quot;: true
+    },
+    &quot;compliance&quot;: {
+      &quot;catalogEntriesScored&quot;: 128,
+      &quot;documentsFetched&quot;: 16,
+      &quot;documentBytesFetched&quot;: 5356529,
+      &quot;guidanceExcerptsRetained&quot;: 13,
+      &quot;guidanceExcerptBytesRetained&quot;: 2121
+    }
+  }
+}</pre>
+<p><strong>Provenance:</strong> model-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

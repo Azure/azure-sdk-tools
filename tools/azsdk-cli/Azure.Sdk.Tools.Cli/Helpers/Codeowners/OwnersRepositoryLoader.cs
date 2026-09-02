@@ -87,12 +87,12 @@ public static class OwnersRepositoryLoader
             RecurseSubdirectories = true,
             IgnoreInaccessible = true,
             MatchCasing = MatchCasing.CaseInsensitive,
-            AttributesToSkip = FileAttributes.Hidden | FileAttributes.System,
         };
 
-        return FragmentFileNames
-            .SelectMany(name => Directory.EnumerateFiles(repoRoot, name, options))
+        return Directory.EnumerateFiles(repoRoot, "owners.y*ml", options)
+            .Where(file => FragmentFileNames.Contains(Path.GetFileName(file), StringComparer.OrdinalIgnoreCase))
             .Select(file => Path.GetRelativePath(repoRoot, file).Replace('\\', '/'))
+            .Where(path => !path.StartsWith(".git/", StringComparison.Ordinal))
             .OrderBy(path => path, StringComparer.Ordinal);
     }
 }

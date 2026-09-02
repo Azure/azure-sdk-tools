@@ -107,9 +107,7 @@ public static partial class OwnersYamlEditor
 
         // Inside a flow sequence the separator has to go with the item, and either neighbour may
         // supply it: "[a, b]" -> "[a]" whether b or a is removed.
-        var withSeparator = new Regex($@"(,\s*{pattern})|({pattern}\s*,\s*)|({pattern})");
-
-        return withSeparator.Replace(code, string.Empty, 1);
+        return Regex.Replace(code, $@"(,\s*{pattern})|({pattern}\s*,\s*)|({pattern})", string.Empty);
     }
 
     private static (string Code, string Comment) SplitTrailingComment(string line)

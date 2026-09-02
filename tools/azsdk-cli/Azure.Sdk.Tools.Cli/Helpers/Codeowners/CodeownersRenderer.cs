@@ -47,7 +47,11 @@ public static class CodeownersRenderer
         }
 
         var ordered = OrderEntries(repository.Config, entries);
-        return new CodeownersRenderResult(Emit(repository.Config, ordered), ordered, errors);
+
+        return new CodeownersRenderResult(
+            Emit(ordered),
+            [.. ordered.SelectMany(section => section.Entries)],
+            errors);
     }
 
     // ---------------------------------------------------------------- binding
@@ -280,26 +284,45 @@ public static class CodeownersRenderer
     /// Ownership must be declared in exactly one place. Path expressions compare with
     /// <see cref="StringComparer.Ordinal"/> because GitHub evaluates CODEOWNERS case-sensitively, so
     /// <c>/sdk/Tables/</c> and <c>/sdk/tables/</c> are genuinely different expressions.
+    /// <para>
+    /// The three rules have different scopes on purpose. Fragments are the new authoring surface and
+    /// carry the full rule set. The owners config is seeded from a CODEOWNERS file that already
+    /// works, so the same path in two different config sections is left alone rather than blocking
+    /// migration on a construct that is not a defect.
+    /// </para>
     /// </summary>
     private static void ValidateNoDuplicatePaths(List<RenderedEntry> entries, List<OwnersValidationError> errors)
     {
-        var duplicates = entries
-            .Where(e => e.Entry.PathExpression.Length > 0)
-            .GroupBy(e => e.Entry.PathExpression, StringComparer.Ordinal)
-            .Where(g => g.Count() > 1);
+        var pathed = entries.Where(e => e.Entry.PathExpression.Length > 0).ToList();
+        var (fromFragments, fromConfig) = (pathed.Where(e => e.IsFromFragment), pathed.Where(e => !e.IsFromFragment));
 
-        foreach (var group in duplicates)
+        // CFG-DUP-003: twice in one config section.
+        foreach (var group in fromConfig
+            .GroupBy(e => (e.SectionName, e.Entry.PathExpression))
+            .Where(g => g.Count() > 1))
         {
-            var fragmentCount = group.Count(e => e.IsFromFragment);
-            var code = fragmentCount switch
-            {
-                0 => "CFG-DUP-003",              // two static entries
-                var n when n == group.Count() => "CFG-DUP-002",   // two fragments
-                _ => "CFG-DUP-001",              // config and fragment
-            };
+            errors.Add(new OwnersValidationError("CFG-DUP-003", DescribeDuplicate(
+                $"Path '{group.Key.PathExpression}' is declared twice in section '{group.Key.SectionName}'.", group)));
+        }
 
-            errors.Add(new OwnersValidationError(code, DescribeDuplicate(
-                $"Path '{group.Key}' is defined in more than one place.", group)));
+        // CFG-DUP-002: claimed by two fragments, or twice within one.
+        foreach (var group in fromFragments
+            .GroupBy(e => e.Entry.PathExpression, StringComparer.Ordinal)
+            .Where(g => g.Count() > 1))
+        {
+            errors.Add(new OwnersValidationError("CFG-DUP-002", DescribeDuplicate(
+                $"Path '{group.Key}' is claimed by more than one fragment entry.", group)));
+        }
+
+        // CFG-DUP-001: claimed by both the config and a fragment. The config entry is rendered by an
+        // earlier section in every realistic layout, so it silently shadows the fragment.
+        var configPaths = fromConfig.ToLookup(e => e.Entry.PathExpression, StringComparer.Ordinal);
+
+        foreach (var fragmentEntry in fromFragments.Where(e => configPaths.Contains(e.Entry.PathExpression)))
+        {
+            errors.Add(new OwnersValidationError("CFG-DUP-001", DescribeDuplicate(
+                $"Path '{fragmentEntry.Entry.PathExpression}' is declared in both the owners config and a fragment.",
+                configPaths[fragmentEntry.Entry.PathExpression].Append(fragmentEntry))));
         }
     }
 
@@ -341,18 +364,17 @@ public static class CodeownersRenderer
     /// <c>sections[].sort</c> and by nothing else — static and fragment entries are one set by this
     /// point, and provenance affects only the <c># Sources:</c> comment.
     /// </summary>
-    private static List<RenderedEntry> OrderEntries(OwnersConfig config, List<RenderedEntry> entries)
+    private static List<(OwnersSection Section, List<RenderedEntry> Entries)> OrderEntries(
+        OwnersConfig config,
+        List<RenderedEntry> entries)
     {
         var bySection = entries.ToLookup(e => e.SectionName, StringComparer.OrdinalIgnoreCase);
-        var ordered = new List<RenderedEntry>(entries.Count);
 
-        foreach (var section in config.Sections)
+        return [.. config.Sections.Select(section =>
         {
             var sectionEntries = bySection[section.Name].ToList();
-            ordered.AddRange(section.Sort ? SortWithEntrySorter(sectionEntries) : sectionEntries);
-        }
-
-        return ordered;
+            return (section, section.Sort ? SortWithEntrySorter(sectionEntries) : sectionEntries);
+        })];
     }
 
     /// <summary>
@@ -372,16 +394,14 @@ public static class CodeownersRenderer
 
     // ------------------------------------------------------------------- emit
 
-    private static string Emit(OwnersConfig config, List<RenderedEntry> entries)
+    private static string Emit(List<(OwnersSection Section, List<RenderedEntry> Entries)> sections)
     {
-        var bySection = entries.ToLookup(e => e.SectionName, StringComparer.OrdinalIgnoreCase);
-
         var blocks = new List<string> { string.Join(LineEnding, GeneratedFileBanner) };
 
-        foreach (var section in config.Sections)
+        foreach (var (section, entries) in sections)
         {
             blocks.Add(FormatSectionBanner(section.Name));
-            blocks.AddRange(bySection[section.Name].Select(FormatEntry));
+            blocks.AddRange(entries.Select(FormatEntry));
         }
 
         return string.Join(LineEnding + LineEnding, blocks) + LineEnding;

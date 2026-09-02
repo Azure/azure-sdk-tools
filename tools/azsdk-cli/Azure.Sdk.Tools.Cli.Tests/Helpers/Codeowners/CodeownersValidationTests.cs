@@ -150,6 +150,50 @@ internal class CodeownersValidationTests
     }
 
     [Test]
+    public void PathDeclaredTwiceInOneConfigSectionIsRejected()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteConfig(OwnersTestRepo.ReadAsset("owners.config.yaml").Replace(
+            SdkCatchAllSection,
+            SdkCatchAllSection + """
+
+                      - path: /sdk/
+                        owners: [test-user-13]
+                """));
+
+        Assert.That(Codes(repo), Does.Contain("CFG-DUP-003"));
+    }
+
+    [Test]
+    public void SamePathInTwoDifferentConfigSectionsIsAllowed()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        // The owners config is seeded from a CODEOWNERS file that already works, so cross-section
+        // repetition is a migration artifact rather than a defect.
+        repo.WriteConfig(OwnersTestRepo.ReadAsset("owners.config.yaml").Replace(
+            SdkCatchAllSection,
+            SdkCatchAllSection + """
+
+
+                  - name: Duplicated
+                    paths:
+                      - path: /sdk/
+                        owners: [test-user-13]
+                """));
+
+        Assert.That(repo.Render().Errors, Is.Empty);
+    }
+
+    private const string SdkCatchAllSection =
+        """
+          - name: SDK
+            paths:
+              # Catch all
+              - path: /sdk/
+                owners: [test-user-13, Azure/azure-sdk-write-net-core]
+        """;
+
+    [Test]
     public void PathDeclaredTwiceInAFragmentIsRejected()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();

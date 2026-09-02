@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TypeSpec Assessment</title>
+<style>
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#fee2e2;color:#991b1b}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
+.tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
+.finding{border-left:1px solid var(--line)}
+.rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}
+.notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
+</style></head><body>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>[Confidential Ledger] Add waitForCommit preview API</h1>
+<p class="hero-meta">TypeSpec source diff: <code>5874aa28fcfbbddafa82b52c02f2622ed0862a8b</code> → <code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25</code></p>
+<div class="summary-grid">
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 2</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">2 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>2/2 intents assessed</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">33 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
+</div></div></header>
+<details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
+<div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
+<p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
+<main class="container">
+<section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
+<section id="downstream-breaking"><h2>Downstream breaking changes (2)</h2><details class="finding sdk-method-card" id="downstream-downstream-group-5946aaf303eb9f31"><summary><strong>CreateLedgerEntry</strong><span class="contract-tag">SDK method</span><span class="finding-summary">1 SDK contract change</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>ConfidentialLedger.createLedgerEntry</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">POST</span><code>/app/transactions</code></span></dd><dt>Change:</dt><dd>An optional parameter was added to the generated public method signature</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>waitForCommit</code></td><td class="contract-before"><code class="contract-value before">not present</code><span class="contract-detail">Existing generated method signature</span></td><td class="contract-after"><code class="contract-value after">boolean?</code><span class="contract-detail">Optional method parameter</span></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The generated createLedgerEntry method adds the optional waitForCommit parameter and shifts the ordered public parameter list, requiring signature updates in generated SDK callers and implementations.</div>
+<div class="contract-footer"><span><strong>Parameters:</strong> 1 added, 3 unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-0444245ca7d40975"><code>semantic-0444245ca7d40975</code></a></span></div>
+</div></details><details class="finding sdk-contract-card" id="downstream-type-ConfidentialLedger-LedgerWriteResult"><summary><strong>LedgerWriteResult</strong><span class="contract-tag">SDK type</span></summary>
+<div class="finding-body"><span id="downstream-shared-type-impact-88a58c4c72ca22da"></span>
+<dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>ConfidentialLedger.LedgerWriteResult</code></dd><dt>Change:</dt><dd>model-property-removed, model-property-added-required</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>model-property-removed</code></td><td class="contract-before"><code class="contract-value before">ConfidentialLedger.LedgerWriteResult preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">ConfidentialLedger.LedgerWriteResult no longer exposes property transactionId.</code></td></tr><tr><td class="contract-member"><code>model-property-added-required</code></td><td class="contract-before"><code class="contract-value before">ConfidentialLedger.LedgerWriteResult preserves its existing language-neutral generated SDK contract.</code></td><td class="contract-after"><code class="contract-value after">ConfidentialLedger.LedgerWriteResult added required property state.</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The public LedgerWriteResult model removes transactionId, so existing generated SDK consumers that read that property must migrate to the response wrapper or another location. LedgerWriteResult adds required state to a reachable public model, changing generated constructors and model contracts even though the property is additive on the wire.</div>
+<details class="affected-operations"><summary><strong>Affected REST operations (33)</strong></summary>
+<div class="affected-operation-list"><div class="affected-operation"><strong>CreateLedgerEntry</strong><span class="http-method">POST</span><code>/app/transactions</code></div><div class="affected-operation"><strong>CreateOrUpdateLedgerUser</strong><span class="http-method">PATCH</span><code>/app/ledgerUsers/{userId}</code></div><div class="affected-operation"><strong>CreateOrUpdateUser</strong><span class="http-method">PATCH</span><code>/app/users/{userId}</code></div><div class="affected-operation"><strong>CreateUserDefinedEndpoint</strong><span class="http-method">PUT</span><code>/app/userDefinedEndpoints</code></div><div class="affected-operation"><strong>CreateUserDefinedFunction</strong><span class="http-method">PUT</span><code>/app/userDefinedFunctions/{functionId}</code></div><div class="affected-operation"><strong>CreateUserDefinedRole</strong><span class="http-method">PUT</span><code>/app/roles</code></div><div class="affected-operation"><strong>DeleteLedgerUser</strong><span class="http-method">DELETE</span><code>/app/ledgerUsers/{userId}</code></div><div class="affected-operation"><strong>DeleteUser</strong><span class="http-method">DELETE</span><code>/app/users/{userId}</code></div><div class="affected-operation"><strong>DeleteUserDefinedFunction</strong><span class="http-method">DELETE</span><code>/app/userDefinedFunctions/{functionId}</code></div><div class="affected-operation"><strong>DeleteUserDefinedRole</strong><span class="http-method">DELETE</span><code>/app/roles</code></div><div class="affected-operation"><strong>ExecuteUserDefinedFunction</strong><span class="http-method">POST</span><code>/app/userDefinedFunctions/{functionId}:execute</code></div><div class="affected-operation"><strong>GetConstitution</strong><span class="http-method">GET</span><code>/app/governance/constitution</code></div><div class="affected-operation"><strong>GetCurrentLedgerEntry</strong><span class="http-method">GET</span><code>/app/transactions/current</code></div><div class="affected-operation"><strong>GetEnclaveQuotes</strong><span class="http-method">GET</span><code>/app/enclaveQuotes</code></div><div class="affected-operation"><strong>GetLedgerEntry</strong><span class="http-method">GET</span><code>/app/transactions/{transactionId}</code></div><div class="affected-operation"><strong>GetLedgerUser</strong><span class="http-method">GET</span><code>/app/ledgerUsers/{userId}</code></div><div class="affected-operation"><strong>GetReceipt</strong><span class="http-method">GET</span><code>/app/transactions/{transactionId}/receipt</code></div><div class="affected-operation"><strong>GetRuntimeOptions</strong><span class="http-method">GET</span><code>/app/userDefinedEndpoints/runtimeOptions</code></div><div class="affected-operation"><strong>GetTransactionStatus</strong><span class="http-method">GET</span><code>/app/transactions/{transactionId}/status</code></div><div class="affected-operation"><strong>GetUser</strong><span class="http-method">GET</span><code>/app/users/{userId}</code></div><div class="affected-operation"><strong>GetUserDefinedEndpoint</strong><span class="http-method">GET</span><code>/app/userDefinedEndpoints</code></div><div class="affected-operation"><strong>GetUserDefinedEndpointsModule</strong><span class="http-method">GET</span><code>/app/userDefinedEndpoints/modules</code></div><div class="affected-operation"><strong>GetUserDefinedFunction</strong><span class="http-method">GET</span><code>/app/userDefinedFunctions/{functionId}</code></div><div class="affected-operation"><strong>GetUserDefinedRole</strong><span class="http-method">GET</span><code>/app/roles</code></div><div class="affected-operation"><strong>ListCollections</strong><span class="http-method">GET</span><code>/app/collections</code></div><div class="affected-operation"><strong>ListConsortiumMembers</strong><span class="http-method">GET</span><code>/app/governance/members</code></div><div class="affected-operation"><strong>ListLedgerEntries</strong><span class="http-method">GET</span><code>/app/transactions</code></div><div class="affected-operation"><strong>ListLedgerUsers</strong><span class="http-method">GET</span><code>/app/ledgerUsers</code></div><div class="affected-operation"><strong>ListTags</strong><span class="http-method">GET</span><code>/app/collections/tags</code></div><div class="affected-operation"><strong>ListUserDefinedFunctions</strong><span class="http-method">GET</span><code>/app/userDefinedFunctions</code></div><div class="affected-operation"><strong>ListUsers</strong><span class="http-method">GET</span><code>/app/users</code></div><div class="affected-operation"><strong>UpdateRuntimeOptions</strong><span class="http-method">PATCH</span><code>/app/userDefinedEndpoints/runtimeOptions</code></div><div class="affected-operation"><strong>UpdateUserDefinedRole</strong><span class="http-method">PATCH</span><code>/app/roles</code></div></div></details>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-0444245ca7d40975"><code>semantic-0444245ca7d40975</code></a></span></div>
+</div></details></section>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
+</section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
+<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-0444245ca7d40975"><summary><strong><span class="action">modify</span> Add the 2026-07-31 preview response models and versioning</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-5946aaf303eb9f31">Downstream breaking changes</a></span></summary><div class="intent-body">
+<p>Add a preview API version and evolve ledger write response models to expose commit state, receipt, and application claims while preserving the prior stable model through versioning decorators; the version propagates across 33 operations.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 3 changed hunks classified. AI inference used for 2 requests.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</div><pre><span class="context">    * The 2026-02-23 API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2026_02_23: &quot;2026-02-23&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2026-07-31-preview API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  @Azure.Core.previewVersion</span>
+<span class="add">+  v2026_07_31_preview: &quot;2026-07-31-preview&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:34</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (33)</h4>
+<p><strong>Operation impact:</strong> 33 REST operations are affected; 3 representative operation(s) are shown below and 30 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>CreateLedgerEntry</strong> <code>POST /app/transactions</code> <span>2026-07-31-preview</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>parameters</td><td>query:api-version (required), query:collectionId, query:tags</td><td>query:api-version (required), query:collectionId, query:tags, query:waitForCommit</td></tr><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, 503, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: parameters, request, responses.</p></div></details>
+<details class="operation"><summary><strong>CreateOrUpdateLedgerUser</strong> <code>PATCH /app/ledgerUsers/{userId}</code> <span>2026-07-31-preview</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
+<details class="operation"><summary><strong>CreateOrUpdateUser</strong> <code>PATCH /app/users/{userId}</code> <span>2026-07-31-preview</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
+<p id="related-findings-semantic-0444245ca7d40975"><strong>Related findings:</strong> <a href="#downstream-downstream-group-5946aaf303eb9f31">downstream-group-5946aaf303eb9f31</a>, <a href="#downstream-shared-type-impact-88a58c4c72ca22da">shared-type-impact-88a58c4c72ca22da</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-18d57aab27797806"><summary><strong><span class="action">modify</span> Add wait-for-commit behavior to ledger entry writes</strong></summary><div class="intent-body">
+<p>Replace the preview ledger-entry write shape with a versioned shared-route operation that adds the optional waitForCommit query parameter and returns commit state, receipt, and rollback error information.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 2 changed hunks classified. AI inference used for 1 request.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</div><pre><span class="context">  * A collection id may optionally be specified.</span>
+<span class="context">  */</span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;Existing API&quot;</span>
+<span class="add">+@removed(Versions.v2026_07_31_preview)</span>
+<span class="add">+@renamedFrom(Versions.v2026_07_31_preview, &quot;createLedgerEntry&quot;)</span>
+<span class="context"> @summary(&quot;Writes a ledger entry.&quot;)</span>
+<span class="add">+@sharedRoute</span>
+<span class="add">+@route(&quot;/app/transactions&quot;)</span>
+<span class="add">+@post</span>
+<span class="add">+op createLedgerEntryAsync is ConfidentialLedgerCommon.LedgerOperation&lt;</span>
+<span class="add">+  {</span>
+<span class="add">+    /**</span>
+<span class="add">+     * The collection id.</span>
+<span class="add">+     */</span>
+<span class="add">+    @query(&quot;collectionId&quot;)</span>
+<span class="add">+    collectionId?: string;</span>
+<span class="add">+</span>
+<span class="add">+    /**</span>
+<span class="add">+     * Comma separated tags.</span>
+<span class="add">+     */</span>
+<span class="add">+    @query(&quot;tags&quot;)</span>
+<span class="add">+    tags?: string;</span>
+<span class="add">+</span>
+<span class="add">+    /**</span>
+<span class="add">+     * Ledger entry.</span>
+<span class="add">+     */</span>
+<span class="add">+    @bodyRoot</span>
+<span class="add">+    entry: LedgerEntry;</span>
+<span class="add">+  },</span>
+<span class="add">+  LedgerWriteResultBeforeV20260731Preview</span>
+<span class="add">+&gt;;</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * A collection id may optionally be specified.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;The versioned ledger write route requires both the service default error and a 503 TransactionRolledBack response.&quot;</span>
+<span class="add">+@added(Versions.v2026_07_31_preview)</span>
+<span class="add">+@summary(&quot;Writes a ledger entry.&quot;)</span>
+<span class="add">+@sharedRoute</span>
+<span class="context"> @route(&quot;/app/transactions&quot;)</span>
+<span class="context"> @post</span>
+<span class="context"> op createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation&lt;</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (0)</h4>
+<p class="empty">No directly affected REST operation.</p>
+<p id="related-findings-semantic-18d57aab27797806"><strong>Related findings:</strong> None</p>
+</div></details></section>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/confidentialledger/data-plane/ConfidentialLedger</code></td><td>new-api-version</td><td><code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25@2026-02-23</code><br><small>current · previous-latest-stable</small></td><td><code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25@2026-07-31-preview</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45162">#45162</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Add the 2026-07-31 preview response models and versioning</h4>
+<div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</div><pre><span class="context">    * The 2026-02-23 API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2026_02_23: &quot;2026-02-23&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2026-07-31-preview API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  @Azure.Core.previewVersion</span>
+<span class="add">+  v2026_07_31_preview: &quot;2026-07-31-preview&quot;,</span>
+<span class="context"> }</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</div><pre><span class="context">  * Returned as a result of a write to the Confidential Ledger, the transaction id</span>
+<span class="context">  * in the response indicates when the write will become durable.</span>
+<span class="context">  */</span>
+<span class="remove">-model LedgerWriteResult {</span>
+<span class="add">+@removed(Versions.v2026_07_31_preview)</span>
+<span class="add">+@renamedFrom(Versions.v2026_07_31_preview, &quot;LedgerWriteResult&quot;)</span>
+<span class="add">+model LedgerWriteResultBeforeV20260731Preview {</span>
+<span class="context">   ...CCFTransactionIdHeader;</span>
+<span class="context"> </span>
+<span class="context">   /**</span></pre></div><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</div><pre><span class="context">   collectionId: string;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="add">+/**</span>
+<span class="add">+ * Returned as a result of writing to the Confidential Ledger.</span>
+<span class="add">+ */</span>
+<span class="add">+@added(Versions.v2026_07_31_preview)</span>
+<span class="add">+model LedgerWriteResultWithReceipt {</span>
+<span class="add">+  ...CCFTransactionIdHeader;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The response body.</span>
+<span class="add">+   */</span>
+<span class="add">+  @bodyRoot</span>
+<span class="add">+  body: LedgerWriteResult;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * The result of writing a ledger entry.</span>
+<span class="add">+ */</span>
+<span class="add">+@added(Versions.v2026_07_31_preview)</span>
+<span class="add">+model LedgerWriteResult {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The collection identifier of the ledger entry.</span>
+<span class="add">+   */</span>
+<span class="add">+  collectionId: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The receipt certifying the committed transaction.</span>
+<span class="add">+   */</span>
+<span class="add">+  receipt?: ReceiptContents;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * State of the write transaction.</span>
+<span class="add">+   */</span>
+<span class="add">+  state: TransactionState;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The list of application claims.</span>
+<span class="add">+   */</span>
+<span class="add">+  applicationClaims?: ApplicationClaim[];</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * The transaction was rolled back before it could be committed.</span>
+<span class="add">+ */</span>
+<span class="add">+@added(Versions.v2026_07_31_preview)</span>
+<span class="add">+@error</span>
+<span class="add">+model TransactionRolledBackErrorResponse {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The HTTP status code.</span>
+<span class="add">+   */</span>
+<span class="add">+  @statusCode</span>
+<span class="add">+  statusCode: 503;</span>
+<span class="add">+</span>
+<span class="add">+  ...ConfidentialLedgerCommon.ConfidentialLedgerError;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="context"> /**</span>
+<span class="context">  * The result of querying for a ledger entry from an older transaction id. The</span>
+<span class="context">  * ledger entry is available in the response only if the returned state is Ready.</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:34</code>, <code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:427</code></p></section><section><h4>Add wait-for-commit behavior to ledger entry writes</h4>
+<div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</div><pre><span class="context">  * A collection id may optionally be specified.</span>
+<span class="context">  */</span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;Existing API&quot;</span>
+<span class="add">+@removed(Versions.v2026_07_31_preview)</span>
+<span class="add">+@renamedFrom(Versions.v2026_07_31_preview, &quot;createLedgerEntry&quot;)</span>
+<span class="context"> @summary(&quot;Writes a ledger entry.&quot;)</span>
+<span class="add">+@sharedRoute</span>
+<span class="add">+@route(&quot;/app/transactions&quot;)</span>
+<span class="add">+@post</span>
+<span class="add">+op createLedgerEntryAsync is ConfidentialLedgerCommon.LedgerOperation&lt;</span>
+<span class="add">+  {</span>
+<span class="add">+    /**</span>
+<span class="add">+     * The collection id.</span>
+<span class="add">+     */</span>
+<span class="add">+    @query(&quot;collectionId&quot;)</span>
+<span class="add">+    collectionId?: string;</span>
+<span class="add">+</span>
+<span class="add">+    /**</span>
+<span class="add">+     * Comma separated tags.</span>
+<span class="add">+     */</span>
+<span class="add">+    @query(&quot;tags&quot;)</span>
+<span class="add">+    tags?: string;</span>
+<span class="add">+</span>
+<span class="add">+    /**</span>
+<span class="add">+     * Ledger entry.</span>
+<span class="add">+     */</span>
+<span class="add">+    @bodyRoot</span>
+<span class="add">+    entry: LedgerEntry;</span>
+<span class="add">+  },</span>
+<span class="add">+  LedgerWriteResultBeforeV20260731Preview</span>
+<span class="add">+&gt;;</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * A collection id may optionally be specified.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;The versioned ledger write route requires both the service default error and a 503 TransactionRolledBack response.&quot;</span>
+<span class="add">+@added(Versions.v2026_07_31_preview)</span>
+<span class="add">+@summary(&quot;Writes a ledger entry.&quot;)</span>
+<span class="add">+@sharedRoute</span>
+<span class="context"> @route(&quot;/app/transactions&quot;)</span>
+<span class="context"> @post</span>
+<span class="context"> op createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation&lt;</span></pre></div><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</div><pre><span class="context">      */</span>
+<span class="context">     @bodyRoot</span>
+<span class="context">     entry: LedgerEntry;</span>
+<span class="add">+</span>
+<span class="add">+    /**</span>
+<span class="add">+     * Whether to wait for the transaction to be globally committed before</span>
+<span class="add">+     * returning. When true, the response includes the transaction receipt.</span>
+<span class="add">+     */</span>
+<span class="add">+    @query(&quot;waitForCommit&quot;)</span>
+<span class="add">+    waitForCommit?: boolean = false;</span>
+<span class="context">   },</span>
+<span class="remove">-  LedgerWriteResult</span>
+<span class="add">+  LedgerWriteResultWithReceipt,</span>
+<span class="add">+  | ConfidentialLedgerCommon.ConfidentialLedgerError</span>
+<span class="add">+  | TransactionRolledBackErrorResponse</span>
+<span class="context"> &gt;;</span>
+<span class="context"> </span>
+<span class="context"> /**</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123</code></p></section></details>
+<h3 id="compliance-search-evidence">Guidance fetched</h3>
+<details class="compliance-intent" id="compliance-intent-semantic-0444245ca7d40975"><summary><strong><a href="#intent-semantic-0444245ca7d40975">Add the 2026-07-31 preview response models and versioning</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-18d57aab27797806"><summary><strong><a href="#intent-semantic-18d57aab27797806">Add wait-for-commit behavior to ledger entry writes</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/">Azure.Core operation interfaces</a></li></ul>
+</div></details>
+<h3>Changed files</h3><ul><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</code> (committed)</li><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</code> (committed)</li><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</code> (committed)</li></ul>
+<h3>Timing and model input</h3><pre>{
+  &quot;timings&quot;: {
+    &quot;totalMs&quot;: 125175,
+    &quot;semanticAnalysisMs&quot;: 127,
+    &quot;restAnalysisMs&quot;: 45,
+    &quot;downstreamAnalysisMs&quot;: 820
+  },
+  &quot;inputAccounting&quot;: {
+    &quot;budgetTier&quot;: &quot;medium&quot;,
+    &quot;budgetBytes&quot;: 262144,
+    &quot;bytes&quot;: 145614,
+    &quot;estimatedTokens&quot;: 36404,
+    &quot;retained&quot;: {
+      &quot;sourceChanges&quot;: 3,
+      &quot;facts&quot;: 70,
+      &quot;semanticReviewUnits&quot;: 2,
+      &quot;restCandidates&quot;: 0,
+      &quot;downstreamCandidates&quot;: 3,
+      &quot;downstreamRootCauses&quot;: 1,
+      &quot;complianceSearchRequests&quot;: 2,
+      &quot;inferenceRequests&quot;: 3,
+      &quot;complianceSearchSourceBytes&quot;: 37502
+    },
+    &quot;omittedRedundant&quot;: {
+      &quot;rawEmitterArtifacts&quot;: true,
+      &quot;compilerLogs&quot;: true,
+      &quot;unchangedInventories&quot;: true,
+      &quot;unreferencedFacts&quot;: true
+    },
+    &quot;inference&quot;: {
+      &quot;requestCount&quot;: 3,
+      &quot;inferredCandidateCount&quot;: 0,
+      &quot;noImpactCount&quot;: 3,
+      &quot;blockedCount&quot;: 0
+    },
+    &quot;compliance&quot;: {
+      &quot;catalogEntriesScored&quot;: 64,
+      &quot;documentsFetched&quot;: 8,
+      &quot;documentBytesFetched&quot;: 2522921,
+      &quot;guidanceExcerptsRetained&quot;: 6,
+      &quot;guidanceExcerptBytesRetained&quot;: 1668
+    }
+  }
+}</pre>
+<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
+</main>
+<script>
+function revealHashTarget() {
+  const target = document.getElementById(location.hash.slice(1));
+  if (!target) return;
+  for (let element = target; element; element = element.parentElement) {
+    if (element.tagName === "DETAILS") element.open = true;
+  }
+  target.scrollIntoView({ block: "start" });
+}
+window.addEventListener("hashchange", revealHashTarget);
+document.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.closest('a[href^="#"]')) {
+    window.setTimeout(revealHashTarget);
+  }
+});
+revealHashTarget();
+</script>
+</body></html>

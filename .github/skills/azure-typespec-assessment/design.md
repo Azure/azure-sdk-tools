@@ -2320,6 +2320,24 @@ The five main dimension sections follow the same order as their summary cards.
 Cards expose visible hover and keyboard-focus states without changing their
 status colors.
 
+Immediately below the header, render **Preview Notice** as a compact
+default-collapsed disclosure bar. Its collapsed summary is one line and should
+occupy approximately 46 pixels vertically. Expanding it reveals the complete
+notice in a compact two-column layout on wide screens and one column on narrow
+screens:
+
+> The TypeSpec Assessment Assistant is currently in preview. Its goal is to
+> help service developers build confidence earlier in the TypeSpec authoring
+> workflow by providing contextual analysis, risk identification, and guidance
+> on potential downstream impacts.
+>
+> This report is intended as a review reference and learning aid only. It does
+> not replace official ARM API, Azure API Stewardship, Azure Breaking Change
+> reviews, and should not be treated as authoritative review feedback or
+> approval for specification changes. Official validation tools, generated
+> artifacts, and reviewer feedback remain the source of truth for merge and
+> release decisions.
+
 The report does not render a separate `Assessment comparison` section. Each
 project records the complete artifact comparison once in the appendix with:
 

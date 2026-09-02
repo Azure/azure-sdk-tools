@@ -46,7 +46,6 @@ The application uses `config/knowledge-config.json` to define which repositories
 - Node.js 20 or higher
 - TypeScript
 - Access to the configured repositories
-- An Azure credential with access to the configured resources, including the `Cognitive Services OpenAI User` role for Azure OpenAI
 
 ### Installation
 
@@ -75,8 +74,6 @@ npm run dev
 ## Environment Variables
 
 - `AZURE_APPCONFIG_ENDPOINT`
-
-Azure OpenAI uses token-based authentication through managed identity, workload identity, or the Azure CLI. An OpenAI API key is not required.
 
 ## Azure DevOps Pipeline
 

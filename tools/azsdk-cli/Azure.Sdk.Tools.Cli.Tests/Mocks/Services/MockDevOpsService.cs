@@ -301,21 +301,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(workItem);
         }
 
-        Task<List<GitHubLableWorkItem>> IDevOpsService.GetGitHubLableWorkItemsAsync(CancellationToken ct)
-        {
-            return Task.FromResult(new List<GitHubLableWorkItem>());
-        }
-
-        Task<GitHubLableWorkItem> IDevOpsService.CreateGitHubLableWorkItemAsync(string label, CancellationToken ct)
-        {
-            return Task.FromResult(new GitHubLableWorkItem
-            {
-                Label = label,
-                WorkItemId = 1,
-                WorkItemUrl = $"https://dev.azure.com/azure-sdk/release/_workitems/edit/1"
-            });
-        }
-
         Task<ProductInfo?> IDevOpsService.GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct)
         {
             // Return mock data for testing

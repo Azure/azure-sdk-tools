@@ -19,9 +19,8 @@ public class CodeownersAuditResponse : CommandResponse
     [JsonPropertyName("force_requested")]
     public bool ForceRequested { get; set; }
 
-    [JsonPropertyName("repo")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Repo { get; set; }
+    [JsonPropertyName("repo_root")]
+    public string RepoRoot { get; set; } = string.Empty;
 
     [JsonPropertyName("violations")]
     public List<AuditViolation> Violations { get; } = [];
@@ -42,7 +41,7 @@ public class CodeownersAuditResponse : CommandResponse
     {
         var sb = new StringBuilder();
         sb.AppendLine("=== CODEOWNERS Audit Report ===");
-        sb.AppendLine($"Fix mode: {FixRequested}, Force: {ForceRequested}, Repo: {Repo ?? "(all)"}");
+        sb.AppendLine($"Fix mode: {FixRequested}, Force: {ForceRequested}, Repo root: {RepoRoot}");
         sb.AppendLine($"Total violations: {TotalViolations}");
         sb.AppendLine($"Fixes applied: {FixesApplied}");
         sb.AppendLine($"Fixes failed: {FixesFailed}");

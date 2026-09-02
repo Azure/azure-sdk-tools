@@ -167,8 +167,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<string>> GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct);
-        public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
-        public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
@@ -1909,70 +1907,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             await CreateWorkItemRelationAsync(child.WorkItemId, "Parent", parent.WorkItemId, ct: ct);
-        }
-
-        /// <summary>
-        /// Gets all Label work items from the Release project.
-        /// </summary>
-        /// <returns>List of GitHubLableWorkItem objects</returns>
-        public async Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct)
-        {
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
-            var workItems = await FetchWorkItemsPagedAsync(query, ct: ct);
-
-            return workItems.Select(wi => new GitHubLableWorkItem
-            {
-                Label = wi.Fields.TryGetValue("Custom.Label", out object? labelValue) ? labelValue?.ToString() ?? string.Empty : string.Empty,
-                WorkItemId = wi.Id ?? 0,
-                WorkItemUrl = GetWorkItemHtmlUrl(wi.Id ?? 0)
-            }).ToList();
-        }
-
-        /// <summary>
-        /// Creates a new Label work item in the Release project.
-        /// </summary>
-        /// <param name="label">The label name to create</param>
-        /// <returns>The created GitHubLableWorkItem</returns>
-        public async Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct)
-        {
-            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
-            {
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/System.Title",
-                    Value = $"Label: {label}"
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.Label",
-                    Value = label
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/System.History",
-                    Value = "This work item was automatically created from the service labels CSV file (common-labels.csv) by the azsdk CLI tool."
-                }
-            };
-
-            logger.LogInformation("Creating Label work item for '{label}'", label);
-            var workItem = await connection.GetWorkItemClient(ct).CreateWorkItemAsync(patchDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, "Label", cancellationToken: ct);
-
-            if (workItem == null || workItem.Id == null)
-            {
-                throw new Exception($"Failed to create Label work item for '{label}'");
-            }
-
-            logger.LogInformation("Created Label work item {workItemId} for '{label}'", workItem.Id, label);
-
-            return new GitHubLableWorkItem
-            {
-                Label = label,
-                WorkItemId = workItem.Id ?? 0,
-                WorkItemUrl = GetWorkItemHtmlUrl(workItem.Id ?? 0)
-            };
         }
 
         private static string GetWorkItemHtmlUrl(int workItemId)

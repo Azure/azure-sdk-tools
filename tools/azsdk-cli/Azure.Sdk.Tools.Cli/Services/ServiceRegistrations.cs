@@ -14,7 +14,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
-using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
@@ -80,17 +79,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
             services.AddSingleton<UserOrgVisibilityCache>();
             services.AddSingleton<ICacheValidator, CacheValidator>();
-            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
             services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
             services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
-
-            services.AddSingleton<IAuditRule, InvalidOwnerRule>();
-            services.AddSingleton<IAuditRule, MalformedTeamRule>();
-            services.AddSingleton<IAuditRule, TeamNotWriteRule>();
-            services.AddSingleton<IAuditRule, LabelNotInRepoLabelsRule>();
-            services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
-            services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
-            services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();

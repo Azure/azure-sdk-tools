@@ -50,31 +50,6 @@ public class CreateServiceLabelHandler : IMockToolHandler
     }
 }
 
-/// <summary>Mock handler for azsdk_engsys_codeowner_view.</summary>
-public class CodeownerViewHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_view";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new CodeownersViewResponse
-    {
-        Packages =
-        [
-            new PackageResponse
-            {
-                WorkItemId = 70001,
-                PackageName = "Azure.Template.Contoso",
-                Language = ".NET",
-                PackageType = "client",
-                Owners =
-                [
-                    new OwnerResponse { GitHubAlias = "contoso-owner-1" },
-                    new OwnerResponse { GitHubAlias = "contoso-owner-2" }
-                ],
-                Labels = ["Contoso.WidgetManager"]
-            }
-        ]
-    };
-}
-
 /// <summary>Mock handler for azsdk_engsys_codeowner_check_package.</summary>
 public class CodeownerCheckPackageHandler : IMockToolHandler
 {
@@ -89,70 +64,6 @@ public class CodeownerCheckPackageHandler : IMockToolHandler
     };
 }
 
-internal static class CodeownersModifyMockResponses
-{
-    public static CodeownersModifyResponse OkWithMessage() => new()
-    {
-        View = new CodeownersViewResponse
-        {
-            Packages =
-            [
-                new PackageResponse
-                {
-                    WorkItemId = 70001,
-                    PackageName = "Azure.Template.Contoso",
-                    Language = ".NET",
-                    PackageType = "client",
-                    Owners = [new OwnerResponse { GitHubAlias = "contoso-owner-1" }],
-                    Labels = ["Contoso.WidgetManager"]
-                }
-            ]
-        }
-    };
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_add_package_owner.</summary>
-public class CodeownerAddPackageOwnerHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_add_package_owner";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => CodeownersModifyMockResponses.OkWithMessage();
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_add_package_label.</summary>
-public class CodeownerAddPackageLabelHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_add_package_label";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => CodeownersModifyMockResponses.OkWithMessage();
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_add_label_owner.</summary>
-public class CodeownerAddLabelOwnerHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_add_label_owner";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => CodeownersModifyMockResponses.OkWithMessage();
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_remove_package_owner.</summary>
-public class CodeownerRemovePackageOwnerHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_remove_package_owner";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => CodeownersModifyMockResponses.OkWithMessage();
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_remove_package_label.</summary>
-public class CodeownerRemovePackageLabelHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_remove_package_label";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => CodeownersModifyMockResponses.OkWithMessage();
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_remove_label_owner.</summary>
-public class CodeownerRemoveLabelOwnerHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_remove_label_owner";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => CodeownersModifyMockResponses.OkWithMessage();
-}
-
 /// <summary>Mock handler for azsdk_engsys_codeowner_update_cache.</summary>
 public class CodeownerUpdateCacheHandler : IMockToolHandler
 {
@@ -161,5 +72,26 @@ public class CodeownerUpdateCacheHandler : IMockToolHandler
     {
         Message = "CODEOWNERS cache refreshed (mock)",
         Result = new { packagesRefreshed = 1, labelOwnersRefreshed = 1 }
+    };
+}
+
+/// <summary>Mock handler for azsdk_engsys_codeowner_generate.</summary>
+public class CodeownerGenerateHandler : IMockToolHandler
+{
+    public string ToolName => "azsdk_engsys_codeowner_generate";
+    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new DefaultCommandResponse
+    {
+        Message = "CODEOWNERS regenerated from owners.yaml (mock)",
+        Result = new { outputPath = ".github/CODEOWNERS", inSync = true }
+    };
+}
+
+/// <summary>Mock handler for azsdk_engsys_codeowner_audit.</summary>
+public class CodeownerAuditHandler : IMockToolHandler
+{
+    public string ToolName => "azsdk_engsys_codeowner_audit";
+    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new CodeownersAuditResponse
+    {
+        RepoRoot = arguments?.GetValueOrDefault("repoRoot")?.ToString() ?? "/repo"
     };
 }

@@ -10,20 +10,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 public interface ICheckPackageHelper
 {
     /// <summary>
-    /// Validates that a path has sufficient owners, PR labels, and service owners
-    /// based on parsed CODEOWNERS entries.
+    /// Validates that a package directory has sufficient owners, PR labels, and service owners.
+    /// Ownership is resolved from the <c>owners.yaml</c> fragment that governs
+    /// <paramref name="directoryPath"/>, found by walking up from that directory.
     /// </summary>
     /// <param name="directoryPath">Relative path from repo root to the package directory.</param>
-    /// <param name="repo">Repository name used only for prompt generation in the response.</param>
-    /// <param name="codeownersEntries">
-    /// Pre-parsed CODEOWNERS entries from <see cref="CodeownersParser"/>. This helper relies on parser behavior
-    /// such as metadata block parsing and attempted team expansion when evaluating owners and labels.
-    /// </param>
+    /// <param name="repoRoot">Absolute path to the repository root.</param>
+    /// <param name="repo">Repository name, used for repo-label validation and prompt generation.</param>
     /// <returns>A <see cref="CheckPackageResponse"/> describing success or all discovered issues.</returns>
-    CheckPackageResponse CheckPackage(
+    Task<CheckPackageResponse> CheckPackage(
         string directoryPath,
+        string repoRoot,
         string? repo,
-        List<CodeownersEntry> codeownersEntries);
+        CancellationToken ct);
 }
 
 public class CheckPackageHelper : ICheckPackageHelper
@@ -36,13 +35,28 @@ public class CheckPackageHelper : ICheckPackageHelper
     private const string PrLabelPlaceholder = "<pr-label>";
     private const string ServiceAttentionLabel = "Service Attention";
 
+    public Task<CheckPackageResponse> CheckPackage(
+        string directoryPath,
+        string repoRoot,
+        string? repo,
+        CancellationToken ct)
+        => throw new NotImplementedException(
+            "Resolving package ownership from owners.yaml is not implemented yet. " +
+            "See Component 11 of tools/azsdk-cli/docs/specs/8-operations-codeowners-management.spec.md.");
+
     /// <summary>
-    /// Validates a package path against CODEOWNERS entries produced by <see cref="CodeownersParser"/>.
+    /// Applies the four package-ownership rules to a set of entries already resolved from an
+    /// owners fragment. Kept separate from resolution so the rules stay directly testable.
     /// </summary>
-    public CheckPackageResponse CheckPackage(
+    /// <param name="ownersFilePath">
+    /// Repo-relative path of the fragment the entries came from. Used to tell the caller which file
+    /// to edit; null when the entries did not come from a fragment.
+    /// </param>
+    public CheckPackageResponse Evaluate(
         string directoryPath,
         string? repo,
-        List<CodeownersEntry> codeownersEntries)
+        List<CodeownersEntry> codeownersEntries,
+        string? ownersFilePath)
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
         {
@@ -68,7 +82,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             {
                 Code = CheckPackageIssue.Codes.InvalidDirectoryPath,
                 Message = $"check-package failed for path '{directoryPath}': Package directory paths must not contain '*'.",
-                NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and rerun the ownership check with a concrete package directory path",
+                NextStep = $"Rerun the ownership check with a concrete package directory path instead of {FormatPromptValue(directoryPath)}",
                 CurrentValues = [directoryPath],
             });
 
@@ -81,8 +95,8 @@ public class CheckPackageHelper : ICheckPackageHelper
             response.Issues.Add(new CheckPackageIssue
             {
                 Code = CheckPackageIssue.Codes.NoMatchingPath,
-                Message = $"check-package failed: No CODEOWNERS entry matches path '{directoryPath}'.",
-                NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered",
+                Message = $"check-package failed: No owners.yaml entry matches path '{directoryPath}'.",
+                NextStep = $"Add a path entry for {FormatPromptValue(directoryPath)} with owners and pr-labels to {FormatOwnersFile(ownersFilePath, directoryPath)} so package {FormatPromptValue(packageName)} is covered",
             });
 
             return response;
@@ -106,9 +120,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has {owners.Count} unique owner(s); " +
                     $"at least {MinimumOwnerCount} are required. " +
                     $"Owners: [{string.Join(", ", matchedEntry.SourceOwners ?? [])}]",
-                NextStep = resolvedTargetType == PackageTargetType
-                    ? $"/owners add owners {CurrentGitHubUserPlaceholder} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
-                    : $"/owners add owners {CurrentGitHubUserPlaceholder} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}",
+                NextStep = $"Add {CurrentGitHubUserPlaceholder} to the owners list of the {FormatPromptValue(resolvedTarget)} path entry in {FormatOwnersFile(ownersFilePath, directoryPath)}",
                 FoundCount = owners.Count,
                 RequiredCount = MinimumOwnerCount,
                 CurrentValues = matchedEntry.SourceOwners != null
@@ -125,9 +137,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 Message =
                     $"check-package failed for path '{directoryPath}': " +
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has no PR label.",
-                NextStep = resolvedTargetType == PackageTargetType
-                    ? $"/owners add label {FormatQuotedValue(PrLabelPlaceholder)} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
-                    : $"/owners add label {FormatQuotedValue(PrLabelPlaceholder)} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}",
+                NextStep = $"Add a pr-labels entry to the {FormatPromptValue(resolvedTarget)} path entry in {FormatOwnersFile(ownersFilePath, directoryPath)}",
             });
 
             return response;
@@ -142,7 +152,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             {
                 Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
                 Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, 0, null),
-                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, repo),
+                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFilePath, directoryPath),
                 FoundCount = 0,
                 RequiredCount = MinimumOwnerCount,
             });
@@ -160,7 +170,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             {
                 Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
                 Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, serviceOwners.Count, matchingServiceEntry.ServiceOwners),
-                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, repo),
+                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFilePath, directoryPath),
                 FoundCount = serviceOwners.Count,
                 RequiredCount = MinimumOwnerCount,
                 CurrentValues = matchingServiceEntry.ServiceOwners != null
@@ -291,9 +301,27 @@ public class CheckPackageHelper : ICheckPackageHelper
         return message;
     }
 
-    private static string BuildServiceOwnerNextStep(IReadOnlyList<string> labels, string? repo)
+    private static string BuildServiceOwnerNextStep(IReadOnlyList<string> labels, string? ownersFilePath, string directoryPath)
     {
-        return $"/owners add service owners {CurrentGitHubUserPlaceholder} to {FormatPrLabelTargetForPrompt(labels)}{FormatRepoPhrase(repo)}";
+        return $"Add {CurrentGitHubUserPlaceholder} to the service-owners list of the {FormatPrLabelTargetForPrompt(labels)} "
+            + $"label-owners block in {FormatOwnersFile(ownersFilePath, directoryPath)}";
+    }
+
+    /// <summary>
+    /// Names the fragment the caller should edit. When no fragment governs the directory, suggests
+    /// where one should be created: the service directory two segments below the repo root.
+    /// </summary>
+    private static string FormatOwnersFile(string? ownersFilePath, string directoryPath)
+    {
+        if (!string.IsNullOrEmpty(ownersFilePath))
+        {
+            return ownersFilePath;
+        }
+
+        var segments = directoryPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length >= 2
+            ? $"{segments[0]}/{segments[1]}/owners.yaml"
+            : "the owners.yaml for this service";
     }
 
     private static IReadOnlyList<string> GetServiceOwnerPromptLabels(IEnumerable<string>? labels)
@@ -370,11 +398,4 @@ public class CheckPackageHelper : ICheckPackageHelper
     }
 
     private static string FormatQuotedValue(string value) => $"\"{value}\"";
-
-    private static string FormatRepoPhrase(string? repo)
-    {
-        return string.IsNullOrEmpty(repo)
-            ? string.Empty
-            : $" in repo {FormatPromptValue(repo)}";
-    }
 }

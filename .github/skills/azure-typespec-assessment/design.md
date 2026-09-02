@@ -2117,10 +2117,13 @@ The report must show:
    to the actual behavior, while retaining complete evidence in JSON and the
    appendix;
 10. appendix with a **Potential limits** subsection for retained assessment
-    blockers, followed by files, projects, compiler artifacts, timings, model
-    input accounting, ranked Compliance documents, retrieval attempts, and
-    provenance. Potential limits are supporting caveats rather than a
-    standalone main-report section.
+    blockers, followed by a clickable pull-request link when PR identity is
+    available, files, projects, compiler artifacts, timings, model input
+    accounting, ranked Compliance documents, retrieval attempts, and
+    provenance. Derive the link from the repository remote and PR number when
+    the current schema does not carry a dedicated pull-request object.
+    Potential limits are supporting caveats rather than a standalone
+    main-report section.
 
 ### REST contract cards
 

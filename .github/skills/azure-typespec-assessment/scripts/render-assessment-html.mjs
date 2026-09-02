@@ -134,9 +134,26 @@ function complianceStatus(status) {
   return { icon: "i", label: "Not assessed", className: "" };
 }
 
-function pullRequestLink(pullRequest) {
-  return pullRequest?.url
-    ? `<a href="${escapeHtml(pullRequest.url)}">#${escapeHtml(pullRequest.number)}</a>`
+function githubRepositoryUrl(remoteUrl) {
+  const normalized = String(remoteUrl ?? "")
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\.git$/i, "");
+  if (/^https?:\/\/github\.com\//i.test(normalized)) return normalized;
+  const sshPath = normalized.match(/^git@github\.com:(.+)$/i)?.[1];
+  if (sshPath) return `https://github.com/${sshPath}`;
+  const sshUrlPath = normalized.match(/^ssh:\/\/git@github\.com\/(.+)$/i)?.[1];
+  return sshUrlPath ? `https://github.com/${sshUrlPath}` : undefined;
+}
+
+function pullRequestLink(assessment) {
+  const number = assessment.pullRequest?.number ?? assessment.pr;
+  const repositoryUrl = githubRepositoryUrl(assessment.repository?.remoteUrl);
+  const url =
+    assessment.pullRequest?.url ??
+    (number && repositoryUrl ? `${repositoryUrl}/pull/${number}` : undefined);
+  return url
+    ? `<a href="${escapeHtml(url)}">#${escapeHtml(number)}</a>`
     : "Not available for this local pre-PR assessment.";
 }
 
@@ -1430,7 +1447,7 @@ function renderCurrent(assessment) {
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — ${escapeHtml(dimensions.documentQuality.summary)}</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
-<p><strong>Pull request:</strong> ${pullRequestLink(assessment.pullRequest)}</p>
+<p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>
 ${completeTypeSpecEvidence(dimensions.semantic.items)}
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
 ${complianceEvidenceAppendix(dimensions.compliance, dimensions.semantic.items)}

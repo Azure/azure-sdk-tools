@@ -128,4 +128,7 @@ and coverage, four ranked documents per intent, fetched guidance beside changed
 TypeSpec, expanded failures, collapsed passes, retrieval blockers, explicit
 not-assessed Document Quality, and complete provenance. Present top-level
 assessment blockers only in the appendix under **Potential limits**, not as a
-standalone main-report section. Escape all source- and Agent-controlled text.
+standalone main-report section. The appendix must include a clickable pull
+request link when a PR number is available, deriving the URL from
+`repository.remoteUrl` when no dedicated pull-request URL is present. Escape
+all source- and Agent-controlled text.

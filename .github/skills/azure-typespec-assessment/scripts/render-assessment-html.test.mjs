@@ -1208,6 +1208,10 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
   assert.ok(html.includes(`href="#intent-${complianceIntent.id}"`));
 
   assert.match(html, /Semantic intents \(4\)/);
+  assert.match(
+    html,
+    /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
+  );
   assert.match(html, /Remove NFS file and handle response fields/);
   assert.doesNotMatch(
     html,

@@ -3017,6 +3017,15 @@
     return "";
   }
 
+  function hasMergedSpecPr(plan) {
+    const specStatus = (plan.apiReadiness || "").toLowerCase();
+    return specStatus === "completed" || specStatus === "merged";
+  }
+
+  function isReviewRequiredSdkPrStatus(status) {
+    return (status || "").toLowerCase() === "open";
+  }
+
   // Extract candidate PRs without filtering by GitHub status (status fetched progressively).
   function extractCandidatePRs(plans) {
     const seen = new Set();
@@ -3025,6 +3034,7 @@
       if (!p.languages) continue;
       if (p.state === "Finished") continue;
       if (isPrivatePreviewPlan(p)) continue;
+      if (!hasMergedSpecPr(p)) continue;
       for (const [lang, l] of Object.entries(p.languages)) {
         if (isLangExcluded(l.exclusionStatus)) continue;
         if (!l.sdkPrUrl) continue;
@@ -3087,8 +3097,7 @@
   // (server-side enrichment), without making any GitHub requests.
   function buildPRListFromEmbeddedStatuses(candidates) {
     for (const c of candidates) {
-      const stLower = (c.prStatus || "").toLowerCase();
-      if (stLower === "open" || stLower === "draft") {
+      if (isReviewRequiredSdkPrStatus(c.prStatus)) {
         c._statusLoaded = true;
         getPrs().push(c);
       }
@@ -3163,8 +3172,7 @@
         if (!st) continue;
         c._statusLoaded = true;
         c.prStatus = st;
-        const stLower = st.toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(st)) {
           getPrs().push(c);
           needsRender = true;
         }
@@ -3181,8 +3189,7 @@
     // Final pass: add any candidates whose URL wasn't fetched (network error) if they look open
     for (const c of candidates) {
       if (!c._statusLoaded) {
-        const stLower = (c.prStatus || "").toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(c.prStatus)) {
           getPrs().push(c);
         }
       }

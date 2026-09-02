@@ -37,6 +37,13 @@ function run(cmd: string): string {
   return execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 }
 
+// App Configuration returns a zero-byte 403 while a new data-plane role is
+// propagating; Azure CLI masks that response as this JSON parsing error.
+export function isRetryableAppConfigWriteError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /Forbidden|AuthorizationfailedException|not authorized|403|Expecting value:\s*line 1 column 1/i.test(message);
+}
+
 /** App Configuration Data Owner built-in role definition ID. */
 const APP_CONFIG_DATA_OWNER_ROLE_ID = "5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b";
 
@@ -232,8 +239,7 @@ export function seedAppConfiguration(opts: SeedAppConfigurationOptions): void {
         setKvOnce(key, value);
         return;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        const isAuthDelay = /Forbidden|AuthorizationfailedException|not authorized|403/i.test(msg);
+        const isAuthDelay = isRetryableAppConfigWriteError(err);
         const isLast = attempt === delaysSeconds.length - 1;
         if (!isAuthDelay || isLast) throw err;
         const wait = delaysSeconds[attempt + 1];

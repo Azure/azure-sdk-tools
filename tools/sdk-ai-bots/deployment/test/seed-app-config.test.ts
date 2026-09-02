@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   derivedAppConfigValues,
   fixedAppConfigValues,
+  isRetryableAppConfigWriteError,
 } from "../hooks/lib/seed-app-config.js";
 
 test("disables the chatbot evolution agent by default", () => {
@@ -43,4 +44,14 @@ test("injects the chat agent Application Insights resource ID", () => {
   });
 
   assert.equal(values.AGENT_APPLICATIONINSIGHTS_RESOURCE_ID, resourceId);
+});
+
+test("retries the opaque App Configuration RBAC propagation error", () => {
+  assert.equal(
+    isRetryableAppConfigWriteError(
+      new Error("Failed to set the key-value due to an exception: Expecting value: line 1 column 1 (char 0)"),
+    ),
+    true,
+  );
+  assert.equal(isRetryableAppConfigWriteError(new Error("Invalid key")), false);
 });

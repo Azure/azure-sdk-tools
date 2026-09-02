@@ -38,12 +38,12 @@
    fetched documents, fetched bytes, retained excerpts, and retained excerpt
    bytes.
 7. **Judge every intent** — write exactly one `complianceDecisions` entry per
-   Semantic intent. Use `applicable-pass`, `applicable-fail`, or
-   `not-assessed`. Cite fetched sections only when they contribute to the
-   decision. Generic syntax or nearby guidance that does not govern the changed
-   behavior remains search evidence; it does not force a pass/fail decision.
-   When guidance is insufficient, return `not-assessed` with the changed-code
-   evidence and a clear rationale so report generation can continue.
+   Semantic intent. Use `applicable-pass`, `applicable-fail`,
+   `no-applicable-guidance`, or `not-assessed`. Cite fetched sections only when
+   they contribute to the decision. When the search completes but no fetched
+   guidance governs the changed behavior, return `no-applicable-guidance` with
+   changed-code evidence and a clear rationale. Reserve `not-assessed` for
+   incomplete or blocked Compliance.
    Every `applicable-fail` also supplies a concise finding title and `high`,
    `medium`, or `low` severity.
    Never synthesize a requirement or recommended code example.

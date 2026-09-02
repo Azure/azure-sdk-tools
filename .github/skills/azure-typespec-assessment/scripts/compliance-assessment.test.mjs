@@ -237,7 +237,7 @@ test("rejects incomplete declaration source provenance", () => {
   );
 });
 
-test("allows not-assessed when fetched guidance does not govern the intent", () => {
+test("counts completed searches with no governing guidance as assessed", () => {
   const { source, requests, evidence, decisions } = fixture();
   requests[0].declarationIds.push("declaration-2");
   evidence.intents[0].rankedDocuments[0].guidance[0].applicableDeclarationIds.push(
@@ -245,11 +245,11 @@ test("allows not-assessed when fetched guidance does not govern the intent", () 
   );
   decisions[0] = {
     reviewUnitId: "semantic-1",
-    applicableGuidance: decisions[0].applicableGuidance,
+    applicableGuidance: [],
     sourceChangeIds: ["source-1"],
     hunkIds: ["hunk-1"],
     declarationIds: ["declaration-1"],
-    decision: "not-assessed",
+    decision: "no-applicable-guidance",
     actual: "The intent uses a generator-specific decorator.",
     rationale:
       "The fetched page documents generic decorator syntax but does not define the generator-specific semantics.",
@@ -260,10 +260,11 @@ test("allows not-assessed when fetched guidance does not govern the intent", () 
     decisions,
     sourceChanges: [source],
   });
-  assert.equal(compliance.status, "not-assessed");
+  assert.equal(compliance.status, "passed");
   assert.equal(compliance.findings.length, 0);
-  assert.equal(compliance.coverage.assessedIntentCount, 0);
-  assert.deepEqual(compliance.coverage.unassessedIntentIds, ["semantic-1"]);
+  assert.equal(compliance.coverage.assessedIntentCount, 1);
+  assert.deepEqual(compliance.coverage.unassessedIntentIds, []);
+  assert.deepEqual(compliance.blockers, []);
   assert.deepEqual(compliance.intentAssessments[0].declarationIds, [
     "declaration-1",
     "declaration-2",

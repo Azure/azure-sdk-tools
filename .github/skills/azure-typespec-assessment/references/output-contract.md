@@ -81,6 +81,9 @@ Coverage must be exact: one concise semantic result per supplied review unit,
 one decision per supplied deterministic or inferred REST/downstream candidate,
 and one Compliance decision per Semantic intent. Applicable Compliance
 decisions cite fetched guidance sections and synthesize their expected pattern.
+Use `no-applicable-guidance` when search completed but no fetched section
+governs the intent; use `not-assessed` only for incomplete or blocked
+Compliance.
 All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for the finding-first HTML.
@@ -102,9 +105,11 @@ Dimension statuses are derived, not authored:
 
 A blocked implemented dimension cannot pass. Document Quality cannot pass or
 report zero findings as if assessed; it remains explicitly `not-assessed`.
-Insufficient Compliance guidance is represented by an intent-level
-`not-assessed` decision and must not block assembly or HTML generation when the
-decision still identifies the changed code and explains the evidence gap.
+A completed Compliance search with no governing guidance is represented by an
+intent-level `no-applicable-guidance` decision. It counts as assessed and does
+not create a blocker. `not-assessed` is reserved for missing evidence,
+retrieval failures, blocked Semantic analysis, or otherwise incomplete
+Compliance.
 
 ## HTML
 

@@ -233,9 +233,12 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       }
     }
     if (
-      !["applicable-pass", "applicable-fail", "not-assessed"].includes(
-        item.decision,
-      ) ||
+      ![
+        "applicable-pass",
+        "applicable-fail",
+        "no-applicable-guidance",
+        "not-assessed",
+      ].includes(item.decision) ||
       !item.actual?.trim() ||
       !item.gap?.trim() ||
       !Array.isArray(item.applicableGuidance)
@@ -275,6 +278,13 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
             `Compliance intent ${item.semanticIntentId} uses unknown guidance.`,
           );
         }
+      }
+    } else if (item.decision === "no-applicable-guidance") {
+      assessedIntentIds.push(item.semanticIntentId);
+      if (item.applicableGuidance.length || (item.blockers ?? []).length) {
+        errors.push(
+          `Compliance intent ${item.semanticIntentId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
+        );
       }
     } else {
       incompleteEvidence = true;

@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T05:50:13.900Z",
+  "pr": 42853,
+  "generatedAt": "2026-09-02T07:24:22.474Z",
   "title": "TypeSpec assessment: specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices, specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\42853\\head",
@@ -56216,15 +56217,13 @@
       "blockers": []
     },
     "compliance": {
-      "status": "not-assessed",
-      "summary": "Compliance evidence or Semantic intent coverage is incomplete.",
+      "status": "passed",
+      "summary": "All Semantic intents were assessed; no applicable guidance was found for one or more intents.",
       "coverage": {
         "semanticIntentCount": 3,
-        "assessedIntentCount": 2,
+        "assessedIntentCount": 3,
         "selectedDocumentCount": 12,
-        "unassessedIntentIds": [
-          "semantic-74cbdf542ff995de"
-        ]
+        "unassessedIntentIds": []
       },
       "intentAssessments": [
         {
@@ -56870,7 +56869,7 @@
             "hunk-fa8ad8500ba9a540"
           ],
           "declarationIds": [],
-          "decision": "not-assessed",
+          "decision": "no-applicable-guidance",
           "actual": "Four back-compatible scope strings change from !csharp to !csharp,!go.",
           "rationale": "The bounded request contains no material declaration IDs, and none of the four highest-ranked fetched catalog documents governs these language scope strings.",
           "gap": "The bounded request contains no material declaration IDs, and none of the four highest-ranked fetched catalog documents governs these language scope strings.",
@@ -57421,9 +57420,7 @@
               "contentHash": "sha256:abde761b42720d8c795b199a3344ffaea8ff48823a25ae89abe0e5a79ad98ec4"
             }
           ],
-          "blockers": [
-            "no-material-declarations: no changed declaration could be compared."
-          ]
+          "blockers": []
         },
         {
           "semanticIntentId": "semantic-831f19ce86ef8b65",
@@ -58149,12 +58146,7 @@
       ],
       "findings": [],
       "retrievalFailures": [],
-      "blockers": [
-        {
-          "reviewUnitId": "semantic-74cbdf542ff995de",
-          "message": "no-material-declarations: no changed declaration could be compared."
-        }
-      ]
+      "blockers": []
     },
     "documentQuality": {
       "status": "not-assessed",
@@ -58620,9 +58612,7 @@
       }
     }
   ],
-  "blockers": [
-    "Compliance for semantic-74cbdf542ff995de is not assessed because the bounded request has no material declaration IDs and the selected catalog documents do not govern its language scope strings."
-  ],
+  "blockers": [],
   "provenance": {
     "modelInput": "model-input.json",
     "inference": "inference.json",

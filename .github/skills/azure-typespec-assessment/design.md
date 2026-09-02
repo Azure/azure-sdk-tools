@@ -1188,15 +1188,17 @@ assessment units. The decision records:
 - applicable document URLs and guidance sections;
 - `expected`: a concise synthesis of the applicable fetched guidance;
 - `actual`: a concise description of the intent's changed TypeSpec pattern;
-- `decision`: `applicable-pass`, `applicable-fail`, or `not-assessed`; and
+- `decision`: `applicable-pass`, `applicable-fail`,
+  `no-applicable-guidance`, or `not-assessed`; and
 - a short rationale grounded only in the expected and actual evidence.
 
 `applicable-pass` requires at least one fetched guidance section that governs
 the intent and no direct contradiction. `applicable-fail` requires a direct
 contradiction between fetched guidance and changed code. Similar wire
 behavior, an undocumented legacy helper, or a suppression is not equivalent to
-the documented pattern. Use `not-assessed` when no selected document governs
-the intent or retrieval/evidence is insufficient.
+the documented pattern. Use `no-applicable-guidance` when search completed but
+no selected document governs the intent. Use `not-assessed` only when
+retrieval, evidence, or execution is incomplete.
 
 One failing intent produces one intent-level finding. The finding may cite
 multiple source declarations and guidance sections, but it must describe one
@@ -1206,12 +1208,14 @@ separate Compliance decisions or findings.
 ### Dimension status and safety
 
 - `failed`: one or more intent decisions are `applicable-fail`.
-- `passed`: every Semantic intent has an `applicable-pass` decision.
-- `not-assessed`: any Semantic intent has no applicable fetched guidance,
-  retrieval/evidence is insufficient, or fewer than four documents can be
-  retrieved after catalog exhaustion.
+- `passed`: every Semantic intent is `applicable-pass` or
+  `no-applicable-guidance`, with no incomplete evidence.
+- `not-assessed`: retrieval/evidence is insufficient or fewer than four
+  documents can be retrieved after catalog exhaustion.
 
-Documents with `no-relevant-guidance` do not count as intent coverage.
+Documents with `no-relevant-guidance` support a
+`no-applicable-guidance` decision but do not support a pass against a specific
+rule.
 Compliance status is reported independently and does not change
 REST/downstream scoped code safety.
 
@@ -1603,7 +1607,7 @@ File: `assessment-judgment.json`
       "sourceChangeIds": ["source-<hash>"],
       "hunkIds": ["hunk-<hash>"],
       "declarationIds": ["declaration-<hash>"],
-      "decision": "applicable-pass|applicable-fail|not-assessed",
+      "decision": "applicable-pass|applicable-fail|no-applicable-guidance|not-assessed",
       "title": "Required for applicable-fail: concise compliance gap title",
       "severity": "Required for applicable-fail: high|medium|low",
       "expected": "Concise synthesis of applicable fetched guidance.",
@@ -1637,9 +1641,10 @@ exist in `model-input.json`. Decisions may quote only guidance recorded in
 declarations, operations, or assessment units during judgment.
 `applicable-pass` and `applicable-fail` require non-empty expected and actual
 evidence. `applicable-fail` also requires a concise finding title and severity
-for the finding-first HTML presentation. `not-assessed` requires actual
-evidence and a rationale explaining why the fetched guidance does not govern
-the intent, or a retrieval, evidence, or intent-coverage blocker.
+for the finding-first HTML presentation. `no-applicable-guidance` requires
+actual changed-code evidence and a rationale explaining why the completed
+search found no governing guidance. `not-assessed` requires actual evidence
+and a retrieval, evidence, or intent-coverage blocker.
 
 ## 9. Final assessment
 
@@ -2455,8 +2460,9 @@ The main challenges are:
    and identifiers. Assembly rejects invented symbols, unknown sources,
    duplicate coverage, unsupported findings, and success-shaped fallbacks.
 9. **Compliance retrieval quality.** Search must identify governing official
-   guidance for each narrow intent. Generic but irrelevant guidance produces
-   `not-assessed`, not an invented pass or failure.
+   guidance for each narrow intent. A completed search with only generic or
+   irrelevant guidance produces `no-applicable-guidance`; incomplete execution
+   produces `not-assessed`.
 10. **Artifact size and performance.** Large services can produce very large
     evidence graphs. Input compaction must preserve all transitively required
     evidence without overwhelming the bounded Agent context.

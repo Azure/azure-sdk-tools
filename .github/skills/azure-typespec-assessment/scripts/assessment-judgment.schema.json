@@ -77,7 +77,12 @@
             "items": { "type": "string", "pattern": "^declaration-" }
           },
           "decision": {
-            "enum": ["applicable-pass", "applicable-fail", "not-assessed"]
+            "enum": [
+              "applicable-pass",
+              "applicable-fail",
+              "no-applicable-guidance",
+              "not-assessed"
+            ]
           },
           "title": { "type": "string", "minLength": 1 },
           "severity": { "enum": ["high", "medium", "low"] },

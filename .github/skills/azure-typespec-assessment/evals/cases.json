@@ -29,10 +29,10 @@
       "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup"
     ],
     "expected": {
-      "semanticIntents": 1,
+      "semanticIntents": 3,
       "restBreakingFindings": 0,
       "downstreamFindings": 1,
-      "complianceFindings": 2
+      "complianceFindings": 0
     }
   },
   {

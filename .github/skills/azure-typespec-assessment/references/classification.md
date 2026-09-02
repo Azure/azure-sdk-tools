@@ -43,5 +43,7 @@ Set `overallConfidence` to the lowest confidence warranted by ready dimensions a
 
 List concrete blockers already supported by the input. Blocked dimensions
 remain `not-assessed`; do not turn missing evidence into a pass. Azure
-Compliance follows the fetched-document evidence contract; Document Quality is
-a separate dimension with status `not-assessed`.
+Compliance follows the fetched-document evidence contract. A completed search
+with no governing document is assessed as `no-applicable-guidance`, not blocked
+or `not-assessed`. Document Quality is a separate dimension with status
+`not-assessed`.

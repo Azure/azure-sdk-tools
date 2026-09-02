@@ -16,7 +16,7 @@ Follow the [complete workflow](references/workflow.md). Apply the [classificatio
 - Derive semantic intents from changed TypeSpec source. Use AutoRest only to map those intents to REST operations and assess REST compatibility; use TCGC only for downstream SDK analysis.
 - Check deterministic hunk coverage in `model-input.json`. Skip inference when all hunks have candidates or explicit deterministic classifications. For `unknown` hunks only, write and validate `inference.json` before final judgment.
 - In the final bounded Agent phase, summarize each Semantic intent once, judge every deterministic and inferred REST/downstream candidate, rank and fetch four official documents per intent, record search evidence, then assess Compliance once per intent. Do not assess each operation or invent URLs, operations, symbols, sources, or guidance.
-- Treat insufficient Compliance guidance as `not-assessed`; retain its rationale and generate the report instead of blocking assembly.
+- Treat a completed search with no governing guidance as `no-applicable-guidance`; count it as assessed and do not create a blocker. Reserve `not-assessed` for incomplete or blocked Compliance.
 - Report Azure Compliance as `passed`, `failed`, or `not-assessed`. Report Document Quality as a separate `not-assessed` dimension.
 - Overall safety covers REST and downstream SDK impact only.
 - Report blockers and stop after assessment. Do not author fixes or remediate TypeSpec.

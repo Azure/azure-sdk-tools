@@ -1223,6 +1223,63 @@ test("legacy renderer preserves semantic intents and REST-derived downstream fin
   );
 });
 
+test("renderer links assessed intents with no applicable guidance by title", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const noGuidance = assessment.dimensions.compliance.intentAssessments.filter(
+    (item) => item.decision === "no-applicable-guidance",
+  );
+  assert.equal(noGuidance.length, 1);
+  const intent = assessment.dimensions.semantic.items.find(
+    (item) => item.id === noGuidance[0].semanticIntentId,
+  );
+  const html = renderAssessmentHtml(assessment);
+  const complianceHtml = html.slice(
+    html.indexOf('<section id="azure-compliance">'),
+    html.indexOf('<section id="semantic-intents">'),
+  );
+  assert.ok(
+    complianceHtml.includes(
+      `Azure Guidelines were assessed. They passed for the other intents, and no applicable guideline was found for intent <a href="#intent-${intent.id}">${intent.title}</a>.`,
+    ),
+  );
+  assert.doesNotMatch(complianceHtml, /Unassessed intents/);
+  assert.doesNotMatch(complianceHtml, /<code>semantic-[^<]+<\/code>/);
+
+  const another = assessment.dimensions.compliance.intentAssessments.find(
+    (item) => item.decision === "applicable-pass",
+  );
+  another.decision = "no-applicable-guidance";
+  another.applicableGuidance = [];
+  delete another.expected;
+  const anotherIntent = assessment.dimensions.semantic.items.find(
+    (item) => item.id === another.semanticIntentId,
+  );
+  const multipleHtml = renderAssessmentHtml(assessment);
+  const multipleComplianceHtml = multipleHtml.slice(
+    multipleHtml.indexOf('<section id="azure-compliance">'),
+    multipleHtml.indexOf('<section id="semantic-intents">'),
+  );
+  assert.match(
+    multipleComplianceHtml,
+    /no applicable guideline was found for intents /,
+  );
+  assert.ok(
+    multipleComplianceHtml.includes(
+      `<a href="#intent-${intent.id}">${intent.title}</a>`,
+    ),
+  );
+  assert.ok(
+    multipleComplianceHtml.includes(
+      `<a href="#intent-${anotherIntent.id}">${anotherIntent.title}</a>`,
+    ),
+  );
+});
+
 test("downstream section lists and links REST breaking changes without duplicating details", () => {
   const assessment = JSON.parse(
     readFileSync(

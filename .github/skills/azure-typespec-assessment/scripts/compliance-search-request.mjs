@@ -38,18 +38,22 @@ function declarationSymbols(declaration) {
 function changedTokens(sources, hunkIds) {
   const allowed = new Set(hunkIds);
   return uniqueSorted(
-    sources.flatMap((source) =>
-      (source.hunks ?? [])
-        .filter((hunk) => allowed.has(hunk.id))
-        .flatMap((hunk) =>
-          (hunk.lines ?? [])
-            .filter((line) => /^[+-](?![+-])/.test(line))
-            .flatMap((line) => line.match(TOKEN_PATTERN) ?? []),
-        ),
-    ).filter((token) =>
-      !IGNORED_TOKENS.has(token) &&
-      (token.startsWith("@") || token.includes(".") || /[A-Z]/.test(token)),
-    ).slice(0, 80),
+    sources
+      .flatMap((source) =>
+        (source.hunks ?? [])
+          .filter((hunk) => allowed.has(hunk.id))
+          .flatMap((hunk) =>
+            (hunk.lines ?? [])
+              .filter((line) => /^[+-](?![+-])/.test(line))
+              .flatMap((line) => line.match(TOKEN_PATTERN) ?? []),
+          ),
+      )
+      .filter(
+        (token) =>
+          !IGNORED_TOKENS.has(token) &&
+          (token.startsWith("@") || token.includes(".") || /[A-Z]/.test(token)),
+      )
+      .slice(0, 80),
   );
 }
 
@@ -72,73 +76,95 @@ function representativeSourceExcerpts(sources, hunkIds) {
     .filter((excerpt) => excerpt.text)
     .sort((left, right) => {
       const score = (excerpt) => {
-        const compatibilityFile = /(?:^|\/)(?:client|back-compatible)\.tsp$/i
-          .test(excerpt.path);
-        const substantive = /\b(model|interface|op|enum|union|scalar|alias)\b/
-          .test(excerpt.text);
+        const compatibilityFile =
+          /(?:^|\/)(?:client|back-compatible)\.tsp$/i.test(excerpt.path);
+        const substantive =
+          /\b(model|interface|op|enum|union|scalar|alias)\b/.test(excerpt.text);
         return (compatibilityFile ? 2 : 0) + (substantive ? 0 : 1);
       };
-      return score(left) - score(right) ||
+      return (
+        score(left) - score(right) ||
         left.path.localeCompare(right.path) ||
-        left.hunkId.localeCompare(right.hunkId);
+        left.hunkId.localeCompare(right.hunkId)
+      );
     })
     .slice(0, 3);
 }
 
 function categories(declarations, tokens) {
   const kinds = new Set(declarations.map((item) => item.kind?.toLowerCase()));
-  const normalizedTokens = new Set(tokens.map((token) =>
-    token.replace(/^@/, "").split(".").at(-1).toLowerCase()));
-  const hasToken = (...values) => values.some((value) =>
-    normalizedTokens.has(value.toLowerCase()));
+  const normalizedTokens = new Set(
+    tokens.map((token) =>
+      token.replace(/^@/, "").split(".").at(-1).toLowerCase(),
+    ),
+  );
+  const hasToken = (...values) =>
+    values.some((value) => normalizedTokens.has(value.toLowerCase()));
   const values = [];
-  if (hasToken(
-    "TrackedResource",
-    "ProxyResource",
-    "TenantResource",
-    "ExtensionResource",
-    "parentResource",
-    "ResourceNameParameter",
-  )) values.push("resource");
-  if (kinds.has("operation") ||
-      kinds.has("interface") ||
-      hasToken(
-        "ArmResourceOperations",
-        "ArmResourceRead",
-        "ArmResourceCreateOrReplaceAsync",
-        "ArmResourceUpdateAsync",
-        "ArmResourceDeleteAsync",
-        "ArmResourceListByParent",
-        "ArmResourceAction",
-        "route",
-      )) {
+  if (
+    hasToken(
+      "TrackedResource",
+      "ProxyResource",
+      "TenantResource",
+      "ExtensionResource",
+      "parentResource",
+      "ResourceNameParameter",
+    )
+  )
+    values.push("resource");
+  if (
+    kinds.has("operation") ||
+    kinds.has("interface") ||
+    hasToken(
+      "ArmResourceOperations",
+      "ArmResourceRead",
+      "ArmResourceCreateOrReplaceAsync",
+      "ArmResourceUpdateAsync",
+      "ArmResourceDeleteAsync",
+      "ArmResourceListByParent",
+      "ArmResourceAction",
+      "route",
+    )
+  ) {
     values.push("operations");
   }
-  if (hasToken(
-    "added",
-    "removed",
-    "renamedFrom",
-    "typeChangedFrom",
-    "returnTypeChangedFrom",
-    "madeOptional",
-  ) || declarations.some((item) => item.qualifiedName?.endsWith(".Versions"))) {
+  if (
+    hasToken(
+      "added",
+      "removed",
+      "renamedFrom",
+      "typeChangedFrom",
+      "returnTypeChangedFrom",
+      "madeOptional",
+    ) ||
+    declarations.some((item) => item.qualifiedName?.endsWith(".Versions"))
+  ) {
     values.push("versioning");
   }
-  if (hasToken(
-    "useFinalStateVia",
-    "pollingOperation",
-    "finalOperation",
-    "ArmLroLocationHeader",
-    "RetryAfterHeader",
-  )) values.push("lro");
-  if (hasToken("list", "pageItems", "nextLink", "continuationToken")) values.push("paging");
-  if (kinds.has("model") || kinds.has("model-property") || kinds.has("scalar")) {
+  if (
+    hasToken(
+      "useFinalStateVia",
+      "pollingOperation",
+      "finalOperation",
+      "ArmLroLocationHeader",
+      "RetryAfterHeader",
+    )
+  )
+    values.push("lro");
+  if (hasToken("list", "pageItems", "nextLink", "continuationToken"))
+    values.push("paging");
+  if (
+    kinds.has("model") ||
+    kinds.has("model-property") ||
+    kinds.has("scalar")
+  ) {
     values.push("models");
   }
   if (kinds.has("enum") || kinds.has("union")) values.push("enums");
   if (tokens.some((token) => token.startsWith("@"))) values.push("decorators");
   if (hasToken("suppress")) values.push("warnings");
-  if (hasToken("client", "clientName", "clientLocation")) values.push("client-customization");
+  if (hasToken("client", "clientName", "clientLocation"))
+    values.push("client-customization");
   return uniqueSorted(values.length ? values : ["general"]);
 }
 
@@ -147,9 +173,10 @@ function materialDeclarations(unit, sources) {
   const preferredRevision = unit.action === "remove" ? "base" : "current";
   const all = sources.flatMap((source) =>
     (source.declarations ?? [])
-      .filter((declaration) =>
-        declaration.id &&
-        declaration.hunkIds?.some((id) => allowedHunks.has(id)),
+      .filter(
+        (declaration) =>
+          declaration.id &&
+          declaration.hunkIds?.some((id) => allowedHunks.has(id)),
       )
       .map((declaration) => ({ ...declaration, sourceChangeId: source.id })),
   );
@@ -177,10 +204,11 @@ export function buildComplianceSearchRequests({
     const declarations = materialDeclarations(unit, sources);
     const tokens = changedTokens(sources, unit.hunkIds ?? []);
     const servicePlane = sources.some((source) =>
-      /(^|\/)resource-manager(\/|$)/i.test(source.path))
+      /(^|\/)resource-manager(\/|$)/i.test(source.path),
+    )
       ? "resource-manager"
       : "data-plane";
-    return {
+    const request = {
       reviewUnitId: unit.id,
       sourceChangeIds: [...unit.sourceChangeIds].sort(),
       hunkIds: [...(unit.hunkIds ?? [])].sort(),
@@ -189,7 +217,9 @@ export function buildComplianceSearchRequests({
         servicePlane,
         action: unit.action ?? unit.changeKind ?? "modify",
         declarationKinds: uniqueSorted(declarations.map((item) => item.kind)),
-        qualifiedNames: uniqueSorted(declarations.map((item) => item.qualifiedName)),
+        qualifiedNames: uniqueSorted(
+          declarations.map((item) => item.qualifiedName),
+        ),
         symbols: uniqueSorted(declarations.flatMap(declarationSymbols)),
         categories: categories(declarations, tokens),
         changedTokens: tokens,
@@ -200,5 +230,10 @@ export function buildComplianceSearchRequests({
         affectedOperationCount: unit.operations?.length ?? 0,
       },
     };
+    return {
+      requestId: stableId("compliance-search", request),
+      ...request,
+    };
   });
 }
+import { stableId } from "./stable-id.mjs";

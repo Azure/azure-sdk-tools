@@ -262,6 +262,11 @@ test("renders SDK contract changes with collapsed affected operations", () => {
   assert.doesNotMatch(html, /<details class="affected-operations" open>/);
   assert.match(html, /CloudHsmClusters_CreateOrUpdate/);
   assert.match(html, /class="http-method">PUT/);
+  const downstream = html.match(
+    /<section id="downstream-breaking">([\s\S]*?)<\/section>/,
+  )[1];
+  assert.doesNotMatch(downstream, /Changed TypeSpec:/);
+  assert.match(downstream, /Related semantic intents:/);
 });
 
 test("groups REST contract deltas by schema identity and retains affected operations", () => {
@@ -938,6 +943,11 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.match(html, /not present/);
   assert.match(html, /Method kind/);
   assert.match(html, /Why this is breaking/);
+  const downstream = html.match(
+    /<section id="downstream-breaking">([\s\S]*?)<\/section>/,
+  )[1];
+  assert.doesNotMatch(downstream, /Changed TypeSpec:/);
+  assert.match(downstream, /Related semantic intents:/);
   assert.match(
     html,
     /<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×<\/span> 1/,

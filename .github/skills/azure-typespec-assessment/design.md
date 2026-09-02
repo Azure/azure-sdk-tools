@@ -991,7 +991,9 @@ Expanding the card shows:
 3. a highlighted `Why this is breaking` explanation;
 4. a default-collapsed `Affected REST operations (N)` disclosure whose rows
    show operation ID, HTTP method, and path;
-5. changed TypeSpec source links and related Semantic intent links.
+5. related Semantic intent links. Changed TypeSpec source evidence remains in
+   the Semantic intent and appendix rather than being repeated in the SDK type
+   card.
 
 The outer type card and all nested detail disclosures, including affected REST
 operations, are collapsed by default. A type card with one or more related
@@ -2007,8 +2009,9 @@ card:
    additions/removals/modifications/reordering and non-parameter method deltas;
 4. a highlighted `Why this is breaking` block combines the confirmed
    method-delta rationales;
-5. a compact footer retains parameter counts, changed TypeSpec source links,
-   and related Semantic intent links.
+5. a compact footer retains parameter counts and related Semantic intent
+   links. Changed TypeSpec source evidence remains in the Semantic intent and
+   appendix rather than being repeated in the SDK method card.
 
 The card does not repeat unchanged parameters as table rows. Added or removed
 parameters use `not present` on the missing side, modified parameters show the
@@ -2094,9 +2097,10 @@ The report must show:
    identity, HTTP method/path, structured changed-member rows, and highlighted
    rationale.
    The affected REST operation list is also collapsed by default, while
-   expanded details retain changed TypeSpec and Semantic intent links. Mapped
-   SDK method data and root-cause provenance remain available in JSON rather
-   than the main report;
+   expanded details retain Semantic intent links. Changed TypeSpec source
+   evidence remains in Semantic intents and the appendix. Mapped SDK method
+   data and root-cause provenance remain available in JSON rather than the
+   main report;
 6. a numbered `Azure Guidelines (N)` section before Semantic intents,
    containing only findings, without
    a separate status or coverage summary card, plus an explicit not-assessed

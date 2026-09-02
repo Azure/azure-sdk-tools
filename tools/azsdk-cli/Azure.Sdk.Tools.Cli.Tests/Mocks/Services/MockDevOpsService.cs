@@ -24,6 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string? ConfiguredApiVersionForTypeSpecPathAndApiVersion { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
+        public string? LastRunSDKGenerationPipelineApiVersion { get; private set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
 
         // Captures the release plan passed to CreateReleasePlanWorkItemAsync so that a subsequent
@@ -233,6 +234,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, CancellationToken ct)
         {
+            LastRunSDKGenerationPipelineApiVersion = apiVersion;
             if (ConfiguredRunSDKGenerationPipeline != null)
             {
                 return Task.FromResult(ConfiguredRunSDKGenerationPipeline);

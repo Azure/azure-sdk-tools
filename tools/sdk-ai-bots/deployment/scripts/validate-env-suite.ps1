@@ -29,6 +29,7 @@ $hasYq = $null -ne (Get-Command yq -ErrorAction SilentlyContinue)
 
 $RequiredKeys = @(
     'subscription', 'subscriptionId', 'tenantId',
+    'serverApplicationClientId', 'serverApplicationIdUri',
     'resourceGroupPrefix', 'keyVaultName', 'appConfigName',
     'containerRegistryName', 'teamsGroupId', 'approvalRequired',
     'prodDeployOnlyFromPipeline', 'chatbotEvolutionAgentEnabled',
@@ -58,6 +59,12 @@ foreach ($env in $Envs) {
         }
         if ($key -eq 'subscriptionId' -and $value -notmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') {
             $errors += "[$env] subscriptionId '$value' is not GUID-shaped"
+        }
+        if ($key -eq 'serverApplicationClientId' -and $value -notmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') {
+            $errors += "[$env] serverApplicationClientId '$value' is not GUID-shaped"
+        }
+        if ($key -eq 'serverApplicationIdUri' -and $value -notmatch '^(api|https)://[^/].*[^/]$') {
+            $errors += "[$env] serverApplicationIdUri '$value' must be an api:// or https:// URI without a trailing slash"
         }
         if ($key -eq 'chatbotEvolutionAgentEnabled' -and $value -notmatch '^(true|false)$') {
             $errors += "[$env] chatbotEvolutionAgentEnabled '$value' must be true or false"

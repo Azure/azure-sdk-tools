@@ -16,15 +16,10 @@
  *    "Registering agent environment variables" step is a no-op). So we clone
  *    the deployed version with environment_variables embedded — the only
  *    mechanism the Foundry runtime honours. Idempotent.
- * 3. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
- *    so callers can obtain tokens EasyAuth accepts (service principal,
- *    identifier URI, delegated scope, application app-role, pre-authorized
- *    clients, and managed-identity app-role assignments).
- * 4. Sanity-check the hosted agent by pinging its /ping endpoint.
+ * 3. Sanity-check the hosted agent by pinging its /ping endpoint.
  */
 
 import { execSync } from "child_process";
-import { ensureAgentServerAuthorization } from "./lib/ensure-agent-server-authorization.js";
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
 
@@ -342,7 +337,6 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
   await ensureAgentAppConfigEnv();
 
   loadAzdEnv();
-  ensureAgentServerAuthorization(process.env, log);
 
   if (!AGENT_BASE_URL) {
     log("AGENT_BASE_URL not set — skipping ping.");

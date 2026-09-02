@@ -35,6 +35,10 @@ steps:
               export npm_config_userconfig="$(resolvedNpmrcPath)"
               # Hard-enforce build-once: CD must never rebuild the image.
               export AZD_SKIP_IMAGE_BUILD=1
+              # Teams Toolkit uses an interactive Microsoft 365 identity and
+              # Microsoft Graph. Keep that separate from the Azure service
+              # connection so component CD requires Azure RBAC only.
+              export AZD_SKIP_TEAMS_PROVISION="${AZD_SKIP_TEAMS_PROVISION:-1}"
               export AZURE_ENV_NAME
               export CONTAINER_REGISTRY_NAME="$ACR_NAME"
               case "${{ parameters.service }}" in

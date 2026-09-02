@@ -59,19 +59,10 @@ function ensureSecretsOfficerRole(
     return;
   }
 
-  let principalId = env.DEVELOPER_PRINCIPAL_ID?.trim();
-  let principalType = env.DEVELOPER_PRINCIPAL_TYPE?.trim() || "User";
+  const principalId = env.DEVELOPER_PRINCIPAL_ID?.trim();
+  const principalType = env.DEVELOPER_PRINCIPAL_TYPE?.trim() || "User";
   if (!principalId) {
-    try {
-      principalId = run(`az ad signed-in-user show --query id --output tsv`);
-      principalType = "User";
-    } catch {
-      log("  Could not resolve deployer principal id — relying on existing access.");
-      return;
-    }
-  }
-  if (!principalId) {
-    log("  No principal id available — relying on existing access.");
+    log("  DEVELOPER_PRINCIPAL_ID is not set — relying on existing access.");
     return;
   }
 

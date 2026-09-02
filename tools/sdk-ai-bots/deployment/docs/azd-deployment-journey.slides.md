@@ -247,7 +247,6 @@ Each hook had to be authored from scratch against that service's own API dialect
  preprovision.ts (global)                         predeploy.ts (global)
    • env-suite validation                            • prod guardrail
     • quota check
-    • Entra app for SERVER_AUDIENCE
    • developer principal                          <service>-predeploy.ts
    • Teams-connection probe                            • az acr build → dev-N.0.0
            │                                           • repoint slot / app
@@ -361,7 +360,7 @@ Idempotent RBAC, conditional OAuth resources, deferred/two-phase workflows, "ens
 
 ## Short term
 
-- Move remaining `az` CLI calls in hooks behind small, tested helper libs (some already: `ensure-role-assignment`, `ensure-entra-app`, `env-suite`, `acr-tags`).
+- Move remaining `az` CLI calls in hooks behind small, tested helper libs (some already: `ensure-role-assignment`, `env-suite`, `acr-tags`).
 - Cover hooks with unit + integration tests (fake `az` / Foundry via nock).
 - Kill remaining `value: ''` App Service settings; require explicit params or omit.
 
@@ -398,7 +397,7 @@ Every hook we own is a **temporary bridge**. The end state is:
 | Agent-server image build and production deploy | Native `azd deploy agent-server` App Service container support                                  |
 | `patch-workflow` (Logic App PUT)                | Deferred / two-phase resources are a first-class construct in the provisioning lib              |
 | `sync-teams-env` (rewrite `.env.azd`)           | `azd` × Teams Toolkit share an env schema; no cross-tool env copying                            |
-| `preprovision.ensureEntraApp`                   | Microsoft Graph provider for Entra apps, called from the provisioning lib                       |
+| `scripts/create-entra-app.ts`                  | One-time interactive bootstrap; the fixed app ID and URI are inputs to provisioning             |
 
 **Rule of thumb:** if a hook is doing something IaC _should_ be able to express, that hook is a bug report against the platform.
 

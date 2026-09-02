@@ -9,8 +9,8 @@
  *     outside Azure DevOps for the prod env.
  *   - Detects local-dev drift between the env-suite and the azd env vars
  *     and tells the developer to run scripts/sync-env-suite.ps1.
- *   - Ensures the Entra ID app registration backing `serverAudience` exists
- *     and exports its clientId as SERVER_AUDIENCE for downstream layers.
+ *   - Detects the deploying principal from its ARM access token without
+ *     requiring Microsoft Graph access.
  */
 
 import { execFileSync, execSync } from "child_process";
@@ -18,7 +18,6 @@ import { readFileSync, existsSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-import { ensureEntraApp } from "./lib/ensure-entra-app.js";
 import { getEnvSuiteValue, getEnvSuiteValues } from "./lib/env-suite.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
 import { runQuotaCheck } from "./lib/quota-check.js";
@@ -27,7 +26,6 @@ const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
 const RUNNING_IN_PIPELINE = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
-const PREVIEW_MODE = process.env.AZD_PROVISION_PREVIEW === "true";
 
 const SUITE_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -101,9 +99,6 @@ function detectLocalDrift(): void {
 
     expected.AZURE_SUBSCRIPTION_ID = read(`.environments.${ENV_NAME}.subscriptionId`);
     expected.AZURE_TENANT_ID = read(`.environments.${ENV_NAME}.tenantId`);
-    expected.SERVICE_MANAGEMENT_REFERENCE = read(
-      `.environments.${ENV_NAME}.serviceManagementReference`,
-    );
     expected.AZURE_RESOURCE_GROUP = read(`.environments.${ENV_NAME}.resourceGroupPrefix`);
     expected.AZURE_LOCATION = read(`.environments.${ENV_NAME}.regions[0].name`);
     expected.AZURE_AI_LOCATION = read(`.environments.${ENV_NAME}.aiLocation`);
@@ -132,6 +127,20 @@ function detectLocalDrift(): void {
     );
     Object.assign(expected, overrides);
   }
+
+  const serverApplicationClientId =
+    getEnvSuiteValue(ENV_NAME, "serverApplicationClientId", SUITE_PATH) ?? "";
+  const serverApplicationIdUri =
+    getEnvSuiteValue(ENV_NAME, "serverApplicationIdUri", SUITE_PATH) ?? "";
+  if (!serverApplicationClientId || serverApplicationClientId.startsWith("REPLACE_WITH_")) {
+    throw new Error(`serverApplicationClientId is missing or still a placeholder in ${SUITE_PATH}`);
+  }
+  if (!serverApplicationIdUri || serverApplicationIdUri.startsWith("REPLACE_WITH_")) {
+    throw new Error(`serverApplicationIdUri is missing or still a placeholder in ${SUITE_PATH}`);
+  }
+  expected.SERVER_AUDIENCE = serverApplicationClientId;
+  expected.SERVER_APPLICATION_ID_URI = serverApplicationIdUri;
+  expected.RAG_SERVICE_SCOPE = `${serverApplicationIdUri}/.default`;
 
   const teamsGroupId = getEnvSuiteValue(ENV_NAME, "teamsGroupId", SUITE_PATH) ?? "";
   const teamsChannelIds = getEnvSuiteValues(ENV_NAME, "teamsChannelIds", SUITE_PATH);
@@ -164,7 +173,7 @@ function detectLocalDrift(): void {
   log(
     yqAvailable
       ? "  ✓ azd env vars match environment-suite.yaml"
-      : "  ✓ Teams routing matches environment-suite.yaml; full drift check skipped without yq",
+      : "  ✓ fixed identity and Teams routing match environment-suite.yaml; full drift check skipped without yq",
   );
 }
 
@@ -210,51 +219,6 @@ function checkResourceQuotas(): void {
 }
 
 /**
- * Ensures the Entra ID app registration that backs `serverAudience` exists,
- * then persists its clientId (appId) as SERVER_AUDIENCE so downstream layer
- * parameter adapters pick it up in the same provision run.
- *
- * No-op when SERVER_AUDIENCE is already set (e.g. pipelines pass it in
- * explicitly via environment-suite.yaml bicepOverrides).
- */
-function ensureServerAudience(): void {
-  const existing = process.env.SERVER_AUDIENCE?.trim();
-  if (existing) {
-    log(`  ✓ SERVER_AUDIENCE already set (${existing}); skipping Entra app creation`);
-    return;
-  }
-  if (!ENV_NAME) {
-    log("  AZURE_ENV_NAME not set — skipping Entra app registration.");
-    return;
-  }
-
-  const displayName = `azuresdkqabot-server-${ENV_NAME}`;
-  log(`SERVER_AUDIENCE not set — ensuring Entra app registration '${displayName}'`);
-  let appId: string;
-  try {
-    appId = ensureEntraApp({
-      displayName,
-      allowCreate: !PREVIEW_MODE,
-      ownedDisplayNameContains: "qabot",
-      serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
-    });
-  } catch (error) {
-    if (PREVIEW_MODE && error instanceof Error && error.message.includes("does not exist")) {
-      log("  SERVER_AUDIENCE is not initialized; resource-group preview does not require it.");
-      return;
-    }
-    throw error;
-  }
-
-  // Persist for subsequent azd runs (.azure/<env>/.env).
-  execSync(`azd env set SERVER_AUDIENCE ${appId}`, { stdio: "inherit" });
-  // Export into the current process for this layer and persist it for the
-  // downstream layer parameter adapters.
-  process.env.SERVER_AUDIENCE = appId;
-  log(`  ✓ SERVER_AUDIENCE=${appId} persisted via azd env set`);
-}
-
-/**
  * Detects the currently authenticated principal's object ID and type, then
  * persists them as DEVELOPER_PRINCIPAL_ID / DEVELOPER_PRINCIPAL_TYPE so Bicep
  * grants the deployer direct access to Azure resources (Key Vault, ACR, etc.).
@@ -268,40 +232,47 @@ function ensureDeveloperPrincipal(): void {
   }
   log("DEVELOPER_PRINCIPAL_ID not set — detecting current auth principal...");
   try {
-    // Try signed-in user first (interactive / user login).
-    const userId = execSync(
-      "az ad signed-in-user show --query id -o tsv 2>/dev/null",
-      { encoding: "utf8" }
+    const token = execFileSync(
+      "az",
+      [
+        "account",
+        "get-access-token",
+        "--resource",
+        "https://management.azure.com/",
+        "--query",
+        "accessToken",
+        "--output",
+        "tsv",
+      ],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
     ).trim();
-    if (userId) {
-      execSync(`azd env set DEVELOPER_PRINCIPAL_ID ${userId}`, { stdio: "inherit" });
-      execSync(`azd env set DEVELOPER_PRINCIPAL_TYPE User`, { stdio: "inherit" });
-      process.env.DEVELOPER_PRINCIPAL_ID = userId;
-      process.env.DEVELOPER_PRINCIPAL_TYPE = "User";
-      log(`  ✓ DEVELOPER_PRINCIPAL_ID=${userId} (User)`);
-      return;
-    }
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) throw new Error("ARM access token is not a JWT");
+
+    const payload = JSON.parse(
+      Buffer.from(payloadSegment.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"),
+    ) as { oid?: string; idtyp?: string };
+    const principalId = payload.oid?.trim();
+    if (!principalId) throw new Error("ARM access token has no oid claim");
+
+    const accountType = execFileSync(
+      "az",
+      ["account", "show", "--query", "user.type", "--output", "tsv"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    ).trim().toLowerCase();
+    const principalType = accountType === "serviceprincipal" || payload.idtyp === "app"
+      ? "ServicePrincipal"
+      : "User";
+
+    execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_ID", principalId], { stdio: "inherit" });
+    execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_TYPE", principalType], { stdio: "inherit" });
+    process.env.DEVELOPER_PRINCIPAL_ID = principalId;
+    process.env.DEVELOPER_PRINCIPAL_TYPE = principalType;
+    log(`  ✓ DEVELOPER_PRINCIPAL_ID=${principalId} (${principalType})`);
+    return;
   } catch {
-    // Not a user login — fall through to service principal.
+    log("  ⚠ Could not detect principal ID — developer role assignments will be skipped.");
   }
-  try {
-    // Service principal (pipeline / federated login).
-    const spId = execSync(
-      "az ad sp show --id $(az account show --query user.name -o tsv) --query id -o tsv 2>/dev/null",
-      { encoding: "utf8" }
-    ).trim();
-    if (spId) {
-      execSync(`azd env set DEVELOPER_PRINCIPAL_ID ${spId}`, { stdio: "inherit" });
-      execSync(`azd env set DEVELOPER_PRINCIPAL_TYPE ServicePrincipal`, { stdio: "inherit" });
-      process.env.DEVELOPER_PRINCIPAL_ID = spId;
-      process.env.DEVELOPER_PRINCIPAL_TYPE = "ServicePrincipal";
-      log(`  ✓ DEVELOPER_PRINCIPAL_ID=${spId} (ServicePrincipal)`);
-      return;
-    }
-  } catch {
-    // ignore
-  }
-  log("  ⚠ Could not detect principal ID — developer role assignments will be skipped.");
 }
 
 (async () => {
@@ -313,7 +284,6 @@ function ensureDeveloperPrincipal(): void {
   enforceProvisionGuard();
   validateAuth();
   checkResourceQuotas();
-  ensureServerAudience();
   ensureDeveloperPrincipal();
 
   log("Preprovision checks passed.");

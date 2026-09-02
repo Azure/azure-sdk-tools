@@ -7,6 +7,7 @@ declared:
 - environment names (`dev`, `preview`, `prod`)
 - target subscription (alias + GUID)
 - tenant ID
+- fixed backend application client ID and Application ID URI
 - resource group prefix
 - region / ring list
 - approval requirement
@@ -29,6 +30,9 @@ environments:
         subscription: string # ADO service-connection alias
         subscriptionId: GUID
         tenantId: GUID
+        serviceManagementReference: string? # one-time Entra bootstrap only
+        serverApplicationClientId: GUID
+        serverApplicationIdUri: string # api:// or https:// URI
         resourceGroupPrefix: string
         keyVaultName: string
         appConfigName: string
@@ -83,14 +87,18 @@ This script reads the per-env block from `environment-suite.yaml` and calls
 `azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
 `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
 `CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`,
-`CHATBOT_EVOLUTION_AGENT_ENABLED`) plus every entry in `bicepOverrides`.
+`CHATBOT_EVOLUTION_AGENT_ENABLED`, `SERVER_AUDIENCE`,
+`SERVER_APPLICATION_ID_URI`, `RAG_SERVICE_SCOPE`) plus every entry in
+`bicepOverrides`.
 
 Teams routing values are suite-owned and copied into the local azd environment:
 `teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →
 comma-separated `TEAMS_CHANNEL_IDS`. Pipelines export the same values directly
-from the suite. Pin an existing Entra application with
-`bicepOverrides.SERVER_AUDIENCE`; when it is omitted, preprovision creates or
-finds the environment application and persists `SERVER_AUDIENCE` in azd.
+from the suite. `serverApplicationClientId` becomes `SERVER_AUDIENCE` for Easy
+Auth. `serverApplicationIdUri` becomes `SERVER_APPLICATION_ID_URI`, and the
+frontend scope is derived as `<serverApplicationIdUri>/.default`. The Entra
+application is created separately with `scripts/create-entra-app.ts`; azd and
+the pipelines never manage it through Microsoft Graph.
 
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.
@@ -104,9 +112,11 @@ are unaffected — they read the suite directly via
 ## Adding a new environment
 
 1. Add a top-level block under `environments:` in `environment-suite.yaml`.
-2. Add any existing-resource pins under the environment's `bicepOverrides`.
-3. Register an Azure service connection with the same alias as
+2. Run `scripts/create-entra-app.ts`, then add its client ID and Application ID
+    URI to the environment block.
+3. Add any existing-resource pins under the environment's `bicepOverrides`.
+4. Register an Azure service connection with the same alias as
    `subscription:`.
-4. Restrict that connection to the intended pipelines and configure any
+5. Restrict that connection to the intended pipelines and configure any
     required approvals or branch-control checks on the connection.
-5. Re-run `validate-env-suite.ps1`.
+6. Re-run `validate-env-suite.ps1`.

@@ -95,24 +95,20 @@ consumption will block provisioning.
 
 ## Entra application
 
-- [x] The interactive deployment user can create applications in the Microsoft
-      tenant and currently has delegated `Application.ReadWrite.All` and
-      `AppRoleAssignment.ReadWrite.All`.
-- [ ] Decide whether this fresh environment may reuse
-      `azuresdkqabot-server-dev`. For complete isolation, create a new server
-      application and pin its client ID as `SERVER_AUDIENCE`.
+- [ ] Run `npm run create-entra-app -- ...` with an authorized interactive
+      identity, outside the deployment pipeline.
+- [ ] Copy the generated client ID to `serverApplicationClientId` and the chosen
+      Application ID URI to `serverApplicationIdUri` in the environment suite.
 - [ ] Confirm the server application has the intended sign-in audience and a
       home-tenant service principal.
 - [ ] Configure the server identifier URI, delegated scope, application role,
-      and required pre-authorized clients.
+      and Azure CLI preauthorization through the bootstrap script.
 - [ ] Confirm Azure Bot uses the frontend UAMI client ID with
       `msaAppType=UserAssignedMSI`; no separate bot app registration is used.
-- [ ] Verify the frontend and Logic App managed identities receive the server
-      application role.
-- [ ] If a pipeline service principal performs these operations, grant it the
-      required Microsoft Graph application permissions with admin consent.
-      Otherwise, create the application interactively and pin its ID before
-      running the pipeline.
+- [ ] After the UAMIs exist, rerun the bootstrap with `--caller-client-id` for
+      each identity that must receive `access_as_application`.
+- [ ] Confirm the Azure DevOps service connection has no Microsoft Graph
+      application permissions; backend app management is not a pipeline task.
 - [ ] Verify the configured Service Management Reference is valid for the new
       server application.
 

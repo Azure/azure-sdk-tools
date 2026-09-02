@@ -231,7 +231,6 @@ tools/sdk-ai-bots/
 │  │  ├─ agent-postdeploy.ts
 │  │  └─ lib/
 │  │     ├─ acr-tags.ts
-│  │     ├─ ensure-entra-app.ts
 │  │     ├─ ensure-role-assignment.ts
 │  │     ├─ env-suite.ts
 │  │     ├─ patch-workflow.ts
@@ -240,6 +239,8 @@ tools/sdk-ai-bots/
 │  │     ├─ seed-key-vault.ts
 │  │     ├─ sync-teams-env.ts
 │  │     └─ upload-bot-configs.ts
+│  ├─ scripts/
+│  │  └─ create-entra-app.ts           ← one-time interactive bootstrap
 │  ├─ pipelines/
 │  │  ├─ templates/
 │  │  │  ├─ load-environment-suite.yml

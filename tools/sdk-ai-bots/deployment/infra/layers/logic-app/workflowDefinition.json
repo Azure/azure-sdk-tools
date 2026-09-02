@@ -18,7 +18,7 @@
     "serverBaseUrl": {
       "type": "String"
     },
-    "serverAudience": {
+    "serverApplicationIdUri": {
       "type": "String"
     },
     "serverIdentityResourceId": {
@@ -232,7 +232,7 @@
               "type": "Http",
               "inputs": {
                 "authentication": {
-                  "audience": "@parameters('serverAudience')",
+                  "audience": "@parameters('serverApplicationIdUri')",
                   "identity": "@parameters('serverIdentityResourceId')",
                   "type": "ManagedServiceIdentity"
                 },
@@ -316,7 +316,7 @@
                   "type": "Http",
                   "inputs": {
                     "authentication": {
-                      "audience": "@parameters('serverAudience')",
+                      "audience": "@parameters('serverApplicationIdUri')",
                       "identity": "@parameters('serverIdentityResourceId')",
                       "type": "ManagedServiceIdentity"
                     },

@@ -223,7 +223,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
   const serverBaseUrl = requireEnv("SERVER_BASE_URL");
-  const serverAudience = requireEnv("SERVER_AUDIENCE");
+  const serverApplicationIdUri = requireEnv("SERVER_APPLICATION_ID_URI");
   const botBaseUrl = requireEnv("BOT_BASE_URL");
   const botAudience = requireEnv("BOT_AUDIENCE");
   const blobStorageAccountName = requireEnv("STORAGE_ACCOUNT_NAME");
@@ -287,7 +287,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     teamsGroupId: { value: teamsGroupId },
     teamsChannelIds: { value: teamsChannelIds },
     serverBaseUrl: { value: serverBaseUrl },
-    serverAudience: { value: serverAudience },
+    serverApplicationIdUri: { value: serverApplicationIdUri },
     serverIdentityResourceId: { value: serverIdentityResourceId },
     botBaseUrl: { value: botBaseUrl },
     botAudience: { value: botAudience },

@@ -7,6 +7,7 @@
 # ║  Replace every `REPLACE_WITH_*` placeholder below with the real value:    ║
 # ║    - subscriptionId (dev / preview / prod)                                ║
 # ║    - tenantId (if non-default)                                            ║
+# ║    - backend server application client ID and Application ID URI          ║
 # ║    - teamsAppId                                                           ║
 # ║                                                                           ║
 # ║  Validate with:                                                           ║
@@ -39,6 +40,8 @@ environments:
         subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
+        serverApplicationClientId: 'f9b6590e-3710-402a-a17a-d6b99de129a3'
+        serverApplicationIdUri: 'api://72f988bf-86f1-41af-91ab-2d7cd011db47/azure-sdk-qa-bot-playground'
         resourceGroupPrefix: 'azure-sdk-qa-bot-dev-20260826'
         keyVaultName: 'azsdkqabot-kv-dev260826'
         appConfigName: 'azsdkqabot-config-dev-20260826'
@@ -84,6 +87,8 @@ environments:
         subscriptionId: 'REPLACE_WITH_PREVIEW_SUBSCRIPTION_ID'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
+        serverApplicationClientId: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_CLIENT_ID'
+        serverApplicationIdUri: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_ID_URI'
         resourceGroupPrefix: 'rg-azuresdkqabot-preview'
         keyVaultName: 'azsdkqabot-kv-preview'
         appConfigName: 'azsdkqabot-config-preview'
@@ -122,6 +127,8 @@ environments:
         subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
+        serverApplicationClientId: '899da762-d510-48f2-911a-db9ea0cc41fd'
+        serverApplicationIdUri: 'api://azure-sdk-qa-bot'
         resourceGroupPrefix: 'azure-sdk-qa-bot'
         keyVaultName: 'azuresdkqabot-keyvalut'
         appConfigName: 'azuresdkqabot-config'
@@ -155,7 +162,6 @@ environments:
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: true
         bicepOverrides:
-            SERVER_AUDIENCE: '899da762-d510-48f2-911a-db9ea0cc41fd'
             DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
             DEVELOPER_PRINCIPAL_TYPE: 'Group'
             FRONTEND_IMAGE_REPOSITORY: 'azure-sdk-qa-bot:latest'

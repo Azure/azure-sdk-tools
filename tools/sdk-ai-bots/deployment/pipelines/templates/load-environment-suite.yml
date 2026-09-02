@@ -112,7 +112,9 @@ steps:
           fi
           export_var AZURE_SUBSCRIPTION_ID          ".environments.${ENV}.subscriptionId"
           export_var AZURE_TENANT_ID                ".environments.${ENV}.tenantId"
-          export_var SERVICE_MANAGEMENT_REFERENCE   ".environments.${ENV}.serviceManagementReference"
+          export_var SERVER_AUDIENCE                ".environments.${ENV}.serverApplicationClientId"
+          export_var SERVER_APPLICATION_ID_URI      ".environments.${ENV}.serverApplicationIdUri"
+          export_var RAG_SERVICE_SCOPE              ".environments.${ENV}.serverApplicationIdUri + \"/.default\""
           export_var AZURE_RESOURCE_GROUP           ".environments.${ENV}.resourceGroupPrefix"
           export_var AZURE_LOCATION                 ".environments.${ENV}.regions[0].name"
           export_var AZURE_AI_LOCATION              ".environments.${ENV}.aiLocation"

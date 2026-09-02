@@ -14,9 +14,8 @@
         - azd provision <layer> --preview (the same layer adapter path)
         - per-service hooks       (via process env vars)
 
-    Teams IDs and any fixed environment-specific Bicep values are copied from
-    the suite. When SERVER_AUDIENCE is not pinned, the preprovision hook creates
-    or discovers the environment's Entra app registration.
+    Teams IDs, the externally managed backend Entra application, and fixed
+    environment-specific Bicep values are copied from the suite.
 
     Run this once after `azd env new <env>`, and again whenever the suite is
     updated. Pipelines do not need it — they read the suite directly via
@@ -78,7 +77,9 @@ if (-not ($existingNames -contains $Environment)) {
 $Mapping = @(
     @{ Path = ".environments.$Environment.subscriptionId";       Key = 'AZURE_SUBSCRIPTION_ID' }
     @{ Path = ".environments.$Environment.tenantId";             Key = 'AZURE_TENANT_ID' }
-    @{ Path = ".environments.$Environment.serviceManagementReference"; Key = 'SERVICE_MANAGEMENT_REFERENCE' }
+    @{ Path = ".environments.$Environment.serverApplicationClientId"; Key = 'SERVER_AUDIENCE' }
+    @{ Path = ".environments.$Environment.serverApplicationIdUri"; Key = 'SERVER_APPLICATION_ID_URI' }
+    @{ Path = ".environments.$Environment.serverApplicationIdUri + `"/.default`""; Key = 'RAG_SERVICE_SCOPE' }
     @{ Path = ".environments.$Environment.resourceGroupPrefix";  Key = 'AZURE_RESOURCE_GROUP' }
     @{ Path = ".environments.$Environment.regions[0].name";      Key = 'AZURE_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }

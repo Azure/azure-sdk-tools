@@ -82,7 +82,7 @@ Before `azd`, standing this up meant:
  preprovision.ts (global)                         predeploy.ts (global)
    • env-suite validation                            • prod guardrail
   • quota check
-  • Entra app for SERVER_AUDIENCE
+  • fixed backend app ID + Application ID URI
    • developer principal                          <service>-predeploy.ts
    • Teams-connection probe                            • az acr build → dev-N.0.0
            │                                           • repoint slot / app
@@ -117,7 +117,7 @@ Every time we onboard a piece of the product, we run the **same three-step thoug
  AI Foundry, UAMI             agent       → azure.ai.agent      env needed BEFORE agent boot?
  App Services + slots         function-app→ host: appservice      → postdeploy: seed App Config
  Function App, Logic App      logic-app   → (no host — hook)    RBAC needed BEFORE app runs?
- Entra app, Bot, Teams conn   knowledge-  → (no host — pipeline)  → postprovision: ensure role
+ Bot, Teams conn              knowledge-  → (no host — pipeline)  → postprovision: ensure role
                               sync                              workflow refs a live Function?
      ⇓ extract into Bicep         ⇓ tag azd-service-name          → postdeploy: patch workflow
    azd provision (all at once)  azd deploy <service>            (pre/post × provision/deploy)
@@ -405,7 +405,7 @@ Every hook we own is a **temporary bridge**. The end state:
 | Agent-server container deployment               | Native direct-production App Service deployment                               |
 | `patch-workflow` (Logic App PUT)                | Deferred / two-phase resource is a first-class construct                       |
 | `sync-teams-env` (rewrite `.env.azd`)           | Shared env schema across tools; no cross-tool copying                          |
-| `preprovision.ensureEntraApp`                   | Microsoft Graph provider for Entra apps                                        |
+| `scripts/create-entra-app.ts`                  | One-time interactive bootstrap for the externally managed Entra app            |
 
 > **Rule of thumb:** if a hook does something IaC _should_ express, that hook is a **bug report against the platform.**
 

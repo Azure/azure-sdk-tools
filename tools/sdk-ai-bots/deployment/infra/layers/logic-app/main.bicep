@@ -12,8 +12,8 @@ param teamsChannelIds array
 @description('Base URL of the agent server.')
 param serverBaseUrl string
 
-@description('Client ID (audience) for authenticating to the agent server.')
-param serverAudience string
+@description('Application ID URI used as the managed-identity token resource for the agent server.')
+param serverApplicationIdUri string
 
 @description('Base URL of the bot.')
 param botBaseUrl string
@@ -153,8 +153,8 @@ var workflowParameters = {
   serverBaseUrl: {
     value: serverBaseUrl
   }
-  serverAudience: {
-    value: serverAudience
+  serverApplicationIdUri: {
+    value: serverApplicationIdUri
   }
   serverIdentityResourceId: {
     value: serverIdentityResourceId

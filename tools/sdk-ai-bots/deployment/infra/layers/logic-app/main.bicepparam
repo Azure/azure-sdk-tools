@@ -3,7 +3,7 @@ using './main.bicep'
 param location = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
 param teamsGroupId = readEnvironmentVariable('TEAMS_GROUP_ID', '3e17dcb0-4257-4a30-b843-77f47f1d4121')
 param teamsChannelIds = split(readEnvironmentVariable('TEAMS_CHANNEL_IDS', '19:de3fce22c2994be18cac50502c55f717@thread.skype'), ',')
-param serverAudience = readEnvironmentVariable('SERVER_AUDIENCE', '')
+param serverApplicationIdUri = readEnvironmentVariable('SERVER_APPLICATION_ID_URI', '')
 param serverBaseUrl = readEnvironmentVariable('SERVER_BASE_URL', '')
 param botBaseUrl = readEnvironmentVariable('BOT_BASE_URL', '')
 param botAudience = readEnvironmentVariable('BOT_AUDIENCE', '')

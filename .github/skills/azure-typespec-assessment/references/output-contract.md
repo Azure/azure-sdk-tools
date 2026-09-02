@@ -134,6 +134,11 @@ dimensions as REST breaking changes, downstream breaking changes, Azure
 Guidelines, Document Quality and Agent Friendliness, and Semantic intents. The
 Azure Guidelines card uses its finding count as the primary numeric value;
 status remains represented by its icon and color.
+Immediately below the header, render a compact `Preview Notice` details element
+that is collapsed by default. Its one-line summary should occupy approximately
+46 pixels vertically. The expanded body must preserve the complete approved
+two-paragraph disclaimer and use two columns on wide screens and one column on
+narrow screens.
 Present top-level assessment blockers only in the appendix under
 **Potential limits**, not as a standalone main-report section. The appendix
 must include a clickable pull request link when a PR number is available,

@@ -774,6 +774,20 @@ test("renderer labels active Compliance and scoped safety", () => {
     html,
     /<section id="document-quality"><h2>Document Quality and Agent Friendliness<\/h2><div class="panel not-assessed"><strong>Not assessed<\/strong>/,
   );
+  assert.match(
+    html,
+    /<details class="notice"><summary class="container"><span class="notice-title">Preview Notice<\/span>/,
+  );
+  assert.doesNotMatch(html, /<details class="notice" open>/);
+  assert.match(html, /min-height:46px/);
+  assert.match(
+    html,
+    /The TypeSpec Assessment Assistant is currently in preview\. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow/,
+  );
+  assert.match(
+    html,
+    /Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions\./,
+  );
   const sectionOrder = [
     "rest-breaking",
     "downstream-breaking",

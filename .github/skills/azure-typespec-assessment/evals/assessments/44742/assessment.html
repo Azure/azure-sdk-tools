@@ -11,11 +11,11 @@
 <p class="hero-meta">TypeSpec source diff: <code>e75a07cd7ea1b2207190a362305db02b639715ec</code> → <code>656ca8b0741973760f8a60ee0fd293ba9c31e708</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">4 findings<br>4/4 intents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 4</div><div class="summary-label">Semantic intents</div><div class="summary-detail">10 operations<br>0 Added, 4 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> 6</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 17</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">11 direct · 6 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> 4</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">4 findings<br>4/4 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 4</div><div class="summary-label">Semantic intents</div><div class="summary-detail">10 operations<br>0 Added, 4 Modified, 0 Removed</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality and Agent Friendliness is reported separately and is not assessed.</div></aside>
 <main class="container">
@@ -296,6 +296,7 @@
 </div></details>
 </div></details>
 </section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="semantic-intents"><h2>Semantic intents (4)</h2><details class="intent" id="intent-semantic-106722e15dc2d25d"><summary><strong><span class="action">modify</span> Remove NFS file and handle response fields</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-ab51f5de14b65807">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-e780fc908e1002f9">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>Removes NFS file item link count and file type fields plus related special-file item models from the 2026-12-06 surface, affecting handle-list response reachability.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
@@ -535,7 +536,6 @@
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <p id="related-findings-semantic-eed96d1f60797ccb"><strong>Related findings:</strong> <a href="#finding-rest-602755e363934a01">rest-602755e363934a01</a>, <a href="#finding-rest-7cb939c12a3a0829">rest-7cb939c12a3a0829</a>, <a href="#finding-rest-b9b027f2659bd666">rest-b9b027f2659bd666</a>, <a href="#finding-rest-c6f13c7a797667ec">rest-c6f13c7a797667ec</a>, <a href="#finding-rest-dfd9ab5766765c21">rest-dfd9ab5766765c21</a>, <a href="#finding-rest-e1dddfbaea78586f">rest-e1dddfbaea78586f</a>, <a href="#finding-rest-e44caa5e57a6060c">rest-e44caa5e57a6060c</a>, <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-feb2640a19ddd738">compliance-feb2640a19ddd738</a></p>
 </div></details></section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/storage/data-plane/FileStorage</code></td><td>existing-api-version</td><td><code>e75a07cd7ea1b2207190a362305db02b639715ec@2026-12-06</code><br><small>base · affected-existing-version</small></td><td><code>656ca8b0741973760f8a60ee0fd293ba9c31e708@2026-12-06</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44742">#44742</a></p>

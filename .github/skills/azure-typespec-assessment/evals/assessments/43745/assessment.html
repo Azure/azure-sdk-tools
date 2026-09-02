@@ -11,11 +11,11 @@
 <p class="hero-meta">TypeSpec source diff: <code>a6887d2260f26285d4b1f5fba97da370be9200b4</code> → <code>71ce7d0c524c4bea7bc737836684acd53f343147</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">3 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 1</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">1 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">3 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality and Agent Friendliness is reported separately and is not assessed.</div></aside>
 <main class="container">
@@ -32,6 +32,7 @@
 </div></details></section>
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-6c953bac4d5ca5b2"><summary><strong><span class="action">modify</span> Make Cloud HSM SKU names extensible</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-2c9bf3a182588490">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>The TypeSpec change replaces the fixed CloudHsmClusterSkuName enum with an open string union while retaining both known service wire values.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
@@ -69,7 +70,6 @@
 <p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
 <p id="related-findings-semantic-6c953bac4d5ca5b2"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-2c9bf3a182588490">shared-type-impact-2c9bf3a182588490</a></p>
 </div></details></section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules</code></td><td>existing-api-version</td><td><code>a6887d2260f26285d4b1f5fba97da370be9200b4@2025-03-31</code><br><small>base · affected-existing-version</small></td><td><code>71ce7d0c524c4bea7bc737836684acd53f343147@2025-03-31</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/43745">#43745</a></p>

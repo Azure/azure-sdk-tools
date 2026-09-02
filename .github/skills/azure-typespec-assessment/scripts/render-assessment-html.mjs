@@ -127,11 +127,9 @@ function headerSummary(assessment) {
 }
 
 function complianceStatus(status) {
-  if (status === "passed")
-    return { icon: "✓", label: "Passed", className: "pass" };
-  if (status === "failed")
-    return { icon: "×", label: "Failed", className: "fail" };
-  return { icon: "i", label: "Not assessed", className: "" };
+  if (status === "passed") return { icon: "✓", className: "pass" };
+  if (status === "failed") return { icon: "×", className: "fail" };
+  return { icon: "i", className: "" };
 }
 
 function githubRepositoryUrl(remoteUrl) {
@@ -1435,19 +1433,19 @@ function renderCurrent(assessment) {
 <p class="hero-meta">TypeSpec source diff: ${comparisonHeader}</p>
 <div class="summary-grid">
 <a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${escapeHtml(complianceStatus(summary.complianceStatus).label)}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceFindingCount} findings<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> ${summary.semanticItems.length}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${summary.restCount ? "fail" : "pass"}">${summary.restCount ? "×" : "✓"}</span> ${summary.restCount}</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${summary.downstreamCount ? "fail" : "pass"}">${summary.downstreamCount ? "×" : "✓"}</span> ${summary.downstreamCount}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">${summary.directDownstreamCount} direct · ${summary.restCount} from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${summary.complianceFindingCount}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceFindingCount} findings<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${escapeHtml(dimensions.documentQuality.summary)}</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> ${summary.semanticItems.length}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality and Agent Friendliness is reported separately and is not assessed.</div></aside>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (${summary.restCount})</h2>${rest}</section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (${summary.downstreamCount})</h2>${downstreamItems}</section>
 <section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceFindingCount})</h2>${renderCompliance(dimensions.compliance, dimensions.semantic.items)}</section>
-<section id="semantic-intents"><h2>Semantic intents (${dimensions.semantic.items.length})</h2>${semantic || '<div class="panel">No semantic review units.</div>'}</section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — ${escapeHtml(dimensions.documentQuality.summary)}</div></section>
+<section id="semantic-intents"><h2>Semantic intents (${dimensions.semantic.items.length})</h2>${semantic || '<div class="panel">No semantic review units.</div>'}</section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>

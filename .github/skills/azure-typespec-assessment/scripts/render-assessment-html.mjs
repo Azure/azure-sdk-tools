@@ -1189,10 +1189,7 @@ function downstreamOperationGroups(dimension, semanticItems) {
         : group.parametersUnchanged
           ? "unchanged"
           : "changed";
-      const inferred = group.deltas.some(
-        (delta) => findingsById.get(delta.findingId)?.inferred,
-      );
-      return `<details class="finding sdk-method-card ${escapeHtml(severity)}" id="downstream-${anchor(group.id)}"><summary><span class="severity ${escapeHtml(severity)}">${escapeHtml(severity)}</span><strong>${escapeHtml(group.operationId ?? group.symbol)}</strong><span class="contract-tag">SDK method</span>${inferred ? '<span class="origin-tag">AI inferred</span>' : ""}<span class="finding-summary">${rows.length} SDK contract ${rows.length === 1 ? "change" : "changes"}</span></summary>
+      return `<details class="finding sdk-method-card ${escapeHtml(severity)}" id="downstream-${anchor(group.id)}"><summary><span class="severity ${escapeHtml(severity)}">${escapeHtml(severity)}</span><strong>${escapeHtml(group.operationId ?? group.symbol)}</strong><span class="contract-tag">SDK method</span><span class="finding-summary">${rows.length} SDK contract ${rows.length === 1 ? "change" : "changes"}</span></summary>
 <div class="finding-body">
 <dl class="contract-metadata"><dt>SDK method:</dt><dd><code>${escapeHtml(group.symbol)}</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">${escapeHtml((group.method ?? "").toUpperCase())}</span><code>${escapeHtml(group.path)}</code></span></dd><dt>Change:</dt><dd>${escapeHtml(changeSummary)}</dd></dl>
 <h4>Breaking changes</h4>
@@ -1326,8 +1323,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       const legacyAnchors = card.legacyImpactIds
         .map((id) => `<span id="downstream-${anchor(id)}"></span>`)
         .join("");
-      const inferred = directFindings.some((finding) => finding.inferred);
-      return `<details class="finding sdk-contract-card ${escapeHtml(card.severity)}" id="downstream-type-${anchor(card.type)}"><summary><span class="severity ${escapeHtml(card.severity)}">${escapeHtml(card.severity)}</span><strong>${escapeHtml(shortTypeName(card.type))}</strong><span class="contract-tag">SDK type</span>${inferred ? '<span class="origin-tag">AI inferred</span>' : ""}</summary>
+      return `<details class="finding sdk-contract-card ${escapeHtml(card.severity)}" id="downstream-type-${anchor(card.type)}"><summary><span class="severity ${escapeHtml(card.severity)}">${escapeHtml(card.severity)}</span><strong>${escapeHtml(shortTypeName(card.type))}</strong><span class="contract-tag">SDK type</span></summary>
 <div class="finding-body">${legacyAnchors}
 <dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>${escapeHtml(card.type)}</code></dd><dt>Change:</dt><dd>${escapeHtml(changeSummary)}</dd></dl>
 <h4>Breaking changes</h4>

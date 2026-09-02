@@ -293,7 +293,7 @@ function operationMatchesDeclarations(pair, declarations, transitive = false) {
     const qualifiedName = declaration.qualifiedName;
     const [owner, member] = qualifiedName.split(".");
     if (declaration.kind === "operation" &&
-        operationName === comparableName(`${owner}_${member}`)) {
+        operationName === comparableName(member ? `${owner}_${member}` : owner)) {
       return "operation-identity";
     }
     const modelName = owner && declaration.kind === "property" ? owner : qualifiedName;

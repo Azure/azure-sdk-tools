@@ -716,7 +716,10 @@ summary; complete mapping and grouping provenance remains in
 Allowed mapping evidence:
 
 1. **Operation identity:** a changed TypeSpec operation maps to its exact
-   compiled AutoRest operation.
+   compiled AutoRest operation. Identity normalization supports both interface
+   members such as `Widgets.get` → `Widgets_Get` and top-level operations such
+   as `createLedgerEntry` → `CreateLedgerEntry`; punctuation and casing alone
+   do not prevent an otherwise exact identity match.
 2. **Contract containment:** a changed model, property, enum, union, or alias
    maps to an operation only when that exact changed declaration is contained
    in the operation's compiled request, response, parameter, or response

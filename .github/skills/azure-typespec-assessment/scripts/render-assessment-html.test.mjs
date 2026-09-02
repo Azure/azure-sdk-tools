@@ -616,7 +616,8 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   );
   assert.match(html, /Use the standard resource template/);
   assert.match(html, /Child does not use the documented resource template/);
-  assert.match(html, /class="severity medium">medium/);
+  assert.doesNotMatch(html, /class="severity/);
+  assert.doesNotMatch(html, />medium<\/span>/);
   assert.match(html, /<strong>Gap:<\/strong>/);
   assert.match(html, /<strong>Expected<\/strong>/);
   assert.match(html, /Documented TypeSpec example/);
@@ -1223,6 +1224,14 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     html,
     /<summary><strong><span class="action"><\/span>\s*<\/strong><\/summary>/,
   );
+  assert.ok(
+    Object.values(assessment.dimensions).some((dimension) =>
+      (dimension.findings ?? []).some((finding) => finding.severity),
+    ),
+  );
+  assert.doesNotMatch(html, /<span class="severity/);
+  assert.doesNotMatch(html, /class="finding [^"]*\b(?:high|medium|low)\b/);
+  assert.match(html, /\.finding\{border-left:1px solid var\(--line\)\}/);
 });
 
 test("renderer links assessed intents with no applicable guidance by title", () => {

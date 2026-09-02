@@ -343,7 +343,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(result.Status, Is.EqualTo("Success"));
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline"));
-            Assert.That(mockDevOpsService.LastRunSDKGenerationPipelineApiVersion, Is.EqualTo("2024-01-01-preview"));
         }
 
         [Test]

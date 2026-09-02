@@ -2109,10 +2109,11 @@ The report must show:
    under **Actual**, show at most two changed-code snippets ranked by relevance
    to the actual behavior, while retaining complete evidence in JSON and the
    appendix;
-10. blockers;
-11. appendix with files, projects, compiler artifacts, timings, model input
-    accounting, ranked Compliance documents, retrieval attempts, and
-    provenance.
+10. appendix with a **Potential limits** subsection for retained assessment
+    blockers, followed by files, projects, compiler artifacts, timings, model
+    input accounting, ranked Compliance documents, retrieval attempts, and
+    provenance. Potential limits are supporting caveats rather than a
+    standalone main-report section.
 
 ### REST contract cards
 

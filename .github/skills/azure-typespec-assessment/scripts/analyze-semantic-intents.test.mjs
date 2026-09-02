@@ -132,6 +132,66 @@ test("creates source-first semantic units and retains unchanged REST operations"
   assert.deepEqual(result.reviewUnits[0].hunkIds, ["hunk-kept"]);
 });
 
+test("maps a top-level TypeSpec operation to its AutoRest operation ID", (context) => {
+  const work = fs.mkdtempSync(path.join(process.cwd(), ".semantic-top-level-operation-test-"));
+  context.after(() => fs.rmSync(work, { recursive: true, force: true }));
+  const document = {
+    swagger: "2.0",
+    info: { title: "Ledger", version: "v1" },
+    paths: {
+      "/app/transactions": {
+        post: {
+          operationId: "CreateLedgerEntry",
+          parameters: [],
+          responses: { 200: { description: "ok" } },
+        },
+      },
+    },
+  };
+  writeJson(path.join(work, "base.json"), document);
+  writeJson(path.join(work, "current.json"), document);
+  const result = analyzeSemanticIntents({
+    workRoot: work,
+    manifest: {
+      projects: [{
+        id: "project-ledger",
+        sourceChangeIds: ["source-ledger"],
+        artifacts: {
+          base: { autorest: artifact("base.json") },
+          current: { autorest: artifact("current.json") },
+        },
+      }],
+    },
+    sourceIndex: {
+      sourceChanges: [{
+        id: "source-ledger",
+        status: "modified",
+        hunks: [{ id: "hunk-ledger" }],
+        declarations: [
+          {
+            id: "declaration-base",
+            kind: "operation",
+            qualifiedName: "createLedgerEntry",
+            hunkIds: ["hunk-ledger"],
+            source: { revision: "base" },
+          },
+          {
+            id: "declaration-current",
+            kind: "operation",
+            qualifiedName: "createLedgerEntry",
+            hunkIds: ["hunk-ledger"],
+            source: { revision: "current" },
+          },
+        ],
+      }],
+    },
+  });
+
+  assert.equal(result.reviewUnits.length, 1);
+  assert.equal(result.reviewUnits[0].operations[0].operationId, "CreateLedgerEntry");
+  assert.equal(result.reviewUnits[0].operations[0].matchBasis, "operation-identity");
+});
+
 test("retains a semantic unit when changed TypeSpec has no REST operation", (context) => {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".semantic-no-rest-test-"));
   context.after(() => fs.rmSync(work, { recursive: true, force: true }));

@@ -13,7 +13,7 @@
 <div class="summary-grid">
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 2</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">2 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 1</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">1 direct · 0 from REST breaking</div></a>
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>2/2 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">33 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
@@ -23,14 +23,7 @@
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes (2)</h2><details class="finding sdk-method-card" id="downstream-downstream-group-5946aaf303eb9f31"><summary><strong>CreateLedgerEntry</strong><span class="contract-tag">SDK method</span><span class="finding-summary">1 SDK contract change</span></summary>
-<div class="finding-body">
-<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>ConfidentialLedger.createLedgerEntry</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">POST</span><code>/app/transactions</code></span></dd><dt>Change:</dt><dd>An optional parameter was added to the generated public method signature</dd></dl>
-<h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>waitForCommit</code></td><td class="contract-before"><code class="contract-value before">not present</code><span class="contract-detail">Existing generated method signature</span></td><td class="contract-after"><code class="contract-value after">boolean?</code><span class="contract-detail">Optional method parameter</span></td></tr></tbody></table>
-<div class="breaking-rationale"><strong>Why this is breaking:</strong> The generated createLedgerEntry method adds the optional waitForCommit parameter and shifts the ordered public parameter list, requiring signature updates in generated SDK callers and implementations.</div>
-<div class="contract-footer"><span><strong>Parameters:</strong> 1 added, 3 unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-0444245ca7d40975"><code>semantic-0444245ca7d40975</code></a></span></div>
-</div></details><details class="finding sdk-contract-card" id="downstream-type-ConfidentialLedger-LedgerWriteResult"><summary><strong>LedgerWriteResult</strong><span class="contract-tag">SDK type</span></summary>
+<section id="downstream-breaking"><h2>Downstream breaking changes (1)</h2><details class="finding sdk-contract-card" id="downstream-type-ConfidentialLedger-LedgerWriteResult"><summary><strong>LedgerWriteResult</strong><span class="contract-tag">SDK type</span></summary>
 <div class="finding-body"><span id="downstream-shared-type-impact-88a58c4c72ca22da"></span>
 <dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>ConfidentialLedger.LedgerWriteResult</code></dd><dt>Change:</dt><dd>model-property-removed, model-property-added-required</dd></dl>
 <h4>Breaking changes</h4>
@@ -43,7 +36,7 @@
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-0444245ca7d40975"><summary><strong><span class="action">modify</span> Add the 2026-07-31 preview response models and versioning</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-5946aaf303eb9f31">Downstream breaking changes</a></span></summary><div class="intent-body">
+<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-0444245ca7d40975"><summary><strong><span class="action">modify</span> Add the 2026-07-31 preview response models and versioning</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-shared-type-impact-88a58c4c72ca22da">Downstream breaking changes</a></span></summary><div class="intent-body">
 <p>Add a preview API version and evolve ledger write response models to expose commit state, receipt, and application claims while preserving the prior stable model through versioning decorators; the version propagates across 33 operations.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 3 changed hunks classified. AI inference used for 2 requests.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -70,9 +63,9 @@
 <details class="operation"><summary><strong>CreateOrUpdateUser</strong> <code>PATCH /app/users/{userId}</code> <span>2026-07-31-preview</span></summary>
 <div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
-<p id="related-findings-semantic-0444245ca7d40975"><strong>Related findings:</strong> <a href="#downstream-downstream-group-5946aaf303eb9f31">downstream-group-5946aaf303eb9f31</a>, <a href="#downstream-shared-type-impact-88a58c4c72ca22da">shared-type-impact-88a58c4c72ca22da</a></p>
+<p id="related-findings-semantic-0444245ca7d40975"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-88a58c4c72ca22da">shared-type-impact-88a58c4c72ca22da</a></p>
 </div></details>
-<details class="intent" id="intent-semantic-18d57aab27797806"><summary><strong><span class="action">modify</span> Add wait-for-commit behavior to ledger entry writes</strong></summary><div class="intent-body">
+<details class="intent" id="intent-semantic-dc076128a0053073"><summary><strong><span class="action">modify</span> Add wait-for-commit behavior to ledger entry writes</strong></summary><div class="intent-body">
 <p>Replace the preview ledger-entry write shape with a versioned shared-route operation that adds the optional waitForCommit query parameter and returns commit state, receipt, and rollback error information.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 2 changed hunks classified. AI inference used for 1 request.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -119,9 +112,15 @@
 <span class="context"> @post</span>
 <span class="context"> op createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation&lt;</span></pre></div>
 <p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
-<h4>Affected REST operations (0)</h4>
-<p class="empty">No directly affected REST operation.</p>
-<p id="related-findings-semantic-18d57aab27797806"><strong>Related findings:</strong> None</p>
+<h4>Affected REST operations (2)</h4>
+<p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>CreateLedgerEntry</strong> <code>POST /app/transactions</code> <span>2026-07-31-preview</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>parameters</td><td>query:api-version (required), query:collectionId, query:tags</td><td>query:api-version (required), query:collectionId, query:tags, query:waitForCommit</td></tr><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, 503, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: parameters, request, responses.</p></div></details>
+<details class="operation"><summary><strong>GetLedgerEntry</strong> <code>GET /app/transactions/{transactionId}</code> <span>2026-07-31-preview</span></summary>
+<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
+<p id="related-findings-semantic-dc076128a0053073"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/confidentialledger/data-plane/ConfidentialLedger</code></td><td>new-api-version</td><td><code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25@2026-02-23</code><br><small>current · previous-latest-stable</small></td><td><code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25@2026-07-31-preview</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
@@ -275,23 +274,23 @@
 <details class="compliance-intent" id="compliance-intent-semantic-0444245ca7d40975"><summary><strong><a href="#intent-semantic-0444245ca7d40975">Add the 2026-07-31 preview response models and versioning</a></strong></summary>
 <div class="compliance-intent-body">
 <ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
-</div></details><details class="compliance-intent" id="compliance-intent-semantic-18d57aab27797806"><summary><strong><a href="#intent-semantic-18d57aab27797806">Add wait-for-commit behavior to ledger entry writes</a></strong></summary>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-dc076128a0053073"><summary><strong><a href="#intent-semantic-dc076128a0053073">Add wait-for-commit behavior to ledger entry writes</a></strong></summary>
 <div class="compliance-intent-body">
 <ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/">Azure.Core operation interfaces</a></li></ul>
 </div></details>
 <h3>Changed files</h3><ul><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</code> (committed)</li><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</code> (committed)</li><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 125175,
-    &quot;semanticAnalysisMs&quot;: 127,
-    &quot;restAnalysisMs&quot;: 45,
-    &quot;downstreamAnalysisMs&quot;: 820
+    &quot;totalMs&quot;: 94569,
+    &quot;semanticAnalysisMs&quot;: 99,
+    &quot;restAnalysisMs&quot;: 29,
+    &quot;downstreamAnalysisMs&quot;: 677
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;medium&quot;,
     &quot;budgetBytes&quot;: 262144,
-    &quot;bytes&quot;: 145614,
-    &quot;estimatedTokens&quot;: 36404,
+    &quot;bytes&quot;: 145705,
+    &quot;estimatedTokens&quot;: 36427,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 3,
       &quot;facts&quot;: 70,

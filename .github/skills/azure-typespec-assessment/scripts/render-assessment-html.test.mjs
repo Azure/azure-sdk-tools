@@ -1212,6 +1212,10 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     html,
     /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
   );
+  const restFinding = assessment.dimensions.rest.findings[0];
+  const restIntent = assessment.dimensions.semantic.items.find(
+    (item) => item.id === restFinding.relatedSemanticIntents[0],
+  );
   assert.match(html, /Remove NFS file and handle response fields/);
   assert.doesNotMatch(
     html,
@@ -1223,6 +1227,25 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     html,
     /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/,
   );
+  const restHtml = html.slice(
+    html.indexOf('<section id="rest-breaking">'),
+    html.indexOf('<section id="downstream-breaking">'),
+  );
+  assert.match(restHtml, /class="finding rest-contract-card"/);
+  assert.match(restHtml, /<span class="contract-tag">REST contract<\/span>/);
+  assert.match(restHtml, /REST contract member<\/th><th>Before<\/th><th>After/);
+  assert.match(restHtml, /class="breaking-rationale"/);
+  assert.match(
+    restHtml,
+    /<details class="affected-operations"><summary><strong>Affected REST operations \(\d+\)<\/strong><\/summary>/,
+  );
+  assert.doesNotMatch(restHtml, /<details class="affected-operations" open>/);
+  assert.ok(
+    restHtml.includes(
+      `href="#intent-${restIntent.id}">${restIntent.title}</a>`,
+    ),
+  );
+  assert.doesNotMatch(restHtml, /Changed TypeSpec:/);
   assert.doesNotMatch(html, /REST-compatible downstream changes/);
   assert.doesNotMatch(
     html,
@@ -1307,7 +1330,7 @@ test("downstream section lists and links REST breaking changes without duplicati
     html,
     /<div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment<\/code><\/strong><span>2026-12-06<\/span><code>GET \?restype=directory&amp;comp=list<\/code><\/div>/,
   );
-  assert.match(html, /1 contract changes — 1 affected REST operations/);
+  assert.match(html, /1 contract change — 1 affected REST operation/);
   assert.doesNotMatch(html, /contract\(s\)|Compared REST operation:/);
   const downstream = html.slice(
     html.indexOf('<section id="downstream-breaking">'),

@@ -1969,13 +1969,14 @@ The report must show:
    expanded details retain changed TypeSpec and Semantic intent links. Mapped
    SDK method data and root-cause provenance remain available in JSON rather
    than the main report;
-6. source-first Semantic intents;
-7. expandable REST operations with before/after impact;
-8. a numbered `Azure Guidelines (N)` section containing only findings, without
+6. a numbered `Azure Guidelines (N)` section before Semantic intents,
+   containing only findings, without
    a separate status or coverage summary card, plus an explicit not-assessed
    Document Quality dimension;
    per-intent assessments, ranked search documents, and retrieval details
    appear only in the appendix;
+7. source-first Semantic intents;
+8. expandable REST operations with before/after impact;
 9. Compliance finding cards without a separate TypeSpec source-link list;
    under **Actual**, show at most two changed-code snippets ranked by relevance
    to the actual behavior, while retaining complete evidence in JSON and the

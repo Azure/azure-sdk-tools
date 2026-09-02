@@ -39,6 +39,14 @@
     </None>
   </ItemGroup>
 
+  <!-- The canonical ownership YAML samples live with the spec. Linking them here rather than
+       copying keeps the spec and the loader from drifting apart silently. -->
+  <ItemGroup>
+    <None Include="../docs/specs/assets/codeowners/*" LinkBase="TestAssets/codeowners">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <None Update="TestData/TestPrompts.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

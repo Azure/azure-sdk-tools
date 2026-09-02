@@ -72,7 +72,6 @@
         plane: "",
         month: "",
         prLang: "",
-        prStatus: "",
         tag: "",
         language: "",
       },
@@ -780,7 +779,6 @@
     month: { key: "month", default: "" },
     sort: { key: "sort", default: "month" },
     prLang: { key: "prLang", default: "" },
-    prStatus: { key: "prStatus", default: "" },
     tag: { key: "tag", default: "" },
     language: { key: "language", default: "" },
   };
@@ -2591,7 +2589,6 @@
         store().filters.month,
         store().filters.sort,
         store().filters.prLang,
-        store().filters.prStatus,
         store().filters.tag,
         store().filters.language,
         store().activeTab,
@@ -3202,17 +3199,12 @@
 
   function filterPRs(prs) {
     const langFilter = store().filters.prLang || "";
-    const statusFilter = store().filters.prStatus || "";
     const textFilter = store().filters.search.toLowerCase();
     const planeFilter = getGlobalPlaneFilter();
 
     return prs.filter((pr) => {
       if (planeFilter && pr.plane !== planeFilter) return false;
       if (langFilter && pr.language !== langFilter) return false;
-      if (statusFilter) {
-        const st = (pr.prStatus || "").toLowerCase();
-        if (st !== statusFilter) return false;
-      }
       if (textFilter) {
         const searchable =
           `${pr.language} ${pr.repo} ${pr.prNumber} ${pr.packageName} ${pr.planTitle} ${pr.releasePlanId} ${pr.prStatus}`.toLowerCase();

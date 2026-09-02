@@ -216,6 +216,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 language = inputSanitizer.SanitizeLanguage(language);
+                var effectiveApiVersion = string.IsNullOrWhiteSpace(apiVersion) || apiVersion.Equals("none", StringComparison.OrdinalIgnoreCase)
+                    ? releasePlan.SpecAPIVersion
+                    : apiVersion;
+                apiVersion = effectiveApiVersion;
+
                 logger.LogInformation(
                     "Generating SDK for TypeSpec project: {TypespecProjectRoot}, API Version: {ApiVersion}, SDK Release Type: {SdkReleaseType}, Language: {Language}, Pull Request Number: {PullRequestNumber}, Work Item ID: {WorkItemId}",
                     typespecProjectRoot,
@@ -250,6 +255,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     response.ResponseErrors.Add("SDK release type must be set as either beta or stable to generate SDK.");
                     response.Status = "Failed";
+                }
+
+                if (sdkReleaseType.Equals("stable", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(effectiveApiVersion) &&
+                    !effectiveApiVersion.Equals("none", StringComparison.OrdinalIgnoreCase) &&
+                    effectiveApiVersion.Contains("-preview", StringComparison.OrdinalIgnoreCase))
+                {
+                    response.ResponseErrors.Add($"Stable SDK generation is not allowed from preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
+                    response.Status = "Failed";
+                    return response;
                 }
 
                 // Update SDK details in release plan if work item ID is provided

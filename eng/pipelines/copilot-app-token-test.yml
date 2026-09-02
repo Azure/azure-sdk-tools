@@ -75,35 +75,26 @@ jobs:
             npm install -g @github/copilot
             $env:COPILOT_GITHUB_TOKEN = "$(ScopedToken)"
             copilot --version
-            Write-Host "##[group]copilot --help (looking for a verbose/debug flag)"
-            copilot --help 2>&1
-            Write-Host "##[endgroup]"
 
             # The CLI wraps every failure into one generic "Authentication failed" message.
-            # Turn on Node's built-in request tracing so the real HTTP status code (401 vs
-            # 403, and which 403) shows up instead, without us needing to know which internal
-            # endpoint the CLI calls.
-            $env:NODE_DEBUG = "http,https"
-            $env:DEBUG = "*"
-            copilot --yolo -p "Reply with the single word: success" 2>&1 | Tee-Object -Variable copilotOutput
+            # It has its own debug logging (confirmed via `copilot --help`: --log-level /
+            # --log-dir), which is the supported way to see the real HTTP status behind that
+            # message - NODE_DEBUG/DEBUG (tried previously) do not surface it.
+            $logDir = "$(Agent.TempDirectory)/copilot-debug-logs"
+            New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+
+            copilot --log-level debug --log-dir $logDir --yolo -p "Reply with the single word: success" 2>&1 | Tee-Object -Variable copilotOutput
             Write-Host "---"
             Write-Host ($copilotOutput -join "`n")
 
-            $statusLines = $copilotOutput | Select-String -Pattern 'HTTP/\d\.\d"?\s+\d{3}|statusCode[:=]\s*\d{3}|"status"\s*:\s*\d{3}|\b[45]\d\d\b'
-            if ($statusLines) {
-              Write-Host "##[section]Possible status-code lines found:"
-              $statusLines | ForEach-Object { Write-Host $_.Line }
+            Write-Host "##[group]Copilot debug log files"
+            $logFiles = Get-ChildItem -Path $logDir -Recurse -File -ErrorAction SilentlyContinue
+            if ($logFiles) {
+              foreach ($f in $logFiles) {
+                Write-Host "===== $($f.FullName) ====="
+                Get-Content $f.FullName
+              }
             } else {
-              Write-Host "##vso[task.logissue type=warning]No raw HTTP status code surfaced even with NODE_DEBUG/DEBUG set - CLI likely swallows it before printing."
+              Write-Host "##vso[task.logissue type=warning]No debug log files were written to $logDir."
             }
-
-            # Some CLIs write verbose logs to disk even without a flag - check for anything new.
-            Write-Host "##[group]Recently modified files under HOME (possible CLI logs)"
-            Get-ChildItem -Path $HOME -Recurse -File -ErrorAction SilentlyContinue |
-              Where-Object {
-                $_.LastWriteTime -gt (Get-Date).AddMinutes(-10) -and
-                $_.FullName -notmatch '/(\.npm|\.cache|node_modules)/'
-              } |
-              Select-Object FullName, LastWriteTime |
-              Format-Table -AutoSize
             Write-Host "##[endgroup]"

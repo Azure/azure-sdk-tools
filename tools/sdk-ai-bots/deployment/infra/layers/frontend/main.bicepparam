@@ -7,7 +7,6 @@ var tableNameOverride = readEnvironmentVariable('AZURE_TABLE_NAME_FOR_CONVERSATI
 var ragServiceScopeOverride = readEnvironmentVariable('RAG_SERVICE_SCOPE', '')
 var displayNameOverride = readEnvironmentVariable('TEAMS_BOT_FULL_DISPLAY_NAME', '')
 
-param botAppId = readEnvironmentVariable('BOT_APP_ID', '')
 param storageAccountName = readEnvironmentVariable('STORAGE_ACCOUNT_NAME', '')
 param containerRegistryName = readEnvironmentVariable('CONTAINER_REGISTRY_NAME', '')
 param frontendImageRepository = readEnvironmentVariable('FRONTEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot:${env}')

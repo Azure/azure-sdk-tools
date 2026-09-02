@@ -20,18 +20,6 @@ export type SignInAudience =
   | "AzureADMultipleOrgs"
   | "AzureADandPersonalMicrosoftAccount";
 
-export function getBotSignInAudience(
-  azureTenantId: string | undefined,
-  teamsTenantId: string | undefined,
-): SignInAudience {
-  const azureTenant = azureTenantId?.trim().toLowerCase();
-  const teamsTenant = teamsTenantId?.trim().toLowerCase();
-
-  return azureTenant && teamsTenant && azureTenant !== teamsTenant
-    ? "AzureADMultipleOrgs"
-    : "AzureADMyOrg";
-}
-
 export interface EnsureEntraAppOptions {
   displayName: string;
   signInAudience?: SignInAudience;
@@ -211,86 +199,6 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
   }
   log(`  ✓ created appId=${appId}`);
   return finalize(appId);
-}
-
-export interface EnsureManagedIdentityFederatedCredentialOptions {
-  appId: string;
-  managedIdentityPrincipalId: string;
-  tenantId: string;
-  name?: string;
-  audience?: string;
-}
-
-interface FederatedIdentityCredential {
-  id: string;
-  name: string;
-  issuer: string;
-  subject: string;
-  audiences: string[];
-}
-
-/** Ensure an app trusts a UAMI as its secretless client assertion. */
-export function ensureManagedIdentityFederatedCredential(
-  opts: EnsureManagedIdentityFederatedCredentialOptions,
-): void {
-  const {
-    appId,
-    managedIdentityPrincipalId,
-    tenantId,
-    name = "frontend-uami",
-    audience = "api://AzureADTokenExchange",
-  } = opts;
-  const issuer = `https://login.microsoftonline.com/${tenantId}/v2.0`;
-  const appObjectId = run(`az ad app show --id "${appId}" --query id --output tsv`);
-  const credentials = JSON.parse(
-    run(`az ad app federated-credential list --id "${appObjectId}" --output json`) || "[]",
-  ) as FederatedIdentityCredential[];
-  const existing = credentials.find((credential) => credential.name === name);
-  const current =
-    existing?.issuer === issuer &&
-    existing.subject === managedIdentityPrincipalId &&
-    existing.audiences?.length === 1 &&
-    existing.audiences[0] === audience;
-
-  if (current) {
-    log(`  ✓ federated credential '${name}' already trusts UAMI ${managedIdentityPrincipalId}`);
-    return;
-  }
-
-  if (existing) {
-    log(`  replacing drifted federated credential '${name}'`);
-    run(
-      `az ad app federated-credential delete --id "${appObjectId}" ` +
-        `--federated-credential-id "${existing.id}"`,
-    );
-  } else {
-    log(`  creating federated credential '${name}'`);
-  }
-
-  const parametersPath = path.join(os.tmpdir(), `fic-${randomUUID()}.json`);
-  fs.writeFileSync(
-    parametersPath,
-    JSON.stringify({
-      name,
-      issuer,
-      subject: managedIdentityPrincipalId,
-      description: "Allow the frontend UAMI to authenticate as the Teams bot application.",
-      audiences: [audience],
-    }),
-  );
-  try {
-    run(
-      `az ad app federated-credential create --id "${appObjectId}" ` +
-        `--parameters "${parametersPath}" --output none`,
-    );
-  } finally {
-    try {
-      fs.unlinkSync(parametersPath);
-    } catch {
-      /* best-effort cleanup */
-    }
-  }
-  log(`  ✓ federated credential '${name}' trusts UAMI ${managedIdentityPrincipalId}`);
 }
 
 /** Microsoft Azure CLI public client — pre-authorized so `az account

@@ -11,9 +11,6 @@
  *     and tells the developer to run scripts/sync-env-suite.ps1.
  *   - Ensures the Entra ID app registration backing `serverAudience` exists
  *     and exports its clientId as SERVER_AUDIENCE for downstream layers.
- *   - Ensures the Teams bot app registration exists, using a multitenant
- *     audience only when Azure and Teams use different tenants, and exports
- *     its clientId as BOT_APP_ID for the frontend layer.
  */
 
 import { execFileSync, execSync } from "child_process";
@@ -21,7 +18,7 @@ import { readFileSync, existsSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-import { ensureEntraApp, getBotSignInAudience } from "./lib/ensure-entra-app.js";
+import { ensureEntraApp } from "./lib/ensure-entra-app.js";
 import { getEnvSuiteValue, getEnvSuiteValues } from "./lib/env-suite.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
 import { runQuotaCheck } from "./lib/quota-check.js";
@@ -257,54 +254,6 @@ function ensureServerAudience(): void {
   log(`  ✓ SERVER_AUDIENCE=${appId} persisted via azd env set`);
 }
 
-function ensureBotApp(): void {
-  if (!ENV_NAME) {
-    log("  AZURE_ENV_NAME not set — skipping Teams bot app registration.");
-    return;
-  }
-
-  const configuredAppId = process.env.BOT_APP_ID?.trim();
-  const azureTenantId =
-    process.env.AZURE_TENANT_ID?.trim() ||
-    getEnvSuiteValue(ENV_NAME, "tenantId", SUITE_PATH)?.trim();
-  const teamsTenantId = getEnvSuiteValue(ENV_NAME, "teamsAppTenantId", SUITE_PATH)?.trim();
-  const signInAudience = getBotSignInAudience(azureTenantId, teamsTenantId);
-  const displayName = `azuresdkqabot-bot-${ENV_NAME}`;
-  log(
-    configuredAppId
-      ? `Validating BOT_APP_ID ${configuredAppId}`
-      : `BOT_APP_ID not set — ensuring ${signInAudience === "AzureADMultipleOrgs" ? "multitenant" : "single-tenant"} app registration '${displayName}'`,
-  );
-  log(
-    signInAudience === "AzureADMultipleOrgs"
-      ? `  Azure tenant '${azureTenantId}' differs from Teams tenant '${teamsTenantId}' — using AzureADMultipleOrgs`
-      : "  Azure and Teams tenants match (or cannot be compared) — using AzureADMyOrg",
-  );
-  let appId: string;
-  try {
-    appId = ensureEntraApp({
-      displayName,
-      existingAppId: configuredAppId || undefined,
-      signInAudience,
-      ensureServicePrincipal: true,
-      allowCreate: !PREVIEW_MODE,
-      serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
-    });
-  } catch (error) {
-    if (PREVIEW_MODE && error instanceof Error && /does not exist|read-only/i.test(error.message)) {
-      log("  BOT_APP_ID is not initialized; frontend preview requires an applied bot registration.");
-      return;
-    }
-    throw error;
-  }
-
-  if (configuredAppId !== appId) {
-    execSync(`azd env set BOT_APP_ID ${appId}`, { stdio: "inherit" });
-  }
-  process.env.BOT_APP_ID = appId;
-  log(`  ✓ BOT_APP_ID=${appId}`);
-}
-
 /**
  * Detects the currently authenticated principal's object ID and type, then
  * persists them as DEVELOPER_PRINCIPAL_ID / DEVELOPER_PRINCIPAL_TYPE so Bicep
@@ -365,7 +314,6 @@ function ensureDeveloperPrincipal(): void {
   validateAuth();
   checkResourceQuotas();
   ensureServerAudience();
-  ensureBotApp();
   ensureDeveloperPrincipal();
 
   log("Preprovision checks passed.");

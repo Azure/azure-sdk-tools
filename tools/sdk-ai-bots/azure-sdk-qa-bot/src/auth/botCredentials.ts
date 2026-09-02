@@ -1,5 +1,4 @@
 import {
-  FederatedServiceClientCredentialsFactory,
   JwtTokenProviderFactory,
   ManagedIdentityServiceClientCredentialsFactory,
   ServiceClientCredentialsFactory,
@@ -16,45 +15,15 @@ export class BotFrameworkAudienceAwareManagedIdentityFactory extends ManagedIden
   }
 }
 
-export class BotFrameworkAudienceAwareFederatedFactory extends FederatedServiceClientCredentialsFactory {
-  constructor(
-    appId: string,
-    private readonly managedIdentityClientId: string,
-    tenantId?: string,
-  ) {
-    super(appId, managedIdentityClientId, tenantId);
-  }
-
-  async isValidAppId(appId: string): Promise<boolean> {
-    if (
-      appId === BOT_FRAMEWORK_SERVICE_AUDIENCE ||
-      appId === this.managedIdentityClientId
-    ) {
-      return true;
-    }
-    return super.isValidAppId(appId);
-  }
-}
-
 export interface BotCredentialOptions {
   appId?: string;
   appType?: string;
-  tenantId?: string;
-  managedIdentityClientId?: string;
 }
 
 export function createBotCredentialsFactory(
   options: BotCredentialOptions,
 ): ServiceClientCredentialsFactory | undefined {
-  const { appId, appType, tenantId, managedIdentityClientId } = options;
-  if (appId && managedIdentityClientId) {
-    return new BotFrameworkAudienceAwareFederatedFactory(
-      appId,
-      managedIdentityClientId,
-      tenantId,
-    );
-  }
-
+  const { appId, appType } = options;
   if ((appType ?? '').trim().toLowerCase() === 'userassignedmsi' && appId) {
     return new BotFrameworkAudienceAwareManagedIdentityFactory(
       appId,

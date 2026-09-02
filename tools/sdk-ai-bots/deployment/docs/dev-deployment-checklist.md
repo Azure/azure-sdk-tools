@@ -93,7 +93,7 @@ GlobalStandard quota is shared across regions. The remaining `gpt-5.6-sol`
 capacity exactly matches this deployment's request, so any intervening quota
 consumption will block provisioning.
 
-## Entra applications
+## Entra application
 
 - [x] The interactive deployment user can create applications in the Microsoft
       tenant and currently has delegated `Application.ReadWrite.All` and
@@ -101,21 +101,20 @@ consumption will block provisioning.
 - [ ] Decide whether this fresh environment may reuse
       `azuresdkqabot-server-dev`. For complete isolation, create a new server
       application and pin its client ID as `SERVER_AUDIENCE`.
-- [ ] Create or select the Teams bot application and pin its client ID as
-      `BOT_APP_ID`.
-- [ ] Confirm both application registrations have the intended sign-in audience
-      and a home-tenant service principal.
+- [ ] Confirm the server application has the intended sign-in audience and a
+      home-tenant service principal.
 - [ ] Configure the server identifier URI, delegated scope, application role,
       and required pre-authorized clients.
-- [ ] Configure the frontend UAMI federated credential on the bot application.
+- [ ] Confirm Azure Bot uses the frontend UAMI client ID with
+      `msaAppType=UserAssignedMSI`; no separate bot app registration is used.
 - [ ] Verify the frontend and Logic App managed identities receive the server
       application role.
 - [ ] If a pipeline service principal performs these operations, grant it the
       required Microsoft Graph application permissions with admin consent.
-      Otherwise, create the applications interactively and pin their IDs before
+      Otherwise, create the application interactively and pin its ID before
       running the pipeline.
-- [ ] Verify the configured Service Management Reference is valid for each new
-      application.
+- [ ] Verify the configured Service Management Reference is valid for the new
+      server application.
 
 ## Azure DevOps setup
 

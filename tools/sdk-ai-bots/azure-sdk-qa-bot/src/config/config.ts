@@ -7,7 +7,6 @@ const config = {
   MicrosoftAppType: process.env.BOT_TYPE,
   MicrosoftAppTenantId: process.env.BOT_TENANT_ID,
   MicrosoftAppPassword: process.env.BOT_PASSWORD,
-  botManagedIdentityClientID: process.env.BOT_MANAGED_IDENTITY_CLIENT_ID,
   // RAG
   ragApiKey: process.env.RAG_API_KEY,
   // auth

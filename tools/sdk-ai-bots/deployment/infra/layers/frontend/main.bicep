@@ -45,10 +45,6 @@ param azureTableNameForConversation string
 @description('OAuth2 scope the frontend requests for calls to the agent server. Format `api://<server-audience>/.default`. Read at startup by config.js validation — MUST be non-empty.')
 param ragServiceScope string
 
-@description('Entra application client ID used by Teams and Azure Bot Service. The app is multitenant only when Azure and Teams use different tenants. The frontend UAMI is federated to this application for secretless authentication.')
-@minLength(1)
-param botAppId string
-
 @description('User-visible display name for the Teams bot (surfaced by the Bot Framework SDK). Per-env value; defaults to the prod name.')
 param teamsBotFullDisplayName string = 'Azure SDK Q&A Bot'
 
@@ -215,7 +211,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'BOT_ID'
-          value: botAppId
+          value: userAssignedIdentity.properties.clientId
         }
         {
           name: 'BOT_TENANT_ID'
@@ -223,7 +219,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'BOT_TYPE'
-          value: 'SingleTenant'
+          value: 'UserAssignedMsi'
         }
         {
           name: 'BOT_MANAGED_IDENTITY_CLIENT_ID'
@@ -330,9 +326,10 @@ resource botService 'Microsoft.BotService/botServices@2023-09-15-preview' = {
   properties: {
     displayName: 'Azure SDK Q&A Bot'
     endpoint: 'https://${site.properties.defaultHostName}/api/messages'
-    msaAppId: botAppId
+    msaAppId: userAssignedIdentity.properties.clientId
+    msaAppMSIResourceId: userAssignedIdentity.id
     msaAppTenantId: userAssignedIdentity.properties.tenantId
-    msaAppType: 'SingleTenant'
+    msaAppType: 'UserAssignedMSI'
   }
   location: 'global'
   sku: {
@@ -492,13 +489,8 @@ resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04
 output BOT_IDENTITY_NAME string = userAssignedIdentity.name
 output BOT_SERVICE_NAME string = botService.name
 output BOT_BASE_URL string = 'https://${site.properties.defaultHostName}'
-// Entra application used by Teams and Azure Bot Service. Its sign-in audience
-// is selected by preprovision from the Azure and Teams tenant IDs.
-output BOT_ID string = botAppId
-// UAMI retained for Azure resource access and used as the federated assertion
-// that authenticates the BOT_ID application without a client secret.
+output BOT_ID string = userAssignedIdentity.properties.clientId
 output BOT_MANAGED_IDENTITY_CLIENT_ID string = userAssignedIdentity.properties.clientId
-output BOT_MANAGED_IDENTITY_PRINCIPAL_ID string = userAssignedIdentity.properties.principalId
 // Token audience callers use when POSTing to the bot's /api/messages. For a
 // bot registered as `msaAppType: UserAssignedMSI`, the Bot Framework
 // CloudAdapter validates incoming JWTs against the Bot Framework Service

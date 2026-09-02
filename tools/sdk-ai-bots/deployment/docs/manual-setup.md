@@ -193,6 +193,24 @@ authorize the pipeline to use the three resource repositories on first run:
 
 ## 8. First provision (dev)
 
+### Bot identity and cross-tenant deployments
+
+The supported deployment assumes the Azure resources and Teams tenant are in
+the same Entra tenant. Azure Bot uses the frontend user-assigned managed
+identity directly: its client ID is `BOT_ID`/`msaAppId`, its resource ID is
+`msaAppMSIResourceId`, and `msaAppType` is `UserAssignedMSI`. No separate bot
+app registration, client secret, or federated credential is created.
+
+A cross-tenant deployment is not supported by this template. Azure Bot stopped
+supporting creation of new multitenant bots after July 31, 2025; only existing
+legacy multitenant bots continue to work. Do not add `BOT_APP_ID` alone: mixing
+a separate application ID with the current `UserAssignedMSI` contract produces
+an invalid Bot Framework identity configuration. A legacy multitenant bot would
+need its existing Entra application, secret/certificate, tenant consent, and a
+matching `MultiTenant` runtime configuration. New cross-tenant requirements
+should be designed on a currently supported Microsoft 365 Agents or Teams SDK
+identity model rather than added to this Azure Bot template.
+
 Run from your workstation, signed in to the dev subscription:
 
 ```bash

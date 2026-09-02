@@ -17,8 +17,6 @@ const adapterConfig = config.isLocal && !config.MicrosoftAppId
 const credentialsFactory = createBotCredentialsFactory({
   appId: config.MicrosoftAppId,
   appType: config.MicrosoftAppType,
-  tenantId: config.MicrosoftAppTenantId,
-  managedIdentityClientId: config.botManagedIdentityClientID,
 });
 
 const adapter = new TeamsAdapter(adapterConfig, credentialsFactory);

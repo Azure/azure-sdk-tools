@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { analyzeSemanticIntents } from "./analyze-semantic-intents.mjs";
+import {
+  analyzeSemanticIntents,
+  dedupePublicationHunks,
+} from "./analyze-semantic-intents.mjs";
 
 function writeJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -16,6 +19,53 @@ function artifact(file) {
     files: [{ path: file, documentRole: "primary" }],
   };
 }
+
+test("keeps shared hunks only in their specific semantic unit", () => {
+  const units = [{
+    id: "semantic-publication",
+    sourceChangeIds: ["source-version", "source-client"],
+    hunkIds: ["hunk-version", "hunk-client"],
+    declarationIds: ["declaration-version", "declaration-client"],
+    operations: [],
+    groupingEvidence: {
+      reasons: ["cross-project:api-version-publication"],
+      memberHunkIds: ["hunk-version", "hunk-client"],
+    },
+  }, {
+    id: "semantic-client",
+    sourceChangeIds: ["source-client"],
+    hunkIds: ["hunk-client"],
+    declarationIds: ["declaration-client"],
+    operations: [],
+    groupingEvidence: {
+      reasons: ["sdk-compatibility"],
+      memberHunkIds: ["hunk-client"],
+    },
+  }];
+  const sources = [{
+    id: "source-version",
+    hunks: [{ id: "hunk-version" }],
+    declarations: [{
+      id: "declaration-version",
+      hunkIds: ["hunk-version"],
+    }],
+  }, {
+    id: "source-client",
+    hunks: [{ id: "hunk-client" }],
+    declarations: [{
+      id: "declaration-client",
+      hunkIds: ["hunk-client"],
+    }],
+  }];
+
+  const result = dedupePublicationHunks(units, sources);
+
+  assert.deepEqual(result[0].hunkIds, ["hunk-version"]);
+  assert.deepEqual(result[0].sourceChangeIds, ["source-version"]);
+  assert.deepEqual(result[0].declarationIds, ["declaration-version"]);
+  assert.deepEqual(result[0].groupingEvidence.memberHunkIds, ["hunk-version"]);
+  assert.deepEqual(result[1], units[1]);
+});
 
 test("creates source-first semantic units and retains unchanged REST operations", (context) => {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".semantic-analyzer-test-"));

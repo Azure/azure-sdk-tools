@@ -315,7 +315,8 @@ export function analyzeRestBreaking(options) {
             evidenceFactIds: [beforeFactId, afterFactId].filter(Boolean),
             reviewRequired: true,
           };
-          candidates.push({ id: stableId("rest", candidate), ...candidate });
+          const id = stableId("rest", candidate);
+          candidates.push({ id, ...candidate, contractChange: change });
         }
       }
       analyzedProjects += 1;

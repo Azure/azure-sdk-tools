@@ -12,7 +12,11 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { parseArgs, runNetworkPilot } from "./run-network-pilot.mjs";
+import {
+  commonSpecificationRoot,
+  parseArgs,
+  runNetworkPilot,
+} from "./run-network-pilot.mjs";
 
 const evalRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const testRoot = join(evalRoot, ".workspaces");
@@ -23,6 +27,20 @@ const requiredPackages = [
   "@azure-tools/typespec-azure-resource-manager",
   "@azure-tools/typespec-client-generator-core",
 ];
+
+test("uses the common specification root for multi-root cases", () => {
+  assert.equal(
+    commonSpecificationRoot([
+      "specification/recoveryservices",
+      "specification/recoveryservicesbackup",
+    ]),
+    "specification",
+  );
+  assert.equal(
+    commonSpecificationRoot(["specification/network/resource-manager"]),
+    "specification/network/resource-manager",
+  );
+});
 
 function writeFixtureManifests(root) {
   writeFileSync(
@@ -215,6 +233,10 @@ test("coordinates deterministic analysis and prepares an Agent work item", () =>
     assert.equal(started.agentQueueMs, 4_000);
 
     writeFileSync(
+      workItem.expectedOutputs.complianceSearchEvidence,
+      '{"schemaVersion":1}\n',
+    );
+    writeFileSync(
       join(output, "assessment-judgment.json"),
       '{"schemaVersion":1}\n',
     );
@@ -264,6 +286,13 @@ test("coordinates deterministic analysis and prepares an Agent work item", () =>
     assert.match(
       completed.assessmentJson,
       /reports[\\/]5000[\\/]assessment\.json$/,
+    );
+    assert.deepEqual(
+      JSON.parse(readFileSync(completed.assessmentJson, "utf8")).pullRequest,
+      {
+        number: 44988,
+        url: "https://github.com/Azure/azure-rest-api-specs/pull/44988",
+      },
     );
     assert.equal(finalCommands.length, 3);
     const assembleArgs = finalCommands[0].args;

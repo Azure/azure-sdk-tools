@@ -40,6 +40,14 @@ function parseArgs(argv) {
 }
 
 function findingCounts(assessment) {
+  if (assessment.schemaVersion === 1) {
+    return {
+      semanticIntents: assessment.dimensions.semantic.items.length,
+      restBreakingFindings: assessment.dimensions.rest.findings.length,
+      downstreamFindings: assessment.dimensions.downstream.findings.length,
+      complianceFindings: assessment.dimensions.compliance.findings.length,
+    };
+  }
   return {
     semanticIntents: assessment.dimensions.semanticUnderstanding.items.length,
     restBreakingFindings:
@@ -60,11 +68,11 @@ function assertEqual(actual, expected, description) {
 function assertMajorReportPoints(html, assessment, description) {
   const required = [
     "REST breaking changes",
-    "downstream SDK breaking changes",
+    "Downstream breaking changes",
     "Semantic intents",
-    "Azure Compliance",
+    "Azure Guidelines",
     "Document Quality",
-    "Planned / Not assessed",
+    "Not assessed",
     "Appendix",
   ];
   for (const value of required) {
@@ -103,12 +111,12 @@ export function replayCase(testCase, options = {}) {
   }
   assertEqual(assessment.pr, testCase.pr, `PR ${testCase.pr} identity`);
   assertEqual(
-    assessment.baseline.commit,
+    assessment.baseline?.commit ?? assessment.comparison?.baseCommit,
     testCase.baseCommit,
     `PR ${testCase.pr} baseline`,
   );
   assertEqual(
-    assessment.head.commit,
+    assessment.head?.commit ?? assessment.comparison?.headCommit,
     testCase.headCommit,
     `PR ${testCase.pr} head`,
   );
@@ -176,6 +184,11 @@ export function runE2e(options = {}) {
       (total, { elapsedMs }) => total + elapsedMs,
       0,
     ),
+    results: results.map(({ pr, elapsedMs, output }) => ({
+      pr,
+      elapsedMs,
+      output,
+    })),
   };
   writeFileSync(
     join(outputRoot, "summary.json"),

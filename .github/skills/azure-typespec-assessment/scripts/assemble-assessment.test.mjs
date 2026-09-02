@@ -3,8 +3,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { assembleAssessment } from "./assemble-assessment.mjs";
+import {
+  assembleAssessment,
+  matchTypeFindingIntents,
+} from "./assemble-assessment.mjs";
 import { readJson, writeJson } from "./cli.mjs";
+import { readComplianceCatalog } from "./compliance-assessment.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
 function fixture() {
@@ -12,6 +16,10 @@ function fixture() {
   writeJson(path.join(work, "preparation-manifest.json"), {
     schemaVersion: 1,
     repository: { root: "repo" },
+    pullRequest: {
+      number: 123,
+      url: "https://github.com/Azure/azure-rest-api-specs/pull/123",
+    },
     comparison: {
       baseRef: "origin/main",
       mergeBaseCommit: "base",
@@ -27,8 +35,12 @@ function fixture() {
     sourceChanges: [{
       id: "source-1",
       path: "specification/a/main.tsp",
-      hunks: [{ id: "hunk-1" }],
+      hunks: [{ id: "hunk-1", lines: ["+model Widget {}"] }],
       declarations: [{
+        id: "declaration-1",
+        kind: "model",
+        qualifiedName: "Contoso.Widget",
+        hunkIds: ["hunk-1"],
         source: { revision: "current", startLine: 1, endLine: 2 },
       }],
     }],
@@ -85,7 +97,102 @@ function fixture() {
   return work;
 }
 
-test("assembler joins approved evidence and derives scoped safety", () => {
+function addComplianceInput(work) {
+  const request = {
+    reviewUnitId: "semantic-1",
+    sourceChangeIds: ["source-1"],
+    hunkIds: ["hunk-1"],
+    declarationIds: ["declaration-1"],
+    queryProfile: {
+      servicePlane: "data-plane",
+      action: "modify",
+      declarationKinds: ["model"],
+      qualifiedNames: ["Contoso.Widget"],
+      symbols: [],
+      categories: ["models"],
+      changedTokens: ["Widget"],
+    },
+  };
+  writeJson(path.join(work, "model-input.json"), {
+    complianceSearchRequests: [request],
+    inputAccounting: {},
+  });
+  const scores = [10, 9, 8, 7];
+  const catalogRanking = readComplianceCatalog().map((item, index) => ({
+    rank: index + 1,
+    catalogOrder: item.catalogOrder,
+    title: item.title,
+    canonicalUrl: item.canonicalUrl,
+    score: index < 4 ? {
+      exactSymbol: 4,
+      patternCategory: 3,
+      servicePlane: index < 2 ? 2 : 0,
+      changeContext: index === 0 || index === 2 ? 1 : 0,
+      total: scores[index],
+    } : {
+      exactSymbol: 0,
+      patternCategory: 0,
+      servicePlane: 0,
+      changeContext: 0,
+      total: 0,
+    },
+    selectionRationale: index < 4
+      ? "Relevant to the changed model."
+      : "Lower relevance to the changed model.",
+  }));
+  const documents = catalogRanking.slice(0, 4).map((item, index) => ({
+    ...item,
+    retrieval: {
+      status: "fetched",
+      retrievedAt: "2026-08-28T00:00:00.000Z",
+      contentHash: `sha256:${"a".repeat(64)}`,
+    },
+    guidance: index === 0 ? [{
+      section: "Resource types",
+      excerpt: "Use the standard resource template.",
+      queryTerms: ["Widget"],
+      examples: [],
+      applicableDeclarationIds: ["declaration-1"],
+    }] : [],
+    noRelevantGuidance: index !== 0,
+  }));
+  writeJson(path.join(work, "compliance-search-evidence.json"), {
+    schemaVersion: 1,
+    intents: [{
+      reviewUnitId: "semantic-1",
+      queryProfile: request.queryProfile,
+      catalogRanking,
+      rankedDocuments: documents,
+      retrievalAttempts: [],
+      blockers: [],
+    }],
+    inputAccounting: {
+      catalogEntriesScored: readComplianceCatalog().length,
+      documentsFetched: 4,
+      documentBytesFetched: 100,
+      guidanceExcerptsRetained: 1,
+      guidanceExcerptBytesRetained: 35,
+    },
+  });
+  return [{
+    reviewUnitId: "semantic-1",
+    applicableGuidance: [{
+      canonicalDocumentUrl: documents[0].canonicalUrl,
+      guidanceSection: "Resource types",
+    }],
+    sourceChangeIds: ["source-1"],
+    hunkIds: ["hunk-1"],
+    declarationIds: ["declaration-1"],
+    decision: "applicable-fail",
+    title: "Widget does not use the documented resource template",
+    severity: "medium",
+    expected: "Use the standard resource template.",
+    actual: "model Widget {}",
+    rationale: "The model does not use the documented resource template.",
+  }];
+}
+
+test("assembler joins confirmed evidence and derives scoped safety", () => {
   const work = fixture();
   const assessment = assembleAssessment({
     work,
@@ -95,8 +202,6 @@ test("assembler joins approved evidence and derives scoped safety", () => {
         reviewUnitId: "semantic-1",
         title: "Require mode",
         summary: "The request now requires mode.",
-        sourceChangeIds: ["source-1"],
-        operationIds: ["operation-1"],
       }],
       restDecisions: [{
         candidateId: "rest-1",
@@ -105,16 +210,21 @@ test("assembler joins approved evidence and derives scoped safety", () => {
         rationale: "Existing requests fail.",
       }],
       downstreamDecisions: [],
+      complianceDecisions: [],
       overallConfidence: "high",
       blockers: [],
     },
   });
   assert.equal(assessment.safety.status, "failed");
+  assert.deepEqual(assessment.pullRequest, {
+    number: 123,
+    url: "https://github.com/Azure/azure-rest-api-specs/pull/123",
+  });
   assert.equal(assessment.dimensions.semantic.items[0].action, "add");
   assert.equal(assessment.dimensions.semantic.items[0].changeKind, "add");
   assert.deepEqual(
     assessment.dimensions.semantic.items[0].operations.map((operation) => operation.operationId),
-    ["Widgets_Get"],
+    ["Widgets_Get", "Widgets_List"],
   );
   assert.equal(assessment.dimensions.rest.findings.length, 1);
   assert.deepEqual(validateAssessment(assessment), []);
@@ -132,17 +242,49 @@ test("assembler rejects incomplete candidate coverage", () => {
             reviewUnitId: "semantic-1",
             title: "Title",
             summary: "Summary",
-            sourceChangeIds: ["source-1"],
-            operationIds: ["operation-1"],
           }],
           restDecisions: [],
           downstreamDecisions: [],
+          complianceDecisions: [],
           overallConfidence: "high",
           blockers: [],
         },
       }),
     /coverage mismatch/,
   );
+});
+
+test("assembler requires and joins active Compliance evidence", () => {
+  const work = fixture();
+  const complianceDecisions = addComplianceInput(work);
+  const assessment = assembleAssessment({
+    work,
+    judgment: {
+      schemaVersion: 1,
+      semanticIntents: [{
+        reviewUnitId: "semantic-1",
+        title: "Change Widget",
+        summary: "Changes the Widget model.",
+      }],
+      restDecisions: [{
+        candidateId: "rest-1",
+        decision: "reject",
+        rationale: "The REST contract remains compatible.",
+      }],
+      downstreamDecisions: [],
+      complianceDecisions,
+      overallConfidence: "high",
+      blockers: [],
+    },
+  });
+  assert.equal(assessment.dimensions.compliance.status, "failed");
+  assert.equal(assessment.dimensions.compliance.findings.length, 1);
+  assert.equal(assessment.dimensions.compliance.intentAssessments[0].documents.length, 4);
+  assert.equal(
+    assessment.provenance.complianceSearchEvidence,
+    "compliance-search-evidence.json",
+  );
+  assert.deepEqual(validateAssessment(assessment), []);
 });
 
 test("aggregates direct SDK deltas by method and links them to semantic REST operations", () => {
@@ -198,8 +340,6 @@ test("aggregates direct SDK deltas by method and links them to semantic REST ope
         reviewUnitId: "semantic-1",
         title: "Modify get",
         summary: "Modify the SDK projection while preserving REST.",
-        sourceChangeIds: ["source-1"],
-        operationIds: ["operation-1"],
       }],
       restDecisions: [{
         candidateId: "rest-1",
@@ -226,6 +366,7 @@ test("aggregates direct SDK deltas by method and links them to semantic REST ope
           rationale: "LRO behavior changed.",
         },
       ],
+      complianceDecisions: [],
       overallConfidence: "high",
       blockers: [],
     },
@@ -320,8 +461,6 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
         reviewUnitId: "semantic-1",
         title: "Modify get",
         summary: "Add an optional request parameter.",
-        sourceChangeIds: ["source-1"],
-        operationIds: ["operation-1"],
       }],
       restDecisions: [{
         candidateId: "rest-1",
@@ -342,6 +481,7 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
           rationale: "The source candidate duplicated URI metadata.",
         },
       ],
+      complianceDecisions: [],
       overallConfidence: "high",
       blockers: [],
     },
@@ -421,8 +561,6 @@ test("uses only version-governance hunks for legacy publication operations", () 
         reviewUnitId: "semantic-1",
         title: "Publish v1",
         summary: "Publish the API version.",
-        sourceChangeIds: ["source-1"],
-        operationIds: ["operation-1"],
       }],
       restDecisions: [{
         candidateId: "rest-1",
@@ -430,6 +568,7 @@ test("uses only version-governance hunks for legacy publication operations", () 
         rationale: "REST remains compatible.",
       }],
       downstreamDecisions: [],
+      complianceDecisions: [],
       overallConfidence: "high",
       blockers: [],
     },
@@ -438,4 +577,34 @@ test("uses only version-governance hunks for legacy publication operations", () 
   const operationSources = assessment.dimensions.semantic.items[0].operations[0].sources;
   assert.deepEqual(operationSources.map((source) => source.id), ["source-1"]);
   assert.deepEqual(operationSources[0].hunks.map((hunk) => hunk.id), ["hunk-1"]);
+});
+
+test("matches type findings to semantic intents by changed declaration identity", () => {
+  const semanticItems = [{
+    id: "semantic-file-items",
+    declarationIds: ["file-item", "file-item-name"],
+    sources: [{
+      declarations: [
+        { id: "file-item", qualifiedName: "FileItem" },
+        { id: "file-item-name", qualifiedName: "FileItem.name" },
+        { id: "directory-item", qualifiedName: "DirectoryItem" },
+      ],
+    }],
+  }, {
+    id: "semantic-directory-items",
+    declarationIds: ["directory-item"],
+    sources: [{
+      declarations: [
+        { id: "file-item", qualifiedName: "FileItem" },
+        { id: "directory-item", qualifiedName: "DirectoryItem" },
+      ],
+    }],
+  }];
+
+  const matches = matchTypeFindingIntents({
+    crossLanguageDefinitionId: "Storage.File.FileItem",
+    evidence: [],
+  }, semanticItems);
+
+  assert.deepEqual(matches.map((intent) => intent.id), ["semantic-file-items"]);
 });

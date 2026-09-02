@@ -4,6 +4,9 @@ This directory is the repeatable regression suite for the 11 historical
 TypeSpec assessments. It separates inputs, accepted outputs, generated outputs,
 and legacy evidence:
 
+These historical PRs are examples of real code changes only. The skill assesses
+the current Git diff and normally runs before a PR or API review approval exists.
+
 - `cases.json` is the authoritative case and workspace manifest. Each entry
   records the PR, exact base/head commits, TypeSpec projects, and expected
   conclusion counts.
@@ -34,10 +37,21 @@ node .github\skills\azure-typespec-assessment\evals\scripts\run-e2e.mjs `
 ```
 
 The replay validates the assessment schema, verifies exact base/head commits and
-expected conclusion counts, renders HTML with the current renderer, and rejects
-canonical HTML drift. Because the runner writes outside Vally's temporary
-workspace when `--output` is absolute, the HTML remains available after Vally
-finishes.
+expected conclusion counts, renders HTML with the current renderer, and records
+per-PR validation/render time in each `result.json` and the suite
+`summary.json`. Because the runner writes outside Vally's temporary workspace
+when `--output` is absolute, the HTML remains available after Vally finishes.
+
+After a Compliance renderer rollout, compare all generated reports with the
+accepted reports and preserve both replay and historical full-run timings:
+
+```powershell
+node .github\skills\azure-typespec-assessment\evals\scripts\compare-compliance-rollout.mjs
+```
+
+The comparison is written to `compliance-rollout-results.json`. It labels
+replay timing separately from historical full assessment and Compliance timing
+so render latency is never presented as end-to-end Agent latency.
 
 ## Replay versus the full sparse pilot
 
@@ -157,8 +171,10 @@ This separates `agentQueueMs` from `agentJudgmentMs`. For latency benchmarks,
 run one Agent case at a time. Parallel runs measure suite throughput; their
 queue times must not be interpreted as per-case judgment latency.
 
-After the assessment skill writes fresh `assessment-judgment.json` and
-`materialization-assessment.json`, finish the measured E2E run with:
+After the assessment skill writes fresh
+`deterministic-analysis\compliance-search-evidence.json`,
+`assessment-judgment.json`, and `materialization-assessment.json`, finish the
+measured E2E run with:
 
 ```powershell
 node .github\skills\azure-typespec-assessment\evals\scripts\run-network-pilot.mjs `

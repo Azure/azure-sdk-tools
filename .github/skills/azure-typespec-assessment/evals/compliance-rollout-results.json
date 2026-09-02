@@ -1,0 +1,378 @@
+{
+  "generatedAt": "2026-09-01T08:16:39.210Z",
+  "methodology": {
+    "previousReports": "evals/assessments/<pr>/assessment.html",
+    "currentReports": "evals/outputs/compliance-rollout/<pr>/assessment.html",
+    "replayTiming": "Schema validation plus HTML rendering only; excludes compilation and Agent work.",
+    "historicalTiming": "Preserved full assessment and Compliance timings from fixtures/execution-time-breakdowns.json.",
+    "previousFastTiming": "Previous impact-only end-to-end and documentation-evidence timings from fast-assessment-execution-times.json.",
+    "comparisonScope": "The source assessment data is unchanged; the current renderer activates the preserved Compliance evidence.",
+    "contractCoverage": "The 11-PR replay covers validation/rendering compatibility. Active four-document-per-intent search, tuple coverage, assembly, and rejection paths are covered by focused tests."
+  },
+  "caseCount": 11,
+  "statusCounts": {
+    "passed": 4,
+    "failed": 6,
+    "not-assessed": 1
+  },
+  "totalReplayValidationAndRenderMs": 113,
+  "allReportsShowOfficialDocuments": true,
+  "allFindingTitlesPreserved": true,
+  "allSemanticIntentsPreserved": true,
+  "allRestFindingsPreserved": true,
+  "allDownstreamFindingsPreserved": true,
+  "results": [
+    {
+      "pr": 42435,
+      "timing": {
+        "replayValidationAndRenderMs": 9,
+        "previousFastAssessmentMs": 2488,
+        "previousFastDocumentationEvidenceMs": 43,
+        "historicalFullAssessmentMs": 691281,
+        "historicalComplianceMs": 192000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "passed",
+        "documentCount": 1,
+        "findingCount": 0
+      },
+      "comparison": {
+        "previousReportBytes": 22104,
+        "currentReportBytes": 22104,
+        "byteDelta": 0,
+        "previousComplianceSectionBytes": 986,
+        "currentComplianceSectionBytes": 986,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 42853,
+      "timing": {
+        "replayValidationAndRenderMs": 20,
+        "previousFastAssessmentMs": 892,
+        "previousFastDocumentationEvidenceMs": 39,
+        "historicalFullAssessmentMs": 812941,
+        "historicalComplianceMs": 206000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "failed",
+        "documentCount": 2,
+        "findingCount": 2
+      },
+      "comparison": {
+        "previousReportBytes": 33919,
+        "currentReportBytes": 41900,
+        "byteDelta": 7981,
+        "previousComplianceSectionBytes": 8837,
+        "currentComplianceSectionBytes": 10499,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 43308,
+      "timing": {
+        "replayValidationAndRenderMs": 5,
+        "previousFastAssessmentMs": 882,
+        "previousFastDocumentationEvidenceMs": 31,
+        "historicalFullAssessmentMs": 829433,
+        "historicalComplianceMs": 471000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "passed",
+        "documentCount": 2,
+        "findingCount": 0
+      },
+      "comparison": {
+        "previousReportBytes": 52736,
+        "currentReportBytes": 36264,
+        "byteDelta": -16472,
+        "previousComplianceSectionBytes": 178,
+        "currentComplianceSectionBytes": 1606,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 43745,
+      "timing": {
+        "replayValidationAndRenderMs": 4,
+        "previousFastAssessmentMs": 489,
+        "previousFastDocumentationEvidenceMs": 33,
+        "historicalFullAssessmentMs": 472057,
+        "historicalComplianceMs": 208000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "passed",
+        "documentCount": 1,
+        "findingCount": 0
+      },
+      "comparison": {
+        "previousReportBytes": 36014,
+        "currentReportBytes": 20205,
+        "byteDelta": -15809,
+        "previousComplianceSectionBytes": 178,
+        "currentComplianceSectionBytes": 947,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 44200,
+      "timing": {
+        "replayValidationAndRenderMs": 10,
+        "previousFastAssessmentMs": 630,
+        "previousFastDocumentationEvidenceMs": 38,
+        "historicalFullAssessmentMs": 728374,
+        "historicalComplianceMs": 255000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "failed",
+        "documentCount": 4,
+        "findingCount": 4
+      },
+      "comparison": {
+        "previousReportBytes": 87706,
+        "currentReportBytes": 103880,
+        "byteDelta": 16174,
+        "previousComplianceSectionBytes": 23865,
+        "currentComplianceSectionBytes": 29167,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 44454,
+      "timing": {
+        "replayValidationAndRenderMs": 4,
+        "previousFastAssessmentMs": 605,
+        "previousFastDocumentationEvidenceMs": 36,
+        "historicalFullAssessmentMs": 629133,
+        "historicalComplianceMs": 165000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "failed",
+        "documentCount": 2,
+        "findingCount": 1
+      },
+      "comparison": {
+        "previousReportBytes": 35529,
+        "currentReportBytes": 23045,
+        "byteDelta": -12484,
+        "previousComplianceSectionBytes": 3894,
+        "currentComplianceSectionBytes": 4888,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 44742,
+      "timing": {
+        "replayValidationAndRenderMs": 5,
+        "previousFastAssessmentMs": 729,
+        "previousFastDocumentationEvidenceMs": 27,
+        "historicalFullAssessmentMs": 765738,
+        "historicalComplianceMs": 148000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "failed",
+        "documentCount": 1,
+        "findingCount": 1
+      },
+      "comparison": {
+        "previousReportBytes": 38631,
+        "currentReportBytes": 46453,
+        "byteDelta": 7822,
+        "previousComplianceSectionBytes": 5269,
+        "currentComplianceSectionBytes": 6455,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 44882,
+      "timing": {
+        "replayValidationAndRenderMs": 7,
+        "previousFastAssessmentMs": 909,
+        "previousFastDocumentationEvidenceMs": 59,
+        "historicalFullAssessmentMs": 939098,
+        "historicalComplianceMs": 218000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "failed",
+        "documentCount": 2,
+        "findingCount": 1
+      },
+      "comparison": {
+        "previousReportBytes": 176290,
+        "currentReportBytes": 25371,
+        "byteDelta": -150919,
+        "previousComplianceSectionBytes": 3351,
+        "currentComplianceSectionBytes": 4289,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 44988,
+      "timing": {
+        "replayValidationAndRenderMs": 40,
+        "previousFastAssessmentMs": 29324,
+        "previousFastDocumentationEvidenceMs": 75,
+        "historicalFullAssessmentMs": 1022973,
+        "historicalComplianceMs": 196000,
+        "historicalTimingQuality": "estimated/measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "failed",
+        "documentCount": 4,
+        "findingCount": 4
+      },
+      "comparison": {
+        "previousReportBytes": 625700,
+        "currentReportBytes": 353605,
+        "byteDelta": -272095,
+        "previousComplianceSectionBytes": 14929,
+        "currentComplianceSectionBytes": 18642,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 45348,
+      "timing": {
+        "replayValidationAndRenderMs": 5,
+        "previousFastAssessmentMs": 1962,
+        "previousFastDocumentationEvidenceMs": 72,
+        "historicalFullAssessmentMs": 688675,
+        "historicalComplianceMs": 49000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "passed",
+        "documentCount": 2,
+        "findingCount": 0
+      },
+      "comparison": {
+        "previousReportBytes": 25453,
+        "currentReportBytes": 17312,
+        "byteDelta": -8141,
+        "previousComplianceSectionBytes": 178,
+        "currentComplianceSectionBytes": 1752,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": true,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    },
+    {
+      "pr": 45536,
+      "timing": {
+        "replayValidationAndRenderMs": 4,
+        "previousFastAssessmentMs": 644,
+        "previousFastDocumentationEvidenceMs": 27,
+        "historicalFullAssessmentMs": 712258,
+        "historicalComplianceMs": 66000,
+        "historicalTimingQuality": "measured"
+      },
+      "compliance": {
+        "evidenceMode": "preserved-historical-curation",
+        "status": "not-assessed",
+        "documentCount": 0,
+        "findingCount": 0
+      },
+      "comparison": {
+        "previousReportBytes": 33765,
+        "currentReportBytes": 17739,
+        "byteDelta": -16026,
+        "previousComplianceSectionBytes": 288,
+        "currentComplianceSectionBytes": 375,
+        "previousCompliancePresentation": "active",
+        "currentCompliancePresentation": "active",
+        "currentShowsOfficialDocuments": false,
+        "currentShowsFindings": true,
+        "currentShowsSemanticIntents": true,
+        "currentShowsRestFindings": true,
+        "currentShowsDownstreamFindings": true,
+        "semanticRestDownstreamDataChanged": false
+      }
+    }
+  ]
+}

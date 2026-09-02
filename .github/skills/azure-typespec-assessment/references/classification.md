@@ -4,11 +4,11 @@ The deterministic scripts identify review units, facts, and candidates. The Agen
 
 ## Evidence boundaries
 
-| Dimension  | Allowed evidence                                                      | Judgment                                                                                                                    |
-| ---------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Semantic   | Changed source plus before/after AutoRest facts in `model-input.json` | Explain author intent and caller-visible API behavior for every review unit. Use TypeSpec/API terms, not emitter internals. |
-| REST       | AutoRest wire-contract candidate facts                                | Approve only when the current wire contract can invalidate an existing caller or response consumer; otherwise reject.       |
-| Downstream | TCGC SDK-surface candidate facts and changed customization decorators | Approve only when language-neutral generated public/runtime SDK behavior can break existing SDK users; otherwise reject.    |
+| Dimension  | Allowed evidence                                                                                                         | Judgment                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Semantic   | Compact changed-construct profile, representative source excerpts, and aggregate operation signals in `model-input.json` | Produce one concise intent-level title and summary. Do not analyze every operation.                                      |
+| REST       | AutoRest wire-contract candidate facts                                                                                   | Approve only when the current wire contract can invalidate an existing caller or response consumer; otherwise reject.    |
+| Downstream | TCGC SDK-surface candidate facts and changed customization decorators                                                    | Approve only when language-neutral generated public/runtime SDK behavior can break existing SDK users; otherwise reject. |
 
 REST and downstream decisions are independent. A REST-compatible change can still break generated SDK users. Never use TCGC to classify REST compatibility or AutoRest to infer SDK surface.
 
@@ -30,7 +30,10 @@ Use the candidate's default severity as a starting point, then apply:
 
 ## Semantic and confidence rules
 
-Produce exactly one title and summary per semantic review unit. Include only operation/source IDs allowed by that unit. Describe version propagation explicitly when that is the unit's change kind.
+Produce exactly one title and summary per semantic review unit. Do not return
+operation or source IDs; deterministic assembly restores the complete
+inventory. Describe version propagation explicitly when that is the unit's
+change kind.
 
 Set `overallConfidence` to the lowest confidence warranted by ready dimensions and evidence quality:
 
@@ -38,4 +41,7 @@ Set `overallConfidence` to the lowest confidence warranted by ready dimensions a
 - `medium`: interpretation is required but evidence is sufficient;
 - `low`: material ambiguity remains.
 
-List concrete blockers already supported by the input. Blocked dimensions remain `not-assessed`; do not turn missing evidence into a pass. Azure Compliance and Document Quality receive no judgment in the MVP and remain planned.
+List concrete blockers already supported by the input. Blocked dimensions
+remain `not-assessed`; do not turn missing evidence into a pass. Azure
+Compliance follows the fetched-document evidence contract; Document Quality is
+a separate dimension with status `not-assessed`.

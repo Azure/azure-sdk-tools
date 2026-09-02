@@ -1,13 +1,13 @@
-# Original Azure TypeSpec Assessment MVP Rewrite Plan
+# Azure TypeSpec Assessment Design
 
 ## Goal
 
-Rebuild `.github/skills/azure-typespec-assessment` from the deleted
-implementation, following
+Define the target architecture for
+`.github/skills/azure-typespec-assessment`, following
 `tools/azsdk-cli/docs/specs/typespec-assessment.spec.md` at commit
 `0c73c7462073e857b490d76e27a05a02eed4a1ed`.
 
-The MVP is a read-only assessment of the current TypeSpec Git diff. It compares
+The assessment is a read-only review of the current TypeSpec Git diff. It compares
 the merge base of `HEAD` and a selected branch with `HEAD` plus staged,
 unstaged, and relevant untracked changes.
 
@@ -16,37 +16,86 @@ Included:
 - semantic understanding from changed TypeSpec and AutoRest;
 - REST breaking candidates from AutoRest;
 - downstream SDK breaking candidates from TCGC;
+- documentation-grounded Azure compliance from the four highest-ranked
+  retrievable official documents for each Semantic intent;
 - one bounded Agent judgment;
 - validated `assessment.json`;
 - readable `assessment.html`.
 
-Compliance and Document Quality are visibly deferred as `planned`.
+Document Quality is a separate visible dimension with status `not-assessed`.
+
+**Implementation status:** Semantic, REST, downstream, and documentation-
+grounded Compliance assessment are active. Document Quality is present but not
+assessed.
 
 ## End-to-end flow
 
 ```text
-prepare-assessment.mjs
-  Git diff + source index + isolated comparison-role compile
-  AutoRest artifacts + TCGC artifacts
-        |
-        +----------------------+----------------------+
-        v                      v                      v
-analyze-semantic-       analyze-rest-         analyze-downstream-
-intents.mjs             breaking.mjs          breaking.mjs
-        \                      |                      /
-         +---------- run-assessment-analysis.mjs ---+
-                         model-input.json
-                                  |
-                                  v
-                       one Agent judgment
-                                  |
-                                  v
-                  assemble -> validate -> render HTML
+             Current TypeSpec Git diff
+                         |
+                         v
+       Deterministic preparation and compilation
+          (source index + AutoRest + TCGC)
+                         |
+       preparation-manifest.json
+       source/source-index.json
+                         |
+       +-----------------+-----------------+-----------------+
+       |                 |                 |                 |
+       v                 v                 v                 v
+   Semantic            REST            Downstream        Compliance
+ deterministic     deterministic      deterministic     deterministic
+ review units       candidates         candidates      search requests
+       |                 |                 |                 |
+ dimensions/        dimensions/       dimensions/       complianceSearchRequests
+ semantic-intents-  rest-breaking-    downstream-       embedded below
+ input.json          input.json         breaking-input.json
+       |                 |                 |                 |
+       +-----------------+-----------------+-----------------+
+                         |
+                         v
+                  model-input.json
+                         |
+                         v
+              One bounded AI judgment
+       +-----------------+-----------------+-----------------+
+       |                 |                 |                 |
+       v                 v                 v                 v
+ Summarize each      Classify each     Classify each    Rank and fetch
+ semantic intent    REST candidate    SDK candidate    official guidance,
+ once                                                   then assess each
+                                                        intent once
+       |                 |                 |                 |
+       +-----------------+-----------------+-----------------+
+                         |                                   |
+                         v                                   v
+             assessment-judgment.json       compliance-search-evidence.json
+                         \                                   /
+                          +---------------+-----------------+
+                                          |
+                                          v
+                              Assemble and validate
+                                          |
+                                          v
+                            assessment.json + assessment.html
 ```
 
-No Node.js script calls an LLM API. Preparation and dimension analysis are
-deterministic. The Agent reads only bounded `model-input.json` and writes
-`assessment-judgment.json`.
+No Node.js script produces `compliance-search-evidence.json` or calls an LLM
+API. Preparation and dimension analysis are deterministic.
+`compliance-search-request.mjs` only builds the query profiles embedded in
+`model-input.json`. The main Agent reads that bounded input and the local
+document catalog, calls `web_fetch` until it obtains the four highest-ranked
+retrievable official documents per review unit or exhausts the catalog, and
+writes both `compliance-search-evidence.json` and
+`assessment-judgment.json`. `compliance-assessment.mjs`, called during
+assembly, consumes and validates the search evidence; it does not produce it.
+
+Compliance is parallel to Semantic, REST, and Downstream as an assessment
+dimension, but not as an initial deterministic analyzer. Its search requires
+the deterministic Semantic review units and their TypeSpec evidence, so it
+branches from `model-input.json`. It does not consume REST or Downstream
+candidates; those take the direct branch from `model-input.json` into the same
+bounded Agent judgment.
 
 ## 1. Preparation manifest
 
@@ -260,10 +309,11 @@ operations:
 - `ServiceGateways_UpdateAddressLocations`;
 - `ServiceGateways_UpdateServices`.
 
-For each operation, the Semantic card shows LRO/202/Location behavior in the
-baseline version and synchronous/200/`ServiceGatewayActionOkResponseBody`
-behavior in `2025-09-01`. This is version-scoped REST evolution, not a REST
-breaking finding.
+The Semantic intent summarizes the shared change from LRO/202/Location
+behavior to synchronous/200/`ServiceGatewayActionOkResponseBody` behavior in
+`2025-09-01`. Its two operations remain deterministic supporting evidence;
+they do not receive separate Semantic judgments. This is version-scoped REST
+evolution, not a REST breaking finding.
 
 Downstream contains two direct SDK method groups. Each merges `lro` to `basic`,
 LRO metadata removal, response-type change, and explicitly unchanged
@@ -335,9 +385,7 @@ File: `source/source-index.json`
             "-  name: string;",
             "+  name: WidgetName;"
           ],
-          "declarationOccurrenceIds": [
-            "declaration-occurrence-<hash>"
-          ],
+          "declarationOccurrenceIds": ["declaration-occurrence-<hash>"],
           "normalizedChanges": [
             {
               "kind": "type-change",
@@ -445,6 +493,7 @@ The original plan used AutoRest-change-first review units:
       "changedAspects": ["responses"],
       "sourceChangeIds": ["source-<hash>"],
       "declarationIds": ["declaration-<hash>"],
+      "catalogRanking": [],
       "operationIds": ["operation-<hash>"],
       "beforeFactIds": ["operation-<hash>"],
       "afterFactIds": ["operation-<hash>"]
@@ -558,6 +607,30 @@ Grouping is deterministic and happens before Agent judgment. The Agent writes
 the title and summary for each supplied group but cannot merge, split, or move
 hunks between groups.
 
+### Bounded Semantic judgment
+
+Semantic judgment is **intent-level only**. The Agent receives one compact
+synopsis per deterministic review unit:
+
+- action and grouped declaration names/kinds;
+- changed TypeSpec constructs and up to three representative source excerpts;
+- affected REST operation count and up to three representative operation
+  identities;
+- aggregate REST and downstream change signals; and
+- deterministic grouping and mapping summaries.
+
+The Agent produces one concise title and one behavior summary for the review
+unit. It does not explain, classify, or restate every affected operation.
+Complete operation facts, before/after contracts, and source inventories remain
+deterministic evidence outside the Semantic prompt. They are available to REST
+and downstream candidate judgment when needed, but are not duplicated into
+Semantic analysis.
+
+The summary describes the user-visible API goal shared by the group. It must
+not enumerate all operations, declarations, or hunks. Operation count and
+representative examples provide scale and traceability without expanding the
+Agent workload with the size of the affected operation set.
+
 Each non-standalone group records structured `groupingEvidence`. Every evidence
 entry identifies the allowed relationship kind and the exact hunk,
 declaration, and compiled fact IDs supporting that relationship. A group
@@ -652,15 +725,13 @@ Examples:
 - A shared helper change may map to several operations only when each
   operation is proven to instantiate that helper.
 
-For a changed template, trait, or helper, list **every proven consumer** as an
-affected REST operation. A consumer remains semantically affected even when
-its normalized AutoRest and TCGC outputs are both unchanged, because its
-compiled behavior depends directly on the changed TypeSpec abstraction. Its
-operation card must separately state:
-
-- whether the REST contract changed;
-- whether a downstream SDK projection changed;
-- or that both normalized outputs are unchanged.
+For a changed template, trait, or helper, retain **every proven consumer** in
+the deterministic affected-operation inventory. A consumer remains
+semantically affected even when its normalized AutoRest and TCGC outputs are
+both unchanged, because its compiled behavior depends directly on the changed
+TypeSpec abstraction. The intent records aggregate counts for REST-changed,
+downstream-changed, and unchanged consumers; it does not require a Semantic
+assessment for each consumer.
 
 Do not reduce the affected-operation set to only operations with breaking
 findings. Findings describe compatibility outcomes; they do not define the
@@ -857,11 +928,13 @@ method parameter change. A query parameter added to both the method and its
 nested LRO operation URI produces one `method-parameters-changed` finding, not
 an additional `method-lro-changed` finding.
 
-### Downstream shared-type aggregation
+### Downstream type presentation and root-cause aggregation
 
 REST-compatible model, enum, union, and other shared SDK type findings are
-grouped by **root cause**, not rendered as one flat card per propagated type.
-Each root cause produces one default-collapsed `Shared SDK type impact` card.
+grouped by **root cause** in JSON for causal traceability and deduplication.
+HTML renders one default-collapsed breaking-change card per distinct affected
+SDK type, alongside the operation-level downstream cards. It does not render
+one large `Shared SDK type impact` card containing several types.
 
 A root cause is the nearest deterministic SDK contract change that caused the
 types to acquire a breaking public-surface difference. Examples include:
@@ -875,32 +948,58 @@ Root-cause relationships must come from TCGC type and method reference
 provenance. Matching only by project, source file, name, or simultaneous usage
 changes is insufficient.
 
-Each shared-type card contains:
+Each type card summary contains:
 
-1. a concise root-cause summary;
-2. the number of distinct affected SDK types;
-3. the number of distinct affected REST operations;
-4. the number of distinct affected SDK methods;
-5. three deterministic representative operation/method examples;
-6. an expandable complete affected type, operation, and method list;
-7. links to the underlying approved findings and related Semantic intents.
+1. severity;
+2. the short SDK type name;
+3. an `SDK type` tag.
+
+Do not show the contract-change count or affected REST operation count in the
+collapsed summary. Those details belong in the expanded body.
+
+Expanding the card shows:
+
+1. the stable cross-language SDK contract identity and a concise change
+   summary;
+2. a structured `SDK contract member | Before | After` table for the changed
+   type shape, properties, or enum members;
+3. a highlighted `Why this is breaking` explanation;
+4. a default-collapsed `Affected REST operations (N)` disclosure whose rows
+   show operation ID, HTTP method, and path;
+5. changed TypeSpec source links and related Semantic intent links.
+
+The outer type card and all nested detail disclosures, including affected REST
+operations, are collapsed by default. A type card with one or more related
+REST operations uses the same visual hierarchy as the REST-contract and direct
+operation-level downstream cards. The report labels the type as an
+`SDK contract` rather than presenting it as a secondary aggregate.
+
+Mapped SDK method data and root-cause provenance remain in `assessment.json`
+for deterministic traceability but are not rendered in the SDK type card.
 
 Counts are based on distinct stable identities, not finding count. The same
-underlying downstream finding must appear in exactly one aggregate. If several
-method deltas are parts of one method contract change, such as method kind,
-response type, and LRO metadata, they count as one affected SDK method and one
-affected REST operation.
+underlying downstream finding must appear in exactly one type card. Multiple
+property, enum-member, union, or usage deltas for the same cross-language type
+are merged into that type's card and remain separately traceable in JSON. If
+several method deltas are parts of one method contract change, such as method
+kind, response type, and LRO metadata, they count as one affected SDK method
+and one affected REST operation.
 
-When one propagated type is affected by multiple independent root causes, keep
-the type in each applicable root-cause card but assign its underlying finding
-to one canonical card. Other cards reference that type as shared evidence
-rather than duplicating the finding. The JSON records the canonical aggregate
-ID so validation can enforce complete, non-overlapping finding coverage.
+When one type is affected by multiple independent root causes, render one type
+card containing separate root-cause references rather than duplicate cards.
+The JSON records the canonical type-card identity and root-cause memberships
+so validation can enforce complete, non-overlapping finding coverage.
 
-If deterministic TCGC provenance cannot establish a root cause, place the
-finding in a separate `Unresolved shared SDK type impact` group. Do not attach
-operations or methods based on guesses; counts for unproven operation/method
-relationships remain zero.
+Related operations require deterministic evidence: TCGC type/method reference
+provenance, or exact changed TypeSpec declaration identity linked to a Semantic
+intent's operation inventory. Source-file coincidence alone is insufficient.
+Do not present a related REST operation as a mapped SDK method.
+
+If deterministic evidence cannot establish a root cause or an operation/method
+relationship, retain the type card and show the unavailable relationship
+explicitly. Do not attach operations or methods based on guesses; counts for
+unproven relationships remain zero. A confirmed type-level breaking change
+must not disappear merely because operation or method mapping is unavailable.
 
 For PR 43308, the ten public-type usage findings are one root-cause group:
 
@@ -910,18 +1009,20 @@ For PR 43308, the ten public-type usage findings are one root-cause group:
 - affected REST operations: 2;
 - affected SDK methods: 2;
 - the two direct methods remain separate operation cards containing their
-  merged kind, response, and LRO deltas.
+  merged kind, response, and LRO deltas;
+- HTML renders ten collapsed SDK type cards, each linked to the shared root
+  cause and its deterministically related operations/methods.
 
 ### Semantic and finding relationships
 
-Relationships between Semantic intents and approved findings are
+Relationships between Semantic intents and confirmed findings are
 **bidirectional** and deterministic:
 
 - each REST finding records its related Semantic intent IDs;
-- each downstream operation/shared-type group records its related Semantic
-  intent IDs;
+- each downstream operation group and SDK type card records its related
+  Semantic intent IDs;
 - each Semantic intent records its related REST finding, downstream operation
-  group, and shared-type group IDs.
+  group, and SDK type card IDs.
 
 The primary affected list inside a Semantic intent contains REST operations
 only. SDK methods, models, enums, unions, and other generated symbols appear
@@ -933,7 +1034,7 @@ Allowed relationship evidence:
    operation identity.
 2. Downstream method group to Semantic intent: exact project and compiled HTTP
    method/path mapped to an affected REST operation in that intent.
-3. Shared-type group to Semantic intent: deterministic TCGC root-cause
+3. SDK type card to Semantic intent: deterministic TCGC root-cause
    provenance through its related downstream method groups or an exact changed
    TypeSpec declaration.
 4. Unique source fallback: allowed only when one and only one Semantic intent
@@ -957,7 +1058,245 @@ Validation requires:
 - rejected findings are never linked;
 - ambiguous or unsupported relationships remain absent.
 
-## 6. Bounded Agent input
+## 6. Documentation-grounded Azure compliance
+
+Compliance is an independent assessment dimension. It consumes Semantic
+intents and their bounded TypeSpec query profiles while retaining links to the
+complete deterministic source evidence. It does not consume or derive
+conclusions from downstream SDK breaking input. Document Quality remains a
+separate `not-assessed` dimension.
+
+### Goal and evidence boundary
+
+Compliance assesses each Semantic intent once against applicable first-party
+TypeSpec and Azure TypeSpec documentation. The decision uses the intent's
+changed TypeSpec constructs and source evidence, but it does not assess each
+affected REST operation or generate a document-by-declaration decision matrix.
+It does not infer rules from generated OpenAPI, TCGC output, compiler
+diagnostics, catalog descriptions, prior reports, or model knowledge.
+
+The search uses the local [agentic search
+procedure](references/agentic-search.md) and its [official document
+catalog](references/reference-document-links.md). The copied catalog is
+navigation metadata. Only successfully fetched page content can establish an
+expected compliance pattern.
+
+### Query profile
+
+Build one query profile per Semantic intent from deterministic evidence:
+
+- ARM or data-plane service kind;
+- intent action and summary;
+- changed declaration kinds and qualified names;
+- decorators and augment decorators;
+- templates, traits, base resource types, and operation interfaces;
+- versioning, paging, LRO, warning-suppression, and client-customization
+  constructs;
+- normalized added and removed TypeSpec tokens;
+- up to three representative source excerpts; and
+- affected-operation counts, without operation-by-operation contracts.
+
+The deterministic request retains the complete source/hunk inventory for
+traceability, but the compliance prompt is bounded to the compact intent
+profile above. Operation facts are excluded because compliance evaluates the
+TypeSpec design intent, not each compiled operation.
+
+### Select the four highest-scoring documents
+
+Score every entry in `reference-document-links.md` for each intent:
+
+| Signal           | Points | Meaning                                                                                                                                    |
+| ---------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Exact symbol     |      4 | Catalog title or description names a changed decorator, template, base type, interface, or other exact TypeSpec construct.                 |
+| Pattern/category |      3 | The catalog section directly matches the changed resource, operation, versioning, LRO, paging, model, enum, decorator, or warning pattern. |
+| Service plane    |      2 | The document applies to the intent's ARM or data-plane service kind.                                                                       |
+| Change context   |      1 | The document matches the add/remove/modify action or the stable/preview version transition.                                                |
+
+Scores are additive, from 0 through 10. Rank the complete catalog by descending
+score and break ties by catalog order. Select the first four retrievable
+documents, recording each score component and a concise selection rationale.
+Do not allow the Agent to add an uncataloged URL.
+
+For PR 44988's `Add address prefix set child resources` intent, the expected
+catalog ranking is:
+
+1. ARM resource types and modeling;
+2. ARM resource operations;
+3. Azure.ResourceManager interface reference;
+4. Evolving APIs.
+
+The first three match the new ARM child-resource and lifecycle-operation
+patterns; the fourth covers introducing that surface in a new API version.
+This is a ranking example, not compliance evidence: the fetched sections must
+still prove applicability.
+
+Fetch the initial four URLs concurrently with `web_fetch`. Cache fetched
+markdown by canonical URL and content hash for the assessment run. When
+retrieval fails, retain the failed attempt as provenance and fetch the
+next-ranked catalog entry until four documents have been retrieved or the
+catalog is exhausted.
+
+### Extract applicable guidance
+
+Search each fetched page for exact query-profile terms and their surrounding
+section. Retain:
+
+- document title, canonical URL, section heading, retrieval timestamp, and
+  content hash;
+- a concise verbatim excerpt containing the normative guidance;
+- one or two directly relevant TypeSpec examples, each at most 12 lines;
+- the query terms that matched;
+- `no-relevant-guidance` when the fetched page does not govern the intent.
+
+Do not treat the catalog description, a search-result summary, or a generated
+code example as documentation evidence. Do not broaden beyond the ranked
+catalog during this phase.
+
+### Assess the Semantic intent once
+
+After guidance extraction, produce exactly one Compliance decision for the
+Semantic intent. The selected documents are evidence sources, not independent
+assessment units. The decision records:
+
+- Semantic intent ID and the source-change, hunk, and declaration IDs used as
+  supporting evidence;
+- applicable document URLs and guidance sections;
+- `expected`: a concise synthesis of the applicable fetched guidance;
+- `actual`: a concise description of the intent's changed TypeSpec pattern;
+- `decision`: `applicable-pass`, `applicable-fail`, or `not-assessed`; and
+- a short rationale grounded only in the expected and actual evidence.
+
+`applicable-pass` requires at least one fetched guidance section that governs
+the intent and no direct contradiction. `applicable-fail` requires a direct
+contradiction between fetched guidance and changed code. Similar wire
+behavior, an undocumented legacy helper, or a suppression is not equivalent to
+the documented pattern. Use `not-assessed` when no selected document governs
+the intent or retrieval/evidence is insufficient.
+
+One failing intent produces one intent-level finding. The finding may cite
+multiple source declarations and guidance sections, but it must describe one
+coherent compliance gap for the intent. Affected operations never receive
+separate Compliance decisions or findings.
+
+### Dimension status and safety
+
+- `failed`: one or more intent decisions are `applicable-fail`.
+- `passed`: every Semantic intent has an `applicable-pass` decision.
+- `not-assessed`: any Semantic intent has no applicable fetched guidance,
+  retrieval/evidence is insufficient, or fewer than four documents can be
+  retrieved after catalog exhaustion.
+
+Documents with `no-relevant-guidance` do not count as intent coverage.
+Compliance status is reported independently and does not change
+REST/downstream scoped code safety.
+
+### Bounded Agent behavior
+
+The Agent performs catalog scoring, document search, excerpt selection, and
+one intent-level evidence comparison in the existing bounded judgment phase.
+It may not change Semantic intent membership, invent source IDs, invent URLs,
+or use unfetched knowledge. The judgment schema requires exactly one
+Compliance decision per Semantic intent, and deterministic assembly rejects
+unknown, duplicate, or missing intent decisions.
+
+The same Agent phase records retrieval and extracted evidence separately from
+its decisions in `compliance-search-evidence.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "intents": [
+    {
+      "reviewUnitId": "semantic-<hash>",
+      "queryProfile": {},
+      "catalogRanking": [
+        {
+          "rank": 1,
+          "catalogOrder": 3,
+          "title": "ARM resource types and modeling",
+          "canonicalUrl": "https://azure.github.io/typespec-azure/docs/...",
+          "score": {
+            "exactSymbol": 4,
+            "patternCategory": 3,
+            "servicePlane": 2,
+            "changeContext": 1,
+            "total": 10
+          },
+          "selectionRationale": "Matches the changed ARM child-resource pattern."
+        }
+      ],
+      "rankedDocuments": [
+        {
+          "rank": 1,
+          "catalogOrder": 3,
+          "title": "ARM resource types and modeling",
+          "canonicalUrl": "https://azure.github.io/typespec-azure/docs/...",
+          "score": {
+            "exactSymbol": 4,
+            "patternCategory": 3,
+            "servicePlane": 2,
+            "changeContext": 1,
+            "total": 10
+          },
+          "selectionRationale": "Matches the changed ARM child-resource pattern.",
+          "retrieval": {
+            "status": "fetched",
+            "retrievedAt": "2026-01-01T00:00:00.000Z",
+            "contentHash": "sha256:<hash>"
+          },
+          "guidance": [
+            {
+              "section": "Resource types",
+              "excerpt": "Concise normative guidance.",
+              "queryTerms": ["TrackedResource"],
+              "examples": [
+                "model Widget is TrackedResource<WidgetProperties> {}"
+              ],
+              "applicableDeclarationIds": ["declaration-<hash>"]
+            }
+          ],
+          "noRelevantGuidance": false
+        }
+      ],
+      "retrievalAttempts": [
+        {
+          "rank": 4,
+          "canonicalUrl": "https://azure.github.io/typespec-azure/docs/...",
+          "status": "failed",
+          "error": "Fetch failure."
+        }
+      ],
+      "blockers": []
+    }
+  ],
+  "inputAccounting": {
+    "catalogEntriesScored": 0,
+    "documentsFetched": 0,
+    "documentBytesFetched": 0,
+    "guidanceExcerptsRetained": 0,
+    "guidanceExcerptBytesRetained": 0
+  }
+}
+```
+
+`catalogRanking` contains every catalog URL in score order.
+`rankedDocuments` contains the first four successfully fetched entries from
+that ranking unless catalog exhaustion is recorded as a blocker.
+`retrievalAttempts` retains failed top-ranked URLs and their replacement
+history.
+
+The HTML report will show compliance by Semantic intent:
+
+- overall status and coverage;
+- the four ranked documents and selection scores;
+- one intent-level expected/actual comparison with supporting TypeSpec
+  evidence;
+- failing intent assessments expanded by default;
+- passing intent assessments collapsed by default;
+- retrieval failures and unassessed intents explicitly, never as zero findings
+  that imply success.
+
+## 7. Bounded Agent input
 
 File: `model-input.json`
 
@@ -1006,13 +1345,61 @@ File: `model-input.json`
     "rest-fact-<hash>": {},
     "sdk-fact-<hash>": {}
   },
-  "semanticReviewUnits": [],
+  "semanticReviewUnits": [
+    {
+      "reviewUnitId": "semantic-<hash>",
+      "action": "add",
+      "declarationKinds": ["model"],
+      "qualifiedNames": ["Contoso.AddressPrefixSet"],
+      "changedConstructs": ["TrackedResource"],
+      "representativeSourceExcerpts": [
+        {
+          "hunkId": "hunk-<hash>",
+          "text": "model AddressPrefixSet is TrackedResource<...>;"
+        }
+      ],
+      "affectedOperationCount": 4,
+      "representativeOperationIds": [
+        "AddressPrefixSets_Get",
+        "AddressPrefixSets_CreateOrUpdate",
+        "AddressPrefixSets_Delete"
+      ],
+      "restChangedOperationCount": 4,
+      "downstreamChangedOperationCount": 4,
+      "groupingSummaries": [
+        "The resource model and lifecycle operations form one child-resource change."
+      ]
+    }
+  ],
   "restCandidates": [],
   "downstreamRootCauses": [],
   "downstreamCandidates": [],
+  "complianceSearchRequests": [
+    {
+      "reviewUnitId": "semantic-<hash>",
+      "sourceChangeIds": ["source-<hash>"],
+      "hunkIds": ["hunk-<hash>"],
+      "declarationIds": ["declaration-<hash>"],
+      "queryProfile": {
+        "servicePlane": "resource-manager",
+        "action": "add",
+        "declarationKinds": ["model"],
+        "qualifiedNames": ["Contoso.AddressPrefixSet"],
+        "symbols": ["TrackedResource"],
+        "categories": ["resource", "operations", "versioning"],
+        "changedTokens": ["AddressPrefixSet", "TrackedResource"],
+        "representativeSourceExcerpts": [
+          {
+            "hunkId": "hunk-<hash>",
+            "text": "model AddressPrefixSet is TrackedResource<...>;"
+          }
+        ],
+        "affectedOperationCount": 4
+      }
+    }
+  ],
   "deferredDimensions": {
-    "compliance": "planned",
-    "documentQuality": "planned"
+    "documentQuality": "not-assessed"
   },
   "blockers": [],
   "inputAccounting": {
@@ -1026,7 +1413,9 @@ File: `model-input.json`
       "semanticReviewUnits": 0,
       "restCandidates": 0,
       "downstreamRootCauses": 0,
-      "downstreamCandidates": 0
+      "downstreamCandidates": 0,
+      "complianceSearchRequests": 0,
+      "complianceSearchSourceBytes": 0
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
@@ -1041,7 +1430,7 @@ File: `model-input.json`
 Only transitively referenced compact facts enter model input. Required evidence
 is never silently dropped to fit the budget.
 
-## 7. Agent judgment
+## 8. Agent judgment
 
 File: `assessment-judgment.json`
 
@@ -1052,9 +1441,7 @@ File: `assessment-judgment.json`
     {
       "reviewUnitId": "semantic-<hash>",
       "title": "Return scenario-run resources from run actions",
-      "summary": "The TypeSpec change modifies the operation behavior.",
-      "sourceChangeIds": ["source-<hash>"],
-      "operationIds": ["operation-<hash>"]
+      "summary": "The TypeSpec change makes scenario execution and cancellation return pollable scenario-run resources."
     }
   ],
   "restDecisions": [
@@ -1082,6 +1469,26 @@ File: `assessment-judgment.json`
       "excludedCandidateIds": []
     }
   ],
+  "complianceDecisions": [
+    {
+      "reviewUnitId": "semantic-<hash>",
+      "applicableGuidance": [
+        {
+          "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/...",
+          "guidanceSection": "Resource types"
+        }
+      ],
+      "sourceChangeIds": ["source-<hash>"],
+      "hunkIds": ["hunk-<hash>"],
+      "declarationIds": ["declaration-<hash>"],
+      "decision": "applicable-pass|applicable-fail|not-assessed",
+      "title": "Required for applicable-fail: concise compliance gap title",
+      "severity": "Required for applicable-fail: high|medium|low",
+      "expected": "Concise synthesis of applicable fetched guidance.",
+      "actual": "Concise description of the intent's changed TypeSpec pattern.",
+      "rationale": "Evidence-grounded comparison rationale."
+    }
+  ],
   "overallConfidence": "high|medium|low",
   "blockers": []
 }
@@ -1092,14 +1499,26 @@ REST candidate. Direct downstream method candidates require one decision per
 candidate. Propagated shared-type candidates require one decision per
 deterministic root cause instead of repetitive per-type decisions.
 
-An approved root-cause decision approves every `propagatedCandidateId` in that
+An internal `approve` root-cause decision retains every `propagatedCandidateId` in that
 root cause except IDs explicitly listed in `excludedCandidateIds`. Exclusions
 must be members of that root cause and are treated as rejected. A rejected
 root-cause decision rejects every propagated candidate and omits severity.
 Every downstream candidate must be covered exactly once by either a direct
 candidate decision or one canonical root-cause decision.
 
-## 8. Final assessment
+Every Semantic intent must have exactly one Compliance decision. Every
+applicable guidance URL must identify a successfully fetched
+`rankedDocuments` entry, and all source, hunk, and declaration IDs must already
+exist in `model-input.json`. Decisions may quote only guidance recorded in
+`compliance-search-evidence.json`; the Agent cannot add URLs, evidence,
+declarations, operations, or assessment units during judgment.
+`applicable-pass` and `applicable-fail` require non-empty expected and actual
+evidence. `applicable-fail` also requires a concise finding title and severity
+for the finding-first HTML presentation. `not-assessed` requires actual
+evidence and a rationale explaining why the fetched guidance does not govern
+the intent, or a retrieval, evidence, or intent-coverage blocker.
+
+## 9. Final assessment
 
 File: `assessment.json`
 
@@ -1282,12 +1701,101 @@ File: `assessment.json`
       "blockers": []
     },
     "compliance": {
-      "status": "planned",
-      "summary": "Deferred from the MVP."
+      "status": "passed|failed|not-assessed",
+      "summary": "Documentation-grounded compliance result.",
+      "coverage": {
+        "semanticIntentCount": 1,
+        "assessedIntentCount": 1,
+        "selectedDocumentCount": 4,
+        "unassessedIntentIds": []
+      },
+      "intentAssessments": [
+        {
+          "semanticIntentId": "semantic-<hash>",
+          "sourceChangeIds": ["source-<hash>"],
+          "hunkIds": ["hunk-<hash>"],
+          "declarationIds": ["declaration-<hash>"],
+          "documents": [
+            {
+              "rank": 1,
+              "catalogOrder": 3,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/...",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "retrievedAt": "2026-01-01T00:00:00.000Z",
+              "contentHash": "sha256:<hash>",
+              "guidance": [
+                {
+                  "section": "Resource types",
+                  "excerpt": "Concise normative guidance.",
+                  "queryTerms": ["TrackedResource"],
+                  "examples": [],
+                  "applicableDeclarationIds": ["declaration-<hash>"]
+                }
+              ],
+              "noRelevantGuidance": false
+            }
+          ],
+          "decision": "applicable-fail",
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/...",
+              "section": "Resource types"
+            }
+          ],
+          "expected": "Use the documented resource template.",
+          "actual": "The intent introduces the resource with a different pattern.",
+          "gap": "The intent does not apply the required template.",
+          "sourceLinks": [
+            {
+              "path": "specification/contoso/Contoso/main.tsp",
+              "startLine": 40,
+              "endLine": 44
+            }
+          ],
+          "codeSnippets": ["model AddressPrefixSet { ... }"],
+          "blockers": []
+        }
+      ],
+      "findings": [
+        {
+          "id": "compliance-<hash>",
+          "semanticIntentId": "semantic-<hash>",
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/...",
+              "section": "Resource types",
+              "excerpt": "Concise normative guidance."
+            }
+          ],
+          "declarationIds": ["declaration-<hash>"],
+          "sourceChangeIds": ["source-<hash>"],
+          "hunkIds": ["hunk-<hash>"],
+          "expected": "Use the documented resource template.",
+          "actual": "The intent introduces the resource with a different pattern.",
+          "gap": "The intent does not apply the required template.",
+          "sourceLinks": [
+            {
+              "path": "specification/contoso/Contoso/main.tsp",
+              "startLine": 40,
+              "endLine": 44
+            }
+          ],
+          "codeSnippets": ["model AddressPrefixSet { ... }"]
+        }
+      ],
+      "retrievalFailures": [],
+      "blockers": []
     },
     "documentQuality": {
-      "status": "planned",
-      "summary": "Planned by the design document."
+      "status": "not-assessed",
+      "summary": "Document quality is not assessed."
     }
   },
   "changedFiles": [],
@@ -1295,6 +1803,7 @@ File: `assessment.json`
   "blockers": [],
   "provenance": {
     "modelInput": "model-input.json",
+    "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
     "preparationManifest": "preparation-manifest.json"
   },
@@ -1303,7 +1812,7 @@ File: `assessment.json`
 }
 ```
 
-Every downstream operation group merges all approved deltas for one project,
+Every downstream operation group merges all confirmed deltas for one project,
 REST operation, and SDK method. Each delta retains its underlying finding ID,
 rule, severity, concise actual/expected behavior, and rationale, and adds
 structured `field`, `before`, and `after` values.
@@ -1359,6 +1868,25 @@ the changed portion is visually prominent. A method card contains only
 semantic deltas whose normalized before and after values differ; unchanged
 LRO, paging, response, kind, access, or client metadata is not listed.
 
+Each SDK method card uses the same contract-focused hierarchy as an SDK type
+card:
+
+1. the default-collapsed summary shows severity, REST operation ID, an
+   `SDK method` tag, and the SDK contract-change count;
+2. expanded metadata shows the stable SDK method identity, HTTP method/path,
+   and a concise change summary;
+3. a structured `SDK method member | Before | After` table renders parameter
+   additions/removals/modifications/reordering and non-parameter method deltas;
+4. a highlighted `Why this is breaking` block combines the confirmed
+   method-delta rationales;
+5. a compact footer retains parameter counts, changed TypeSpec source links,
+   and related Semantic intent links.
+
+The card does not repeat unchanged parameters as table rows. Added or removed
+parameters use `not present` on the missing side, modified parameters show the
+projected before/after signatures, and reordered parameters show their
+one-based positions.
+
 ### REST/downstream deduplication
 
 When an operation is already REST breaking, suppress only downstream SDK
@@ -1375,17 +1903,21 @@ Examples:
   customization may remain an independent downstream finding even when the
   operation also has a REST break.
 
-Each suppressed delta records the approved REST finding IDs and deterministic
-causal match basis in `impliedByRest`. HTML shows one concise notice with the
-suppressed operation/method/delta counts and links to the REST findings. If an
-operation group contains both implied and independent deltas, render the group
-with only its independent deltas and mention the suppressed count.
+Each suppressed delta records the confirmed REST finding IDs and deterministic
+causal match basis in `impliedByRest`. HTML presents one unified **Downstream
+breaking changes (N)** list. `N` counts the visible entries: linked REST
+findings, direct SDK method groups, and distinct SDK type cards. Each REST
+breaking finding also appears in that list with a `REST breaking` tag and a
+direct link to its REST finding details; the REST details are not duplicated.
+Independent REST-compatible SDK method and type breaks remain full collapsed
+downstream cards. If an operation group contains both implied and independent
+deltas, render the group with only its independent deltas.
 
 Do not suppress an entire operation group based only on matching operation ID,
 HTTP method/path, project, or API version. Deduplication requires a supported
 rule-to-rule causal relationship and matching deterministic evidence.
 
-## 9. Validation
+## 10. Validation
 
 Assembly validates the small Agent answer and joins complete deterministic
 evidence. Final validation independently checks:
@@ -1400,38 +1932,161 @@ evidence. Final validation independently checks:
 7. reciprocal semantic/finding relationships;
 8. complete downstream aggregation traceability;
 9. derived counts, dimension status, and scoped safety;
-10. Compliance and Document Quality remain `planned`.
+10. exactly four successfully fetched ranked documents per Semantic intent,
+    or an explicit catalog-exhaustion blocker;
+11. valid 0-10 score components, exact totals, unique catalog URLs, rank
+    ordering, catalog-order tie breaking, and query profiles identical to
+    their deterministic requests;
+12. canonical URL, retrieval timestamp, content hash, section, excerpt, and
+    matched-term provenance for every guidance item;
+13. exact one-time Compliance decision coverage for every Semantic intent;
+14. intent-level Compliance findings with complete source IDs, applicable
+    guidance links, expected guidance, actual TypeSpec pattern, gap, and
+    changed-code snippets;
+15. catalog descriptions and unfetched content are never used as guidance;
+16. Compliance status follows evidence and coverage, while Document Quality
+    remains explicitly `not-assessed`.
 
-## 10. HTML requirements
+## 11. HTML requirements
 
 The report must show:
 
-1. report identity, confidence, scoped safety, and a header link to the
-   detailed source/artifact comparison in the appendix;
-2. Preview Notice and MVP coverage;
+1. report identity, overall code quality (`passed|failed|not-assessed`), and a
+   header link to the detailed source/artifact comparison in the appendix;
+2. scope notice and assessed/not-assessed dimension coverage;
 3. REST breaking findings with actual/expected behavior;
-4. REST-compatible downstream SDK breaks grouped by REST operation/SDK method;
-5. shared type impact collapsed by root cause;
+4. one numbered downstream breaking list containing linked, tagged REST
+   findings, direct SDK method cards, and one SDK type card per distinct
+   affected cross-language type;
+5. all SDK method and SDK contract cards collapsed by default; SDK contract
+   summaries show severity, short type name, and an `SDK type` tag. Expanded
+   details use a structured before/after contract table, highlighted breaking
+   rationale, and the affected REST operation list.
+   SDK method cards use the same structure with an `SDK method` tag, method
+   identity, HTTP method/path, structured changed-member rows, and highlighted
+   rationale.
+   The affected REST operation list is also collapsed by default, while
+   expanded details retain changed TypeSpec and Semantic intent links. Mapped
+   SDK method data and root-cause provenance remain available in JSON rather
+   than the main report;
 6. source-first Semantic intents;
 7. expandable REST operations with before/after impact;
-8. planned Compliance and Document Quality;
-9. blockers;
-10. appendix with files, projects, compiler artifacts, timings, model input
-    accounting, and provenance.
+8. a numbered `Azure Guidelines (N)` section containing only findings, without
+   a separate status or coverage summary card, plus an explicit not-assessed
+   Document Quality dimension;
+   per-intent assessments, ranked search documents, and retrieval details
+   appear only in the appendix;
+9. Compliance finding cards without a separate TypeSpec source-link list;
+   under **Actual**, show at most two changed-code snippets ranked by relevance
+   to the actual behavior, while retaining complete evidence in JSON and the
+   appendix;
+10. blockers;
+11. appendix with files, projects, compiler artifacts, timings, model input
+    accounting, ranked Compliance documents, retrieval attempts, and
+    provenance.
+
+### REST contract cards
+
+REST breaking findings use the same visual hierarchy as downstream SDK type
+cards. The renderer groups confirmed REST findings by stable wire-contract
+identity, such as a model, enum, request parameter type, or response header
+type. One contract produces one default-collapsed card and retains every
+deterministically affected REST operation.
+
+Collapsed:
+
+```text
+┌ high  NfsFileType  [REST contract]
+│       3 contract changes · 6 affected REST operations
+└
+```
+
+Expanded:
+
+```text
+┌ high  NfsFileType  [REST contract]
+│
+│ REST contract  Storage.File.NfsFileType
+│
+│ Breaking changes
+│ ┌ Contract area                         Before              After
+│ ├ NfsFileType.SymLink                   "SymLink"            removed
+│ ├ NfsFileType.BlockDevice               "BlockDevice"        removed
+│ └ NfsFileType.CharacterDevice           "CharacterDevice"    removed
+│
+│ Why this is breaking
+│ Removing serialized values narrows the wire contract.
+│
+│ Affected REST operations (6)
+│ Directory_ListFilesAndDirectoriesSegment  GET   ?restype=directory&comp=list
+│ File_GetProperties                        HEAD  /{shareName}/{filePath}
+│ ...
+│
+│ Changed TypeSpec  models.tsp:412
+│ Related intent    Remove NFS file-type variants
+└
+```
+
+Presentation rules:
+
+1. The summary shows severity, stable REST contract identity, a `REST
+contract` tag, distinct contract-delta count, and distinct affected REST
+   operation count.
+2. The card is collapsed by default. Hash navigation opens the selected card
+   and its folded ancestors.
+3. The expanded body starts with contract identity, followed by one compact
+   `Contract member | Before | After` table.
+4. Multiple findings for the same contract become rows in that table; do not
+   repeat full cards or unchanged request/response content.
+5. Contract identities come from exact normalized AutoRest schema references
+   or enum metadata. A removed property's own type is preferred; otherwise use
+   the nearest containing named contract. Source-file or display-name
+   coincidence is insufficient.
+6. Human-readable contract areas replace internal rule IDs, for example
+   `response 200.segment.fileItems[].fileType`, `include`, or
+   `x-ms-file-file-type`.
+7. Removed values use removal styling and added/replacement values use
+   addition styling, matching downstream method cards.
+8. One concise rationale follows the table. Per-row rationales are shown only
+   when they materially differ.
+9. The complete affected-operation list follows the diff. Each row shows
+   operation ID, selected API version, HTTP method, and path.
+10. REST-derived downstream entries link back to the contract card rather than
+    duplicate its REST details.
+11. Changed TypeSpec sources and related Semantic intents appear at the bottom.
+12. A REST finding without a proven contract identity remains visible as a
+    default-collapsed `Unmapped REST contract change` card. Do not infer a
+    contract from source-file coincidence.
+13. Stable finding anchors remain inside the aggregate card so existing deep
+    links continue to work. JSON retains every underlying finding once.
+14. The visible REST count is the number of distinct contract cards plus
+    unmapped cards, not the raw finding-row count.
+
+Compliance rendering is source-first:
+
+- show status, assessed-intent coverage, and finding count;
+- under each Semantic intent, show the four ranked documents, score
+  components, fetched section, and canonical source link;
+- show one fetched-guidance synthesis beside the intent's representative
+  changed TypeSpec evidence;
+- expand `applicable-fail` intent assessments by default;
+- collapse `applicable-pass` intent assessments by default;
+- render retrieval failures, catalog exhaustion, and `not-assessed` intents
+  explicitly rather than presenting zero findings as a pass.
 
 Semantic operation rendering is bounded:
 
-- for 15 or fewer affected REST operations, render every operation as an
-  expandable card;
-- for more than 15, render a concise total-impact sentence and three
-  representative expandable operation cards;
+- render a concise aggregate impact sentence and no more than three
+  representative expandable operation cards for every intent;
 - choose representatives deterministically in stable operation-ID order;
 - state how many operations are omitted from HTML;
 - retain the complete affected-operation inventory in `assessment.json`.
 
 Each operation card shows the operation ID, selected API version, HTTP
 method/path, concise mapping reason, REST before/after delta or explicit
-unchanged statement, and downstream outcome. It does not repeat TypeSpec code.
+unchanged statement, and downstream outcome. It is deterministic supporting
+evidence, not a separate Semantic or Compliance assessment, and it does not
+repeat TypeSpec code.
 
 Each Semantic intent is collapsed by default and shows exactly one escaped
 TypeSpec code example. The example is nested in a second disclosure that is
@@ -1473,36 +2128,39 @@ it is further restricted to the operation fact's project root. It must not
 attach another subservice's version declaration or other intent-wide feature
 or compatibility hunks to every published operation.
 
-For one assessed subservice/project, the header's `TypeSpec source diff` line
-shows the exact artifact pair:
+The header's `TypeSpec source diff` line shows only the Git source commits:
 
 ```text
-TypeSpec source diff:
-<baseline-commit>@<baseline-api-version> →
-<target-commit>@<target-api-version>
+TypeSpec source diff: <base-commit> → <head-commit>
 ```
 
-For multiple assessed subservices/projects, one pair would be ambiguous, so
-the header links directly to the appendix's `Projects and compiler status`
-table instead:
+The appendix's `Projects and compiler status` table records the exact API
+version passed to each baseline and target emitter invocation:
 
 ```text
-TypeSpec source diff: See Projects and compiler status in Appendix
+baseline <commit>@<api-version> → target <commit>@<api-version>
 ```
 
 The header follows a summary-dashboard hierarchy:
 
 1. uppercase `TypeSpec Assessment` eyebrow;
 2. prominent assessment title;
-3. overall confidence and either the single source/artifact pair or the
-   multi-project appendix link on one metadata line;
-4. five summary cards for overall code safety, Semantic intents, REST breaking
-   changes, downstream breaking changes, and Azure compliance.
+3. the single source/artifact pair or multi-project appendix link on one
+   metadata line;
+4. six summary cards for overall code quality, Semantic intents, REST breaking
+   changes, downstream breaking changes, Azure Guidelines, and Document
+   Quality.
 
-The Semantic card includes distinct affected-operation count and
+Overall code quality combines REST/downstream safety with Azure Guidelines. It
+is `Failed` when either assessed result fails, `Passed` when both pass, and
+`Not assessed` when neither fails but either result is unavailable. Document
+Quality remains a separate dimension. The Semantic card includes distinct
+affected-operation count and
 add/modify/remove intent counts. The downstream card distinguishes affected
-SDK methods from underlying finding count. Planned compliance is labeled
-`Planned / Not assessed`; a zero must not imply that compliance passed.
+SDK methods from underlying finding count. The Compliance card shows
+`Passed`, `Failed`, or `Not assessed` plus finding and covered-declaration
+counts. A zero finding count must not imply a pass when evidence retrieval or
+declaration coverage is incomplete.
 
 Each summary card is a full-card link to its report section:
 
@@ -1510,9 +2168,8 @@ Each summary card is a full-card link to its report section:
 - REST breaking changes → `#rest-breaking`;
 - downstream breaking changes → `#downstream-breaking`;
 - Azure compliance → `#azure-compliance`;
-- overall code safety → the failing REST section when REST findings exist,
-  otherwise the failing downstream section, with REST as the passed-state
-  overview target.
+- Document Quality → `#document-quality`;
+- overall code quality → the failed or incomplete code-quality dimension.
 
 Cards expose visible hover and keyboard-focus states without changing their
 status colors.
@@ -1546,7 +2203,7 @@ The report explicitly states when the Git base commit is used only for the
 TypeSpec source diff and is not used to produce the baseline emitter artifact.
 Never label a head-source artifact as a base-commit artifact.
 
-## 11. Files
+## 12. Files
 
 ```text
 .github/skills/azure-typespec-assessment/
@@ -1556,6 +2213,8 @@ Never label a head-source artifact as a base-commit artifact.
     classification.md
     output-contract.md
     downstream-breaking-cases.md
+    agentic-search.md
+    reference-document-links.md
   scripts/
     cli.mjs
     stable-id.mjs
@@ -1570,6 +2229,8 @@ Never label a head-source artifact as a base-commit artifact.
     analyze-rest-breaking.mjs
     analyze-downstream-breaking.mjs
     run-assessment-analysis.mjs
+    compliance-search-request.mjs
+    compliance-search-evidence.schema.json
     assessment-judgment.schema.json
     assessment.schema.json
     assemble-assessment.mjs
@@ -1583,7 +2244,7 @@ Never label a head-source artifact as a base-commit artifact.
 
 Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 
-## 12. Completion criteria
+## 13. Completion criteria
 
 - One command prepares deterministic evidence and bounded Agent input.
 - AutoRest and TCGC use the same source revision and API version within each
@@ -1591,11 +2252,22 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 - Semantic analysis covers changed TypeSpec source before calculating REST
   impact.
 - REST and downstream analyzers follow emitter boundaries.
-- Agent judgment has exact bounded coverage.
+- Every Semantic intent produces one bounded Compliance query profile from its
+  changed constructs, representative source evidence, and aggregate operation
+  counts.
+- Catalog scoring deterministically selects the four highest-ranked
+  retrievable official documents per intent, with failed attempts and
+  replacements preserved.
+- Fetched guidance has canonical URL, content hash, section, excerpt, and
+  query-term provenance.
+- Agent judgment has one concise Semantic result and one Compliance decision
+  per intent, plus exact bounded REST and downstream candidate coverage.
 - Final JSON rejects unsupported or incomplete results.
-- HTML contains the required major information points.
-- Focused tests, 11 retained report replays, strict skill lint, and a real
-  PR 43308 smoke test pass.
+- HTML presents ranked documentation and intent-level Compliance results
+  without conflating them with scoped REST/downstream code safety.
+- Focused tests, 11 retained report replays, strict skill lint, and real PR
+  43308, 44882, and 44988 smoke tests pass.
 - PR 44988 produces 11 coherent Semantic intents, no REST breaking finding for
   the new-version transition, and two grouped Service Gateway downstream SDK
-  method breaks.
+  method breaks, and ranks the expected four documents for the AddressPrefixSet
+  intent.

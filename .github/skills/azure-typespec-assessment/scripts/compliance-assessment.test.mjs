@@ -1,83 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assembleCompliance, readComplianceCatalog } from "./compliance-assessment.mjs";
+import {
+  assembleCompliance,
+  readComplianceCatalog,
+} from "./compliance-assessment.mjs";
 import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
-
-/** @typedef {import("./compliance-search-evidence.schema.js").Document} ComplianceDocument */
-/** @typedef {import("./compliance-search-evidence.schema.js").RankedCatalogEntry} RankedCatalogEntry */
-/** @typedef {import("./compliance-search-evidence.schema.js").Score} ComplianceScore */
-/** @typedef {import("./compliance-search-evidence.schema.js").TypeSpecAzureGuidelinesSearchEvidence} SearchEvidence */
-/** @typedef {import("./runtime-types.js").ComplianceDecision} ComplianceDecision */
-/** @typedef {import("./runtime-types.js").ComplianceSearchRequest} ComplianceSearchRequest */
-/** @typedef {import("./runtime-types.js").SourceChange} SourceChange */
-/** @typedef {SearchEvidence & {rankedDocuments: [ComplianceDocument, ComplianceDocument, ComplianceDocument, ComplianceDocument]}} FixtureEvidence */
-/**
- * @typedef {{
- *   source: SourceChange,
- *   requests: [ComplianceSearchRequest, ...ComplianceSearchRequest[]],
- *   evidence: FixtureEvidence,
- *   decisions: [ComplianceDecision, ...ComplianceDecision[]]
- * }} Fixture
- */
 
 const HASH = `sha256:${"a".repeat(64)}`;
 
-/**
- * @param {unknown} value
- * @returns {value is unknown[]}
- */
-function isUnknownArray(value) {
-  return Array.isArray(value);
-}
-
-void test("catalog prioritizes API evolution and separates supported resource and paging guidance", () => {
-  const catalog = readComplianceCatalog();
-  const urls = catalog.map((entry) => entry.canonicalUrl);
-  assert.equal(catalog[0].title, "Evolving APIs");
-  assert.equal(new Set(urls).size, urls.length);
-  for (const excluded of [
-    "/howtos/arm/agent-base-type/",
-    "/getstarted/azure-core/step05/",
-    "/libraries/azure-core/reference/interfaces/",
-  ]) {
-    assert.equal(
-      urls.some((url) => url.endsWith(excluded)),
-      false,
-    );
-  }
-  const pagination = catalog.find((entry) => entry.title === "TypeSpec pagination");
-  const resourceManagerDataTypes = catalog.find(
-    (entry) => entry.title === "Azure.ResourceManager data types",
-  );
-  const restDecorators = catalog.find((entry) => entry.title === "TypeSpec.Rest decorators");
-  const resourceManagerDecorators = catalog.find(
-    (entry) => entry.title === "Azure.ResourceManager decorators",
-  );
-  assert.ok(pagination);
-  assert.ok(resourceManagerDataTypes);
-  assert.ok(restDecorators);
-  assert.ok(resourceManagerDecorators);
-  assert.equal(pagination.category, "Data-Plane Paging");
-  assert.equal(resourceManagerDataTypes.category, "ARM Paging");
-  assert.equal(restDecorators.category, "Resource Semantics");
-  assert.equal(resourceManagerDecorators.category, "Resource Semantics");
-  assert.ok(catalog.some((entry) => entry.title === "Specific extension resource sample"));
-});
-
-/** @returns {Fixture} */
 function fixture() {
-  /** @type {SourceChange} */
   const source = {
     id: "source-1",
     path: "specification/widgets/resource-manager/Microsoft.Widgets/main.tsp",
-    status: "modified",
-    origins: [],
     hunks: [
       {
         id: "hunk-1",
-        base: { startLine: 10, endLine: 10 },
-        current: { startLine: 10, endLine: 11 },
-        lines: ["+@parentResource(Widget)", "+model Child is ProxyResource<ChildProperties>;"],
+        lines: [
+          "+@parentResource(Widget)",
+          "+model Child is ProxyResource<ChildProperties>;",
+        ],
       },
     ],
     declarations: [
@@ -86,7 +27,6 @@ function fixture() {
         kind: "model",
         qualifiedName: "Microsoft.Widgets.Child",
         decorators: ["@parentResource"],
-        versionedMembers: [],
         hunkIds: ["hunk-1"],
         source: {
           revision: "current",
@@ -97,20 +37,17 @@ function fixture() {
       },
     ],
   };
-  const requests = /** @type {[ComplianceSearchRequest, ...ComplianceSearchRequest[]]} */ (
-    buildComplianceSearchRequests({
-      semanticReviewUnits: [
-        {
-          id: "semantic-1",
-          action: "add",
-          sourceChangeIds: ["source-1"],
-          hunkIds: ["hunk-1"],
-        },
-      ],
-      sourceChanges: { "source-1": source },
-    })
-  );
-  /** @type {ComplianceScore[]} */
+  const requests = buildComplianceSearchRequests({
+    semanticReviewUnits: [
+      {
+        id: "semantic-1",
+        action: "add",
+        sourceChangeIds: ["source-1"],
+        hunkIds: ["hunk-1"],
+      },
+    ],
+    sourceChanges: { "source-1": source },
+  });
   const scoreValues = [
     {
       exactSymbol: 4,
@@ -141,7 +78,7 @@ function fixture() {
       total: 7,
     },
   ];
-  const catalogRankingEntries = readComplianceCatalog().map((item, index) => ({
+  const catalogRanking = readComplianceCatalog().map((item, index) => ({
     rank: index + 1,
     catalogOrder: item.catalogOrder,
     title: item.title,
@@ -158,13 +95,10 @@ function fixture() {
         ? "The document matches the changed ARM resource pattern."
         : "The document has lower relevance to this intent.",
   }));
-  assert.ok(catalogRankingEntries[0]);
-  /** @type {[RankedCatalogEntry, ...RankedCatalogEntry[]]} */
-  const catalogRanking = [catalogRankingEntries[0], ...catalogRankingEntries.slice(1)];
-  const documentEntries = catalogRanking.slice(0, 4).map((item, index) => ({
+  const documents = catalogRanking.slice(0, 4).map((item, index) => ({
     ...item,
     retrieval: {
-      status: /** @type {const} */ ("fetched"),
+      status: "fetched",
       retrievedAt: "2026-08-28T00:00:00.000Z",
       contentHash: HASH,
     },
@@ -175,39 +109,25 @@ function fixture() {
               section: "Resource types",
               excerpt: "Guidance 1",
               queryTerms: ["ProxyResource"],
-              examples: /** @type {[string]} */ ([
-                "model Child is ProxyResource<ChildProperties>;",
-              ]),
-              applicableDeclarationIds: /** @type {[string]} */ (["declaration-1"]),
+              examples: ["model Child is ProxyResource<ChildProperties>;"],
+              applicableDeclarationIds: ["declaration-1"],
             },
           ]
         : [],
     noRelevantGuidance: index !== 0,
   }));
-  assert.ok(documentEntries[0]);
-  assert.ok(documentEntries[1]);
-  assert.ok(documentEntries[2]);
-  assert.ok(documentEntries[3]);
-  /** @type {[ComplianceDocument, ComplianceDocument, ComplianceDocument, ComplianceDocument]} */
-  const documents = [
-    documentEntries[0],
-    documentEntries[1],
-    documentEntries[2],
-    documentEntries[3],
-  ];
-  /** @type {FixtureEvidence} */
   const evidence = {
-    schemaVersion: 2,
-    queryProfiles: [
+    schemaVersion: 1,
+    intents: [
       {
         reviewUnitId: "semantic-1",
         queryProfile: requests[0].queryProfile,
+        catalogRanking,
+        rankedDocuments: documents,
+        retrievalAttempts: [],
+        blockers: [],
       },
     ],
-    catalogRanking,
-    rankedDocuments: documents,
-    retrievalAttempts: [],
-    blockers: [],
     inputAccounting: {
       catalogEntriesScored: readComplianceCatalog().length,
       documentsFetched: 4,
@@ -216,7 +136,6 @@ function fixture() {
       guidanceExcerptBytesRetained: 100,
     },
   };
-  /** @type {[ComplianceDecision, ...ComplianceDecision[]]} */
   const decisions = [
     {
       reviewUnitId: "semantic-1",
@@ -240,7 +159,7 @@ function fixture() {
   return { source, requests, evidence, decisions };
 }
 
-void test("builds a bounded Azure Guidelines query profile from Semantic intent evidence", () => {
+test("builds a bounded Compliance query profile from Semantic intent evidence", () => {
   const { requests } = fixture();
   assert.equal(requests.length, 1);
   assert.equal(requests[0].queryProfile.servicePlane, "resource-manager");
@@ -252,7 +171,7 @@ void test("builds a bounded Azure Guidelines query profile from Semantic intent 
   assert.equal(requests[0].queryProfile.affectedOperationCount, 0);
 });
 
-void test("assembles one Azure Guidelines finding and coverage per Semantic intent", () => {
+test("assembles one Compliance finding and coverage per Semantic intent", () => {
   const { source, requests, evidence, decisions } = fixture();
   const compliance = assembleCompliance({
     requests,
@@ -266,21 +185,16 @@ void test("assembles one Azure Guidelines finding and coverage per Semantic inte
   assert.equal(compliance.coverage.assessedIntentCount, 1);
   assert.equal(compliance.coverage.selectedDocumentCount, 4);
   assert.equal(compliance.intentAssessments[0].decision, "applicable-fail");
-  assert.equal(compliance.intentAssessments[0].documents, undefined);
-  assert.ok(compliance.sharedSearch);
-  assert.ok(isUnknownArray(compliance.sharedSearch.documents));
-  assert.equal(compliance.sharedSearch.documents.length, 4);
-  const snippets = /** @type {{lines?: string[]}[]} */ (compliance.findings[0].codeSnippets);
-  assert.ok(snippets);
-  assert.deepEqual(snippets[0].lines, [
+  assert.deepEqual(compliance.findings[0].codeSnippets[0].lines, [
     "+@parentResource(Widget)",
     "+model Child is ProxyResource<ChildProperties>;",
   ]);
 });
 
-void test("rejects uncataloged Azure Guidelines evidence", () => {
+test("rejects uncataloged Compliance evidence", () => {
   const { source, requests, evidence, decisions } = fixture();
-  evidence.rankedDocuments[0].canonicalUrl = "https://example.test/invented";
+  evidence.intents[0].rankedDocuments[0].canonicalUrl =
+    "https://example.test/invented";
   assert.throws(
     () =>
       assembleCompliance({
@@ -293,7 +207,7 @@ void test("rejects uncataloged Azure Guidelines evidence", () => {
   );
 });
 
-void test("rejects intent decisions that cite unknown guidance", () => {
+test("rejects intent decisions that cite unknown guidance", () => {
   const { source, requests, evidence, decisions } = fixture();
   decisions[0].applicableGuidance[0].guidanceSection = "Unknown";
   assert.throws(
@@ -308,7 +222,7 @@ void test("rejects intent decisions that cite unknown guidance", () => {
   );
 });
 
-void test("rejects incomplete declaration source provenance", () => {
+test("rejects incomplete declaration source provenance", () => {
   const { source, requests, evidence, decisions } = fixture();
   decisions[0] = { ...decisions[0], sourceChangeIds: [], hunkIds: [] };
   assert.throws(
@@ -323,17 +237,19 @@ void test("rejects incomplete declaration source provenance", () => {
   );
 });
 
-void test("counts completed searches with no governing guidance as assessed", () => {
+test("allows not-assessed when fetched guidance does not govern the intent", () => {
   const { source, requests, evidence, decisions } = fixture();
   requests[0].declarationIds.push("declaration-2");
-  evidence.rankedDocuments[0].guidance[0].applicableDeclarationIds.push("declaration-2");
+  evidence.intents[0].rankedDocuments[0].guidance[0].applicableDeclarationIds.push(
+    "declaration-2",
+  );
   decisions[0] = {
     reviewUnitId: "semantic-1",
-    applicableGuidance: [],
+    applicableGuidance: decisions[0].applicableGuidance,
     sourceChangeIds: ["source-1"],
     hunkIds: ["hunk-1"],
     declarationIds: ["declaration-1"],
-    decision: "no-applicable-guidance",
+    decision: "not-assessed",
     actual: "The intent uses a generator-specific decorator.",
     rationale:
       "The fetched page documents generic decorator syntax but does not define the generator-specific semantics.",
@@ -344,20 +260,18 @@ void test("counts completed searches with no governing guidance as assessed", ()
     decisions,
     sourceChanges: [source],
   });
-  assert.equal(compliance.status, "passed");
+  assert.equal(compliance.status, "not-assessed");
   assert.equal(compliance.findings.length, 0);
-  assert.equal(compliance.coverage.assessedIntentCount, 1);
-  assert.deepEqual(compliance.coverage.unassessedIntentIds, []);
-  assert.deepEqual(compliance.blockers, []);
+  assert.equal(compliance.coverage.assessedIntentCount, 0);
+  assert.deepEqual(compliance.coverage.unassessedIntentIds, ["semantic-1"]);
   assert.deepEqual(compliance.intentAssessments[0].declarationIds, [
     "declaration-1",
     "declaration-2",
   ]);
-  assert.ok(isUnknownArray(compliance.intentAssessments[0].sourceLinks));
   assert.equal(compliance.intentAssessments[0].sourceLinks.length, 1);
 });
 
-void test("does not pass Azure Guidelines when Semantic analysis is blocked", () => {
+test("does not pass Compliance when Semantic analysis is blocked", () => {
   const compliance = assembleCompliance({
     requests: [],
     evidence: {
@@ -377,43 +291,4 @@ void test("does not pass Azure Guidelines when Semantic analysis is blocked", ()
   });
   assert.equal(compliance.status, "not-assessed");
   assert.equal(compliance.blockers.length, 1);
-});
-
-void test("ranks and fetches one shared document set for multiple Semantic intents", () => {
-  const { source, requests, evidence, decisions } = fixture();
-  requests.push({
-    ...structuredClone(requests[0]),
-    reviewUnitId: "semantic-2",
-    requestId: "compliance-search-2",
-  });
-  evidence.queryProfiles.push({
-    reviewUnitId: "semantic-2",
-    queryProfile: structuredClone(requests[1].queryProfile),
-  });
-  decisions.push({
-    reviewUnitId: "semantic-2",
-    applicableGuidance: [],
-    sourceChangeIds: ["source-1"],
-    hunkIds: ["hunk-1"],
-    declarationIds: ["declaration-1"],
-    decision: "no-applicable-guidance",
-    actual: "The second intent changes the same resource area.",
-    rationale: "None of the four shared documents governs this intent.",
-  });
-  const compliance = assembleCompliance({
-    requests,
-    evidence,
-    decisions,
-    sourceChanges: [source],
-  });
-  assert.equal(compliance.coverage.semanticIntentCount, 2);
-  assert.equal(compliance.coverage.selectedDocumentCount, 4);
-  assert.ok(compliance.sharedSearch);
-  assert.ok(isUnknownArray(compliance.sharedSearch.documents));
-  assert.equal(compliance.sharedSearch.documents.length, 4);
-  assert.ok(
-    compliance.intentAssessments.every(
-      (intent) => intent.catalogRanking === undefined && intent.documents === undefined,
-    ),
-  );
 });

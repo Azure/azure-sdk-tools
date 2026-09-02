@@ -42,6 +42,7 @@ test("collectChanges combines committed, staged, unstaged, and untracked TypeSpe
 });
 
 test("deriveServiceRoot rejects paths outside specification", () => {
+  assert.equal(deriveServiceRoot("specification"), "specification");
   assert.equal(
     deriveServiceRoot("specification/widget/resource-manager/Widget"),
     "specification/widget",

@@ -381,6 +381,9 @@ function mergeUnits(project, units, sourceIndex) {
         new RegExp(`\\b${name.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(text));
       const key = tags.includes("governance:api-version")
         ? "publication"
+        : ["client", "back-compatible"].includes(baseName) ||
+            /Azure\.ClientGenerator\.Core\.Legacy|@@(?:alternateType|clientName)\b/.test(text)
+          ? "sdk-compatibility"
         : !["main", "models", "client", "back-compatible"].includes(baseName)
           ? `feature:${baseName}`
           : referencedFeature
@@ -444,6 +447,57 @@ function stableOperationIdentity(operation) {
     ...stableOperation
   } = operation;
   return stableOperation;
+}
+
+export function dedupePublicationHunks(reviewUnits, sourceChanges) {
+  const specificallyOwnedHunks = new Set(
+    reviewUnits
+      .filter((unit) =>
+        !(unit.groupingEvidence?.reasons ?? [])
+          .includes("cross-project:api-version-publication"))
+      .flatMap((unit) => unit.hunkIds),
+  );
+  const sourceById = new Map(sourceChanges.map((source) => [source.id, source]));
+
+  return reviewUnits.map((unit) => {
+    if (!(unit.groupingEvidence?.reasons ?? [])
+      .includes("cross-project:api-version-publication")) {
+      return unit;
+    }
+    const hunkIds = unit.hunkIds.filter((id) => !specificallyOwnedHunks.has(id));
+    if (hunkIds.length === unit.hunkIds.length) return unit;
+
+    const retainedHunks = new Set(hunkIds);
+    const sourceChangeIds = unit.sourceChangeIds.filter((id) =>
+      sourceById.get(id)?.hunks?.some((hunk) => retainedHunks.has(hunk.id)),
+    );
+    const declarationIds = unit.declarationIds.filter((id) =>
+      sourceChangeIds.some((sourceId) =>
+        sourceById.get(sourceId)?.declarations?.some((declaration) =>
+          declaration.id === id &&
+          declaration.hunkIds?.some((hunkId) => retainedHunks.has(hunkId))),
+      ),
+    );
+    const updated = {
+      ...unit,
+      sourceChangeIds,
+      hunkIds,
+      declarationIds,
+      groupingEvidence: {
+        ...unit.groupingEvidence,
+        memberHunkIds: unit.groupingEvidence.memberHunkIds
+          .filter((id) => retainedHunks.has(id)),
+      },
+    };
+    const { id: _id, ...identity } = updated;
+    return {
+      id: stableId("semantic", {
+        ...identity,
+        operations: identity.operations.map(stableOperationIdentity),
+      }),
+      ...identity,
+    };
+  });
 }
 
 function mergeUnitGroup(units, sourceIndex, groupingEvidence) {
@@ -762,6 +816,11 @@ export function analyzeSemanticIntents(options) {
       mergedPublication,
     );
   }
+  reviewUnits.splice(
+    0,
+    reviewUnits.length,
+    ...dedupePublicationHunks(reviewUnits, sourceIndex.sourceChanges),
+  );
   reviewUnits.sort((left, right) => left.id.localeCompare(right.id));
   const result = {
     schemaVersion: 1,

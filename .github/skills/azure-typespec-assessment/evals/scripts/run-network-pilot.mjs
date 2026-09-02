@@ -218,6 +218,13 @@ function selectedPhases(phase) {
   return [phase];
 }
 
+export function commonSpecificationRoot(sparseRoots) {
+  const segments = sparseRoots.map((root) => root.split("/"));
+  const common = segments[0].filter((segment, index) =>
+    segments.every((parts) => parts[index] === segment));
+  return common.join("/") || ".";
+}
+
 function analysisArguments(paths, testCase, modelInputBudgetBytes) {
   return [
     analysisScript,
@@ -226,7 +233,7 @@ function analysisArguments(paths, testCase, modelInputBudgetBytes) {
     "--base",
     testCase.baseCommit,
     "--specification",
-    testCase.sparseRoots[0],
+    commonSpecificationRoot(testCase.sparseRoots),
     "--output",
     paths.analysisOutput,
     "--document-cache",
@@ -425,6 +432,7 @@ function prepareAgentWorkItem(
       sharedNodeModules: dependencySetup.nodeModules,
     },
     expectedOutputs: {
+      complianceSearchEvidence: paths.complianceSearchEvidence,
       assessmentJudgment: join(paths.output, "assessment-judgment.json"),
       materializationAssessment: join(
         paths.output,
@@ -434,7 +442,8 @@ function prepareAgentWorkItem(
     instructions: [
       "Review every bounded item in model-input.json using the azure-typespec-assessment classification rules.",
       "As the first Agent action, run the start-agent phase for this pilot.",
-      "Write assessment-judgment.json and materialization-assessment.json using the skill schemas and output contract.",
+      "Run the bounded Compliance search and write compliance-search-evidence.json in the deterministic-analysis directory.",
+      "Write assessment-judgment.json with exact Compliance tuple coverage and materialization-assessment.json using the skill schemas and output contract.",
       "Assemble and validate the final assessment only after Agent judgment; this coordinator does not invoke an LLM.",
     ],
   };
@@ -478,6 +487,7 @@ function startAgentJudgment(paths, manifest, agentStartedAtEpochMs) {
 function finalizeAssessment(
   paths,
   manifest,
+  testCase,
   runCommand,
   agentCompletedAtEpochMs,
 ) {
@@ -491,6 +501,7 @@ function finalizeAssessment(
     );
   }
   for (const [path, description] of [
+    [paths.complianceSearchEvidence, "Agent Compliance search evidence"],
     [paths.assessmentJudgment, "Agent assessment judgment"],
     [paths.materializationAssessment, "Agent materialization assessment"],
   ]) {
@@ -524,6 +535,13 @@ function finalizeAssessment(
     assessmentJson,
   ];
   runCommand(process.execPath, assembleArgs, { cwd: paths.output });
+  const assessment = loadJson(assessmentJson, "Final assessment JSON");
+  assessment.pr = testCase.pr;
+  assessment.pullRequest = {
+    number: testCase.pr,
+    url: `https://github.com/Azure/azure-rest-api-specs/pull/${testCase.pr}`,
+  };
+  writeJson(assessmentJson, assessment);
   runCommand(process.execPath, [validateScript, assessmentJson], {
     cwd: paths.output,
   });
@@ -585,6 +603,10 @@ export function runNetworkPilot(options, dependencies = {}) {
       : undefined,
   };
   paths.modelInput = join(paths.analysisOutput, "model-input.json");
+  paths.complianceSearchEvidence = join(
+    paths.analysisOutput,
+    "compliance-search-evidence.json",
+  );
   paths.manifest = join(output, "pilot-manifest.json");
   paths.summary = join(output, "pilot-summary.json");
   paths.agentWorkItem = join(output, "agent-work-item.json");
@@ -819,10 +841,12 @@ export function runNetworkPilot(options, dependencies = {}) {
         finalizeAssessment(
           paths,
           manifest,
+          testCase,
           runCommand,
           dependencies.agentCompletedAtEpochMs?.() ??
             Math.ceil(
               Math.max(
+                statSync(paths.complianceSearchEvidence).mtimeMs,
                 statSync(paths.assessmentJudgment).mtimeMs,
                 statSync(paths.materializationAssessment).mtimeMs,
               ),

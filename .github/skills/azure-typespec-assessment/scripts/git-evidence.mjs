@@ -85,6 +85,7 @@ export function unifiedDiff(repo, mergeBase, file) {
 
 export function deriveServiceRoot(specification) {
   const normalized = specification.replaceAll("\\", "/").replace(/^\.?\//, "");
+  if (normalized === "specification") return normalized;
   const match = /^(specification\/[^/]+)/.exec(normalized);
   if (!match) throw new Error(`Specification must be under specification/<service>: ${specification}`);
   return match[1];

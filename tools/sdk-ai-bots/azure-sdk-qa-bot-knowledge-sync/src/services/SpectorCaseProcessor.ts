@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { InvocationContext } from '@azure/functions';
-import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential, WorkloadIdentityCredential } from '@azure/identity';
 import { AzureOpenAI} from "openai";
 
 // Retry configuration for OpenAI API calls
@@ -40,17 +39,9 @@ export class SpectorCaseProcessor {
     private static async initOpenAIClient(): Promise<void> {
         const deploymentName = process.env.AOAI_CHAT_REASONING_MODEL;
         const apiVersion = "2024-12-01-preview";
+        const apiKey = process.env.AOAI_CHAT_COMPLETIONS_API_KEY;
         const endpoint = process.env.AOAI_CHAT_COMPLETIONS_ENDPOINT;
-        const credential = new ChainedTokenCredential(
-            new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
-        );
-        const azureADTokenProvider = async (): Promise<string> => {
-            const token = await credential.getToken('https://cognitiveservices.azure.com/.default');
-            return token.token;
-        };
-        const options = { deploymentName, apiVersion, azureADTokenProvider, endpoint }
+        const options = { deploymentName, apiVersion, apiKey, endpoint }
         this.openAIClient = new AzureOpenAI(options);
     }
     /**

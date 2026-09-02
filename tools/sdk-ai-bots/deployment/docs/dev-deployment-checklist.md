@@ -162,7 +162,7 @@ requires the Azure and Entra permissions above.
       `AZURE_APPCONFIG_ENDPOINT`.
 - [ ] Deploy `frontend`.
 - [ ] Confirm the provisioning hook seeded `AI-SEARCH-APIKEY` in the
-      environment Key Vault. Azure OpenAI uses Microsoft Entra authentication.
+      environment Key Vault. It does not seed an Azure OpenAI account key.
 - [ ] Confirm App Configuration contains all fixed and derived settings.
 - [ ] Confirm postprovision created or updated the configured Search synonym
       map, index, data sources, skillsets, indexers, knowledge source, and

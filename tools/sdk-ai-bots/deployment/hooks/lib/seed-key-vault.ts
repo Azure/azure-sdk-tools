@@ -4,9 +4,9 @@
  *   - AI-SEARCH-APIKEY               ← AI Search service admin (primary) key
  *
  * The source key is read from the provisioned resource via the control plane,
- * then written to the app's own Key Vault. Azure OpenAI uses Microsoft Entra
- * authentication and no Cognitive Services account key is stored. Safe to run
- * on every provision (secret set is create-or-new-version).
+ * then written to the app's own Key Vault. This deployment does not retrieve
+ * or store a Cognitive Services account key. Safe to run on every provision
+ * (secret set is create-or-new-version).
  *
  * Requires the deploying principal to have `Key Vault Secrets Officer` on the
  * vault; this grants it idempotently (self-healing) in case bicep's role
@@ -83,7 +83,7 @@ function ensureSecretsOfficerRole(
 }
 
 /**
- * Seed the two backend secrets from the provisioned resources.
+ * Seed the Search API key from the provisioned resource.
  */
 export function seedKeyVaultSecrets(opts: SeedKeyVaultSecretsOptions): void {
   const { keyVaultName, resourceGroup, searchServiceName, env } = opts;

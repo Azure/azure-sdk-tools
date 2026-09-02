@@ -739,7 +739,7 @@ function legacyFindingCards(findings = [], downstream = false) {
 ${legacyEvidence(evidence)}
 ${omittedRestEvidence ? '<p class="sources">REST finding details are omitted here; see <a href="#rest-breaking">REST breaking changes</a>.</p>' : ""}
 <p><strong>Related semantic intents:</strong> ${semanticLinks(finding.relatedSemanticIntents)}</p>
-<p class="sources"><strong>Changed TypeSpec:</strong> ${sourceLinks(finding.sources)}</p>
+${downstream ? "" : `<p class="sources"><strong>Changed TypeSpec:</strong> ${sourceLinks(finding.sources)}</p>`}
 </div></details>`;
     })
     .join("\n");
@@ -1163,9 +1163,6 @@ function downstreamOperationGroups(dimension, semanticItems) {
       ];
     });
   const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-  const findingsById = new Map(
-    (dimension.findings ?? []).map((finding) => [finding.id, finding]),
-  );
   const groups = (dimension.operationGroups ?? [])
     .map((group) => {
       const rows = methodContractRows(group);
@@ -1191,14 +1188,6 @@ function downstreamOperationGroups(dimension, semanticItems) {
           group.deltas.map((delta) => delta.rationale).filter(Boolean),
         ),
       ].join(" ");
-      const sources = [
-        ...new Map(
-          group.deltas
-            .map((delta) => findingsById.get(delta.findingId))
-            .flatMap((finding) => finding?.sources ?? [])
-            .map((source) => [source.id ?? source.path, source]),
-        ).values(),
-      ];
       const parameterDetail = parameterDelta
         ? parameterSummary(parameterDelta.changes)
         : group.parametersUnchanged
@@ -1215,7 +1204,7 @@ function downstreamOperationGroups(dimension, semanticItems) {
         )
         .join("")}</tbody></table>
 ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</strong> ${escapeHtml(rationale)}</div>` : ""}
-<div class="contract-footer"><span><strong>Parameters:</strong> ${escapeHtml(parameterDetail)}</span><span><strong>Changed TypeSpec:</strong> ${sourceLinks(sources)}</span><span><strong>Related semantic intents:</strong> ${semanticLinks(group.relatedSemanticIntents)}</span></div>
+<div class="contract-footer"><span><strong>Parameters:</strong> ${escapeHtml(parameterDetail)}</span><span><strong>Related semantic intents:</strong> ${semanticLinks(group.relatedSemanticIntents)}</span></div>
 </div></details>`;
     })
     .join("\n");
@@ -1328,13 +1317,6 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
           directFindings.map((finding) => finding.rationale).filter(Boolean),
         ),
       ].join(" ");
-      const sources = [
-        ...new Map(
-          directFindings
-            .flatMap((finding) => finding.sources ?? [])
-            .map((source) => [source.id ?? source.path, source]),
-        ).values(),
-      ];
       const legacyAnchors = card.legacyImpactIds
         .map((id) => `<span id="downstream-${anchor(id)}"></span>`)
         .join("");
@@ -1350,7 +1332,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
         .join("")}</tbody></table>
 ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</strong> ${escapeHtml(rationale)}</div>` : ""}
 ${affectedOperations(relatedOperations)}
-<div class="contract-footer"><span><strong>Changed TypeSpec:</strong> ${sourceLinks(sources)}</span><span><strong>Related semantic intents:</strong> ${semanticLinks(card.relatedSemanticIntents)}</span></div>
+<div class="contract-footer"><span><strong>Related semantic intents:</strong> ${semanticLinks(card.relatedSemanticIntents)}</span></div>
 </div></details>`;
     })
     .join("\n");

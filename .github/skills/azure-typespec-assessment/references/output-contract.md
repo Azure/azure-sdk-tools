@@ -94,6 +94,10 @@ Deterministic assembly joins Agent-confirmed decisions to complete facts and cha
 
 Every confirmed REST finding must contain actual and expected behavior, rationale, severity, affected operation, deterministic evidence, and exact changed TypeSpec source. Every confirmed downstream finding requires the same fields plus an SDK symbol or cross-language definition ID. User-facing output must say detected or confirmed, never approved. Semantic items require title, summary, affected operations, and changed source.
 
+Downstream SDK method and SDK type cards must not repeat `Changed TypeSpec`
+source links. Keep that evidence in `assessment.json`, Semantic intents, and
+the appendix; retain only related Semantic intent links in the cards.
+
 Dimension statuses are derived, not authored:
 
 - semantic: `assessed` or `not-assessed`;

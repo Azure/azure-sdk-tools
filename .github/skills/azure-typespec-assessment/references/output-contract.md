@@ -86,7 +86,7 @@ governs the intent; use `not-assessed` only for incomplete or blocked
 Compliance.
 All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
-title and `high`, `medium`, or `low` severity for the finding-first HTML.
+title and `high`, `medium`, or `low` severity for structured assessment data.
 
 ## Final data
 
@@ -97,6 +97,10 @@ Every confirmed REST finding must contain actual and expected behavior, rational
 Downstream SDK method and SDK type cards must not repeat `Changed TypeSpec`
 source links. Keep that evidence in `assessment.json`, Semantic intents, and
 the appendix; retain only related Semantic intent links in the cards.
+
+HTML finding cards must not display `high`, `medium`, or `low` severity labels
+or severity-colored borders. Severity remains available in `assessment.json`
+for validation and machine consumers.
 
 Dimension statuses are derived, not authored:
 

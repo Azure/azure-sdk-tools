@@ -975,12 +975,13 @@ changes is insufficient.
 
 Each type card summary contains:
 
-1. severity;
-2. the short SDK type name;
-3. an `SDK type` tag.
+1. the short SDK type name;
+2. an `SDK type` tag.
 
 Do not show the contract-change count or affected REST operation count in the
-collapsed summary. Those details belong in the expanded body.
+collapsed summary. Do not show `high`, `medium`, or `low` severity labels or
+severity-colored borders; severity remains structured JSON metadata. Contract
+details belong in the expanded body.
 
 Expanding the card shows:
 
@@ -1643,9 +1644,9 @@ exist in `model-input.json`. Decisions may quote only guidance recorded in
 declarations, operations, or assessment units during judgment.
 `applicable-pass` and `applicable-fail` require non-empty expected and actual
 evidence. `applicable-fail` also requires a concise finding title and severity
-for the finding-first HTML presentation. `no-applicable-guidance` requires
-actual changed-code evidence and a rationale explaining why the completed
-search found no governing guidance. `not-assessed` requires actual evidence
+for structured assessment metadata. `no-applicable-guidance` requires actual
+changed-code evidence and a rationale explaining why the completed search
+found no governing guidance. `not-assessed` requires actual evidence
 and a retrieval, evidence, or intent-coverage blocker.
 
 ## 9. Final assessment
@@ -2001,8 +2002,9 @@ LRO, paging, response, kind, access, or client metadata is not listed.
 Each SDK method card uses the same contract-focused hierarchy as an SDK type
 card:
 
-1. the default-collapsed summary shows severity, REST operation ID, an
-   `SDK method` tag, and the SDK contract-change count;
+1. the default-collapsed summary shows the REST operation ID, an `SDK method`
+   tag, and the SDK contract-change count without a severity label or
+   severity-colored border;
 2. expanded metadata shows the stable SDK method identity, HTTP method/path,
    and a concise change summary;
 3. a structured `SDK method member | Before | After` table renders parameter
@@ -2090,9 +2092,10 @@ The report must show:
    findings, direct SDK method cards, and one SDK type card per distinct
    affected cross-language type;
 5. all SDK method and SDK contract cards collapsed by default; SDK contract
-   summaries show severity, short type name, and an `SDK type` tag. Expanded
-   details use a structured before/after contract table, highlighted breaking
-   rationale, and the affected REST operation list.
+   summaries show the short type name and an `SDK type` tag without severity
+   labels or severity-colored borders. Expanded details use a structured
+   before/after contract table, highlighted breaking rationale, and the
+   affected REST operation list.
    SDK method cards use the same structure with an `SDK method` tag, method
    identity, HTTP method/path, structured changed-member rows, and highlighted
    rationale.
@@ -2130,15 +2133,15 @@ deterministically affected REST operation.
 Collapsed:
 
 ```text
-┌ high  NfsFileType  [REST contract]
-│       3 contract changes · 6 affected REST operations
+┌ NfsFileType  [REST contract]
+│ 3 contract changes · 6 affected REST operations
 └
 ```
 
 Expanded:
 
 ```text
-┌ high  NfsFileType  [REST contract]
+┌ NfsFileType  [REST contract]
 │
 │ REST contract  Storage.File.NfsFileType
 │
@@ -2163,9 +2166,9 @@ Expanded:
 
 Presentation rules:
 
-1. The summary shows severity, stable REST contract identity, a `REST
-contract` tag, distinct contract-delta count, and distinct affected REST
-   operation count.
+1. The summary shows stable REST contract identity, a `REST contract` tag,
+   distinct contract-delta count, and distinct affected REST operation count.
+   It does not show severity labels or severity-colored borders.
 2. The card is collapsed by default. Hash navigation opens the selected card
    and its folded ancestors.
 3. The expanded body starts with contract identity, followed by one compact

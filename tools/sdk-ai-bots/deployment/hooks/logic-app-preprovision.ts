@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+import { isManagedApiConnection } from "./lib/managed-api-connection.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
 
 const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -38,10 +39,24 @@ function preserveTeamsConnection(): void {
       const raw = execSync(
         `az resource list --resource-group "${resourceGroup}" ` +
           `--subscription "${subscriptionId}" --resource-type Microsoft.Web/connections ` +
-          `--query "[?contains(properties.api.id, '/managedApis/teams')].name" -o json`,
+          `--query "[].name" -o json`,
         { encoding: "utf8" },
       );
-      const names = JSON.parse(raw) as string[];
+      const candidateNames = JSON.parse(raw) as string[];
+      const names = candidateNames.filter((candidateName) => {
+        try {
+          const apiId = execSync(
+            `az resource show --resource-type Microsoft.Web/connections ` +
+              `--subscription "${subscriptionId}" -g "${resourceGroup}" ` +
+              `-n "${candidateName}" --query "properties.api.id" -o tsv`,
+            { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+          ).trim();
+          return isManagedApiConnection(apiId, "teams");
+        } catch (error) {
+          if (!isMissingResource(error)) throw error;
+          return false;
+        }
+      });
       if (names.length > 1) {
         throw new Error(`Multiple Teams API connections found: ${names.join(", ")}`);
       }

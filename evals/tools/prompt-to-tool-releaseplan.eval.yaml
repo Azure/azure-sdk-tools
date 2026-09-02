@@ -331,7 +331,7 @@ stimuli:
   - name: create-release-plan
     prompt: |
       Create a release plan for the Contoso Widget Manager, no need to get it afterwards only create.
-      My setup has already been verified, do not run azsdk_verify_setup. Here is all the context you need:
+      Here is all the context you need:
       TypeSpec project located at "specification/contosowidgetmanager/Contoso.WidgetManager".
       Use service tree ID "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f",
       product tree ID "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e",
@@ -353,7 +353,6 @@ stimuli:
   - name: link-namespace-approval-issue
     prompt: |
       Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan 12345.
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 5
       max_tokens: 5000

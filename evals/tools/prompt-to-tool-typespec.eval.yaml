@@ -192,7 +192,6 @@ stimuli:
   - name: check-public-repo
     prompt: |
       Check if my TypeSpec project is in the public repo.
-      My setup has already been verified, do not run azsdk_verify_setup.
       Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
       Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself.
     constraints:
@@ -220,7 +219,6 @@ stimuli:
   - name: get-modified-typespec-projects
     prompt: |
       List the TypeSpec projects modified in my current branch compared to main.
-      My setup has already been verified, do not run azsdk_verify_setup.
       The repository root is the relative path ./azure-rest-api-specs.
       Invoke the appropriate Azure SDK MCP tool directly to do this — do not run git commands or inspect the workspace files yourself.
       max_turns: 5

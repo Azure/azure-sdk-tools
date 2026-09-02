@@ -34,7 +34,6 @@ stimuli:
       After that, check whether this project is in the public
       azure-rest-api-specs repo.
       Project path: specification/contosowidgetmanager/Contoso.WidgetManager.
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 12
       max_tokens: 16000

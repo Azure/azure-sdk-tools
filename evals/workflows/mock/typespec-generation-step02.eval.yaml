@@ -34,7 +34,6 @@ stimuli:
       WidgetSuite model, then validate the project and check whether it is in
       the public azure-rest-api-specs repo.
       The project is at specification/contosowidgetmanager/Contoso.WidgetManager.
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 12
       max_tokens: 16000

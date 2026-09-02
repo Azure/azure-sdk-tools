@@ -74,7 +74,6 @@ stimuli:
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-        My setup has already been verified, do not run azsdk_verify_setup.
       - |
         Now run SDK generation for all languages for the release plan you just
         created.

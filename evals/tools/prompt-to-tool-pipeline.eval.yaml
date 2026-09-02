@@ -81,7 +81,6 @@ stimuli:
   - name: check-sdk-generation-status
     prompt: |
       Check the SDK generation pipeline status for build ID 5513110.
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 5
       max_tokens: 5000

@@ -73,8 +73,7 @@ stimuli:
     prompt: |
       Walk me through the full
       release-plan + SDK-generation flow for the Contoso Widget Manager
-      end-to-end. Do every step below, in order, and use real tools (no
-      dry-run, no simulation):
+      end-to-end. Do every step below, in order, and use real tools:
 
         1. Create a release plan using:
              - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
@@ -95,7 +94,6 @@ stimuli:
         4. Once the generation pipeline reports a pull request URL, link
            that SDK pull request back to the release plan from step 2.
 
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 20
       max_tokens: 30000

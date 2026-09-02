@@ -89,7 +89,6 @@ stimuli:
   # - name: get-pr-link-current-branch
   #   prompt: |
   #     What's the status of the spec PR in my current branch? Only check the status once.
-  #     My setup has already been verified, do not run azsdk_verify_setup.
   #     The repository root is the relative path ./azure-rest-api-specs.
   #   constraints:
   #     max_turns: 5

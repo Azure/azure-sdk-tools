@@ -56,7 +56,6 @@ stimuli:
         - API version: "2022-11-01-preview"
         - SDK release type: "beta"
         - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
@@ -89,7 +88,6 @@ stimuli:
         - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
       After the release plan is created, generate SDK for all languages
       using the work-item ID from the created release plan.
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 12
       max_tokens: 16000
@@ -123,7 +121,6 @@ stimuli:
       release plan. Here is the context you need:
         - release plan work item ID: "29262"
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 8
       max_tokens: 10000
@@ -155,7 +152,6 @@ stimuli:
       Manager release plan. Here is the context you need:
         - release plan work item ID: "29262"
         - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
@@ -184,7 +180,6 @@ stimuli:
         - release plan work item ID: "29262"
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
         - tspconfig path: "specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 8
       max_tokens: 10000

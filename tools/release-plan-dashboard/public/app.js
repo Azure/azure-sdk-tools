@@ -1814,7 +1814,7 @@
       }
     }
     if (p.apiSpec && p.apiSpec.apiVersion) {
-      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK generated using API-Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
+      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK Generated From API Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
     }
     if (
       p.typeSpecPath &&

@@ -44,6 +44,51 @@ async def test_technical_question_should_respond(service: IntentionService) -> N
 
 
 @pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
+        (
+            "Azure MCP Server fails to authenticate when running remotely with "
+            "on-behalf-of credentials. How can I troubleshoot the token exchange?"
+        ),
+        (
+            "What validation and integration tests are required when contributing "
+            "a new tool to Azure MCP Server?"
+        ),
+    ],
+)
+async def test_azure_mcp_technical_questions_should_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Azure MCP technical support questions should trigger a bot response."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_azure_mcp_release_announcement_should_not_respond(
+    service: IntentionService,
+) -> None:
+    """An Azure MCP release announcement without an ask should not trigger a reply."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "FYI: Azure MCP Server version 2.4 is now available. The release "
+                "notes and updated installation package have been published."
+            ),
+        )
+    )
+
+    resp = await service.classify(req)
+
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
 async def test_casual_message_should_not_respond(service: IntentionService) -> None:
     """Casual greeting should be classified as should_respond=false."""
     req = IntentionRequest(
@@ -133,7 +178,7 @@ async def test_human_approval_request_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -253,7 +298,7 @@ async def test_bot_no_reply_nudge_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -376,7 +421,7 @@ async def test_followup_to_bot_reply_should_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -436,7 +481,7 @@ async def test_pushback_on_bot_answer_should_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -488,7 +533,7 @@ async def test_thank_you_closure_after_bot_reply_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -535,7 +580,7 @@ async def test_pre_deployment_thread_reply_should_not_respond(
 
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -605,7 +650,7 @@ async def test_human_assistance_plea_after_bot_reply_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -673,7 +718,7 @@ async def test_cc_routing_addendum_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -756,7 +801,7 @@ async def test_assistance_plea_after_cc_ping_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 

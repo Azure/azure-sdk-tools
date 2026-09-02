@@ -2272,3 +2272,89 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
   the new-version transition, and two grouped Service Gateway downstream SDK
   method breaks, and ranks the expected four documents for the AddressPrefixSet
   intent.
+
+## 14. Technical challenges
+
+The primary technical challenge is constructing and reconciling several
+incomplete graphs of the same API change:
+
+| Graph          | Source                         | Represents                                                                 |
+| -------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| Source graph   | TypeSpec compiler and Git diff | Hunks, declarations, decorators, references, and versions                  |
+| REST graph     | AutoRest output                | Operations, routes, parameters, schemas, headers, paging, and LRO behavior |
+| SDK graph      | TCGC output                    | Clients, methods, parameters, return types, models, enums, and unions      |
+| Guidance graph | Official documents             | Azure requirements applicable to each Semantic intent                      |
+
+The assessment must connect these graphs without losing provenance:
+
+```text
+TypeSpec hunk
+  -> declaration
+  -> Semantic intent
+  -> REST operation and schema
+  -> SDK client, method, and type
+  -> applicable Azure guidance
+```
+
+The main challenges are:
+
+1. **Stable identity across revisions.** Names, operation IDs, paths, generated
+   symbols, and compiler identities may change between baseline and target.
+   Fallback matching must not pair unrelated entities.
+2. **Transitive type reachability.** A nested model or enum can affect
+   operations and SDK methods through inheritance, spreads, aliases, unions,
+   collections, response wrappers, and LRO results. Traversal must be
+   cycle-safe and deduplicated.
+3. **Version projection.** The comparison may select different API versions on
+   the two sides. Analysis must distinguish a PR change from a difference
+   caused only by version selection.
+4. **Language-specific SDK behavior.** Language-neutral TCGC may not expose
+   Go-, Python-, Java-, or C#-specific customization effects such as a scoped
+   `@@clientLocation` change.
+5. **Source-to-artifact provenance.** Compiler artifacts describe generated
+   contracts but may not identify the exact changed hunk that caused a delta.
+   Every finding still requires an auditable link to changed TypeSpec.
+6. **Coverage accounting.** Exact candidate coverage proves that every
+   generated candidate was judged, but does not prove that every changed hunk
+   produced a candidate or an explicit no-impact result.
+7. **Deterministic aggregation.** Fine-grained deltas must become readable
+   method, client, and type findings without hiding distinct breaks or
+   duplicating one root cause across many operations.
+8. **Bounded Agent validation.** Agent output must use only supplied evidence
+   and identifiers. Assembly rejects invented symbols, unknown sources,
+   duplicate coverage, unsupported findings, and success-shaped fallbacks.
+9. **Compliance retrieval quality.** Search must identify governing official
+   guidance for each narrow intent. Generic but irrelevant guidance produces
+   `not-assessed`, not an invented pass or failure.
+10. **Artifact size and performance.** Large services can produce very large
+    evidence graphs. Input compaction must preserve all transitively required
+    evidence without overwhelming the bounded Agent context.
+
+To make deterministic blind spots observable, each Semantic review unit should
+eventually include a coverage ledger:
+
+```json
+{
+  "reviewUnitId": "semantic-...",
+  "deterministicCoverage": {
+    "restCandidateIds": [],
+    "downstreamCandidateIds": [],
+    "complianceSearchRequestIds": ["compliance-search-..."],
+    "relatedOperationIds": [],
+    "coveredHunkIds": [],
+    "uncoveredHunkIds": ["hunk-..."],
+    "gaps": ["no-language-specific-tcgc-delta"]
+  },
+  "inferenceRequired": true
+}
+```
+
+This changes the completeness invariant from:
+
+> Every generated candidate was judged.
+
+to:
+
+> Every changed piece of evidence was deterministically analyzed, explicitly
+> classified as no impact, sent to bounded AI inference, or reported as
+> blocked.

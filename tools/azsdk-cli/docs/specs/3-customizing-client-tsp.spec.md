@@ -198,7 +198,10 @@ Classify -- CodeCustomization Request --> CustomCodeInScope
 CustomCodeInScope --Yes --> CodeCustomization["Code Repair<br/>Apply Code Customization</br>Max 2 Iterations"]
 CustomCodeInScope --No --> Failure
 
-CodeCustomization --> Build
+CodeCustomization --> BuildAfterCodeCustomization[Build SDK after CodeCustomization]
+BuildAfterCodeCustomization --> BuildAfterCodeCustomizationOK{Build Successful?}
+BuildAfterCodeCustomizationOK -- No --> Failure
+BuildAfterCodeCustomizationOK -- Yes --> Success
 SpecInputInScope -- No --> Failure
 SpecInputInScope -- Yes --> ApplyTypespecCustomization["Apply TypeSpec<br/>Customization"]
 ApplyTypespecCustomization --> CustomCodeInScopeForSpec
@@ -208,7 +211,7 @@ Regen --> RegenOK{Regen Successfully?}
 RegenOK -- Yes --> Build[Build SDK]
 RegenOK -- No --> AppendRegenFailure["Append Regen Failure<br/>to Customization Request"]
 AppendRegenFailure --> M{has more customization request?}
-Build --> BuildOK{Build Successful}
+Build --> BuildOK{Build Successful?}
 BuildOK -- No --> AppendBuildFailure["Append Build Failure<br/>to Customization Request"]
 AppendBuildFailure --> M
 BuildOK -- Yes --> M
@@ -229,6 +232,7 @@ style CodeCustomization fill:#ffccbc
 style ApplyTypespecCustomization fill:#ffccbc
 style Regen fill:#ffe082
 style Build fill:#ffe082
+style BuildAfterCodeCustomization fill:#ffe082
 
 ```
 

@@ -24,11 +24,12 @@ Included:
 - validated `assessment.json`;
 - readable `assessment.html`.
 
-Document Quality is a separate visible dimension with status `not-assessed`.
+Document Quality and Agent Friendliness is a separate visible dimension with
+status `not-assessed`.
 
 **Implementation status:** Semantic, REST, downstream, and documentation-
-and optional AI inference are active. Document Quality is present but not
-assessed.
+and optional AI inference are active. Document Quality and Agent Friendliness
+is present but not assessed.
 
 ## End-to-end flow
 
@@ -1091,8 +1092,8 @@ Validation requires:
 Compliance is an independent assessment dimension. It consumes Semantic
 intents and their bounded TypeSpec query profiles while retaining links to the
 complete deterministic source evidence. It does not consume or derive
-conclusions from downstream SDK breaking input. Document Quality remains a
-separate `not-assessed` dimension.
+conclusions from downstream SDK breaking input. Document Quality and Agent
+Friendliness remains a separate `not-assessed` dimension.
 
 ### Goal and evidence boundary
 
@@ -1926,7 +1927,7 @@ File: `assessment.json`
     },
     "documentQuality": {
       "status": "not-assessed",
-      "summary": "Document quality is not assessed."
+      "summary": "Document Quality and Agent Friendliness is not assessed."
     }
   },
   "changedFiles": [],
@@ -2078,7 +2079,7 @@ evidence. Final validation independently checks:
     changed-code snippets;
 15. catalog descriptions and unfetched content are never used as guidance;
 16. Compliance status follows evidence and coverage, while Document Quality
-    remains explicitly `not-assessed`.
+    and Agent Friendliness remains explicitly `not-assessed`.
 
 ## 11. HTML requirements
 
@@ -2107,7 +2108,7 @@ The report must show:
 6. a numbered `Azure Guidelines (N)` section before Semantic intents,
    containing only findings, without
    a separate status or coverage summary card, plus an explicit not-assessed
-   Document Quality dimension;
+   Document Quality and Agent Friendliness dimension;
    per-intent assessments, ranked search documents, and retrieval details
    appear only in the appendix;
 7. source-first Semantic intents;
@@ -2310,7 +2311,7 @@ Each summary card is a full-card link to its report section:
 - REST breaking changes → `#rest-breaking`;
 - downstream breaking changes → `#downstream-breaking`;
 - Azure compliance → `#azure-compliance`;
-- Document Quality → `#document-quality`;
+- Document Quality and Agent Friendliness → `#document-quality`;
 - overall code quality → the failed or incomplete code-quality dimension.
 
 Cards expose visible hover and keyboard-focus states without changing their

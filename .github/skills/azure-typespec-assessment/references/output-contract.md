@@ -132,3 +132,11 @@ standalone main-report section. The appendix must include a clickable pull
 request link when a PR number is available, deriving the URL from
 `repository.remoteUrl` when no dedicated pull-request URL is present. Escape
 all source- and Agent-controlled text.
+
+REST breaking findings must use the shared contract-card hierarchy: contract
+identity and `REST contract` tag in the summary; a styled
+`REST contract member | Before | After` table; a highlighted
+`Why this is breaking` callout; a nested affected-operation list collapsed by
+default; and human-readable Semantic intent links in the footer. Do not render
+severity labels, severity-colored borders, or Changed TypeSpec links in these
+cards.

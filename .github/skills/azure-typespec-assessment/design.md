@@ -2157,13 +2157,9 @@ Expanded:
 │ Why this is breaking
 │ Removing serialized values narrows the wire contract.
 │
-│ Affected REST operations (6)
-│ Directory_ListFilesAndDirectoriesSegment  GET   ?restype=directory&comp=list
-│ File_GetProperties                        HEAD  /{shareName}/{filePath}
-│ ...
+│ ▸ Affected REST operations (6)
 │
-│ Changed TypeSpec  models.tsp:412
-│ Related intent    Remove NFS file-type variants
+│ Related semantic intents  Remove NFS file-type variants
 └
 ```
 
@@ -2187,19 +2183,25 @@ Presentation rules:
    `x-ms-file-file-type`.
 7. Removed values use removal styling and added/replacement values use
    addition styling, matching downstream method cards.
-8. One concise rationale follows the table. Per-row rationales are shown only
-   when they materially differ.
-9. The complete affected-operation list follows the diff. Each row shows
-   operation ID, selected API version, HTTP method, and path.
-10. REST-derived downstream entries link back to the contract card rather than
+8. One concise rationale follows the table in the same highlighted
+   `Why this is breaking` callout used by downstream SDK cards. Per-row
+   rationales are shown only when they materially differ.
+9. The complete affected-operation list follows the rationale in a nested
+   details element that is collapsed by default. Its summary shows the
+   distinct operation count; expanded rows show operation ID, selected API
+   version, HTTP method, and path.
+10. The footer contains only human-readable links to related Semantic intents.
+    Do not repeat Changed TypeSpec source links in the REST card; complete
+    source evidence remains in the Semantic intent and appendix.
+11. REST-derived downstream entries link back to the contract card rather than
     duplicate its REST details.
-11. Changed TypeSpec sources and related Semantic intents appear at the bottom.
-12. A REST finding without a proven contract identity remains visible as a
+12. Changed TypeSpec sources and related Semantic intents appear at the bottom.
+13. A REST finding without a proven contract identity remains visible as a
     default-collapsed `Unmapped REST contract change` card. Do not infer a
     contract from source-file coincidence.
-13. Stable finding anchors remain inside the aggregate card so existing deep
+14. Stable finding anchors remain inside the aggregate card so existing deep
     links continue to work. JSON retains every underlying finding once.
-14. The visible REST count is the number of distinct contract cards plus
+15. The visible REST count is the number of distinct contract cards plus
     unmapped cards, not the raw finding-row count.
 
 Compliance rendering is source-first:

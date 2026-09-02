@@ -32,7 +32,7 @@ The purpose of `azure-typespec-assessment` skill is to:
 ## Goals
 
 - Assess only TypeSpec changes in the user-selected specification.
-- Assess five dimensions: REST breaking changes, downstream breaking changes, Azure compliance, semantic intents, and document quality.
+- Assess five dimensions: REST breaking changes, downstream breaking changes, TypeSpec Azure guideline conformance, semantic intents, and document quality.
 - Include committed, staged, unstaged, and relevant untracked changes.
 - Ground every conclusion in changed TypeSpec source and reproducible evidence.
 - Support remediation through the TypeSpec authoring skill and a future breaking-change mitigation skill.
@@ -55,9 +55,9 @@ The purpose of `azure-typespec-assessment` skill is to:
 
 **User:** Use `origin/main`.
 
-**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, Azure compliance, semantic intents, and document quality. It includes source-linked findings and impact explanations. Here is the report [assessment.html]().
+**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, TypeSpec Azure guidelines, semantic intents, and document quality. It includes source-linked findings and impact explanations. Here is the report [assessment.html]().
 
-**User:** Fix the breaking changes and compliance issues.
+**User:** Fix the breaking changes and TypeSpec Azure guideline issues.
 
 **Agent:** I will apply the approved fixes through the breaking-change mitigation and TypeSpec authoring skills, validate the updated TypeSpec, and reassess it against the same baseline.
 
@@ -94,15 +94,17 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 3. Azure Guidelines
 
-**Tooling:** `web_fetch`.
+\*\*Tooling\*\*: \`web\_fetch, later integrate with [TypeSpec suppression reporting tool](https://github.com/Azure/azure-rest-api-specs/tree/main/eng/tools/typespec-suppressions).
 
-**Deterministic analysis:** Capture changed declarations and retain fetched guidance with its URL, section, excerpt, example, and content identity.
+**Deterministic analysis:** Capture changed declarations and retain fetched guidance from TypeSpec Azure website with its URL, section, excerpt, example, and content identity. The suppression reporting tool detects new or changed inline `#suppress` directives and `tspconfig.yaml` linter disables relative to the baseline so they can be included in the assessment.
 
 **AI judgment:** Select applicable authoritative guidance and classify each declaration as passed, failed, not applicable, or not assessed.
 
+> **Note:** If broader guideline assessment is needed in the future, we can explore a separate skill whose guidance is maintained by the appropriate owners. It could cover TypeSpec Azure guidance, API Review Board REST guidelines, ARM guidelines, and SDK guidelines.
+
 #### 4. Semantic Intents
 
-**Tooling:** Git diff, `@azure-tools/typespec-autorest`, later switch to `@typespec/http` (wip [PR](https://github.com/microsoft/typespec/pull/11489)).
+**Tooling:** Git diff, `@azure-tools/typespec-autorest`, later switch to http diff detected in `@azure-tools/typespec-breaking-change`.
 
 **Deterministic analysis:** Collect source hunks, changed declarations, versioned members, affected operations, REST signatures, paging/LRO metadata, and bounded review units.
 

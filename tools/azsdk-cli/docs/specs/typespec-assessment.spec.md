@@ -32,7 +32,7 @@ The purpose of `azure-typespec-assessment` skill is to:
 ## Goals
 
 - Assess only TypeSpec changes in the user-selected specification.
-- Assess five dimensions: REST breaking changes, downstream breaking changes, TypeSpec Azure guideline conformance, semantic intents, and document quality.
+- Assess five dimensions: REST breaking changes, downstream breaking changes, TypeSpec Azure guideline conformance, semantic intents, and document quality and agent friendliness.
 - Include committed, staged, unstaged, and relevant untracked changes.
 - Ground every conclusion in changed TypeSpec source and reproducible evidence.
 - Support remediation through the TypeSpec authoring skill and a future breaking-change mitigation skill.
@@ -55,7 +55,7 @@ The purpose of `azure-typespec-assessment` skill is to:
 
 **User:** Use `origin/main`.
 
-**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, TypeSpec Azure guidelines, semantic intents, and document quality. It includes source-linked findings and impact explanations. Here is the report [assessment.html]().
+**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, TypeSpec Azure guidelines, semantic intents, and document quality and agent friendliness. It includes source-linked findings and impact explanations. Here is the report [assessment.html]().
 
 **User:** Fix the breaking changes and TypeSpec Azure guideline issues.
 
@@ -110,13 +110,13 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 **AI judgment:** Correlate related edits into the author's higher-level intent and summarize the resulting API behavior without inventing unsupported effects.
 
-#### 5. Document Quality
+#### 5. Document Quality and Agent Friendliness
 
 **Planned tooling:** Git diff, repository examples.
 
 **Deterministic analysis:** Collect changed comments, descriptions, examples, documentation diagnostics, and their associated API surface.
 
-**AI judgment:** Assess whether the documentation is accurate, complete, understandable, consistent with emitted behavior, and useful to consumers.
+**AI judgment:** Assess whether the documentation is accurate, complete, understandable, consistent with emitted behavior, and useful to both human consumers and coding agents.
 
 
 ### Remediation Integration

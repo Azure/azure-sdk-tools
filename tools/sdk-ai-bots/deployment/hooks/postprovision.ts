@@ -37,7 +37,6 @@ function seedKeyVaultSecretsStep(): void {
     keyVaultName: process.env.KEY_VAULT_NAME ?? "",
     resourceGroup: RESOURCE_GROUP,
     searchServiceName: process.env.SEARCH_SERVICE_NAME ?? "",
-    aiResourceName: process.env.AI_RESOURCE_NAME ?? "",
     env: process.env,
     log: (m) => log(m),
   });

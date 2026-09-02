@@ -89,7 +89,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
       aiProjectName
     ]
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
+    disableLocalAuth: true
   }
   location: location
   kind: 'AIServices'

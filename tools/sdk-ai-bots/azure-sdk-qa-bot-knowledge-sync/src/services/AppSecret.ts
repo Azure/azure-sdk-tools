@@ -1,9 +1,7 @@
 import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential, WorkloadIdentityCredential} from '@azure/identity';
 import { SecretClient } from '@azure/keyvault-secrets';
 
-/**
- * Initialize secrets by loading them from Azure Key Vault and setting to environment variables
- */
+/** Initialize the SSH key used by knowledge source synchronization. */
 export async function initSecrets(): Promise<void> {
     // Get the Key Vault endpoint from environment variable
     const keyVaultEndpoint = process.env.KEYVAULT_ENDPOINT;
@@ -24,15 +22,6 @@ export async function initSecrets(): Promise<void> {
 
         // Establish a connection to the Key Vault client
         const client = new SecretClient(keyVaultEndpoint, credential);
-
-        // Get AOAI Chat Completions API Key
-        const aoaiSecretResponse = await client.getSecret('AOAI-CHAT-COMPLETIONS-API-KEY');
-        if (!aoaiSecretResponse.value) {
-            throw new Error('Failed to get AOAI-CHAT-COMPLETIONS-API-KEY secret value');
-        }
-
-        process.env.AOAI_CHAT_COMPLETIONS_API_KEY = aoaiSecretResponse.value;
-        console.log('Set AOAI_CHAT_COMPLETIONS_API_KEY from Key Vault');
 
         // Get SSH private key
         const sshPrivateKeySecret = await client.getSecret('SSH-PRIVATE-KEY');

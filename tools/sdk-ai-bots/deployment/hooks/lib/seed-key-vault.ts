@@ -1,15 +1,12 @@
 /**
- * seedKeyVaultSecrets — populate the Key Vault secrets the backend reads at
- * startup. The Go backend's `config.InitSecrets()` fatally exits (container
- * crash / 503) if these secrets are missing, so they must exist before the
- * backend container can start:
+ * seedKeyVaultSecrets — populate the Key Vault secret used for Azure AI Search:
  *
  *   - AI-SEARCH-APIKEY               ← AI Search service admin (primary) key
- *   - AOAI-CHAT-COMPLETIONS-API-KEY  ← Azure OpenAI / AI Services account key
  *
- * Both source keys are read from the provisioned resources via the control
- * plane, then written to the app's own Key Vault. Safe to run on every
- * provision (secret set is create-or-new-version).
+ * The source key is read from the provisioned resource via the control plane,
+ * then written to the app's own Key Vault. Azure OpenAI uses Microsoft Entra
+ * authentication and no Cognitive Services account key is stored. Safe to run
+ * on every provision (secret set is create-or-new-version).
  *
  * Requires the deploying principal to have `Key Vault Secrets Officer` on the
  * vault; this grants it idempotently (self-healing) in case bicep's role
@@ -29,8 +26,6 @@ export interface SeedKeyVaultSecretsOptions {
   resourceGroup: string;
   /** AI Search service name (SEARCH_SERVICE_NAME output). */
   searchServiceName: string;
-  /** AI Services / Azure OpenAI account name (AI_RESOURCE_NAME output). */
-  aiResourceName: string;
   /** Environment values — normally `process.env`. */
   env: NodeJS.ProcessEnv;
   log?: (msg: string) => void;
@@ -91,15 +86,15 @@ function ensureSecretsOfficerRole(
  * Seed the two backend secrets from the provisioned resources.
  */
 export function seedKeyVaultSecrets(opts: SeedKeyVaultSecretsOptions): void {
-  const { keyVaultName, resourceGroup, searchServiceName, aiResourceName, env } = opts;
+  const { keyVaultName, resourceGroup, searchServiceName, env } = opts;
   const log = opts.log ?? ((m: string) => console.log(`[seed-key-vault] ${m}`));
 
   if (!keyVaultName) {
     log("KEY_VAULT_NAME not set — skipping Key Vault secret seeding.");
     return;
   }
-  if (!searchServiceName || !aiResourceName) {
-    log("SEARCH_SERVICE_NAME / AI_RESOURCE_NAME not set — skipping Key Vault secret seeding.");
+  if (!searchServiceName) {
+    log("SEARCH_SERVICE_NAME not set — skipping Key Vault secret seeding.");
     return;
   }
 
@@ -108,9 +103,6 @@ export function seedKeyVaultSecrets(opts: SeedKeyVaultSecretsOptions): void {
   // Read the source keys from the provisioned resources (control plane).
   const searchApiKey = run(
     `az search admin-key show --service-name "${searchServiceName}" --resource-group "${resourceGroup}" --query primaryKey --output tsv`,
-  );
-  const aoaiApiKey = run(
-    `az cognitiveservices account keys list --name "${aiResourceName}" --resource-group "${resourceGroup}" --query key1 --output tsv`,
   );
 
   const sleep = (seconds: number): void => {
@@ -156,10 +148,8 @@ export function seedKeyVaultSecrets(opts: SeedKeyVaultSecretsOptions): void {
     }
   };
 
-  log(`Seeding 2 secret(s) into '${keyVaultName}'...`);
+  log(`Seeding 1 secret into '${keyVaultName}'...`);
   setSecretWithRetry("AI-SEARCH-APIKEY", searchApiKey);
   log("  ✓ AI-SEARCH-APIKEY");
-  setSecretWithRetry("AOAI-CHAT-COMPLETIONS-API-KEY", aoaiApiKey);
-  log("  ✓ AOAI-CHAT-COMPLETIONS-API-KEY");
   log(`Key Vault '${keyVaultName}' seeded.`);
 }

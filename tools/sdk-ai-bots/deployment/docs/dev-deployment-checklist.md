@@ -161,8 +161,8 @@ requires the Azure and Entra permissions above.
 - [ ] Run hosted-agent postdeploy reconciliation for data-plane RBAC and
       `AZURE_APPCONFIG_ENDPOINT`.
 - [ ] Deploy `frontend`.
-- [ ] Confirm the provisioning hook seeded `AI-SEARCH-APIKEY` and
-      `AOAI-CHAT-COMPLETIONS-API-KEY` in the environment Key Vault.
+- [ ] Confirm the provisioning hook seeded `AI-SEARCH-APIKEY` in the
+      environment Key Vault. Azure OpenAI uses Microsoft Entra authentication.
 - [ ] Confirm App Configuration contains all fixed and derived settings.
 - [ ] Confirm postprovision created or updated the configured Search synonym
       map, index, data sources, skillsets, indexers, knowledge source, and

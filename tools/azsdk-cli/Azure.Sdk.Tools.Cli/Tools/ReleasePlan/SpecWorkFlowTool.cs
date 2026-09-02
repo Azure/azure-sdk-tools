@@ -257,7 +257,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.Status = "Failed";
                 }
 
-                if (sdkReleaseType == "stable" && !string.IsNullOrWhiteSpace(effectiveApiVersion) &&
+                if (sdkReleaseType.Equals("stable", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(effectiveApiVersion) &&
                     !effectiveApiVersion.Equals("none", StringComparison.OrdinalIgnoreCase) &&
                     effectiveApiVersion.Contains("-preview", StringComparison.OrdinalIgnoreCase))
                 {

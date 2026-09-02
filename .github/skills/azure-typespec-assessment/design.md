@@ -18,6 +18,8 @@ Included:
 - downstream SDK breaking candidates from TCGC;
 - documentation-grounded Azure compliance from the four highest-ranked
   retrievable official documents for each Semantic intent;
+- optional bounded AI inference for source hunks that deterministic analysis
+  cannot classify;
 - one bounded Agent judgment;
 - validated `assessment.json`;
 - readable `assessment.html`.
@@ -25,8 +27,9 @@ Included:
 Document Quality is a separate visible dimension with status `not-assessed`.
 
 **Implementation status:** Semantic, REST, downstream, and documentation-
-grounded Compliance assessment are active. Document Quality is present but not
-assessed.
+grounded Compliance assessment are active. Deterministic coverage accounting
+and optional AI inference are the next implementation step. Document Quality
+is present but not assessed.
 
 ## End-to-end flow
 
@@ -57,14 +60,29 @@ assessed.
                   model-input.json
                          |
                          v
+          Check deterministic hunk coverage
+                         |
+                  +------+------+
+                  |             |
+          all classified    unknown hunks
+                  |             |
+                  |             v
+                  |      Bounded AI inference
+                  |      for unknown hunks only
+                  |             |
+                  |       inference.json
+                  |             |
+                  +------+------+
+                         |
+                         v
               One bounded AI judgment
        +-----------------+-----------------+-----------------+
        |                 |                 |                 |
        v                 v                 v                 v
  Summarize each      Classify each     Classify each    Rank and fetch
- semantic intent    REST candidate    SDK candidate    official guidance,
- once                                                   then assess each
-                                                        intent once
+ semantic intent    deterministic or  deterministic or official guidance,
+ once               inferred REST     inferred SDK     then assess each
+                    candidate          candidate        intent once
        |                 |                 |                 |
        +-----------------+-----------------+-----------------+
                          |                                   |
@@ -80,8 +98,9 @@ assessed.
                             assessment.json + assessment.html
 ```
 
-No Node.js script produces `compliance-search-evidence.json` or calls an LLM
-API. Preparation and dimension analysis are deterministic.
+No Node.js script produces `inference.json` or
+`compliance-search-evidence.json`, or calls an LLM API. Preparation, dimension
+analysis, and coverage accounting are deterministic.
 `compliance-search-request.mjs` only builds the query profiles embedded in
 `model-input.json`. The main Agent reads that bounded input and the local
 document catalog, calls `web_fetch` until it obtains the four highest-ranked
@@ -96,6 +115,13 @@ the deterministic Semantic review units and their TypeSpec evidence, so it
 branches from `model-input.json`. It does not consume REST or Downstream
 candidates; those take the direct branch from `model-input.json` into the same
 bounded Agent judgment.
+
+Coverage accounting is embedded in `model-input.json`; it is not a separate
+artifact and does not rewrite the file after creation. When every hunk has a
+deterministic candidate or explicit deterministic classification, the Agent
+skips inference. Otherwise, the Agent reads only the bounded inference requests
+for unknown hunks, writes `inference.json`, and then judges the combined
+deterministic and inferred candidates.
 
 ## 1. Preparation manifest
 
@@ -1368,7 +1394,28 @@ File: `model-input.json`
       "downstreamChangedOperationCount": 4,
       "groupingSummaries": [
         "The resource model and lifecycle operations form one child-resource change."
-      ]
+      ],
+      "deterministicCoverage": {
+        "restCandidateIds": [],
+        "downstreamCandidateIds": [],
+        "complianceSearchRequestIds": ["compliance-search-<hash>"],
+        "relatedOperationIds": [
+          "AddressPrefixSets_Get",
+          "AddressPrefixSets_CreateOrUpdate",
+          "AddressPrefixSets_Delete"
+        ],
+        "coveredHunkIds": ["hunk-<hash>"],
+        "uncoveredHunkIds": [],
+        "classifications": [
+          {
+            "hunkId": "hunk-<hash>",
+            "status": "candidate-generated|no-impact|semantic-only|unknown|blocked",
+            "reason": "declaration-and-operation-mapped"
+          }
+        ],
+        "gaps": []
+      },
+      "inferenceRequired": false
     }
   ],
   "restCandidates": [],
@@ -1398,6 +1445,7 @@ File: `model-input.json`
       }
     }
   ],
+  "inferenceRequests": [],
   "deferredDimensions": {
     "documentQuality": "not-assessed"
   },
@@ -1429,6 +1477,78 @@ File: `model-input.json`
 
 Only transitively referenced compact facts enter model input. Required evidence
 is never silently dropped to fit the budget.
+
+### 7.1 Deterministic coverage and optional inference
+
+Coverage is calculated before `model-input.json` is written. For each Semantic
+review unit, every member hunk receives exactly one deterministic status:
+
+- `candidate-generated`: at least one mapped REST or downstream candidate;
+- `no-impact`: the relevant deterministic contracts were compared and did not
+  produce an impact candidate;
+- `semantic-only`: the indexed change does not affect a REST or SDK contract;
+- `unknown`: the source change cannot be mapped reliably to the available
+  language-neutral artifacts;
+- `blocked`: required deterministic artifacts or analysis are unavailable.
+
+Only `unknown` hunks set `inferenceRequired: true`. An empty candidate list
+alone does not trigger inference. Compliance retrieval failure also does not
+trigger inference.
+
+Each unknown hunk produces one bounded `inferenceRequests` entry:
+
+```json
+{
+  "requestId": "inference-request-<hash>",
+  "reviewUnitId": "semantic-<hash>",
+  "sourceChangeId": "source-<hash>",
+  "hunkId": "hunk-<hash>",
+  "reason": "source-change-not-represented-in-language-neutral-artifacts",
+  "sourceExcerpt": "@@clientLocation(..., \"!csharp,!go\");",
+  "relatedOperationIds": [],
+  "allowedDimensions": ["rest", "downstream"]
+}
+```
+
+When `inferenceRequests` is empty, `inference.json` must not be required. When
+requests exist, the Agent writes one result per request to `inference.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "results": [
+    {
+      "requestId": "inference-request-<hash>",
+      "reviewUnitId": "semantic-<hash>",
+      "hunkId": "hunk-<hash>",
+      "decision": "candidates",
+      "rationale": "The scoped customization changes generated Go client placement.",
+      "candidates": [
+        {
+          "id": "inferred-downstream-<hash>",
+          "dimension": "downstream",
+          "rule": "client-location-changed",
+          "defaultSeverity": "high",
+          "actual": "The affected operations move in the generated Go client hierarchy.",
+          "expected": "Existing generated Go client placement remains stable.",
+          "crossLanguageDefinitionId": "ProtectionContainersOperationGroup",
+          "sourceChangeIds": ["source-<hash>"],
+          "hunkIds": ["hunk-<hash>"],
+          "operationIds": [],
+          "evidenceFactIds": [],
+          "reviewRequired": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+The other valid inference decisions are `no-impact` and `blocked`; both require
+a rationale and contain no candidates. Inferred candidates must use only the
+request's review unit, source, hunk, operations, and allowed dimensions.
+Assembly rejects missing, duplicate, unknown, or out-of-scope inference
+results. The Agent never modifies `model-input.json`.
 
 ## 8. Agent judgment
 
@@ -1495,9 +1615,10 @@ File: `assessment-judgment.json`
 ```
 
 Exactly one semantic result is required per review unit and one decision per
-REST candidate. Direct downstream method candidates require one decision per
-candidate. Propagated shared-type candidates require one decision per
-deterministic root cause instead of repetitive per-type decisions.
+deterministic or inferred REST candidate. Direct deterministic or inferred
+downstream candidates require one decision per candidate. Propagated
+shared-type candidates require one decision per deterministic root cause
+instead of repetitive per-type decisions.
 
 An internal `approve` root-cause decision retains every `propagatedCandidateId` in that
 root cause except IDs explicitly listed in `excludedCandidateIds`. Exclusions
@@ -2261,8 +2382,15 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
   replacements preserved.
 - Fetched guidance has canonical URL, content hash, section, excerpt, and
   query-term provenance.
+- Every Semantic review unit records deterministic hunk coverage directly in
+  `model-input.json`.
+- AI inference is skipped when all hunks are deterministically classified and
+  runs only for explicit `unknown` hunk requests.
+- When inference runs, `inference.json` has exact request coverage and only
+  bounded, source-linked inferred candidates.
 - Agent judgment has one concise Semantic result and one Compliance decision
-  per intent, plus exact bounded REST and downstream candidate coverage.
+  per intent, plus exact deterministic and inferred REST/downstream candidate
+  coverage.
 - Final JSON rejects unsupported or incomplete results.
 - HTML presents ranked documentation and intent-level Compliance results
   without conflating them with scoped REST/downstream code safety.
@@ -2330,8 +2458,8 @@ The main challenges are:
     evidence graphs. Input compaction must preserve all transitively required
     evidence without overwhelming the bounded Agent context.
 
-To make deterministic blind spots observable, each Semantic review unit should
-eventually include a coverage ledger:
+To make deterministic blind spots observable, each Semantic review unit
+includes a coverage ledger:
 
 ```json
 {

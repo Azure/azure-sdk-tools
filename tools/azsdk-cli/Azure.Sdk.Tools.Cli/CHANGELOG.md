@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.
+
 ### Other Changes
 
 ## 0.6.41 (2026-08-31)

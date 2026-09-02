@@ -9,16 +9,41 @@
 <p class="hero-meta">TypeSpec source diff: <code>9eb0993333857ef0ffb2863ccc76f8b123cae90b</code> → <code>22bc88578fb1f253688e8a5bf127ef3a4502745a</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 findings<br>2 documents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">35 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 findings<br>2 documents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
+<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding medium" id="compliance-finding-newrelic-preview-retained">
+<summary><span class="severity medium">medium</span><strong>Replaced preview remains in the version enum</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The new Versions enum retains 2025-05-01-preview alongside 2026-06-01 instead of removing the replaced preview.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>Remove the replaced preview version from the version enum.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path"><a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">specification/newrelic/NewRelicObservability.Management/main.tsp:38-48</a></div><pre><span class=""><span class="line-number">38</span>enum Versions {</span>
+<span class=""><span class="line-number">39</span>  /**</span>
+<span class=""><span class="line-number">40</span>   * The 2025-05-01-preview API version.</span>
+<span class=""><span class="line-number">41</span>   */</span>
+<span class=""><span class="line-number">42</span>  v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
+<span class=""><span class="line-number">43</span></span>
+<span class=""><span class="line-number">44</span>  /**</span>
+<span class=""><span class="line-number">45</span>   * The 2026-06-01 API version.</span>
+<span class=""><span class="line-number">46</span>   */</span>
+<span class=""><span class="line-number">47</span>  v2026_06_01: &quot;2026-06-01&quot;,</span>
+<span class=""><span class="line-number">48</span>}</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-add-stable-version-and-go-delete-signature"><code>add-stable-version-and-go-delete-signature</code></a></p>
+</div></details>
+</div></details>
+</section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-add-stable-version-and-go-delete-signature"><summary><strong><span class="action">modify</span> Add a stable API version and reorder Go delete parameters</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-newrelic-preview-retained">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -70,31 +95,6 @@
 <p><strong>Change outcome:</strong> The service becomes explicitly versioned with 2025-05-01-preview and 2026-06-01, exposing the existing operations in the stable version. A client.tsp @@override places userEmail before monitorName in the generated Go delete signature while preserving query and path serialization.</p></div></details>
 <p id="related-findings-add-stable-version-and-go-delete-signature"><strong>Related findings:</strong> <a href="#compliance-finding-newrelic-preview-retained">newrelic-preview-retained</a></p>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding medium" id="compliance-finding-newrelic-preview-retained">
-<summary><span class="severity medium">medium</span><strong>Replaced preview remains in the version enum</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The new Versions enum retains 2025-05-01-preview alongside 2026-06-01 instead of removing the replaced preview.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>Remove the replaced preview version from the version enum.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Adding a Stable Version when the Last Version was Preview — Retained authoritative evidence</a></p>
-
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path"><a href="https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L38-L48">specification/newrelic/NewRelicObservability.Management/main.tsp:38-48</a></div><pre><span class=""><span class="line-number">38</span>enum Versions {</span>
-<span class=""><span class="line-number">39</span>  /**</span>
-<span class=""><span class="line-number">40</span>   * The 2025-05-01-preview API version.</span>
-<span class=""><span class="line-number">41</span>   */</span>
-<span class=""><span class="line-number">42</span>  v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
-<span class=""><span class="line-number">43</span></span>
-<span class=""><span class="line-number">44</span>  /**</span>
-<span class=""><span class="line-number">45</span>   * The 2026-06-01 API version.</span>
-<span class=""><span class="line-number">46</span>   */</span>
-<span class=""><span class="line-number">47</span>  v2026_06_01: &quot;2026-06-01&quot;,</span>
-<span class=""><span class="line-number">48</span>}</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-add-stable-version-and-go-delete-signature"><code>add-stable-version-and-go-delete-signature</code></a></p>
-</div></details>
-</div></details>
-</section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/newrelic/NewRelicObservability.Management</code></td><td>new-api-version</td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2025-05-01-preview</code><br><small>current · previous-latest-preview</small></td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2026-06-01</code><br><small>current · newest-added-version</small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>

@@ -9,10 +9,10 @@
 <p class="hero-meta">TypeSpec source diff: <code>9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5</code> → <code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">3 findings<br>11/11 intents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 11</div><div class="summary-label">Semantic intents</div><div class="summary-detail">183 operations<br>8 Added, 3 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">3 direct · 0 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">3 findings<br>11/11 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
@@ -42,6 +42,80 @@
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The existing Microsoft.Network.ServiceGateways.updateServicesLro generated method changes its invocation or result contract as shown by the bounded before/after TCGC facts.</div>
 <div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Changed TypeSpec:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/back-compatible.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:1492</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp:47</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp:54</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp:45</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp:138</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/client.tsp</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp:16</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp:18</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp:17</code>, <code>specification/network/resource-manager/Microsoft.Network/Network/Network/main.tsp:152</code></span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
 </div></details></section>
+<section id="azure-compliance"><h2>Azure Guidelines (3)</h2><details class="finding compliance-finding medium" id="compliance-finding-compliance-669a010d2fb35c4b">
+<summary><span class="severity medium">medium</span><strong>Legacy suppression retains a placeholder justification</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The changed #suppress message is still a FIXME placeholder, so it does not provide the justification required by the directive contract.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>Suppress directive allows suppressing a specific warning diagnostic. It takes 2 arguments: The diagnostic code to suppress and a message to justify the suppression.</p>
+<p><strong>Guidance:</strong> <a href="https://typespec.io/docs/language-basics/directives/">Directives</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:20397-20403</div><pre><span class="add"><span class="line-number">20397</span>+/**</span>
+<span class="add"><span class="line-number">20398</span>+ * Request body for the MoveIpConfigurations operation.</span>
+<span class="add"><span class="line-number">20399</span>+ */</span>
+<span class="add"><span class="line-number">20400</span>+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
+<span class="add"><span class="line-number">20401</span>+@added(Versions.v2025_09_01)</span>
+<span class="add"><span class="line-number">20402</span>+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)</span>
+<span class="add"><span class="line-number">20403</span>+model MoveIpConfigurationsRequest {</span>
+<span class="add"><span class="line-number">20404</span>+  /**</span>
+<span class="add"><span class="line-number">20405</span>+   * A list of IP configuration move items.</span>
+<span class="add"><span class="line-number">20406</span>+   */</span>
+<span class="add"><span class="line-number">20407</span>+  @identifiers(#[])</span>
+<span class="add"><span class="line-number">20408</span>+  moveIpConfigurationItems: MoveIpConfigurationItem[];</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-23cf6865c336a2a8"><code>semantic-23cf6865c336a2a8</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding medium" id="compliance-finding-compliance-1767678c13fd37d9">
+<summary><span class="severity medium">medium</span><strong>Connection Analyzer uses a legacy routed-operation template</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The new Connection Analyzer surface is based on Legacy.RoutedOperations instead of the documented standard ARM resource-operation templates.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>TypeSpec operation templates provide a simple mechanism for producing the most common operation patterns in ARM, using best practices and conforming to ARM RPC guidelines.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:55-60</div><pre><span class="add"><span class="line-number">55</span>+alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations&lt;</span>
+<span class="add"><span class="line-number">56</span>+  {</span>
+<span class="add"><span class="line-number">57</span>+    ...ApiVersionParameter;</span>
+<span class="add"><span class="line-number">58</span>+    ...SubscriptionIdParameter;</span>
+<span class="add"><span class="line-number">59</span>+    ...ResourceGroupParameter;</span>
+<span class="add"><span class="line-number">60</span>+</span>
+<span class="add"><span class="line-number">61</span>+    /** The name of the network watcher. */</span>
+<span class="add"><span class="line-number">62</span>+    @path</span>
+<span class="add"><span class="line-number">63</span>+    @segment(&quot;networkWatchers&quot;)</span>
+<span class="add"><span class="line-number">64</span>+    @key</span>
+<span class="add"><span class="line-number">65</span>+    @pattern(&quot;^[0-9a-zA-Z]([0-9a-zA-Z_.-]{0,62}[0-9a-zA-Z_])?$&quot;)</span>
+<span class="add"><span class="line-number">66</span>+    networkWatcherName: string;</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-9e1ae8c664f60144"><code>semantic-9e1ae8c664f60144</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding high" id="compliance-finding-compliance-6c4e771f22b3d619">
+<summary><span class="severity high">high</span><strong>Behavior-affecting operationId suppression bypasses TypeSpec semantics</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The changed code suppresses no-openapi to force wire operation IDs, but the fetched Azure guidance explicitly says behavior-affecting @operationId usage must not be suppressed.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>Decorators that do affect behavior should never be suppressed: name your interface and operation accordingly instead of using @operationId, and define the types correctly in TypeSpec instead of using @useRef.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div><pre><span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;The LRO variant uses a different TypeSpec member name to enable versioning, but must preserve the original operationId for wire backward compatibility with 2025-05-01 and 2025-07-01.&quot;</span>
+<span class="add">+@@operationId(</span>
+<span class="add">+  ServiceGateways.updateAddressLocationsLro,</span>
+<span class="add">+  &quot;ServiceGateways_UpdateAddressLocations&quot;</span>
+<span class="add">+);</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;The LRO variant uses a different TypeSpec member name to enable versioning, but must preserve the original operationId for wire backward compatibility with 2025-05-01 and 2025-07-01.&quot;</span>
+<span class="add">+@@operationId(</span>
+<span class="add">+  ServiceGateways.updateServicesLro,</span>
+<span class="add">+  &quot;ServiceGateways_UpdateServices&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  ServiceGateways.updateAddressLocationsLro::parameters.body,</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-c407807c969d3377"><code>semantic-c407807c969d3377</code></a></p>
+</div></details>
+</div></details>
+</section>
 <section id="semantic-intents"><h2>Semantic intents (11)</h2><details class="intent" id="intent-semantic-23cf6865c336a2a8"><summary><strong><span class="action">modify</span> Publish shared Network contracts for the 2025-09-01 API</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-669a010d2fb35c4b">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>Updates shared Network models, enums, resource shapes, and paging contracts that flow into the 2025-09-01 operation surface, including load-balancer mode and IP-configuration movement support.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -1190,80 +1264,6 @@
 <p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses.</p></div></details>
 <p id="related-findings-semantic-ba5c64982aa9eea2"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (3)</h2><details class="finding compliance-finding medium" id="compliance-finding-compliance-669a010d2fb35c4b">
-<summary><span class="severity medium">medium</span><strong>Legacy suppression retains a placeholder justification</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The changed #suppress message is still a FIXME placeholder, so it does not provide the justification required by the directive contract.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>Suppress directive allows suppressing a specific warning diagnostic. It takes 2 arguments: The diagnostic code to suppress and a message to justify the suppression.</p>
-<p><strong>Guidance:</strong> <a href="https://typespec.io/docs/language-basics/directives/">Directives</a></p>
-
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:20397-20403</div><pre><span class="add"><span class="line-number">20397</span>+/**</span>
-<span class="add"><span class="line-number">20398</span>+ * Request body for the MoveIpConfigurations operation.</span>
-<span class="add"><span class="line-number">20399</span>+ */</span>
-<span class="add"><span class="line-number">20400</span>+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
-<span class="add"><span class="line-number">20401</span>+@added(Versions.v2025_09_01)</span>
-<span class="add"><span class="line-number">20402</span>+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)</span>
-<span class="add"><span class="line-number">20403</span>+model MoveIpConfigurationsRequest {</span>
-<span class="add"><span class="line-number">20404</span>+  /**</span>
-<span class="add"><span class="line-number">20405</span>+   * A list of IP configuration move items.</span>
-<span class="add"><span class="line-number">20406</span>+   */</span>
-<span class="add"><span class="line-number">20407</span>+  @identifiers(#[])</span>
-<span class="add"><span class="line-number">20408</span>+  moveIpConfigurationItems: MoveIpConfigurationItem[];</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-23cf6865c336a2a8"><code>semantic-23cf6865c336a2a8</code></a></p>
-</div></details>
-</div></details><details class="finding compliance-finding medium" id="compliance-finding-compliance-1767678c13fd37d9">
-<summary><span class="severity medium">medium</span><strong>Connection Analyzer uses a legacy routed-operation template</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The new Connection Analyzer surface is based on Legacy.RoutedOperations instead of the documented standard ARM resource-operation templates.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>TypeSpec operation templates provide a simple mechanism for producing the most common operation patterns in ARM, using best practices and conforming to ARM RPC guidelines.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></p>
-
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:55-60</div><pre><span class="add"><span class="line-number">55</span>+alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations&lt;</span>
-<span class="add"><span class="line-number">56</span>+  {</span>
-<span class="add"><span class="line-number">57</span>+    ...ApiVersionParameter;</span>
-<span class="add"><span class="line-number">58</span>+    ...SubscriptionIdParameter;</span>
-<span class="add"><span class="line-number">59</span>+    ...ResourceGroupParameter;</span>
-<span class="add"><span class="line-number">60</span>+</span>
-<span class="add"><span class="line-number">61</span>+    /** The name of the network watcher. */</span>
-<span class="add"><span class="line-number">62</span>+    @path</span>
-<span class="add"><span class="line-number">63</span>+    @segment(&quot;networkWatchers&quot;)</span>
-<span class="add"><span class="line-number">64</span>+    @key</span>
-<span class="add"><span class="line-number">65</span>+    @pattern(&quot;^[0-9a-zA-Z]([0-9a-zA-Z_.-]{0,62}[0-9a-zA-Z_])?$&quot;)</span>
-<span class="add"><span class="line-number">66</span>+    networkWatcherName: string;</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-9e1ae8c664f60144"><code>semantic-9e1ae8c664f60144</code></a></p>
-</div></details>
-</div></details><details class="finding compliance-finding high" id="compliance-finding-compliance-6c4e771f22b3d619">
-<summary><span class="severity high">high</span><strong>Behavior-affecting operationId suppression bypasses TypeSpec semantics</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The changed code suppresses no-openapi to force wire operation IDs, but the fetched Azure guidance explicitly says behavior-affecting @operationId usage must not be suppressed.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>Decorators that do affect behavior should never be suppressed: name your interface and operation accordingly instead of using @operationId, and define the types correctly in TypeSpec instead of using @useRef.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></p>
-
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div><pre><span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;The LRO variant uses a different TypeSpec member name to enable versioning, but must preserve the original operationId for wire backward compatibility with 2025-05-01 and 2025-07-01.&quot;</span>
-<span class="add">+@@operationId(</span>
-<span class="add">+  ServiceGateways.updateAddressLocationsLro,</span>
-<span class="add">+  &quot;ServiceGateways_UpdateAddressLocations&quot;</span>
-<span class="add">+);</span>
-<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;The LRO variant uses a different TypeSpec member name to enable versioning, but must preserve the original operationId for wire backward compatibility with 2025-05-01 and 2025-07-01.&quot;</span>
-<span class="add">+@@operationId(</span>
-<span class="add">+  ServiceGateways.updateServicesLro,</span>
-<span class="add">+  &quot;ServiceGateways_UpdateServices&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@doc(</span>
-<span class="add">+  ServiceGateways.updateAddressLocationsLro::parameters.body,</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-c407807c969d3377"><code>semantic-c407807c969d3377</code></a></p>
-</div></details>
-</div></details>
-</section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Network</code></td><td>new-api-version</td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-07-01</code><br><small>current · previous-latest-stable</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-09-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Vmss</code></td><td>existing-api-version</td><td><code>9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5@2018-10-01</code><br><small>base · affected-existing-version</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2018-10-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>

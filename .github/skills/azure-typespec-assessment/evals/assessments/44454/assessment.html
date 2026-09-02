@@ -9,16 +9,18 @@
 <p class="hero-meta">TypeSpec source diff: <code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6</code> → <code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i</span> Not assessed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i</span> Not assessed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>0/2 intents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">0 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i</span> Not assessed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>0/2 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty not-assessed">Azure Guidelines were not assessed.</p>
+<div class="panel"><strong>Unassessed intents:</strong> <code>semantic-3d8a84ab0984f292</code>, <code>semantic-a3ce2a2ef2e5fba3</code></div></section>
 <section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-3d8a84ab0984f292"><summary><strong><span class="action">modify</span> Preserve Python operation-group casing for traffic-filter methods</strong></summary><div class="intent-body">
 <p>The compatibility customizations exclude Python from the existing client-location rules for listAssociatedTrafficFilters and createAndAssociateIPFilter, then add Python-specific placements under PascalCase operation-group names.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -74,8 +76,6 @@
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-a3ce2a2ef2e5fba3"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty not-assessed">Azure Guidelines were not assessed.</p>
-<div class="panel"><strong>Unassessed intents:</strong> <code>semantic-3d8a84ab0984f292</code>, <code>semantic-a3ce2a2ef2e5fba3</code></div></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel"><ul><li>The official document catalog contains no guidance for @clientLocation or generated Python operation-group casing, so Azure Compliance is not assessed for either semantic intent.</li></ul></div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/elastic/Elastic.Management</code></td><td>existing-api-version</td><td><code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6@2025-06-01</code><br><small>base · affected-existing-version</small></td><td><code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2@2025-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>

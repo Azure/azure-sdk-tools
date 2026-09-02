@@ -9,16 +9,18 @@
 <p class="hero-meta">TypeSpec source diff: <code>2991970c5377110244bcf9614be03e5aaf32362f</code> → <code>b209254310b3e569b16210d3c59fc8b8ac3b84b4</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>2 documents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">2 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>2 documents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
+</section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-select-arm-common-types-v5"><summary><strong><span class="action">modify</span> Select ARM common types v5 for retained versions</strong></summary><div class="intent-body">
 <p>Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -47,8 +49,6 @@
 <p><strong>Change outcome:</strong> Two Device Registry version members change their @armCommonTypesVersion selection from v6 to v5. The bounded analysis reports no model-relevant REST operation change despite transitive artifact regeneration.</p></div></details>
 <p id="related-findings-select-arm-common-types-v5"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
-</section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/deviceregistry/DeviceRegistry.Management</code></td><td>legacy</td><td><code>unknown commit@unversioned</code><br><small>base · </small></td><td><code>unknown commit@unversioned</code><br><small>current · </small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>

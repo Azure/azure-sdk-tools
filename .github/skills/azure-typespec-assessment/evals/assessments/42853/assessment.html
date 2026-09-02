@@ -9,10 +9,10 @@
 <p class="hero-meta">TypeSpec source diff: <code>519e87e016492a37ce9ea6ac0fdf80d26767f47d</code> → <code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">2 findings<br>2 documents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">7 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 1</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">1 direct · 0 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">2 findings<br>2 documents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
@@ -26,41 +26,6 @@
 
 <p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-add-2026-versions-and-go-placement"><code>version-lineage-add-2026-versions-and-go-placement</code></a></p>
 <p class="sources"><strong>Changed TypeSpec:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp#L46-L74">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp:46</a>, <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L81">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp:67</a></p>
-</div></details></section>
-<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-version-lineage-add-2026-versions-and-go-placement"><summary><strong><span class="action">modify</span> Add 2026 versions and preserve Go client placement</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-source-go-client-location-changed">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-preview-remains-with-stable-version">Azure Guidelines</a></span></summary><div class="intent-body">
-<p>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p>
-<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
-<div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div><pre><span class="context"> </span>
-<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
-<span class="context">   Microsoft.RecoveryServices,</span>
-<span class="remove">-  &quot;!csharp&quot;</span>
-<span class="add">+  &quot;!csharp,!go&quot;</span>
-<span class="context"> );</span>
-<span class="context"> </span>
-<span class="context"> @@clientLocation(PrivateEndpointConnectionResources.get,</span></pre></div>
-<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L81">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp:67</a>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
-<h4>Affected REST operations (7)</h4>
-<p><strong>Operation impact:</strong> 7 REST operations are affected; 3 representative operation(s) are shown below and 4 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
-<details class="operation"><summary><strong>BackupProtectedItems_List</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupProtectedItems</code> <span>2026-02-01</span></summary>
-<div class="operation-body"><p class="good"><strong>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</strong></p>
-<p><strong>Change outcome:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p></div></details>
-<details class="operation"><summary><strong>ProtectedItemOperationResults_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/operationResults/{operationId}</code> <span>2026-02-01</span></summary>
-<div class="operation-body"><p class="good"><strong>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</strong></p>
-<p><strong>Change outcome:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p></div></details>
-<details class="operation"><summary><strong>ProtectedItems_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}</code> <span>2026-02-01</span></summary>
-<div class="operation-body"><p class="good"><strong>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</strong></p>
-<p><strong>Change outcome:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p></div></details>
-<p id="related-findings-version-lineage-add-2026-versions-and-go-placement"><strong>Related findings:</strong> <a href="#downstream-source-go-client-location-changed">source-go-client-location-changed</a>, <a href="#compliance-finding-preview-remains-with-stable-version">preview-remains-with-stable-version</a>, <a href="#compliance-finding-client-locations-outside-client-tsp">client-locations-outside-client-tsp</a></p>
 </div></details></section>
 <section id="azure-compliance"><h2>Azure Guidelines (2)</h2><details class="finding compliance-finding medium" id="compliance-finding-preview-remains-with-stable-version">
 <summary><span class="severity medium">medium</span><strong>Replaced preview remains in the version enum</strong></summary>
@@ -114,6 +79,41 @@
 </div></details>
 </div></details>
 </section>
+<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-version-lineage-add-2026-versions-and-go-placement"><summary><strong><span class="action">modify</span> Add 2026 versions and preserve Go client placement</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-source-go-client-location-changed">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-preview-remains-with-stable-version">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div><pre><span class="context"> </span>
+<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> </span>
+<span class="context"> @@clientLocation(PrivateEndpointConnectionResources.get,</span></pre></div>
+<p class="sources"><strong>Source:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L81">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp:67</a>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<h4>Affected REST operations (7)</h4>
+<p><strong>Operation impact:</strong> 7 REST operations are affected; 3 representative operation(s) are shown below and 4 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>BackupProtectedItems_List</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupProtectedItems</code> <span>2026-02-01</span></summary>
+<div class="operation-body"><p class="good"><strong>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</strong></p>
+<p><strong>Change outcome:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p></div></details>
+<details class="operation"><summary><strong>ProtectedItemOperationResults_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/operationResults/{operationId}</code> <span>2026-02-01</span></summary>
+<div class="operation-body"><p class="good"><strong>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</strong></p>
+<p><strong>Change outcome:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p></div></details>
+<details class="operation"><summary><strong>ProtectedItems_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}</code> <span>2026-02-01</span></summary>
+<div class="operation-body"><p class="good"><strong>The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</strong></p>
+<p><strong>Change outcome:</strong> The service adds 2026-01-31-preview and 2026-02-01, propagating existing protected-item and recovery-point REST contracts into the stable version. Three @@clientLocation compatibility customizations also begin applying to Go, changing generated client ownership without changing wire behavior.</p></div></details>
+<p id="related-findings-version-lineage-add-2026-versions-and-go-placement"><strong>Related findings:</strong> <a href="#downstream-source-go-client-location-changed">source-go-client-location-changed</a>, <a href="#compliance-finding-preview-remains-with-stable-version">preview-remains-with-stable-version</a>, <a href="#compliance-finding-client-locations-outside-client-tsp">client-locations-outside-client-tsp</a></p>
+</div></details></section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices</code></td><td>legacy</td><td><code>unknown commit@unversioned</code><br><small>base · </small></td><td><code>unknown commit@unversioned</code><br><small>current · </small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr><tr><td><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>

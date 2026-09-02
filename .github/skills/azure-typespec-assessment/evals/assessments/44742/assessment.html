@@ -9,10 +9,10 @@
 <p class="hero-meta">TypeSpec source diff: <code>e75a07cd7ea1b2207190a362305db02b639715ec</code> → <code>656ca8b0741973760f8a60ee0fd293ba9c31e708</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 findings<br>1 documents assessed</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">2 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 3 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 findings<br>1 documents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality</div><div class="summary-detail">Document quality is not assessed.</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality is reported separately and is not assessed.</div></aside>
@@ -62,6 +62,33 @@
 <section id="downstream-breaking"><h2>Downstream breaking changes (3)</h2><div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Operation parameter contract changes</strong></a></div>
 <div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Operation response contract changes</strong></a></div>
 <div class="panel downstream-rest-item"><a class="downstream-rest-link" href="#finding-rest-3-parameter-contract-changed-2026-12-06-put"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>Operation parameter contract changes</strong></a></div></section>
+<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding high" id="compliance-finding-delete-existing-versioned-nfs-surface">
+<summary><span class="severity high">high</span><strong>Existing versioned API surface is removed</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The change deletes 2026-12-06 NFS models, XML properties, and values rather than versioning their removal.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs — API Versioning</a></p>
+<div class="diff"><div class="diff-path"><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Documented TypeSpec example</a></div><pre><span class="">/** Contoso API versions */enum Versions {  /** 2021-10-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v1,</span>
+<span class="">  /** 2022-11-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v2,}</span></pre></div>
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path"><a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302">specification/storage/data-plane/FileStorage/models.tsp:287-298</a></div><pre><span class=""><span class="line-number">287</span></span>
+<span class=""><span class="line-number">288</span>  /** BlockDevice */</span>
+<span class=""><span class="line-number">289</span>  @added(Versions.v2026_12_06)</span>
+<span class=""><span class="line-number">290</span>  BlockDevice: &quot;BlockDevice&quot;,</span>
+<span class=""><span class="line-number">291</span></span>
+<span class=""><span class="line-number">292</span>  /** CharacterDevice */</span>
+<span class=""><span class="line-number">293</span>  @added(Versions.v2026_12_06)</span>
+<span class=""><span class="line-number">294</span>  CharacterDevice: &quot;CharacterDevice&quot;,</span>
+<span class=""><span class="line-number">295</span></span>
+<span class=""><span class="line-number">296</span>  /** Socket */</span>
+<span class=""><span class="line-number">297</span>  @added(Versions.v2026_12_06)</span>
+<span class=""><span class="line-number">298</span>  Socket: &quot;Socket&quot;,</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-remove-special-nfs-items"><code>version-lineage-remove-special-nfs-items</code></a></p>
+</div></details>
+</div></details>
+</section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-version-lineage-remove-special-nfs-items"><summary><strong><span class="action">modify</span> Remove special NFS item contracts from 2026-12-06</strong><span class="intent-finding-badges"><a class="intent-finding-badge rest" href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">REST breaking changes</a><a class="intent-finding-badge downstream" href="#downstream-derived-rest-contract-sdk-impact">Downstream breaking changes</a><a class="intent-finding-badge compliance" href="#compliance-finding-delete-existing-versioned-nfs-surface">Azure Guidelines</a></span></summary><div class="intent-body">
 <p>The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
@@ -101,33 +128,6 @@
 <p><strong>Change outcome:</strong> The change removes symbolic-link, block-device, character-device, FIFO, and socket item models, their XML collections, related NFS metadata, and special-file values. Directory listing and file creation retain their routes but lose nested response elements and accepted type values.</p></div></details>
 <p id="related-findings-version-lineage-remove-special-nfs-items"><strong>Related findings:</strong> <a href="#finding-rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list">rest-1-parameter-contract-changed-2026-12-06-get-restype-directory-comp-list</a>, <a href="#finding-rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list">rest-2-response-contract-changed-2026-12-06-get-restype-directory-comp-list</a>, <a href="#finding-rest-3-parameter-contract-changed-2026-12-06-put">rest-3-parameter-contract-changed-2026-12-06-put</a>, <a href="#downstream-derived-rest-contract-sdk-impact">derived-rest-contract-sdk-impact</a>, <a href="#compliance-finding-delete-existing-versioned-nfs-surface">delete-existing-versioned-nfs-surface</a></p>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding high" id="compliance-finding-delete-existing-versioned-nfs-surface">
-<summary><span class="severity high">high</span><strong>Existing versioned API surface is removed</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The change deletes 2026-12-06 NFS models, XML properties, and values rather than versioning their removal.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>on-over-inheritance documentation-required friendly-name key-visibility-required known-encoding long-running-polling-operation-required no-case-mismatch no-closed-literal-union no-enum no-error-status-codes no-explicit-routes-resource-ops no-format no-generic-numeric no-header-explode no-legacy-usage no-multiple-discriminator no-nullable no-offsetdatetime no-openapi-client-extensions no-openapi no-private-usage no-query-explode no-response-body no-rest-library-interfaces no-route-parameter-name-</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs — API Versioning</a></p>
-<div class="diff"><div class="diff-path"><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Documented TypeSpec example</a></div><pre><span class="">/** Contoso API versions */enum Versions {  /** 2021-10-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v1,</span>
-<span class="">  /** 2022-11-01-preview version */  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)  v2,}</span></pre></div>
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path"><a href="https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302">specification/storage/data-plane/FileStorage/models.tsp:287-298</a></div><pre><span class=""><span class="line-number">287</span></span>
-<span class=""><span class="line-number">288</span>  /** BlockDevice */</span>
-<span class=""><span class="line-number">289</span>  @added(Versions.v2026_12_06)</span>
-<span class=""><span class="line-number">290</span>  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class=""><span class="line-number">291</span></span>
-<span class=""><span class="line-number">292</span>  /** CharacterDevice */</span>
-<span class=""><span class="line-number">293</span>  @added(Versions.v2026_12_06)</span>
-<span class=""><span class="line-number">294</span>  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class=""><span class="line-number">295</span></span>
-<span class=""><span class="line-number">296</span>  /** Socket */</span>
-<span class=""><span class="line-number">297</span>  @added(Versions.v2026_12_06)</span>
-<span class=""><span class="line-number">298</span>  Socket: &quot;Socket&quot;,</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-version-lineage-remove-special-nfs-items"><code>version-lineage-remove-special-nfs-items</code></a></p>
-</div></details>
-</div></details>
-</section>
 <section id="document-quality"><h2>Document Quality</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document quality is not assessed.</div></section>
 <section id="blockers"><h2>Blockers</h2><div class="panel">None</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/storage/data-plane/FileStorage</code></td><td>legacy</td><td><code>unknown commit@unversioned</code><br><small>base · </small></td><td><code>unknown commit@unversioned</code><br><small>current · </small></td><td>n/a / n/a</td><td>n/a / n/a</td></tr></tbody></table>

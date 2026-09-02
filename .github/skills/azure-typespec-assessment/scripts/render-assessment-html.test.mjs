@@ -560,7 +560,15 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.match(html, /Failed/);
   const complianceHtml = html.slice(
     html.indexOf('<section id="azure-compliance">'),
-    html.indexOf('<section id="document-quality">'),
+    html.indexOf('<section id="semantic-intents">'),
+  );
+  assert.ok(
+    html.indexOf('<section id="azure-compliance">') <
+      html.indexOf('<section id="semantic-intents">'),
+  );
+  assert.ok(
+    html.indexOf('<a class="summary-card" href="#azure-compliance">') <
+      html.indexOf('<a class="summary-card" href="#semantic-intents">'),
   );
   assert.doesNotMatch(complianceHtml, /Ranked official documents/);
   assert.doesNotMatch(complianceHtml, /class="compliance-intent"/);
@@ -611,7 +619,7 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.match(html, /<h4>TypeSpec code<\/h4>/);
   const findingHtml = html.slice(
     html.indexOf('id="compliance-finding-compliance-1"'),
-    html.indexOf('<section id="document-quality">'),
+    html.indexOf('<section id="semantic-intents">'),
   );
   assert.doesNotMatch(findingHtml, /TypeSpec source:/);
   assert.doesNotMatch(findingHtml, /v2026_01_01/);
@@ -1214,7 +1222,7 @@ test("downstream section lists and links REST breaking changes without duplicati
   assert.doesNotMatch(html, /contract\(s\)|Compared REST operation:/);
   const downstream = html.slice(
     html.indexOf('<section id="downstream-breaking">'),
-    html.indexOf('<section id="semantic-intents">'),
+    html.indexOf('<section id="azure-compliance">'),
   );
 
   assert.match(downstream, /<h2>Downstream breaking changes \(3\)<\/h2>/);

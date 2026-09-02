@@ -18,6 +18,7 @@ Included:
 - downstream SDK breaking candidates from TCGC;
 - documentation-grounded Azure compliance from the four highest-ranked
   retrievable official documents for each Semantic intent;
+- optional bounded AI inference for deterministic coverage gaps;
 - one bounded Agent judgment;
 - validated `assessment.json`;
 - readable `assessment.html`.
@@ -25,77 +26,81 @@ Included:
 Document Quality is a separate visible dimension with status `not-assessed`.
 
 **Implementation status:** Semantic, REST, downstream, and documentation-
-grounded Compliance assessment are active. Document Quality is present but not
-assessed.
+grounded Compliance assessment are active. The coverage gate and optional AI
+inference are target design. Document Quality is present but not assessed.
 
 ## End-to-end flow
 
 ```text
-             Current TypeSpec Git diff
-                         |
-                         v
-       Deterministic preparation and compilation
-          (source index + AutoRest + TCGC)
-                         |
-       preparation-manifest.json
-       source/source-index.json
-                         |
-       +-----------------+-----------------+-----------------+
-       |                 |                 |                 |
-       v                 v                 v                 v
-   Semantic            REST            Downstream        Compliance
- deterministic     deterministic      deterministic     deterministic
- review units       candidates         candidates      search requests
-       |                 |                 |                 |
- dimensions/        dimensions/       dimensions/       complianceSearchRequests
- semantic-intents-  rest-breaking-    downstream-       embedded below
- input.json          input.json         breaking-input.json
-       |                 |                 |                 |
-       +-----------------+-----------------+-----------------+
-                         |
-                         v
-                  model-input.json
-                         |
-                         v
-              One bounded AI judgment
-       +-----------------+-----------------+-----------------+
-       |                 |                 |                 |
-       v                 v                 v                 v
- Summarize each      Classify each     Classify each    Rank and fetch
- semantic intent    REST candidate    SDK candidate    official guidance,
- once                                                   then assess each
-                                                        intent once
-       |                 |                 |                 |
-       +-----------------+-----------------+-----------------+
-                         |                                   |
-                         v                                   v
-             assessment-judgment.json       compliance-search-evidence.json
-                         \                                   /
-                          +---------------+-----------------+
-                                          |
-                                          v
-                              Assemble and validate
-                                          |
-                                          v
-                            assessment.json + assessment.html
+Current TypeSpec Git diff
+          |
+          v
+Split diff into hunks
+          |
+          v
+Deterministic preparation and compilation
+(source index + AutoRest + TCGC)
+          |
+          v
+Group hunks into Semantic review units
+          |
+          v
+Run deterministic analysis
+          |
+          +--> REST candidates
+          +--> downstream SDK candidates
+          +--> Compliance search requests
+          +--> no-impact classifications
+          |
+          v
+Build per-intent coverage ledger
+          |
+          v
+Are all changed hunks classified?
+          |
+     +----+----+
+     |         |
+    yes        no
+     |         |
+     v         v
+Skip AI      Run bounded AI inference
+inference    only for unknown hunks
+     |         |
+     +----+----+
+          |
+          v
+One bounded final AI judgment
+          |
+          +--> summarize each Semantic intent once
+          +--> classify REST and SDK candidates
+          +--> fetch official guidance
+          +--> assess Compliance once per intent
+          |
+          v
+Assemble and strictly validate
+          |
+          v
+assessment.json + assessment.html
 ```
 
-No Node.js script produces `compliance-search-evidence.json` or calls an LLM
-API. Preparation and dimension analysis are deterministic.
-`compliance-search-request.mjs` only builds the query profiles embedded in
-`model-input.json`. The main Agent reads that bounded input and the local
-document catalog, calls `web_fetch` until it obtains the four highest-ranked
-retrievable official documents per review unit or exhausts the catalog, and
-writes both `compliance-search-evidence.json` and
+Preparation and dimension analysis are deterministic. The target coverage gate
+checks whether every changed hunk produced a candidate or an explicit
+deterministic classification. It skips AI inference when coverage is complete.
+When coverage contains an `unknown` gap, bounded AI inference receives only the
+unknown hunks and their relevant evidence, then emits `inference.json` for the
+final judgment.
+
+No Node.js script calls an LLM API. `compliance-search-request.mjs` only builds
+the query profiles embedded in `model-input.json`. The final Agent reads the
+bounded input and local document catalog, calls `web_fetch` until it obtains
+the four highest-ranked retrievable official documents per review unit or
+exhausts the catalog, and writes `compliance-search-evidence.json` and
 `assessment-judgment.json`. `compliance-assessment.mjs`, called during
 assembly, consumes and validates the search evidence; it does not produce it.
 
-Compliance is parallel to Semantic, REST, and Downstream as an assessment
-dimension, but not as an initial deterministic analyzer. Its search requires
-the deterministic Semantic review units and their TypeSpec evidence, so it
-branches from `model-input.json`. It does not consume REST or Downstream
-candidates; those take the direct branch from `model-input.json` into the same
-bounded Agent judgment.
+Compliance remains one assessment per Semantic intent. It depends on
+deterministic Semantic evidence, but it does not require every related
+operation to be assessed separately.
 
 ## 1. Preparation manifest
 

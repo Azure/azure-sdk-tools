@@ -11,11 +11,11 @@
 <p class="hero-meta">TypeSpec source diff: <code>b7170cade07f615426eb153b7035ecf8a1cab4e4</code> → <code>1395797d6112cb083837b3772083bafe0a91460c</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">0 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">0 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality and Agent Friendliness is reported separately and is not assessed.</div></aside>
 <main class="container">
@@ -23,6 +23,7 @@
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intent <a href="#intent-semantic-5c37e529c22fc782">Preserve Java enum member names</a>.</p>
 </section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-5c37e529c22fc782"><summary><strong><span class="action">modify</span> Preserve Java enum member names</strong></summary><div class="intent-body">
 <p>Adds Java-specific @@clientName augment decorators to six existing Consumption enum members so generated Java SDK symbols retain their released uppercase names without changing REST operations.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 1 changed hunks classified. AI inference used for 1 request.</p>
@@ -44,7 +45,6 @@
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-5c37e529c22fc782"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption</code></td><td>existing-api-version</td><td><code>b7170cade07f615426eb153b7035ecf8a1cab4e4@2026-06-01</code><br><small>base · affected-existing-version</small></td><td><code>1395797d6112cb083837b3772083bafe0a91460c@2026-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45536">#45536</a></p>

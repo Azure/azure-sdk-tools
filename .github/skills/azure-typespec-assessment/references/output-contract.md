@@ -129,6 +129,11 @@ intents, active Compliance status
 and coverage, four ranked documents per intent, fetched guidance beside changed
 TypeSpec, expanded failures, collapsed passes, retrieval blockers, explicit
 not-assessed Document Quality and Agent Friendliness, and complete provenance.
+After overall code quality, summary cards and main sections must order the five
+dimensions as REST breaking changes, downstream breaking changes, Azure
+Guidelines, Document Quality and Agent Friendliness, and Semantic intents. The
+Azure Guidelines card uses its finding count as the primary numeric value;
+status remains represented by its icon and color.
 Present top-level assessment blockers only in the appendix under
 **Potential limits**, not as a standalone main-report section. The appendix
 must include a clickable pull request link when a PR number is available,

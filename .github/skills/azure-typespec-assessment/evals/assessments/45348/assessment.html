@@ -11,11 +11,11 @@
 <p class="hero-meta">TypeSpec source diff: <code>2991970c5377110244bcf9614be03e5aaf32362f</code> → <code>b209254310b3e569b16210d3c59fc8b8ac3b84b4</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">109 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">109 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality and Agent Friendliness is reported separately and is not assessed.</div></aside>
 <main class="container">
@@ -23,6 +23,7 @@
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intent <a href="#intent-semantic-9aa453e5a18d9499">Downgrade ARM common-types references from v6 to v5</a>.</p>
 </section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-9aa453e5a18d9499"><summary><strong><span class="action">modify</span> Downgrade ARM common-types references from v6 to v5</strong></summary><div class="intent-body">
 <p>Two @armCommonTypesVersion arguments change from Azure.ResourceManager.CommonTypes.Versions.v6 to v5. The version selection propagates through 109 affected operations, for which deterministic analysis supplied 237 REST review candidates.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
@@ -56,7 +57,6 @@
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <p id="related-findings-semantic-9aa453e5a18d9499"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><ul><li>All 237 REST candidates have bounded before/after fact records that are identical except for generated fact IDs, so the supplied evidence cannot establish caller-visible incompatibility.</li></ul>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/deviceregistry/DeviceRegistry.Management</code></td><td>existing-api-version</td><td><code>2991970c5377110244bcf9614be03e5aaf32362f@2026-11-02-preview</code><br><small>base · affected-existing-version</small></td><td><code>b209254310b3e569b16210d3c59fc8b8ac3b84b4@2026-11-02-preview</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45348">#45348</a></p>

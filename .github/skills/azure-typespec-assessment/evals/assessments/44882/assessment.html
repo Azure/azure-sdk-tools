@@ -11,11 +11,11 @@
 <p class="hero-meta">TypeSpec source diff: <code>9eb0993333857ef0ffb2863ccc76f8b123cae90b</code> → <code>22bc88578fb1f253688e8a5bf127ef3a4502745a</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">35 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 findings<br>1/1 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 1</div><div class="summary-label">Semantic intents</div><div class="summary-detail">35 operations<br>0 Added, 1 Modified, 0 Removed</div></a>
 </div></div></header>
 <aside class="notice"><div class="container"><strong>Preview Notice.</strong> This report is a review aid, not official approval. Overall code quality combines REST/downstream safety with Azure Guidelines. Document Quality and Agent Friendliness is reported separately and is not assessed.</div></aside>
 <main class="container">
@@ -23,6 +23,7 @@
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
 <section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-689d93649516029d"><summary><strong><span class="action">modify</span> Publish the stable New Relic API and preserve Go delete ordering</strong></summary><div class="intent-body">
 <p>The change publishes the 2026-06-01 New Relic API projection and adds a Go-only delete override that retains the legacy SDK parameter order while leaving the bounded REST and language-neutral SDK compatibility candidates empty.</p>
 <p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
@@ -76,7 +77,6 @@
 <p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
 <p id="related-findings-semantic-689d93649516029d"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/newrelic/NewRelicObservability.Management</code></td><td>new-api-version</td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2025-05-01-preview</code><br><small>current · previous-latest-preview</small></td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2026-06-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44882">#44882</a></p>

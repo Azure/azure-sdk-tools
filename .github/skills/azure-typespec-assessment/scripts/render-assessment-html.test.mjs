@@ -563,9 +563,13 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
     /class="finding compliance-finding medium"[^>]* open/,
   );
   assert.match(html, /Failed/);
+  assert.match(
+    html,
+    /<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×<\/span> 1<\/div><div class="summary-label">Azure Guidelines/,
+  );
   const complianceHtml = html.slice(
     html.indexOf('<section id="azure-compliance">'),
-    html.indexOf('<section id="semantic-intents">'),
+    html.indexOf('<section id="document-quality">'),
   );
   assert.ok(
     html.indexOf('<section id="azure-compliance">') <
@@ -625,7 +629,7 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.match(html, /<h4>TypeSpec code<\/h4>/);
   const findingHtml = html.slice(
     html.indexOf('id="compliance-finding-compliance-1"'),
-    html.indexOf('<section id="semantic-intents">'),
+    html.indexOf('<section id="document-quality">'),
   );
   assert.doesNotMatch(findingHtml, /TypeSpec source:/);
   assert.doesNotMatch(findingHtml, /v2026_01_01/);
@@ -731,6 +735,19 @@ test("renderer labels active Compliance and scoped safety", () => {
   assert.match(html, /<a class="summary-card" href="#downstream-breaking">/);
   assert.match(html, /<a class="summary-card" href="#azure-compliance">/);
   assert.match(html, /<a class="summary-card" href="#document-quality">/);
+  const summaryLabels = [
+    ...html.matchAll(
+      /<a class="summary-card"[\s\S]*?<div class="summary-label">([^<]+)<\/div>[\s\S]*?<\/a>/g,
+    ),
+  ].map((match) => match[1]);
+  assert.deepEqual(summaryLabels, [
+    "Overall code quality",
+    "REST breaking changes",
+    "Downstream breaking changes",
+    "Azure Guidelines",
+    "Document Quality and Agent Friendliness",
+    "Semantic intents",
+  ]);
   assert.match(html, /Overall code quality/);
   assert.match(html, /REST, downstream, and Azure Guidelines/);
   assert.match(
@@ -751,7 +768,22 @@ test("renderer labels active Compliance and scoped safety", () => {
   assert.match(html, /0\/0 intents assessed/);
   assert.match(
     html,
+    /<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i<\/span> 0<\/div><div class="summary-label">Azure Guidelines/,
+  );
+  assert.match(
+    html,
     /<section id="document-quality"><h2>Document Quality and Agent Friendliness<\/h2><div class="panel not-assessed"><strong>Not assessed<\/strong>/,
+  );
+  const sectionOrder = [
+    "rest-breaking",
+    "downstream-breaking",
+    "azure-compliance",
+    "document-quality",
+    "semantic-intents",
+  ].map((id) => html.indexOf(`<section id="${id}">`));
+  assert.deepEqual(
+    sectionOrder,
+    [...sectionOrder].sort((a, b) => a - b),
   );
   assert.match(
     html,
@@ -1202,6 +1234,10 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
   const complianceIntent = assessment.dimensions.semantic.items.find(
     (item) => item.id === complianceFinding.semanticIntentId,
   );
+  const restFinding = assessment.dimensions.rest.findings[0];
+  const restIntent = assessment.dimensions.semantic.items.find(
+    (item) => item.id === restFinding.relatedSemanticIntents[0],
+  );
   assert.ok(
     html.includes(`href="#compliance-finding-${complianceFinding.id}"`),
   );
@@ -1212,21 +1248,7 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     html,
     /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
   );
-  const restFinding = assessment.dimensions.rest.findings[0];
-  const restIntent = assessment.dimensions.semantic.items.find(
-    (item) => item.id === restFinding.relatedSemanticIntents[0],
-  );
   assert.match(html, /Remove NFS file and handle response fields/);
-  assert.doesNotMatch(
-    html,
-    /REST contract changes require generated-client updates/,
-  );
-  assert.match(html, /Downstream breaking changes \(17\)/);
-  assert.match(html, /6 from REST breaking/);
-  assert.match(
-    html,
-    /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/,
-  );
   const restHtml = html.slice(
     html.indexOf('<section id="rest-breaking">'),
     html.indexOf('<section id="downstream-breaking">'),
@@ -1246,6 +1268,16 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     ),
   );
   assert.doesNotMatch(restHtml, /Changed TypeSpec:/);
+  assert.doesNotMatch(
+    html,
+    /REST contract changes require generated-client updates/,
+  );
+  assert.match(html, /Downstream breaking changes \(17\)/);
+  assert.match(html, /6 from REST breaking/);
+  assert.match(
+    html,
+    /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/,
+  );
   assert.doesNotMatch(html, /REST-compatible downstream changes/);
   assert.doesNotMatch(
     html,
@@ -1278,7 +1310,7 @@ test("renderer links assessed intents with no applicable guidance by title", () 
   const html = renderAssessmentHtml(assessment);
   const complianceHtml = html.slice(
     html.indexOf('<section id="azure-compliance">'),
-    html.indexOf('<section id="semantic-intents">'),
+    html.indexOf('<section id="document-quality">'),
   );
   assert.ok(
     complianceHtml.includes(
@@ -1300,7 +1332,7 @@ test("renderer links assessed intents with no applicable guidance by title", () 
   const multipleHtml = renderAssessmentHtml(assessment);
   const multipleComplianceHtml = multipleHtml.slice(
     multipleHtml.indexOf('<section id="azure-compliance">'),
-    multipleHtml.indexOf('<section id="semantic-intents">'),
+    multipleHtml.indexOf('<section id="document-quality">'),
   );
   assert.match(
     multipleComplianceHtml,

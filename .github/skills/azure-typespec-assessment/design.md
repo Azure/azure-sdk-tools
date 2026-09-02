@@ -2290,9 +2290,9 @@ The header follows a summary-dashboard hierarchy:
 2. prominent assessment title;
 3. the single source/artifact pair or multi-project appendix link on one
    metadata line;
-4. six summary cards for overall code quality, Semantic intents, REST breaking
-   changes, downstream breaking changes, Azure Guidelines, and Document
-   Quality.
+4. six summary cards: overall code quality, then the five dimensions in this
+   order: REST breaking changes, downstream breaking changes, Azure Guidelines,
+   Document Quality and Agent Friendliness, and Semantic intents.
 
 Overall code quality combines REST/downstream safety with Azure Guidelines. It
 is `Failed` when either assessed result fails, `Passed` when both pass, and
@@ -2300,19 +2300,22 @@ is `Failed` when either assessed result fails, `Passed` when both pass, and
 Quality remains a separate dimension. The Semantic card includes distinct
 affected-operation count and
 add/modify/remove intent counts. The downstream card distinguishes affected
-SDK methods from underlying finding count. The Compliance card shows
-`Passed`, `Failed`, or `Not assessed` plus finding and covered-declaration
-counts. A zero finding count must not imply a pass when evidence retrieval or
-declaration coverage is incomplete.
+SDK methods from underlying finding count. The Azure Guidelines card shows the
+finding count as its primary numeric value. Its icon and color communicate
+`passed`, `failed`, or `not-assessed`, while the detail shows finding and
+covered-intent counts. A zero finding count must not imply a pass when evidence
+retrieval or intent coverage is incomplete.
 
 Each summary card is a full-card link to its report section:
 
-- Semantic intents → `#semantic-intents`;
 - REST breaking changes → `#rest-breaking`;
 - downstream breaking changes → `#downstream-breaking`;
 - Azure compliance → `#azure-compliance`;
 - Document Quality and Agent Friendliness → `#document-quality`;
+- Semantic intents → `#semantic-intents`;
 - overall code quality → the failed or incomplete code-quality dimension.
+
+The five main dimension sections follow the same order as their summary cards.
 
 Cards expose visible hover and keyboard-focus states without changing their
 status colors.

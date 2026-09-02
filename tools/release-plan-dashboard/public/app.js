@@ -1813,6 +1813,9 @@
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
     }
+    if (p.apiSpec && p.apiSpec.apiVersion) {
+      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK Generated From API Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
+    }
     if (
       p.typeSpecPath &&
       p.specProjectPath &&

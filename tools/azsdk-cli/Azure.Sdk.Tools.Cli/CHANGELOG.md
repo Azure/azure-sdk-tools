@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.42 (Unreleased)
+## 0.6.42 (2026-09-01)
 
 ### Features Added
 
@@ -11,6 +11,9 @@
 - `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.
 
 ### Other Changes
+
+- Skip SDK generation if an SDK generation pipeline is already in progress for the release plan.
+- Do not run SDK generation if another release plan is in progress for the same package.
 
 ## 0.6.41 (2026-08-31)
 

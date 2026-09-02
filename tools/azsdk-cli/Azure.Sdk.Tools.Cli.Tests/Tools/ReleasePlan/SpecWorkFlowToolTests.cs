@@ -45,50 +45,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             );
         }
 
-        private static Octokit.PullRequest CreateTestPullRequest(int number, ItemState state, bool merged, List<Label>? labels = null)
-        {
-            return new Octokit.PullRequest(
-                id: number,
-                nodeId: null,
-                url: null,
-                htmlUrl: null,
-                diffUrl: null,
-                patchUrl: null,
-                issueUrl: null,
-                statusesUrl: null,
-                number: number,
-                state: state,
-                title: null,
-                body: null,
-                createdAt: DateTimeOffset.Now,
-                updatedAt: DateTimeOffset.Now,
-                closedAt: DateTimeOffset.Now,
-                mergedAt: merged ? DateTimeOffset.Now : (DateTimeOffset?)null,
-                head: null,
-                @base: new Octokit.GitReference(label: null, @ref: "main", sha: null, nodeId: null, url: null, user: null, repository: null),
-                user: null,
-                assignee: null,
-                assignees: null,
-                draft: false,
-                mergeable: null,
-                mergeableState: null,
-                mergedBy: null,
-                mergeCommitSha: null,
-                comments: 0,
-                commits: 1,
-                additions: 1,
-                deletions: 1,
-                changedFiles: 1,
-                milestone: null,
-                locked: false,
-                maintainerCanModify: null,
-                requestedReviewers: null,
-                requestedTeams: null,
-                labels: labels,
-                activeLockReason: null
-            );
-        }
-
         [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
@@ -223,8 +179,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
+            var labels = new List<Label>
+            {
+               new Label(1, "", SpecWorkflowTool.ARM_SIGN_OFF_LABEL, "", "", "", false)
+            };
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(CreateTestPullRequest(123, ItemState.Open, merged: true));
+                .ReturnsAsync(
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, labels, null));
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -237,6 +198,240 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(result.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+        }
+
+        [TestCase("In progress")]
+        [TestCase("Pending")]
+        [TestCase("PENDING")]
+        public async Task GenerateSDK_WhenGenerationAlreadyInProgress_SkipsNewRun(string generationStatus)
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test",
+                        GenerationStatus = generationStatus,
+                        GenerationPipelineUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("was not triggered to avoid duplicate generation"));
+            Assert.That(result.ToString(), Does.Contain("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=99"));
+            // A new generation run should not have been triggered.
+            Assert.That(result.ToString(), Does.Not.Contain("has been initiated to generate the SDK"));
+        }
+
+        [Test]
+        public async Task GenerateSDK_WhenAnotherActiveReleasePlanHasSdkPullRequest_BlocksGeneration()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            // Another active release plan for the same TypeSpec project that already has an SDK pull request.
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
+            {
+                releasePlan,
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    ReleasePlanId = 999,
+                    SDKInfo = new List<SDKInfo>
+                    {
+                        new SDKInfo
+                        {
+                            Language = "Java",
+                            PackageName = "azure-test",
+                            SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/123",
+                            ReleaseStatus = "In progress"
+                        }
+                    }
+                }
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ToString(), Does.Contain("Another active release plan"));
+            Assert.That(result.ToString(), Does.Contain("999"));
+            Assert.That(result.ToString(), Does.Not.Contain("has been initiated to generate the SDK"));
+        }
+
+        [Test]
+        public async Task GenerateSDK_WhenAnotherReleasePlanSdkPullRequestIsReleased_AllowsGeneration()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            // Another active release plan whose SDK pull request has already been released should not block generation.
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
+            {
+                releasePlan,
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    ReleasePlanId = 999,
+                    SDKInfo = new List<SDKInfo>
+                    {
+                        new SDKInfo
+                        {
+                            Language = "Java",
+                            PackageName = "azure-test",
+                            SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/123",
+                            ReleaseStatus = "Released"
+                        }
+                    }
+                }
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("has been initiated to generate the SDK"));
+        }
+
+        [Test]
+        public async Task GenerateSDK_WhenCurrentReleasePlanHasSdkPullRequestForSameLanguage_AllowsRegeneration()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+
+            // Current release plan already has an SDK pull request for the requested language (regeneration scenario).
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test",
+                        SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/456"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
+            // Another active release plan with an unreleased SDK pull request also exists, but regeneration of the
+            // current release plan should still be allowed because it already has its own SDK pull request.
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath = new List<ReleasePlanWorkItem>
+            {
+                releasePlan,
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    ReleasePlanId = 999,
+                    SDKInfo = new List<SDKInfo>
+                    {
+                        new SDKInfo
+                        {
+                            Language = "Java",
+                            PackageName = "azure-test",
+                            SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/123",
+                            ReleaseStatus = "In progress"
+                        }
+                    }
+                }
+            };
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                workItemId: 456
+            );
+
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("has been initiated to generate the SDK"));
         }
 
         [Test]
@@ -360,7 +555,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
 
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(CreateTestPullRequest(123, ItemState.Open, merged: true));
+                .ReturnsAsync(
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
 
             var releasePlan = new ReleasePlanWorkItem
             {
@@ -384,120 +580,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 workItemId: 456               
             );
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
-        }
-
-        [Test]
-        public async Task GenerateSdk_BlockedWhenSpecPullRequestNotMerged()
-        {
-            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
-                .Returns("specification/testcontoso/Contoso.Management");
-            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
-                .Returns(true);
-
-            // Open, unmerged pull request.
-            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(CreateTestPullRequest(123, ItemState.Open, merged: false));
-
-            var releasePlan = new ReleasePlanWorkItem
-            {
-                SDKInfo = new List<SDKInfo>
-                {
-                    new SDKInfo
-                    {
-                        Language = "Java",
-                        PackageName = "azure-test"
-                    }
-                }
-            };
-            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
-
-            var result = await specWorkflowTool.RunGenerateSdkAsync(
-                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
-                apiVersion: "2023-01-01",
-                sdkReleaseType: "beta",
-                language: "Java",
-                pullRequestNumber: 123,
-                workItemId: 456
-            );
-
-            Assert.That(result.ToString(), Does.Contain("has not been merged yet"));
-            Assert.That(result.ToString(), Does.Not.Contain("Azure DevOps pipeline"));
-        }
-
-        [Test]
-        public async Task GenerateSdk_BlockedWhenSpecPullRequestClosedWithoutMerge()
-        {
-            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
-                .Returns("specification/testcontoso/Contoso.Management");
-            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
-                .Returns(true);
-
-            // Pull request closed without merging.
-            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(CreateTestPullRequest(123, ItemState.Closed, merged: false));
-
-            var releasePlan = new ReleasePlanWorkItem
-            {
-                SDKInfo = new List<SDKInfo>
-                {
-                    new SDKInfo
-                    {
-                        Language = "Java",
-                        PackageName = "azure-test"
-                    }
-                }
-            };
-            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
-
-            var result = await specWorkflowTool.RunGenerateSdkAsync(
-                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
-                apiVersion: "2023-01-01",
-                sdkReleaseType: "beta",
-                language: "Java",
-                pullRequestNumber: 123,
-                workItemId: 456
-            );
-
-            Assert.That(result.ToString(), Does.Contain("was closed without being merged"));
-            Assert.That(result.ToString(), Does.Not.Contain("Azure DevOps pipeline"));
-        }
-
-        [Test]
-        public async Task GenerateSdk_BlockedWhenSpecPullRequestNotFound()
-        {
-            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
-                .Returns("specification/testcontoso/Contoso.Management");
-            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
-                .Returns(true);
-
-            // GetPullRequestAsync throws for a nonexistent PR number rather than returning null.
-            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Octokit.NotFoundException("Not Found", System.Net.HttpStatusCode.NotFound));
-
-            var releasePlan = new ReleasePlanWorkItem
-            {
-                SDKInfo = new List<SDKInfo>
-                {
-                    new SDKInfo
-                    {
-                        Language = "Java",
-                        PackageName = "azure-test"
-                    }
-                }
-            };
-            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
-
-            var result = await specWorkflowTool.RunGenerateSdkAsync(
-                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
-                apiVersion: "2023-01-01",
-                sdkReleaseType: "beta",
-                language: "Java",
-                pullRequestNumber: 123,
-                workItemId: 456
-            );
-
-            Assert.That(result.ToString(), Does.Contain("was not found in"));
-            Assert.That(result.ToString(), Does.Not.Contain("Azure DevOps pipeline"));
         }
 
         [Test]

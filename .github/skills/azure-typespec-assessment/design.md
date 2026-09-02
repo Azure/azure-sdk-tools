@@ -27,9 +27,8 @@ Included:
 Document Quality is a separate visible dimension with status `not-assessed`.
 
 **Implementation status:** Semantic, REST, downstream, and documentation-
-grounded Compliance assessment are active. Deterministic coverage accounting
-and optional AI inference are the next implementation step. Document Quality
-is present but not assessed.
+and optional AI inference are active. Document Quality is present but not
+assessed.
 
 ## End-to-end flow
 
@@ -1547,7 +1546,10 @@ requests exist, the Agent writes one result per request to `inference.json`:
 The other valid inference decisions are `no-impact` and `blocked`; both require
 a rationale and contain no candidates. Inferred candidates must use only the
 request's review unit, source, hunk, operations, and allowed dimensions.
-Assembly rejects missing, duplicate, unknown, or out-of-scope inference
+Multiple requests from the same review unit and source may reference the same
+identical inferred candidate when one SDK impact spans several adjacent hunks;
+that candidate lists every covered request hunk and is deduplicated by ID.
+Assembly rejects missing, conflicting, unknown, or out-of-scope inference
 results. The Agent never modifies `model-input.json`.
 
 ## 8. Agent judgment
@@ -2353,6 +2355,7 @@ Never label a head-source artifact as a base-commit artifact.
     run-assessment-analysis.mjs
     compliance-search-request.mjs
     compliance-search-evidence.schema.json
+    inference.schema.json
     assessment-judgment.schema.json
     assessment.schema.json
     assemble-assessment.mjs

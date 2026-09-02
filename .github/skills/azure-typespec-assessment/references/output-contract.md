@@ -11,6 +11,18 @@ provenance, declaration applicability, relevant guidance, and failed
 replacement attempts. Catalog descriptions select documents but never serve
 as guidance.
 
+## Optional inference
+
+`model-input.json` contains `deterministicCoverage` for every Semantic review
+unit and one `inferenceRequests` item per `unknown` hunk. Do not create
+`inference.json` when the request array is empty.
+
+When requests exist, write `inference.json` conforming to
+`scripts\inference.schema.json`. Cover every request exactly once with
+`candidates`, `no-impact`, or `blocked`. Inferred candidates must remain within
+the request's IDs and allowed REST/downstream dimensions. They require final
+Agent judgment like deterministic candidates.
+
 ## Agent judgment
 
 Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.schema.json`:
@@ -66,12 +78,12 @@ Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.
 ```
 
 Coverage must be exact: one concise semantic result per supplied review unit,
-one decision per supplied REST/downstream candidate, and one Compliance
-decision per Semantic intent. Applicable Compliance decisions cite fetched
-guidance sections and synthesize their expected pattern. All IDs and URLs must
-come from the bounded inputs. Every `applicable-fail` decision must also
-provide a concise finding title and `high`, `medium`, or `low` severity for the
-finding-first HTML.
+one decision per supplied deterministic or inferred REST/downstream candidate,
+and one Compliance decision per Semantic intent. Applicable Compliance
+decisions cite fetched guidance sections and synthesize their expected pattern.
+All IDs and URLs must come from the bounded inputs or validated inference
+output. Every `applicable-fail` decision must also provide a concise finding
+title and `high`, `medium`, or `low` severity for the finding-first HTML.
 
 ## Final data
 

@@ -1133,6 +1133,24 @@ test("renderer shows one intent example and keeps complete appendix evidence", (
             sources,
             operations: [],
             relatedFindings: {},
+            deterministicCoverage: {
+              coveredHunkIds: ["hunk-1"],
+              uncoveredHunkIds: ["hunk-2"],
+              classifications: [
+                { hunkId: "hunk-1", status: "no-impact" },
+                { hunkId: "hunk-2", status: "unknown" },
+              ],
+            },
+            inferenceRequired: true,
+            inferenceResults: [
+              {
+                requestId: "inference-request-1",
+                hunkId: "hunk-2",
+                decision: "no-impact",
+                rationale: "No contract impact.",
+                candidateIds: [],
+              },
+            ],
           },
         ],
       },
@@ -1150,6 +1168,10 @@ test("renderer shows one intent example and keeps complete appendix evidence", (
   assert.equal(
     (html.match(/<details class="representative-example">/g) ?? []).length,
     1,
+  );
+  assert.match(
+    html,
+    /Deterministic coverage:<\/strong> 1 of 2 changed hunks classified\. AI inference used for 1 request\./,
   );
   const appendixHtml = html.slice(
     html.indexOf('id="complete-typespec-evidence"'),
@@ -1174,7 +1196,7 @@ test("legacy renderer preserves semantic intents and REST-derived downstream fin
     );
   assert.match(
     html,
-      /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
+    /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
   );
   assert.ok(
     html.includes(`href="#compliance-finding-${complianceFinding.id}"`),
@@ -1190,7 +1212,10 @@ test("legacy renderer preserves semantic intents and REST-derived downstream fin
   );
   assert.match(html, /Downstream breaking changes \(3\)/);
   assert.match(html, /3 from REST breaking/);
-  assert.match(html, /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/);
+  assert.match(
+    html,
+    /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/,
+  );
   assert.doesNotMatch(html, /REST-compatible downstream changes/);
   assert.doesNotMatch(
     html,

@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     !effectiveApiVersion.Equals("none", StringComparison.OrdinalIgnoreCase) &&
                     effectiveApiVersion.Contains("-preview", StringComparison.OrdinalIgnoreCase))
                 {
-                    response.ResponseErrors.Add($"Stable SDK generation is not allowed for preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
+                    response.ResponseErrors.Add($"Stable SDK generation is not allowed from preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
                     response.Status = "Failed";
                     return response;
                 }

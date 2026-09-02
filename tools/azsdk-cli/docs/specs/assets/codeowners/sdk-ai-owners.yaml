@@ -1,0 +1,31 @@
+# Example sdk/ai/owners.yaml
+#
+# Owner aliases are synthetic placeholders (test-user-NN), not real accounts.
+#
+# Path expressions in a fragment are relative to the directory that contains the
+# fragment (sdk/ai/ here) and may only address that directory or something below
+# it. ".." is rejected outright.
+
+version: 1
+
+paths:
+  # "." is the fragment's own directory -> /sdk/ai/
+  - path: .
+    owners: [test-user-07, test-user-09, test-user-18, test-user-23, test-user-24]
+    pr-labels: [AI Model Inference, AI Projects]
+
+  - path: Azure.AI.Inference/
+    owners: [test-user-07, test-user-09, test-user-23]
+    pr-labels: [AI Model Inference]
+
+  - path: Azure.AI.Projects/
+    owners: [test-user-07, test-user-18, test-user-22, test-user-23, test-user-24]
+    pr-labels: [AI Projects]
+
+label-owners:
+  - labels: [AI Model Inference]
+    service-owners: [test-user-07, test-user-09, test-user-23]
+
+  - labels: [AI Projects]
+    service-owners: [test-user-07, test-user-18, test-user-23]
+    azure-sdk-owners: [test-user-07]

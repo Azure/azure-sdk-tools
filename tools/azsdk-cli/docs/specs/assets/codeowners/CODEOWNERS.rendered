@@ -1,0 +1,197 @@
+# ------------------------------------------------------------------------------
+# GENERATED FILE - DO NOT EDIT
+# Ownership is defined in .github/owners.config.yaml and sdk/*/owners.yaml
+# Regenerate with: azsdk config codeowners generate
+# ------------------------------------------------------------------------------
+
+####################
+# Repository Root
+####################
+
+/*    @test-user-13 @Azure/azure-sdk-write-net-core
+
+####################
+# SDK
+####################
+
+/sdk/    @test-user-13 @Azure/azure-sdk-write-net-core
+
+####################
+# End-to-End Samples
+####################
+
+/samples/    @test-user-13 @Azure/azure-sdk-write-net-core
+
+# PRLabel: %Voice Live
+/samples/voicelive/    @test-user-08 @test-user-25 @test-user-19 @test-user-01
+
+####################
+# Core Libraries
+####################
+
+# PRLabel: %Azure.Core
+/sdk/core/    @test-user-15 @Azure/azure-sdk-write-net-core
+
+/sdk/core/Azure.Core/**/Identity/    @test-user-10 @Azure/azure-sdk-write-identity
+
+# PRLabel: %Azure.Identity
+/sdk/identity/    @test-user-10 @Azure/azure-sdk-write-identity
+
+# PRLabel: %Extensions
+/sdk/extensions/    @test-user-13 @Azure/azure-sdk-write-net-core
+
+# PRLabel: %Tables
+/sdk/tables/    @test-user-10 @test-user-13
+
+# AzureSdkOwners: @test-user-15
+# ServiceLabel: %Azure.Core
+# ServiceOwners: @test-user-15 @Azure/azure-sdk-write-net-core
+
+# AzureSdkOwners: @test-user-15
+# ServiceLabel: %System.ClientModel
+# ServiceOwners: @test-user-15 @Azure/azure-sdk-write-net-core
+
+# AzureSdkOwners: @test-user-10
+# ServiceLabel: %Azure.Identity
+
+# AzureSdkOwners: @test-user-13
+# ServiceLabel: %Extensions
+# ServiceOwners: @test-user-13 @Azure/azure-sdk-write-net-core
+
+# AzureSdkOwners: @test-user-10
+# ServiceLabel: %Tables
+
+####################
+# Client Libraries
+####################
+
+/sdk/ai/Azure.AI.Extensions.OpenAI/    @test-user-22
+
+/sdk/ai/Azure.AI.Projects.Agents/    @test-user-22
+
+# PRLabel: %AI Model Inference %AI Projects
+/sdk/ai/    @test-user-07 @test-user-09 @test-user-18 @test-user-23 @test-user-24
+
+# PRLabel: %AI Model Inference
+/sdk/ai/Azure.AI.Inference/    @test-user-07 @test-user-09 @test-user-23
+
+# Sources: sdk/ai/owners.yaml
+# ServiceLabel: %AI Model Inference
+# ServiceOwners: @test-user-07 @test-user-09 @test-user-23
+
+# PRLabel: %AI Projects
+/sdk/ai/Azure.AI.Projects/    @test-user-07 @test-user-18 @test-user-22 @test-user-23 @test-user-24
+
+# Sources: sdk/ai/owners.yaml, sdk/openai/owners.yaml
+# AzureSdkOwners: @test-user-07
+# ServiceLabel: %AI Projects
+# ServiceOwners: @test-user-07 @test-user-18 @test-user-23 @test-user-02 @test-user-24
+
+# PRLabel: %OpenAI
+/sdk/openai/    @test-user-02 @test-user-13 @test-user-24
+
+# Sources: sdk/openai/owners.yaml
+# AzureSdkOwners: @test-user-13
+# ServiceLabel: %OpenAI
+# ServiceOwners: @test-user-02 @test-user-24
+
+#####################
+# Management Fallback
+#####################
+
+# PRLabel: %Mgmt
+/**/*Management*/    @test-user-03 @test-user-04
+
+# PRLabel: %Mgmt
+/sdk/**/ci.mgmt.yml    @test-user-03 @test-user-04 @test-user-14
+
+# PRLabel: %Mgmt
+/**/Azure.ResourceManager*/    @test-user-03 @test-user-04 @test-user-14
+
+# AzureSdkOwners: @test-user-04
+# ServiceLabel: %Mgmt
+
+######################
+# Management Libraries
+######################
+
+# PRLabel: %API Center %Mgmt
+/sdk/apicenter/Azure.ResourceManager.ApiCenter/    @test-user-03 @test-user-04
+
+# PRLabel: %Arize AI %Mgmt
+/sdk/arizeaiobservabilityeval/Azure.ResourceManager.*/    @test-user-03 @test-user-04
+
+# ServiceLabel: %ARM - Core %Mgmt
+# ServiceOwners: @armleads-azure
+
+# PRLabel: %ARM
+/sdk/resources/Azure.ResourceManager.*/    @Azure/arm-sdk-owners
+
+# ServiceLabel: %ARM %Mgmt
+# ServiceOwners: @Azure/arm-sdk-owners @armleads-azure
+
+########################
+# Provisioning Libraries
+########################
+
+# PRLabel: %Provisioning
+/**/Azure.Provisioning*/    @test-user-03 @test-user-04 @test-user-15
+
+# AzureSdkOwners: @test-user-03 @test-user-04
+# ServiceLabel: %Provisioning
+
+####################
+# EngSys
+####################
+
+/eng/    @test-user-06 @test-user-05 @test-user-21
+
+/eng/common/    @Azure/azure-sdk-eng
+
+/eng/mgmt/    @test-user-04 @test-user-15
+
+/eng/pipelines/aggregate-reports.yml    @test-user-13
+
+/eng/analyzerallowlist/    @Azure/azure-sdk-write-net-core @test-user-13
+
+####################
+# Code Generation
+####################
+
+# PRLabel: %CodeGen
+/sdk/tools/Azure.GeneratorAgent/    @test-user-12 @test-user-20 @test-user-11 @test-user-16 @test-user-10
+
+# PRLabel: %CodeGen %Client
+/eng/packages/http-client-csharp/    @test-user-12 @test-user-15 @test-user-11 @test-user-14 @test-user-03 @test-user-13
+
+# AzureSdkOwners: @test-user-12
+# ServiceLabel: %CodeGen
+
+# AzureSdkOwners: @test-user-14 @test-user-03 @test-user-04
+# ServiceLabel: %CodeGen %Mgmt
+
+####################
+# Automation
+####################
+
+/.github/    @test-user-13 @test-user-15 @test-user-12 @test-user-04
+
+/.github/workflows/    @test-user-13 @test-user-15 @test-user-12
+
+/.github/CODEOWNERS    @test-user-13 @test-user-15 @test-user-12
+
+/.github/owners.config.yaml    @test-user-13 @test-user-15 @test-user-12
+
+##########################
+# Repository configuration
+##########################
+
+/.config/    @test-user-13 @Azure/azure-sdk-write-net-core
+
+/doc/    @test-user-13 @test-user-15 @test-user-12
+
+/sdk/**/NuGet.*    @Azure/azure-sdk-write-net-core @test-user-13
+
+/sdk/**/ci*.yml    @Azure/azure-sdk-write-net-core @test-user-13
+
+/**/package-lock.json    @test-user-12 @test-user-15 @test-user-11 @test-user-13 @test-user-17

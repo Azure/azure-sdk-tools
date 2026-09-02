@@ -1,0 +1,260 @@
+# Example .github/owners.config.yaml for Azure/azure-sdk-for-net
+#
+# Derived from https://github.com/Azure/azure-sdk-for-net/blob/main/.github/CODEOWNERS
+# Long lists of static entries are elided with "# ..." for readability; the real
+# file would carry every static entry from the original CODEOWNERS.
+#
+# All owner aliases are synthetic placeholders (test-user-NN). They preserve the
+# structure of the source file -- which entries share owners, how many owners each
+# entry has, and the order they were authored in -- but they do not correspond to
+# any real GitHub account. Team handles (Azure/*, armleads-azure) are real, since
+# they name groups rather than people.
+#
+# Comments in this file are YAML comments. They are for the humans editing this
+# file and are NOT rendered into .github/CODEOWNERS.
+
+version: 1
+
+configs:
+  # Only fragment files matching these globs are read. Any owners.yaml / owners.yml
+  # found outside these globs is a validation error, so ownership cannot be hidden
+  # in an unexpected location.
+  allowed-owner-yaml-paths:
+    - "sdk/*/owners.yaml"
+    - "sdk/*/owners.yml"
+
+  # Fragment entries that do not name a section land here.
+  default-section: Client Libraries
+
+  # Rendered output, relative to repo root.
+  output: .github/CODEOWNERS
+
+  # Minimum individual (non-team) owners required on a fragment path entry.
+  minimum-path-owners: 2
+
+  # Minimum individual (non-team) service owners required on a label-owner block,
+  # evaluated after union.
+  minimum-label-owners: 2
+
+sections:
+  - name: Repository Root
+    paths:
+      # Catch all for loose files in the root, which are mostly global configuration
+      # and should not be changed without team discussion.
+      - path: "/*"
+        owners: [test-user-13, Azure/azure-sdk-write-net-core]
+
+  - name: SDK
+    paths:
+      # Catch all
+      - path: /sdk/
+        owners: [test-user-13, Azure/azure-sdk-write-net-core]
+
+  - name: End-to-End Samples
+    paths:
+      # Samples catch-all
+      - path: /samples/
+        owners: [test-user-13, Azure/azure-sdk-write-net-core]
+
+      - path: /samples/voicelive/
+        owners: [test-user-08, test-user-25, test-user-19, test-user-01]
+        pr-labels: [Voice Live]
+
+  - name: Core Libraries
+    paths:
+      - path: /sdk/core/
+        owners: [test-user-15, Azure/azure-sdk-write-net-core]
+        pr-labels: [Azure.Core]
+
+      - path: /sdk/core/Azure.Core/**/Identity/
+        owners: [test-user-10, Azure/azure-sdk-write-identity]
+
+      - path: /sdk/identity/
+        owners: [test-user-10, Azure/azure-sdk-write-identity]
+        pr-labels: [Azure.Identity]
+
+      - path: /sdk/extensions/
+        owners: [test-user-13, Azure/azure-sdk-write-net-core]
+        pr-labels: [Extensions]
+
+      - path: /sdk/tables/
+        owners: [test-user-10, test-user-13]
+        pr-labels: [Tables]
+
+    label-owners:
+      - labels: [Azure.Core]
+        service-owners: [test-user-15, Azure/azure-sdk-write-net-core]
+        azure-sdk-owners: [test-user-15]
+
+      - labels: [System.ClientModel]
+        service-owners: [test-user-15, Azure/azure-sdk-write-net-core]
+        azure-sdk-owners: [test-user-15]
+
+      - labels: [Azure.Identity]
+        azure-sdk-owners: [test-user-10]
+
+      - labels: [Extensions]
+        service-owners: [test-user-13, Azure/azure-sdk-write-net-core]
+        azure-sdk-owners: [test-user-13]
+
+      - labels: [Tables]
+        azure-sdk-owners: [test-user-10]
+
+  # Populated from sdk/*/owners.yaml fragment files, plus the static entries below.
+  - name: Client Libraries
+    defined-in-files: true
+    sort: true
+
+    # These two carry no PR label in the source CODEOWNERS, and a fragment path
+    # entry requires pr-labels. `convert` transcribes them into the fragment as-is
+    # and `generate --check` rejects them; the resolution taken here is to keep
+    # them static rather than invent a label. Static entries render above the
+    # fragment entries, so the /sdk/ai/ catch-all wins under last-match-wins,
+    # which is what the hand-written CODEOWNERS resolves to today.
+    paths:
+      - path: /sdk/ai/Azure.AI.Extensions.OpenAI/
+        owners: [test-user-22]
+
+      - path: /sdk/ai/Azure.AI.Projects.Agents/
+        owners: [test-user-22]
+
+  # -----------------------------------------------------------------
+  # IMPORTANT NOTE:
+  #   This section acts as a catch-all, assigning management triage for
+  #   all management issues not specifically owned by a partner team.
+  #   Any management packages owned by partner teams must be defined in
+  #   the "Management Libraries" section, which renders AFTER this one.
+  #   Matching takes place from bottom-to-top and will stop after the
+  #   first match.
+  # -----------------------------------------------------------------
+  - name: Management Fallback
+    paths:
+      - path: "/**/*Management*/"
+        owners: [test-user-03, test-user-04]
+        pr-labels: [Mgmt]
+
+      - path: /sdk/**/ci.mgmt.yml
+        owners: [test-user-03, test-user-04, test-user-14]
+        pr-labels: [Mgmt]
+
+      - path: "/**/Azure.ResourceManager*/"
+        owners: [test-user-03, test-user-04, test-user-14]
+        pr-labels: [Mgmt]
+
+    label-owners:
+      - labels: [Mgmt]
+        azure-sdk-owners: [test-user-04]
+
+  - name: Management Libraries
+    defined-in-files: true
+    sort: true
+    paths:
+      - path: /sdk/apicenter/Azure.ResourceManager.ApiCenter/
+        owners: [test-user-03, test-user-04]
+        pr-labels: [API Center, Mgmt]
+
+      - path: /sdk/arizeaiobservabilityeval/Azure.ResourceManager.*/
+        owners: [test-user-03, test-user-04]
+        pr-labels: [Arize AI, Mgmt]
+
+      - path: /sdk/resources/Azure.ResourceManager.*/
+        owners: [Azure/arm-sdk-owners]
+        pr-labels: [ARM]
+
+      # ...
+
+    label-owners:
+      - labels: [ARM, Mgmt]
+        service-owners: [Azure/arm-sdk-owners, armleads-azure]
+
+      - labels: [ARM - Core, Mgmt]
+        service-owners: [armleads-azure]
+
+      # ...
+
+  - name: Provisioning Libraries
+    paths:
+      - path: "/**/Azure.Provisioning*/"
+        owners: [test-user-03, test-user-04, test-user-15]
+        pr-labels: [Provisioning]
+
+    label-owners:
+      - labels: [Provisioning]
+        azure-sdk-owners: [test-user-03, test-user-04]
+
+  - name: EngSys
+    paths:
+      - path: /eng/
+        owners: [test-user-06, test-user-05, test-user-21]
+
+      - path: /eng/common/
+        owners: [Azure/azure-sdk-eng]
+
+      - path: /eng/mgmt/
+        owners: [test-user-04, test-user-15]
+
+      # Owners for notifications for specific pipelines
+      - path: /eng/pipelines/aggregate-reports.yml
+        owners: [test-user-13]
+
+      # Owners for overrides and suppressions
+      - path: /eng/analyzerallowlist/
+        owners: [Azure/azure-sdk-write-net-core, test-user-13]
+
+      # ...
+
+  - name: Code Generation
+    paths:
+      - path: /sdk/tools/Azure.GeneratorAgent/
+        owners: [test-user-12, test-user-20, test-user-11, test-user-16, test-user-10]
+        pr-labels: [CodeGen]
+
+      - path: /eng/packages/http-client-csharp/
+        owners: [test-user-12, test-user-15, test-user-11, test-user-14, test-user-03, test-user-13]
+        pr-labels: [CodeGen, Client]
+
+      # ...
+
+    label-owners:
+      - labels: [CodeGen]
+        azure-sdk-owners: [test-user-12]
+
+      - labels: [CodeGen, Mgmt]
+        azure-sdk-owners: [test-user-14, test-user-03, test-user-04]
+
+  # GitHub integration, CODEOWNERS, and bot rules
+  - name: Automation
+    paths:
+      - path: /.github/
+        owners: [test-user-13, test-user-15, test-user-12, test-user-04]
+
+      - path: /.github/workflows/
+        owners: [test-user-13, test-user-15, test-user-12]
+
+      - path: /.github/CODEOWNERS
+        owners: [test-user-13, test-user-15, test-user-12]
+
+      - path: /.github/owners.config.yaml
+        owners: [test-user-13, test-user-15, test-user-12]
+
+  # Common repository-wide assets and configuration
+  - name: Repository configuration
+    paths:
+      - path: /.config/
+        owners: [test-user-13, Azure/azure-sdk-write-net-core]
+
+      - path: /doc/
+        owners: [test-user-13, test-user-15, test-user-12]
+
+      # Repository configuration that should not be overridden
+      - path: /sdk/**/NuGet.*
+        owners: [Azure/azure-sdk-write-net-core, test-user-13]
+
+      # CI pipeline configuration
+      - path: /sdk/**/ci*.yml
+        owners: [Azure/azure-sdk-write-net-core, test-user-13]
+
+      - path: "/**/package-lock.json"
+        owners: [test-user-12, test-user-15, test-user-11, test-user-13, test-user-17]
+
+      # ...

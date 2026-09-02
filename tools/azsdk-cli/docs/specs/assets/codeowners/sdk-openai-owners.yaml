@@ -1,0 +1,22 @@
+# Example sdk/openai/owners.yaml
+#
+# Owner aliases are synthetic placeholders (test-user-NN), not real accounts.
+#
+# This fragment also claims the "AI Projects" label set. Its service owners are
+# unioned with the ones declared in sdk/ai/owners.yaml into a single rendered
+# ServiceLabel block, and both files are recorded in the block's Sources comment.
+
+version: 1
+
+paths:
+  - path: .
+    owners: [test-user-02, test-user-13, test-user-24]
+    pr-labels: [OpenAI]
+
+label-owners:
+  - labels: [AI Projects]
+    service-owners: [test-user-02, test-user-24]
+
+  - labels: [OpenAI]
+    service-owners: [test-user-02, test-user-24]
+    azure-sdk-owners: [test-user-13]

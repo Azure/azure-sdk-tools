@@ -1,0 +1,118 @@
+# Example produced from https://raw.githubusercontent.com/Azure/azure-sdk-for-net/refs/heads/main/.github/CODEOWNERS
+# Generally: Copy in the owners configs from that original CODEOWNERS file, preserve comments in generally relevant places 
+
+
+
+configs:
+  # Only read configs from these paths
+  allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/*/owners.yml"]
+  # If an entry in a an owners.yaml or owners.yml file doesn't define a section, 
+  # use Client Libraries by default
+  default-section: Client Libraries
+
+sections: 
+  - name: Repository Root
+    paths:
+      - path: "/**"
+        owners: ["test-user-13", "Azure/azure-sdk-write-net-core"]
+  - name: SDK
+    paths: 
+      # Catch all for loose files in the root, which are mostly global configuration and
+      # should not be changed without team discussion.
+      - path: "/sdk/"
+        owners: ["test-user-13", "Azure/azure-sdk-write-net-core"]
+      # ... 
+
+  - name: End-toEnd Samples
+    paths:
+      # Samples catch-all
+      - path: "/samples/"
+        owners: ["test-user-13", "Azure/azure-sdk-write-net-core"]
+
+      - path: "/samples/voice-live/"
+        owners: ["test-user-08", "test-user-25", "test-user-19", "test-user-01"]
+        pr-label: ["Voice Live"]
+
+      # Core Libraries
+      - path: /sdk/core
+        owners: ["test-user-15", "Azure/azure-sdk-write-net-core"]
+        pr-label: ["Core Libraries"]
+
+      - path: /sdk/core/Azure.Core/**/Identity
+        owners: ["test-user-10", "Azure/azure-sdk-write-identity"]
+        pr-label: ["Core Libraries"]
+
+    label-owners:
+      - labels: ["Azure.Core"]
+        azure-sdk-owners: ["test-user-15"]
+        service-owners: ["test-user-15", "Azure/azure-sdk-write-net-core"]
+
+
+  # <other entires>  
+
+
+  - name: Client Libraries
+    # Somehow this is populated from entries in the sdk/*/owners.yaml and sdk/*/owners.yml files
+    defined-in-files: true
+    
+    # Additional entries can be added in via configuration (this works for
+    # labels which aren't directly assigned to paths)
+    label-owners:
+      - labels: [Compute - Managed Disks]
+        service-owners: ["test-user-26", "test-user-27"]
+
+  # The top part of "Management Libraries" section is defined in this Management
+  # Fallback section. Other entires continue below
+  
+  # -----------------------------------------------------------------
+  # IMPORTANT NOTE:
+  #   This block acts as a catch-all, assigning Arthur triage for
+  #   all management issues not specifically owned by a partner
+  #   team.  Any management packages owned by partner teams must
+  #   blocks defined AFTER this one.  Matching takes place from
+  #   bottom-to-top and will stop after the first match.
+  # -----------------------------------------------------------------  
+  - name: Management Fallback
+    paths:
+      - path: "/**/*Management*/"
+        owners: ["test-user-03", "test-user-04"]
+        pr-label: ["Mgmt"]
+
+      - path: "/sdk/**/ci.mgmt.yml"
+        owners: ["test-user-03", "test-user-04", "test-user-14"]
+        pr-label: ["Mgmt"]
+
+      - path: "/**/Azure.ResourceManager*/"
+        owners: ["test-user-03", "test-user-04", "test-user-14"]
+        pr-label: ["Mgmt"]
+
+    label-owners:
+      - labels: ["Mgmt"]
+        azure-sdk-owners: ["test-user-04"]
+
+  - name: Management Libraries
+    paths:
+      - path: "/sdk/apicenter/Azure.ResourceManager.ApiCenter/"
+        owners: ["test-user-03", "test-user-04"]
+        pr-label: ["Mgmt"]
+
+      - path: "/sdk/arizeaiobservabilityeval/Azure.ResourceManager.*/"
+        owners: ["test-user-03", "test-user-04"]
+        pr-label: ["Mgmt"]
+
+      - path: "/sdk/resources/Azure.ResourceManager.*/"
+        owners: ["Azure/arm-sdk-owners"]
+        pr-label: ["Mgmt"]
+
+      # ... 
+
+  - name: Provisioning Libraries
+  # ... 
+
+  - name: EngSys
+    paths: 
+      - path: /eng/
+        owners: ["test-user-06", "test-user-05", "test-user-21"]
+      # ...
+
+  # ...

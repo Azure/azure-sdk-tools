@@ -1,5 +1,33 @@
 # Spec: 8-Operations - Codeowners Ownership Audit
 
+> [!IMPORTANT]
+> **Partially superseded.** The ownership source of truth moved from Azure DevOps work items to
+> in-repo YAML (`.github/owners.config.yaml` plus `sdk/<service>/owners.yaml`). See
+> [`8-operations-codeowners-management.spec.md`](./8-operations-codeowners-management.spec.md).
+>
+> What still applies from this document:
+>
+> - the cache-backed audit architecture, the six-hour freshness policy, and the fail-fast behavior
+> - the `update-cache` refresh workflow (pipeline definition `5112`)
+> - the legacy-linter rule mapping, as the historical record of why each rule exists
+>
+> What changed:
+>
+> - audit reads YAML files instead of `Owner` / `Label` / `Label Owner` work items
+> - `AUD-STR-001` and `AUD-STR-002` are retired; a label-owner entry with zero owners or zero labels
+>   is now a schema violation that fails at load, before rendering
+> - `AUD-OWN-001` / `AUD-OWN-003` no longer record state anywhere. There is no `Custom.InvalidSince`
+>   field, no replacement ledger, and no `--invalid-owner-lookback-days` grace period; an owner the
+>   cache reports as invalid is ejected immediately. `--fix` rewrites the owners YAML. The
+>   `Generator Interaction` section below describes the retired behavior and is retained for history.
+> - `AUD-OWN-004`, `AUD-OWN-005`, and `AUD-PATH-001` are added; `PATH-001` /
+>   `PATH-003` become implementable because generation now runs inside a repo checkout
+> - the rendered `CODEOWNERS.cache` blob is removed; `check-package` reads the in-repo
+>   `.github/CODEOWNERS`
+>
+> The current audit rule set is the table in
+> [Component 10 of the management spec](./8-operations-codeowners-management.spec.md#component-10-audit-rules).
+
 ## Table of Contents
 
 - [Overview](#overview)

@@ -94,7 +94,7 @@ Baseline and current projects are compiled independently. Scripts produce determ
 
 #### 3. Azure Guidelines
 
-\*\*Tooling\*\*: \`web\_fetch, later integrate with [TypeSpec suppression reporting tool](https://github.com/Azure/azure-rest-api-specs/tree/main/eng/tools/typespec-suppressions).
+**Tooling**: `web_fetch`, later integrate with [TypeSpec suppression reporting tool](https://github.com/Azure/azure-rest-api-specs/tree/main/eng/tools/typespec-suppressions).
 
 **Deterministic analysis:** Capture changed declarations and retain fetched guidance from TypeSpec Azure website with its URL, section, excerpt, example, and content identity. The suppression reporting tool detects new or changed inline `#suppress` directives and `tspconfig.yaml` linter disables relative to the baseline so they can be included in the assessment.
 

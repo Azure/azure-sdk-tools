@@ -10,6 +10,7 @@ const BASE_DELAY = 2000; // 2 seconds in milliseconds
 const MAX_DELAY = 60000; // 60 seconds in milliseconds
 const MAX_CONCURRENT_COUNT = 5;
 const IGNORED_SPECS = ['special-words'];
+const AZURE_OPENAI_SCOPE = "https://cognitiveservices.azure.com/.default";
 
 interface ConvertResult {
     count: number;
@@ -48,7 +49,7 @@ export class SpectorCaseProcessor {
         );
         const azureADTokenProvider = getBearerTokenProvider(
             credential,
-            "https://cognitiveservices.azure.com/.default"
+            AZURE_OPENAI_SCOPE
         );
         const options = { deploymentName, apiVersion, azureADTokenProvider, endpoint }
         this.openAIClient = new AzureOpenAI(options);

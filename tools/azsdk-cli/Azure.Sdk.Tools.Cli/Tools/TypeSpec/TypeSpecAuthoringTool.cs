@@ -72,10 +72,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             },
 
             new McpCommand(TypeSpecAuthoringToolRetrieveKnowledgeCommandName, "Retrieve TypeSpec-related knowledge from Azure SDK Knowledge Base.", RetrieveKnowledgeToolName)
-             {
+            {
                 _requestOption,
                 _typeSpecProjectPathOption,
-             },
+            },
         ];
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -247,7 +247,7 @@ This tool applies to all tasks involving **TypeSpec**:
 Pass in a `request` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links
 ")]
-        public async Task<TypsSpecKnowledgeRetrieveResponse> RetrieveTypeSpecKnowledge(
+        public async Task<TypeSpecKnowledgeRetrieveResponse> RetrieveTypeSpecKnowledge(
             [Description("The request to ask the AI agent")]
             string request,
             [Description("The root path of the TypeSpec project")]
@@ -260,15 +260,15 @@ Returns an answer with supporting references and documentation links
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(request))
                 {
-                    return new TypsSpecKnowledgeRetrieveResponse
+                    return new TypeSpecKnowledgeRetrieveResponse
                     {
+                        TypeSpecProject = typespecProject,
                         ResponseError = "Request cannot be empty"
                     };
                 }
 
                 _logger.LogInformation("Authoring with request: {Request}", request);
 
-                // Build request
                 // Build request
                 var knowledgeRetrieveRequest = new KnowledgeRetrieveRequest
                 {
@@ -277,39 +277,43 @@ Returns an answer with supporting references and documentation links
                     SearchMode = "quick", // For authoring, default quick search
                     WithWikiSearch = true, // Include wiki search for knowledge retrieval
                 };
-                
+
                 // Call the service
                 var response = await _azureSdkKnowledgeBaseService.SendKnowledgeRetrieveRequestAsync(
                     knowledgeRetrieveRequest, ct);
 
-                _logger.LogInformation("Received response with HasResult: {HasResult}, knowledges: {Knowledges}",
-                    response.HasResult, response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges) : "null");
+                _logger.LogInformation("Received response with HasResult: {HasResult}, knowledges Length: {KnowledgesLength}",
+                    response.HasResult, response.Knowledges != null ? response.Knowledges.Count : 0);
 
                 if (!response.HasResult)
                 {
-                    return new TypsSpecKnowledgeRetrieveResponse
+                    return new TypeSpecKnowledgeRetrieveResponse
                     {
+                        TypeSpecProject = typespecProject,
                         ResponseError = "Did not receive a result from knowledge base service."
                     };
                 }
-                return new TypsSpecKnowledgeRetrieveResponse
+                return new TypeSpecKnowledgeRetrieveResponse
                 {
-                    Context = response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges) : string.Empty
+                    TypeSpecProject = typespecProject,
+                    Context = response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges, new JsonSerializerOptions { WriteIndented = true }) : string.Empty
                 };
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 _logger.LogWarning("AI query was cancelled");
-                return new TypsSpecKnowledgeRetrieveResponse
+                return new TypeSpecKnowledgeRetrieveResponse
                 {
+                    TypeSpecProject = typespecProject,
                     ResponseError = "Query was cancelled"
                 };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error querying AI agent");
-                return new TypsSpecKnowledgeRetrieveResponse
+                return new TypeSpecKnowledgeRetrieveResponse
                 {
+                    TypeSpecProject = typespecProject,
                     ResponseError = $"Failed to query AI agent: {ex.Message}"
                 };
             }

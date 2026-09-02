@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
 {
-    public class TypsSpecKnowledgeRetrieveResponse : CommandResponse
+    public class TypeSpecKnowledgeRetrieveResponse : TypeSpecBaseResponse
     {
         [JsonPropertyName("context")]
         public string Context { get; set; } = String.Empty;

@@ -242,6 +242,7 @@ test("renders SDK contract changes with collapsed affected operations", () => {
     html,
     /<strong>CloudHsmClusterSkuName<\/strong><span class="contract-tag">SDK type<\/span><\/summary>/,
   );
+  assert.match(html, /\.contract-tag\{background:#dbeafe;color:#1e40af\}/);
   assert.doesNotMatch(
     html,
     /SDK contract changes — 3 affected REST operations/,
@@ -982,6 +983,7 @@ test("renderer shows expandable REST operations and aggregated downstream method
     html,
     /<strong>Widgets_Get<\/strong><span class="contract-tag">SDK method<\/span>/,
   );
+  assert.match(html, /\.contract-tag\{background:#dbeafe;color:#1e40af\}/);
   assert.match(html, /2 SDK contract changes/);
   assert.match(html, /SDK method member<\/th><th>Before<\/th><th>After/);
   assert.match(html, /Parameters:<\/strong> 1 added, 3 unchanged/);

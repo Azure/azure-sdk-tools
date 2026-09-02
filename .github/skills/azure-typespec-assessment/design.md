@@ -979,6 +979,10 @@ Each type card summary contains:
 1. the short SDK type name;
 2. an `SDK type` tag.
 
+All `SDK type` and `SDK method` tags use the report's blue informational tag
+style. Red remains reserved for REST-breaking tags and failure indicators; it
+must not be used to imply severity on downstream SDK contract cards.
+
 Do not show the contract-change count or affected REST operation count in the
 collapsed summary. Do not show `high`, `medium`, or `low` severity labels or
 severity-colored borders; severity remains structured JSON metadata. Contract

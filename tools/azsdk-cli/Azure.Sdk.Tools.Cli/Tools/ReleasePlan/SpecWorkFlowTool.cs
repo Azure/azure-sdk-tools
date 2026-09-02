@@ -263,6 +263,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     response.ResponseErrors.Add($"Stable SDK generation is not allowed for preview API version '{effectiveApiVersion}'. Use SDK release type 'beta' or select a stable API version.");
                     response.Status = "Failed";
+                    return response;
                 }
 
                 // Update SDK details in release plan if work item ID is provided

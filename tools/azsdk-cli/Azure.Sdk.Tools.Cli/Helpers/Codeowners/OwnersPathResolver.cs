@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
@@ -56,10 +57,8 @@ public static class OwnersPathResolver
             ? $"/{fragment.Directory}/"
             : $"/{fragment.Directory}/{authored}";
 
-        if (!expression.StartsWith($"/{fragment.Directory}/", StringComparison.Ordinal))
+        if (!IsValidCodeownersExpression(expression, where, errors))
         {
-            errors.Add(new OwnersValidationError("CFG-PATH-002",
-                $"{where}: path '{authored}' resolves to '{expression}', which is outside {fragment.Directory}/."));
             return null;
         }
 
@@ -91,6 +90,29 @@ public static class OwnersPathResolver
 
     private static bool HasParentSegment(string path) =>
         path.Replace('\\', '/').Split('/').Any(segment => segment == "..");
+
+    /// <summary>
+    /// Fragments are new authoring surface, so every expression they produce must be one the
+    /// CodeownersUtils matcher can evaluate — otherwise the audit and check-package silently skip it.
+    /// Config paths are exempt; they carry over from a CODEOWNERS file GitHub already enforces and
+    /// include expressions this validator rejects.
+    /// </summary>
+    private static bool IsValidCodeownersExpression(
+        string expression,
+        string where,
+        List<OwnersValidationError> errors)
+    {
+        var reasons = new List<string>();
+        if (DirectoryUtils.IsValidCodeownersPathExpression(expression, reasons))
+        {
+            return true;
+        }
+
+        errors.Add(new OwnersValidationError("CFG-PATH-002",
+            $"{where}: path resolves to '{expression}', which is not a usable CODEOWNERS expression. " +
+            string.Join(" ", reasons)));
+        return false;
+    }
 
     /// <summary>
     /// A glob-free expression that names a directory on disk must be authored with a trailing slash;

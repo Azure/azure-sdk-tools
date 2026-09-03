@@ -15,9 +15,41 @@ internal class OwnersYamlEditorTests
 
     private static string Remove(string yaml, string alias) => OwnersYamlEditor.RemoveOwner(yaml, Path, alias)!;
 
-    [Test]
-    public void RemovesFromTheMiddleOfAFlowSequence()
+    [TestCase("\"test-user-02\"", TestName = "RemovesADoubleQuotedOwner")]
+    [TestCase("'test-user-02'", TestName = "RemovesASingleQuotedOwner")]
+    [TestCase("\"@test-user-02\"", TestName = "RemovesAQuotedOwnerWrittenWithAnAtSign")]
+    public void RemovesAQuotedOwner(string spelling)
     {
+        var result = Remove(
+            $"""
+            version: 1
+            paths:
+              - path: .
+                owners: [test-user-01, {spelling}, test-user-03]
+                pr-labels: [Example]
+            """, "test-user-02");
+
+        Assert.That(result, Does.Contain("owners: [test-user-01, test-user-03]"));
+    }
+
+    [Test]
+    public void LeavesAnOwnerWhoseAliasStartsWithTheRemovedOne()
+    {
+        var result = OwnersYamlEditor.RemoveOwner(
+            """
+            version: 1
+            paths:
+              - path: .
+                owners: [test-user-01, test-user-010]
+                pr-labels: [Example]
+            """, Path, "test-user-0");
+
+        // Nothing matched, so the file is left alone rather than partially rewritten.
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public void RemovesFromTheMiddleOfAFlowSequence()    {
         var result = Remove(
             """
             version: 1

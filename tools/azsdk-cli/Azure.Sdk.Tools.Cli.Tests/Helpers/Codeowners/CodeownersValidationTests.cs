@@ -17,7 +17,7 @@ internal class CodeownersValidationTests
         $"""
         version: 1
         paths:
-          - path: {path}
+          - path: "{path}"
             owners: [test-user-01, test-user-02]
             pr-labels: [Example]
         """;
@@ -52,6 +52,28 @@ internal class CodeownersValidationTests
         Assert.That(Codes(repo), Does.Contain("CFG-PATH-003"));
     }
 
+    [TestCase("Azure.AI.OpenAI?/", TestName = "QuestionMarkIsNotAWildcard")]
+    [TestCase("[abc]/", TestName = "CharacterRangesAreNotSupported")]
+    [TestCase("!Azure.AI.OpenAI/", TestName = "NegationIsNotSupported")]
+    [TestCase("Azure.AI.*", TestName = "GlobEndingInABareAsteriskDoesNotMatch")]
+    [TestCase("**", TestName = "SubtreeGlobIsEquivalentToTheFragmentDirectory")]
+    public void FragmentPathThatTheMatcherCannotEvaluateIsRejected(string path)
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/openai", FragmentWithPath(path));
+
+        Assert.That(Codes(repo), Does.Contain("CFG-PATH-002"));
+    }
+
+    [Test]
+    public void GlobsTheMatcherCanEvaluateAreAccepted()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/openai", FragmentWithPath("**/*.md"));
+
+        Assert.That(Codes(repo), Is.Empty);
+    }
+
     [Test]
     public void DirectoryPathMustBeAuthoredWithATrailingSlash()
     {
@@ -76,7 +98,7 @@ internal class CodeownersValidationTests
     public void GlobsAreNotCheckedAgainstTheWorkingTree()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.WriteFragment("sdk/openai", FragmentWithPath("Azure.AI.*"));
+        repo.WriteFragment("sdk/openai", FragmentWithPath("Azure.AI.*/"));
 
         Assert.That(repo.Render().Errors, Is.Empty);
     }

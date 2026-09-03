@@ -100,14 +100,22 @@ public static partial class OwnersYamlEditor
         return changed ? string.Join("\n", output) : null;
     }
 
-    /// <summary>Removes the alias as a whole token, tolerating a leading '@' and list punctuation.</summary>
+    /// <summary>
+    /// Removes the alias as a whole token, tolerating a leading '@', list punctuation, and either
+    /// quoting style. All three spellings name the same owner, so a fix that only handled bare
+    /// scalars would corrupt <c>owners: ["alice", "bob"]</c> into <c>["", "bob"]</c>.
+    /// </summary>
     private static string StripAlias(string code, string alias)
     {
-        var pattern = $@"@?{Regex.Escape(alias)}\b";
+        var name = $"@?{Regex.Escape(alias)}";
+
+        // The lookbehind keeps a bare match from starting inside a quote or mid-alias, and \b keeps
+        // "test-user-1" from matching the front of "test-user-10".
+        var token = $"""(?<![\w@'"-])(?:"{name}"|'{name}'|{name}\b)""";
 
         // Inside a flow sequence the separator has to go with the item, and either neighbour may
         // supply it: "[a, b]" -> "[a]" whether b or a is removed.
-        return Regex.Replace(code, $@"(,\s*{pattern})|({pattern}\s*,\s*)|({pattern})", string.Empty);
+        return Regex.Replace(code, $@"(,\s*{token})|({token}\s*,\s*)|({token})", string.Empty);
     }
 
     private static (string Code, string Comment) SplitTrailingComment(string line)

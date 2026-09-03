@@ -3,6 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
@@ -28,6 +29,9 @@ public class CheckPackageHelperTests
         entries = CodeownersParser.ParseCodeownersFile(fixturePath);
     }
 
+    /// <summary>Matches the schema defaults, so these tests pin the rules rather than the config.</summary>
+    private static readonly OwnersConfigSettings DefaultSettings = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -41,7 +45,7 @@ public class CheckPackageHelperTests
             "sdk/two-owners/Azure.TwoOwners",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.Issues, Is.Empty);
@@ -60,7 +64,7 @@ public class CheckPackageHelperTests
             "sdk/three-owners/Azure.ThreeOwners",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.Owners.Count, Is.EqualTo(3));
@@ -74,7 +78,7 @@ public class CheckPackageHelperTests
             "sdk/one-owner/Azure.OneOwner",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientOwners, "1 unique owner");
     }
@@ -86,7 +90,7 @@ public class CheckPackageHelperTests
             "sdk/no-labels/Azure.NoLabels",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.MissingPrLabel, "has no PR label");
     }
@@ -98,7 +102,7 @@ public class CheckPackageHelperTests
             "sdk/zero-svc-owners/Azure.ZeroSvcOwners",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"ZeroOwners\" has 0 unique service owner(s)");
     }
@@ -110,7 +114,7 @@ public class CheckPackageHelperTests
             "sdk/no-svc-match/Azure.NoSvcMatch",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"NoMatchingSvcLabel\" has 0 unique service owner(s)");
         Assert.That(result.ServiceLabels, Does.Contain("NoMatchingSvcLabel"));
@@ -123,7 +127,7 @@ public class CheckPackageHelperTests
             "sdk/does-not-exist/Azure.NonExistent",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.NoMatchingPath, "No owners.yaml entry matches path");
     }
@@ -135,7 +139,7 @@ public class CheckPackageHelperTests
             "sdk/*/Azure.Wildcard",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InvalidDirectoryPath, "must not contain '*'");
         Assert.That(result.Issues[0].CurrentValues, Is.EquivalentTo(new[] { "sdk/*/Azure.Wildcard" }));
@@ -158,7 +162,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
         Assert.That(result.Issues, Has.Count.EqualTo(2));
@@ -182,7 +186,7 @@ public class CheckPackageHelperTests
             "sdk/service/Package.Name",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientOwners, "resolved service-level path entry '/sdk/service'");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
@@ -205,7 +209,7 @@ public class CheckPackageHelperTests
             "sdk/service/Package.Name",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.MissingPrLabel, "resolved service-level path entry '/sdk/service' has no PR label");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
@@ -218,7 +222,7 @@ public class CheckPackageHelperTests
             "sdk/superset-match/Azure.SupersetMatch",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"MultiLabel1\" has 0 unique service owner(s)");
     }
@@ -230,7 +234,7 @@ public class CheckPackageHelperTests
             "sdk/multi-label/Azure.MultiLabel",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.PRLabels.Count, Is.EqualTo(2));
@@ -244,7 +248,7 @@ public class CheckPackageHelperTests
             "sdk/reverse-test/Azure.ReverseTest",
             "Azure/azure-sdk-for-net",
             entries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.Owners.Count, Is.EqualTo(3));
@@ -278,7 +282,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
@@ -297,7 +301,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
@@ -316,7 +320,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientOwners, "Azure/unresolved-team");
     }
@@ -333,7 +337,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "Azure/unresolved-team");
     }
@@ -350,7 +354,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             customEntries,
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.Owners, Is.EquivalentTo(new[] { "ownerAlice", "ownerBob" }));
@@ -364,7 +368,7 @@ public class CheckPackageHelperTests
             "sdk/test/Azure.Test",
             "Azure/azure-sdk-for-net",
             [],
-            ownersFilePath: null);
+            settings: DefaultSettings, ownersFilePath: null);
 
         AssertFailure(result, CheckPackageIssue.Codes.NoMatchingPath, "No owners.yaml entry matches path");
     }
@@ -377,7 +381,7 @@ public class CheckPackageHelperTests
                 null!,
                 "Azure/azure-sdk-for-net",
                 entries,
-                ownersFilePath: null));
+                settings: DefaultSettings, ownersFilePath: null));
     }
 
     private static void AssertFailure(CheckPackageResponse response, string issueCode, string messageFragment)

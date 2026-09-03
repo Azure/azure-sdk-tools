@@ -38,6 +38,7 @@ configs:
 
 sections:
   - name: Repository Root
+    exclude-from-check-package: true
     paths:
       # Catch all for loose files in the root, which are mostly global configuration
       # and should not be changed without team discussion.
@@ -45,12 +46,14 @@ sections:
         owners: [test-user-13, Azure/azure-sdk-write-net-core]
 
   - name: SDK
+    exclude-from-check-package: true
     paths:
       # Catch all
       - path: /sdk/
         owners: [test-user-13, Azure/azure-sdk-write-net-core]
 
   - name: End-to-End Samples
+    exclude-from-check-package: true
     paths:
       # Samples catch-all
       - path: /samples/
@@ -128,6 +131,7 @@ sections:
   #   first match.
   # -----------------------------------------------------------------
   - name: Management Fallback
+    exclude-from-check-package: true
     paths:
       - path: "/**/*Management*/"
         owners: [test-user-03, test-user-04]
@@ -173,6 +177,7 @@ sections:
       # ...
 
   - name: Provisioning Libraries
+    exclude-from-check-package: true
     paths:
       - path: "/**/Azure.Provisioning*/"
         owners: [test-user-03, test-user-04, test-user-15]
@@ -183,6 +188,7 @@ sections:
         azure-sdk-owners: [test-user-03, test-user-04]
 
   - name: EngSys
+    exclude-from-check-package: true
     paths:
       - path: /eng/
         owners: [test-user-06, test-user-05, test-user-21]
@@ -204,6 +210,7 @@ sections:
       # ...
 
   - name: Code Generation
+    exclude-from-check-package: true
     paths:
       - path: /sdk/tools/Azure.GeneratorAgent/
         owners: [test-user-12, test-user-20, test-user-11, test-user-16, test-user-10]
@@ -224,6 +231,7 @@ sections:
 
   # GitHub integration, CODEOWNERS, and bot rules
   - name: Automation
+    exclude-from-check-package: true
     paths:
       - path: /.github/
         owners: [test-user-13, test-user-15, test-user-12, test-user-04]
@@ -239,6 +247,7 @@ sections:
 
   # Common repository-wide assets and configuration
   - name: Repository configuration
+    exclude-from-check-package: true
     paths:
       - path: /.config/
         owners: [test-user-13, Azure/azure-sdk-write-net-core]

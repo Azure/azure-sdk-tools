@@ -74,4 +74,13 @@ public class OwnersSection : IYamlSourceLine
     public List<OwnersPathEntry> Paths { get; set; } = [];
 
     public List<OwnersLabelOwnerEntry> LabelOwners { get; set; } = [];
+
+    /// <summary>
+    /// Hides this section's entries from <c>check-package</c> path resolution. Set it on sections
+    /// holding repo-wide guardrails — the root catch-all, the <c>/sdk/</c> catch-all, EngSys, the
+    /// management fallbacks — which own a package's path in the rendered file but say nothing about
+    /// whether that package declared owners of its own. The entries still render; they are only
+    /// excluded when resolving a package.
+    /// </summary>
+    public bool ExcludeFromCheckPackage { get; set; }
 }

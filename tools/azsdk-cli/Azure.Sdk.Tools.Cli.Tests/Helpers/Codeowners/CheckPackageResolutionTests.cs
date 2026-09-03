@@ -8,14 +8,38 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners;
 
 /// <summary>
-/// Covers the part of check-package that <see cref="CheckPackageHelperTests"/> does not: finding the
-/// fragment that governs a directory and turning it into entries. The ownership rules themselves are
+/// Covers the part of check-package that <see cref="CheckPackageHelperTests"/> does not: rendering
+/// the repository and resolving a directory against the result. The ownership rules themselves are
 /// tested there against explicit entries.
 /// </summary>
 internal class CheckPackageResolutionTests
 {
     private static async Task<CheckPackageResponse> Check(OwnersTestRepo repo, string directoryPath) =>
         await new CheckPackageHelper().CheckPackage(directoryPath, repo.Root, "Azure/azure-sdk-for-net", CancellationToken.None);
+
+    [Test]
+    public async Task ExcludedSectionsDoNotSatisfyOwnership()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.CreateDirectory("sdk/unmigrated/Azure.Unmigrated");
+
+        // /sdk/ in the SDK section matches this path and would own it in the rendered file, but that
+        // section is marked exclude-from-check-package, so the package still reads as undeclared.
+        var result = await Check(repo, "sdk/unmigrated/Azure.Unmigrated");
+
+        Assert.That(result.Issues.Single().Code, Is.EqualTo(CheckPackageIssue.Codes.NoMatchingPath));
+    }
+
+    [Test]
+    public async Task OwnershipDeclaredInAnotherServicesFragmentIsNotBorrowed()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.CreateDirectory("sdk/unmigrated/Azure.Unmigrated");
+
+        var result = await Check(repo, "sdk/unmigrated/Azure.Unmigrated");
+
+        Assert.That(result.Owners, Is.Empty);
+    }
 
     [Test]
     public async Task PackageWithItsOwnPathEntryPasses()
@@ -64,6 +88,21 @@ internal class CheckPackageResolutionTests
         var issue = result.Issues.Single();
         Assert.That(issue.Code, Is.EqualTo(CheckPackageIssue.Codes.NoMatchingPath));
         Assert.That(issue.NextStep, Does.Contain("sdk/unmigrated/owners.yaml"));
+    }
+
+    [Test]
+    public async Task ConfiguredMinimumsAreEnforcedInsteadOfAFixedTwo()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteConfig(OwnersTestRepo.ReadAsset("owners.config.yaml")
+            .Replace("minimum-path-owners: 2", "minimum-path-owners: 4"));
+
+        // Azure.AI.Inference declares three owners, which passes the default of 2.
+        var result = await Check(repo, "sdk/ai/Azure.AI.Inference");
+
+        var issue = result.Issues.Single();
+        Assert.That(issue.Code, Is.EqualTo(CheckPackageIssue.Codes.InsufficientOwners));
+        Assert.That(issue.RequiredCount, Is.EqualTo(4));
     }
 
     [Test]

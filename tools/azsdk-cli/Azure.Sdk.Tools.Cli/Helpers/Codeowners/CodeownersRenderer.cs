@@ -33,6 +33,12 @@ public static class CodeownersRenderer
         "# ------------------------------------------------------------------------------",
     ];
 
+    /// <summary>
+    /// Renders the repository's ownership YAML. Entries that could not be bound are dropped and
+    /// reported rather than aborting the render, so a single bad entry does not hide the state of
+    /// every other one. The caller fails the command when <c>Errors</c> is non-empty; nothing is
+    /// written to disk in that case.
+    /// </summary>
     public static CodeownersRenderResult Render(OwnersRepository repository)
     {
         var errors = new List<OwnersValidationError>();
@@ -40,11 +46,6 @@ public static class CodeownersRenderer
 
         ValidateNoDuplicatePaths(entries, errors);
         ValidateNoDuplicateLabelSets(entries, errors);
-
-        if (errors.Count > 0)
-        {
-            return new CodeownersRenderResult(string.Empty, [], errors);
-        }
 
         var ordered = OrderEntries(repository.Config, entries);
 
@@ -191,44 +192,56 @@ public static class CodeownersRenderer
     /// Groups the fragments' label-owner entries by label set and unions their owners. This is the
     /// feature fragments exist to provide: two service teams can each claim a share of a shared
     /// triage label without coordinating an edit to a single shared line.
+    /// <para>
+    /// The section is part of the grouping key. Contributors that disagree about which section a
+    /// label set belongs in are almost certainly making a mistake, but which one is wrong is a
+    /// human judgement, so each renders where it asked to rather than being silently absorbed into
+    /// whichever fragment happened to sort first.
+    /// </para>
     /// </summary>
     private static IEnumerable<RenderedEntry> BindUnionedLabelOwners(
         OwnersRepository repository,
         Dictionary<string, OwnersSection> sectionsByName,
         List<OwnersValidationError> errors)
     {
-        // Fragments arrive in provenance order, so grouping preserves it and the first contributor
-        // of each group is the one whose labels, casing, and section win.
-        var contributions =
-            from fragment in repository.Fragments
-            from labelEntry in fragment.LabelOwners
-            select (fragment, labelEntry);
+        // Resolve every contributor's section first, so a fragment naming a section that does not
+        // exist is reported no matter how many other fragments share its label set.
+        var contributions = new List<(OwnersFragment Fragment, OwnersLabelOwnerEntry Entry, string Section, string DeclaredAt)>();
 
-        foreach (var group in contributions.GroupBy(c => LabelSetKey(c.labelEntry.Labels), StringComparer.Ordinal))
+        foreach (var fragment in repository.Fragments)
+        {
+            foreach (var labelEntry in fragment.LabelOwners)
+            {
+                var declaredAt = $"{fragment.FilePath}:{labelEntry.Line}";
+                var section = ResolveFragmentSection(
+                    repository.Config, sectionsByName, fragment, labelEntry.Section, declaredAt, errors);
+
+                if (section != null)
+                {
+                    contributions.Add((fragment, labelEntry, section.Name, declaredAt));
+                }
+            }
+        }
+
+        // Fragments arrive in provenance order, so grouping preserves it and the first contributor
+        // of each group is the one whose label spelling wins.
+        foreach (var group in contributions.GroupBy(c => (LabelSetKey(c.Entry.Labels), c.Section)))
         {
             var first = group.First();
-            var declaredAt = $"{first.fragment.FilePath}:{first.labelEntry.Line}";
-
-            var section = ResolveFragmentSection(
-                repository.Config, sectionsByName, first.fragment, first.labelEntry.Section, declaredAt, errors);
-            if (section == null)
-            {
-                continue;
-            }
 
             var unioned = new OwnersLabelOwnerEntry
             {
-                Labels = first.labelEntry.Labels,
-                ServiceOwners = UnionPreservingOrder(group.Select(c => c.labelEntry.ServiceOwners)),
-                AzureSdkOwners = UnionPreservingOrder(group.Select(c => c.labelEntry.AzureSdkOwners)),
+                Labels = first.Entry.Labels,
+                ServiceOwners = UnionPreservingOrder(group.Select(c => c.Entry.ServiceOwners)),
+                AzureSdkOwners = UnionPreservingOrder(group.Select(c => c.Entry.AzureSdkOwners)),
             };
 
             yield return new RenderedEntry
             {
                 Entry = unioned.ToCodeownersEntry(),
-                SectionName = section.Name,
-                Sources = [.. group.Select(c => c.fragment.FilePath).Distinct(StringComparer.Ordinal)],
-                DeclaredAt = declaredAt,
+                SectionName = first.Section,
+                Sources = [.. group.Select(c => c.Fragment.FilePath).Distinct(StringComparer.Ordinal)],
+                DeclaredAt = first.DeclaredAt,
             };
         }
     }
@@ -265,11 +278,13 @@ public static class CodeownersRenderer
     /// Order-insensitive, case-insensitive identity of a label set. Sets differing by even one label
     /// are distinct blocks, because a ServiceLabel block's label set is what triage matches on.
     /// </summary>
+    /// <summary>
+    /// Identity of a label set: order- and case-insensitive. Labels are already normalized and
+    /// deduplicated by <see cref="OwnersYamlLoader"/>, so this only has to make ordering and casing
+    /// irrelevant.
+    /// </summary>
     private static string LabelSetKey(IEnumerable<string> labels) =>
-        string.Join("\u0000", labels
-            .Select(CodeownersEntrySorter.NormalizeLabel)
-            .Select(l => l.ToUpperInvariant())
-            .Order(StringComparer.Ordinal));
+        string.Join("\u0000", labels.Select(l => l.ToUpperInvariant()).Order(StringComparer.Ordinal));
 
     /// <summary>Concatenates in the given order and keeps the first spelling of each owner.</summary>
     private static List<string> UnionPreservingOrder(IEnumerable<List<string>> ownerLists)

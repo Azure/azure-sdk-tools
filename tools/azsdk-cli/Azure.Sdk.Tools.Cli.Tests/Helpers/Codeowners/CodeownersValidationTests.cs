@@ -186,9 +186,6 @@ internal class CodeownersValidationTests
 
     private const string SdkCatchAllSection =
         """
-          - name: SDK
-            paths:
-              # Catch all
               - path: /sdk/
                 owners: [test-user-13, Azure/azure-sdk-write-net-core]
         """;

@@ -37,14 +37,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             DefaultValueFactory = _ => ".",
         };
 
-        private readonly Option<bool> checkOption = new("--check")
-        {
-            Description = "Validate the ownership YAML and report whether CODEOWNERS is up to date without writing it",
-            Required = false,
-            DefaultValueFactory = _ => false,
-        };
-
-        // Export section command options
         private readonly Option<string> codeownersPathOption = new("--codeowners-path")
         {
             Description = "Path to the CODEOWNERS file",
@@ -99,13 +91,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string CodeownerCheckPackageToolName = "azsdk_engsys_codeowner_check_package";
         private const string CodeownerUpdateCacheToolName = "azsdk_engsys_codeowner_update_cache";
 
-        /// <summary>
-        /// Exit code for 'generate --check' when the ownership YAML is valid but the checked-in
-        /// CODEOWNERS file is stale. Distinct from 1 so CI can let contributor PRs through and
-        /// queue a regeneration instead of failing them.
-        /// </summary>
-        private const int StaleCodeownersExitCode = 2;
-
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
         private readonly ICheckPackageHelper checkPackageHelper;
@@ -137,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         [
             new(generateCodeownersCommandName, "Render .github/CODEOWNERS from the repository's ownership YAML")
             {
-                repoRootOption, checkOption,
+                repoRootOption,
             },
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
@@ -163,7 +148,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 case generateCodeownersCommandName:
                     return await GenerateCodeowners(
                         await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct),
-                        parseResult.GetValue(checkOption),
                         ct);
 
                 case exportSectionCommandName:
@@ -201,17 +185,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerGenerateToolName), Description("Render .github/CODEOWNERS from the repository's ownership YAML. Use check mode to verify the checked-in file is up to date without writing it.")]
+        [McpServerTool(Name = CodeownerGenerateToolName), Description("Render .github/CODEOWNERS from the repository's ownership YAML.")]
         public async Task<DefaultCommandResponse> GenerateCodeowners(
             string repoRoot,
-            bool check = false,
             CancellationToken ct = default)
         {
             try
             {
-                var result = await codeownersGenerateHelper.Generate(repoRoot, check, ct);
+                var result = await codeownersGenerateHelper.Generate(repoRoot, ct);
 
-                // Exit codes are a CI contract: 1 for invalid YAML, 2 for valid-but-stale CODEOWNERS.
                 if (result.Errors.Count > 0)
                 {
                     return new DefaultCommandResponse
@@ -220,21 +202,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                if (check && !result.IsUpToDate)
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ExitCode = StaleCodeownersExitCode,
-                        Message = $"{result.OutputPath} is out of date. Run 'azsdk config codeowners generate' to update it.",
-                    };
-                }
-
-                return new DefaultCommandResponse
-                {
-                    Message = check
-                        ? $"{result.OutputPath} is up to date."
-                        : $"Wrote {result.OutputPath}.",
-                };
+                return new DefaultCommandResponse { Message = $"Wrote {result.OutputPath}." };
             }
             catch (Exception ex)
             {

@@ -30,7 +30,6 @@ public class CheckPackageHelper : ICheckPackageHelper
 {
     public const string CurrentGitHubUserPlaceholder = "<github-aliases-to-add>";
 
-    private const int MinimumOwnerCount = 2;
     private const string PackageTargetType = "package";
     private const string PathTargetType = "path";
     private const string PrLabelPlaceholder = "<pr-label>";
@@ -39,14 +38,14 @@ public class CheckPackageHelper : ICheckPackageHelper
     private static readonly string[] FragmentFileNames = ["owners.yaml", "owners.yml"];
 
     /// <summary>
-    /// Resolves ownership from the fragment that governs <paramref name="directoryPath"/> and applies
-    /// the package rules to it.
+    /// Renders the repository's ownership YAML and resolves <paramref name="directoryPath"/> against
+    /// the result, minus the sections marked <c>exclude-from-check-package</c>.
     /// <para>
-    /// This deliberately reads one fragment instead of rendering the whole repository. A package's
-    /// owners and PR labels are always declared in the fragment above it, so a full render would add
-    /// a repo-wide walk and repo-wide failure modes to answer a question local to one directory. The
-    /// accepted consequence is that a package owned only by a static entry in the owners config
-    /// reports as unowned -- which is the signal that it still needs to be migrated to a fragment.
+    /// Resolving through the render rather than through a single fragment means this answers the
+    /// question GitHub will answer — who actually owns this path, under last-match-wins — instead of
+    /// a parallel approximation of it. Excluding the guardrail sections is what makes that useful:
+    /// the root, <c>/sdk/</c>, EngSys and management catch-alls own every package's path but say
+    /// nothing about whether the package declared owners of its own.
     /// </para>
     /// </summary>
     public Task<CheckPackageResponse> CheckPackage(
@@ -55,19 +54,34 @@ public class CheckPackageHelper : ICheckPackageHelper
         string? repo,
         CancellationToken ct)
     {
-        var fragment = FindGoverningFragment(directoryPath, repoRoot);
-        var entries = fragment == null ? [] : ProjectToCodeownersEntries(fragment, repoRoot);
+        var repository = OwnersRepositoryLoader.Load(repoRoot, []);
+        var rendered = CodeownersRenderer.Render(repository);
 
-        return Task.FromResult(Evaluate(directoryPath, repo, entries, fragment?.FilePath));
+        var excludedSections = repository.Config.Sections
+            .Where(section => section.ExcludeFromCheckPackage)
+            .Select(section => section.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var entries = rendered.Entries
+            .Where(entry => !excludedSections.Contains(entry.SectionName))
+            .Select(entry => entry.Entry)
+            .ToList();
+
+        return Task.FromResult(Evaluate(
+            directoryPath,
+            repo,
+            entries,
+            repository.Config.Configs,
+            FindGoverningFragmentPath(directoryPath, repoRoot)));
     }
 
     /// <summary>
-    /// Walks up from <paramref name="directoryPath"/> looking for the <c>owners.yaml</c> that governs
-    /// it. Returns null when there is none, or when the one found is too malformed to deserialize --
-    /// both mean "this package has no usable ownership declaration", which is the message the caller
-    /// already knows how to deliver. Schema errors themselves are reported by generate and audit.
+    /// Repo-relative path of the <c>owners.yaml</c> that governs <paramref name="directoryPath"/>,
+    /// or null when there is none. This answers "which file should I edit", which is a different
+    /// question from "who owns this path" — ownership can be resolved by an entry declared in a
+    /// fragment further up the tree, but a fix still belongs in the nearest governing file.
     /// </summary>
-    private static OwnersFragment? FindGoverningFragment(string directoryPath, string repoRoot)
+    private static string? FindGoverningFragmentPath(string directoryPath, string repoRoot)
     {
         var current = directoryPath.Trim('/');
 
@@ -78,18 +92,9 @@ public class CheckPackageHelper : ICheckPackageHelper
                 var relativePath = $"{current}/{fileName}";
                 var file = Path.Combine(repoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
 
-                if (!File.Exists(file))
+                if (File.Exists(file))
                 {
-                    continue;
-                }
-
-                try
-                {
-                    return OwnersYamlLoader.LoadFragment(File.ReadAllText(file), relativePath);
-                }
-                catch (OwnersYamlException)
-                {
-                    return null;
+                    return relativePath;
                 }
             }
 
@@ -101,37 +106,18 @@ public class CheckPackageHelper : ICheckPackageHelper
     }
 
     /// <summary>
-    /// Projects a fragment onto the entry shape the package rules are written against. Path entries
-    /// that fail path validation are dropped rather than reported: generate and audit are where a
-    /// malformed fragment gets explained.
-    /// </summary>
-    private static List<CodeownersEntry> ProjectToCodeownersEntries(OwnersFragment fragment, string repoRoot)
-    {
-        var ignored = new List<OwnersValidationError>();
-
-        var entries = fragment.Paths
-            .Select(path => (path, expression: OwnersPathResolver.ResolveFragmentPath(fragment, path, repoRoot, ignored)))
-            .Where(resolved => resolved.expression != null)
-            .Select(resolved => resolved.path.ToCodeownersEntry(resolved.expression!))
-            .ToList();
-
-        entries.AddRange(fragment.LabelOwners.Select(labelOwner => labelOwner.ToCodeownersEntry()));
-
-        return entries;
-    }
-
-    /// <summary>
-    /// Applies the four package-ownership rules to a set of entries already resolved from an
-    /// owners fragment. Kept separate from resolution so the rules stay directly testable.
+    /// Applies the four package-ownership rules to a set of already-resolved entries. Kept separate
+    /// from resolution so the rules stay directly testable.
     /// </summary>
     /// <param name="ownersFilePath">
-    /// Repo-relative path of the fragment the entries came from. Used to tell the caller which file
-    /// to edit; null when no fragment governs the directory.
+    /// Repo-relative path of the fragment a fix belongs in. Used to tell the caller which file to
+    /// edit; null when no fragment governs the directory.
     /// </param>
     public CheckPackageResponse Evaluate(
         string directoryPath,
         string? repo,
         List<CodeownersEntry> codeownersEntries,
+        OwnersConfigSettings settings,
         string? ownersFilePath)
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
@@ -182,7 +168,7 @@ public class CheckPackageHelper : ICheckPackageHelper
         response.Owners = owners;
         response.PRLabels = matchedEntry.PRLabels ?? [];
 
-        if (owners.Count < MinimumOwnerCount)
+        if (owners.Count < settings.MinimumPathOwners)
         {
             response.Issues.Add(new CheckPackageIssue
             {
@@ -190,11 +176,11 @@ public class CheckPackageHelper : ICheckPackageHelper
                 Message =
                     $"check-package failed for path '{directoryPath}': " +
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has {owners.Count} unique owner(s); " +
-                    $"at least {MinimumOwnerCount} are required. " +
+                    $"at least {settings.MinimumPathOwners} are required. " +
                     $"Owners: [{string.Join(", ", matchedEntry.SourceOwners ?? [])}]",
                 NextStep = $"Add {CurrentGitHubUserPlaceholder} to the owners list of the {FormatPromptValue(resolvedTarget)} path entry in {FormatOwnersFile(ownersFilePath, directoryPath)}",
                 FoundCount = owners.Count,
-                RequiredCount = MinimumOwnerCount,
+                RequiredCount = settings.MinimumPathOwners,
                 CurrentValues = matchedEntry.SourceOwners != null
                     ? new List<string>(matchedEntry.SourceOwners)
                     : null,
@@ -223,10 +209,10 @@ public class CheckPackageHelper : ICheckPackageHelper
             response.Issues.Add(new CheckPackageIssue
             {
                 Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
-                Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, 0, null),
+                Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, 0, settings.MinimumLabelOwners, null),
                 NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFilePath, directoryPath),
                 FoundCount = 0,
-                RequiredCount = MinimumOwnerCount,
+                RequiredCount = settings.MinimumLabelOwners,
             });
 
             return response;
@@ -236,15 +222,15 @@ public class CheckPackageHelper : ICheckPackageHelper
         response.ServiceOwners = serviceOwners;
         serviceOwnerLabels = GetServiceOwnerPromptLabels(response.ServiceLabels);
 
-        if (serviceOwners.Count < MinimumOwnerCount)
+        if (serviceOwners.Count < settings.MinimumLabelOwners)
         {
             response.Issues.Add(new CheckPackageIssue
             {
                 Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
-                Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, serviceOwners.Count, matchingServiceEntry.ServiceOwners),
+                Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, serviceOwners.Count, settings.MinimumLabelOwners, matchingServiceEntry.ServiceOwners),
                 NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFilePath, directoryPath),
                 FoundCount = serviceOwners.Count,
-                RequiredCount = MinimumOwnerCount,
+                RequiredCount = settings.MinimumLabelOwners,
                 CurrentValues = matchingServiceEntry.ServiceOwners != null
                     ? new List<string>(matchingServiceEntry.ServiceOwners)
                     : null,
@@ -294,8 +280,8 @@ public class CheckPackageHelper : ICheckPackageHelper
 
     /// <summary>
     /// Finds the last CODEOWNERS entry whose ServiceLabels, after removing Service Attention,
-    /// are fully contained within the matched entry's PRLabels, and validates that it has at least
-    /// <see cref="MinimumOwnerCount"/> unique service owners.
+    /// are fully contained within the matched entry's PRLabels, and collects its unique service
+    /// owners for the caller to measure against the configured minimum.
     /// </summary>
     internal static (CodeownersEntry? matchingEntry, List<string> serviceOwners) FindMatchingServiceEntry(
         CodeownersEntry matchedEntry,
@@ -357,12 +343,13 @@ public class CheckPackageHelper : ICheckPackageHelper
         string directoryPath,
         IReadOnlyList<string> labels,
         int foundCount,
+        int requiredCount,
         IEnumerable<string>? serviceOwners)
     {
         var message =
             $"check-package failed for path '{directoryPath}': " +
             $"{FormatPrLabelTargetForMessage(labels)} {GetPluralVerb(labels)} {foundCount} unique service owner(s); " +
-            $"at least {MinimumOwnerCount} are required.";
+            $"at least {requiredCount} are required.";
 
         var currentServiceOwners = serviceOwners?.ToList();
         if (currentServiceOwners?.Count > 0)

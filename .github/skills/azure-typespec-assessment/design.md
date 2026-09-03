@@ -944,6 +944,16 @@ Compared SDK cases:
 - public reachability/usage;
 - SDK customization decorators.
 
+For `model-property-added-required` candidates, Agent judgment must use the
+model's effective direction:
+
+- approve when the model is used as request/input, because existing callers
+  must supply the new required member;
+- reject when the model is response/output-only, because receiving an
+  additional required response member does not invalidate existing callers;
+- approve when the model is used in both directions, because the request/input
+  contract is breaking.
+
 PR 43308 is the required regression: parameters remain equal while
 `ScenarioRuns.cancel` and `ScenarioConfigurations.execute` change from
 `basic`/void to `lro`/`ScenarioRun` with Location polling metadata.

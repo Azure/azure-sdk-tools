@@ -255,7 +255,7 @@ Builds the backend API (FastAPI) container image and deploys to Azure App Servic
 Deploys the Logic App ARM template for Teams channel message mirroring.
 
 - **Pipeline**: [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
-- **Parameters**: `environment` (dev/test/prod)
+- **Parameters**: `team` (azure_sdk/azure_mcp_server), `environment` (dev/test/prod)
 - **What it does**:
    1. Runs `az deployment group create` with environment-specific ARM template parameters
    2. Idempotent — safe to re-run

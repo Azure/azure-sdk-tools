@@ -183,8 +183,7 @@ when the concrete property is present in the normalized body schema, label a
 property mapped to a response header as `Response header property`, and
 otherwise fall back to `Model property`. Containing-type reachability alone
 must not classify every property as a body property. Do not render a
-`model-property-removed` row when deterministic downstream analysis proves the
-member was compatibly promoted from an implicit result model to the explicit
-response wrapper for the same operation. Do not render internal rule identifiers such as
+`model-property-removed` row when downstream judgment concludes that the member
+was compatibly preserved by an explicit response model. Do not render internal rule identifiers such as
 `model-property-removed` as members or use full finding sentences as contract
 values.

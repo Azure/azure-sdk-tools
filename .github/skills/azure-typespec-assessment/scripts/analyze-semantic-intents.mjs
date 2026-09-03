@@ -1,5 +1,8 @@
 import path from "node:path";
-import { normalizeAutorestContract } from "./autorest-contract.mjs";
+import {
+  normalizeAutorestContract,
+  sameAutorestContract,
+} from "./autorest-contract.mjs";
 import { parseArgs, isMain, readJson, runMain, writeJson } from "./cli.mjs";
 import { canonicalJson, stableId } from "./stable-id.mjs";
 
@@ -35,9 +38,7 @@ function operationWireShape(operation, includeVersion = true) {
 }
 
 function same(left, right) {
-  return left === undefined || right === undefined
-    ? left === right
-    : canonicalJson(left) === canonicalJson(right);
+  return sameAutorestContract(left, right);
 }
 
 function changedAspects(before, after) {

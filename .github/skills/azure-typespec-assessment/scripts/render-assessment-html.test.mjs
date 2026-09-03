@@ -586,10 +586,8 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.doesNotMatch(complianceHtml, /class="compliance-intent"/);
   const appendixHtml = html.slice(html.indexOf('<section id="appendix">'));
   assert.match(appendixHtml, /Guidance fetched/);
-  assert.match(
-    appendixHtml,
-    /<details class="compliance-intent" id="compliance-intent-semantic-1">/,
-  );
+  assert.match(appendixHtml, /<ul class="guidance-document-list">/);
+  assert.doesNotMatch(appendixHtml, /class="compliance-intent"/);
   assert.match(
     appendixHtml,
     new RegExp(
@@ -642,11 +640,6 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   );
   assert.match(findingHtml, /model Child extends LegacyResource/);
   assert.match(findingHtml, /interface ChildOperations/);
-  assert.match(
-    html,
-    /<details class="compliance-intent" id="compliance-intent-semantic-1">/,
-  );
-  assert.match(html, /<a href="#intent-semantic-1">/);
 });
 
 test("escapeHtml escapes Agent and source text", () => {
@@ -1011,7 +1004,8 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.doesNotMatch(html, /&quot;name&quot;:&quot;afcManagedSync&quot;/);
   assert.match(html, /get is Lro/);
   assert.match(html, /Representative TypeSpec example/);
-  assert.match(html, /Complete TypeSpec source evidence/);
+  assert.doesNotMatch(html, /Complete TypeSpec source evidence/);
+  assert.doesNotMatch(html, /complete-typespec-evidence/);
   assert.match(
     html,
     /<details class="intent" id="intent-semantic-1"><summary>/,
@@ -1164,7 +1158,7 @@ test("representative source uses hunk position before hunk ID", () => {
   assert.equal(selected.hunks[0].id, "hunk-z");
 });
 
-test("renderer shows one intent example and keeps complete appendix evidence", () => {
+test("renderer shows one representative intent example without duplicating source evidence", () => {
   const sources = [
     {
       id: "source-1",
@@ -1234,10 +1228,8 @@ test("renderer shows one intent example and keeps complete appendix evidence", (
     html,
     /Deterministic coverage:<\/strong> 1 of 2 changed hunks classified\. AI inference used for 1 request\./,
   );
-  const appendixHtml = html.slice(
-    html.indexOf('id="complete-typespec-evidence"'),
-  );
-  assert.equal((appendixHtml.match(/class="diff"/g) ?? []).length, 2);
+  assert.equal((html.match(/class="diff"/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /complete-typespec-evidence/);
 });
 
 test("refreshed baseline preserves semantic and REST-derived downstream links", () => {
@@ -1429,7 +1421,7 @@ test("uses the same contract-area rows in semantic operations and REST findings"
   );
 });
 
-test("falls back to top-level contract areas without confirmed REST findings", () => {
+test("derives narrow structural rows without confirmed REST findings", () => {
   const rows = operationContractRows({
     operationId: "Widgets_Get",
     changedAspects: ["responses"],
@@ -1439,11 +1431,87 @@ test("falls back to top-level contract areas without confirmed REST findings", (
 
   assert.deepEqual(rows, [
     {
-      area: "responses",
-      before: "200",
-      after: "200, 404",
+      area: "response 404",
+      before: "not present",
+      after: "present",
     },
   ]);
+});
+
+test("keeps whole-operation additions as one contract row", () => {
+  const rows = operationContractRows({
+    operationId: "Widgets_Create",
+    changedAspects: [
+      "method",
+      "path",
+      "parameters",
+      "request",
+      "responses",
+      "lro",
+    ],
+    before: {},
+    after: {
+      method: "put",
+      path: "/widgets/{widgetName}",
+      parameters: [
+        {
+          in: "path",
+          name: "widgetName",
+          required: true,
+          schema: { kind: "scalar", type: "string" },
+        },
+      ],
+      request: { kind: "body", schema: { kind: "object" } },
+      responses: [{ status: "200" }],
+      lro: { enabled: true },
+    },
+  });
+
+  assert.deepEqual(rows, [
+    {
+      area: "operation",
+      before: "not present",
+      after: "PUT /widgets/{widgetName}",
+    },
+  ]);
+});
+
+test("shows nested response header changes without identical response summaries", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/43308/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const intent = assessment.dimensions.semantic.items.find((item) =>
+    item.operations?.some(
+      (operation) => operation.operationId === "ScenarioRuns_Get",
+    ),
+  );
+  const operation = intent.operations.find(
+    (item) => item.operationId === "ScenarioRuns_Get",
+  );
+  const rows = operationContractRows(
+    operation,
+    assessment.dimensions.rest.findings,
+    intent.id,
+  );
+
+  assert.deepEqual(rows, [
+    {
+      area: "response 202.header:Location",
+      before: "string",
+      after: "string uri",
+    },
+  ]);
+  assert.ok(
+    !rows.some(
+      (row) =>
+        row.area === "responses" &&
+        row.before === "200, 202, default" &&
+        row.after === "200, 202, default",
+    ),
+  );
 });
 
 test("does not group Azure guideline findings by title alone", () => {

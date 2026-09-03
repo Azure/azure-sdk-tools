@@ -2273,9 +2273,16 @@ row presentation:
   contain the current intent;
 - selected findings reuse the same deterministic contract-area and
   before/after derivation used by REST breaking cards;
-- when no confirmed fine-grained REST finding exists, the operation card falls
-  back to its changed top-level aspects: `method`, `path`, `parameters`,
-  `request`, `responses`, `paging`, `lro`, or whole `operation`; and
+- when no confirmed fine-grained REST finding exists, the operation card
+  deterministically compares the normalized before/after operation facts and
+  expands changed top-level aspects into the narrowest available contract
+  areas: individual parameters, request body/schema paths, response status,
+  body/schema paths and headers, paging fields, LRO fields, method, path, or
+  whole operation;
+- a top-level aspect name is used only when the normalized evidence cannot
+  identify a narrower changed path, and identical summaries such as unchanged
+  response-status lists must not be presented as the explanation of a deeper
+  change; and
 - REST breaking cards continue grouping rows by stable REST contract identity,
   while Semantic operation cards group the applicable rows under each
   representative operation.

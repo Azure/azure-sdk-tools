@@ -27,6 +27,44 @@ function slash(value) {
   return value.replaceAll("\\", "/");
 }
 
+function comparableReference(value) {
+  if (typeof value !== "string") return value;
+  for (const marker of ["#/definitions/", "#/definitions~1"]) {
+    const index = value.indexOf(marker);
+    if (index >= 0) return value.slice(index);
+  }
+  return value;
+}
+
+function comparableContractValue(value, key) {
+  if (Array.isArray(value)) {
+    const items = value.map((item) =>
+      key === "references"
+        ? comparableReference(item)
+        : comparableContractValue(item),
+    );
+    return key === "references" ? [...new Set(items)].sort() : items;
+  }
+  if (!value || typeof value !== "object") {
+    return key === "reference" || key === "ref"
+      ? comparableReference(value)
+      : value;
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([childKey, childValue]) => [
+      childKey,
+      comparableContractValue(childValue, childKey),
+    ]),
+  );
+}
+
+export function sameAutorestContract(left, right) {
+  return left === undefined || right === undefined
+    ? left === right
+    : canonicalJson(comparableContractValue(left)) ===
+        canonicalJson(comparableContractValue(right));
+}
+
 function unsupported(message) {
   return new Error(`Unsupported AutoRest shape: ${message}`);
 }

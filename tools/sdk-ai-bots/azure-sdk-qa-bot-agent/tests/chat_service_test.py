@@ -84,7 +84,7 @@ async def test_rebuild_replays_safe_messages_in_chronological_order() -> None:
     openai_client.conversations.create = AsyncMock(
         return_value=SimpleNamespace(id="conv-new")
     )
-    service = ChatService(openai_client=openai_client)
+    service = ChatService()
     service._conversation_service.get_messages_by_conversation_id = AsyncMock(
         return_value=[
             ConversationMessageItem(
@@ -128,6 +128,7 @@ async def test_rebuild_replays_safe_messages_in_chronological_order() -> None:
     replacement_id, rebuilt = await service._rebuild_conversation_after_failure(
         "teams-thread",
         ConversationType.teams_channel,
+        openai_client,
     )
 
     assert replacement_id == "conv-new"
@@ -142,3 +143,14 @@ async def test_rebuild_replays_safe_messages_in_chronological_order() -> None:
         "current question",
     ]
     assert openai_client.conversations.items.list.call_count == 0
+
+
+def test_stateless_session_ids_are_isolated_by_agent() -> None:
+    """Warm stateless sessions are reused only by the agent that created them."""
+    service = ChatService(openai_client=MagicMock())
+
+    service._set_stateless_session_id("azure-sdk-agent", "sdk-session")
+    service._set_stateless_session_id("azure-mcp-agent", "mcp-session")
+
+    assert service._get_stateless_session_id("azure-sdk-agent") == "sdk-session"
+    assert service._get_stateless_session_id("azure-mcp-agent") == "mcp-session"

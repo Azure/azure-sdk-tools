@@ -86,7 +86,7 @@ class ChatService:
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
-        self._stateless_session_id: str | None = None
+        self._stateless_session_ids: dict[str, str] = {}
 
     def _get_project_client(self) -> AIProjectClient:
         return self._project_client or get_project_client()
@@ -94,16 +94,20 @@ class ChatService:
     def _get_openai_client(self, agent_name: str | None = None) -> AsyncOpenAI:
         return self._openai_client or get_openai_client(agent_name)
 
-    def _get_stateless_session_id(self) -> str | None:
+    def _get_stateless_session_id(self, agent_name: str) -> str | None:
         if self._project_client is None and self._openai_client is None:
-            return get_stateless_session_id()
-        return self._stateless_session_id
+            return get_stateless_session_id(agent_name)
+        return self._stateless_session_ids.get(agent_name)
 
-    def _set_stateless_session_id(self, session_id: str | None) -> None:
+    def _set_stateless_session_id(
+        self, agent_name: str, session_id: str | None
+    ) -> None:
         if self._project_client is None and self._openai_client is None:
-            set_stateless_session_id(session_id)
+            set_stateless_session_id(agent_name, session_id)
+        elif session_id is None:
+            self._stateless_session_ids.pop(agent_name, None)
         else:
-            self._stateless_session_id = session_id
+            self._stateless_session_ids[agent_name] = session_id
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
@@ -118,7 +122,7 @@ class ChatService:
         stateless = not req.conversation_id
         if stateless:
             agent_conversation_id, is_new = None, True
-            agent_session_id = self._get_stateless_session_id()
+            agent_session_id = self._get_stateless_session_id(agent_name)
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
         else:
             agent_conversation_id, is_new = await self._resolve_conversation(
@@ -199,6 +203,7 @@ class ChatService:
                 await self._rebuild_conversation_after_failure(
                     req.conversation_id,
                     req.conversation_type,
+                    openai_client,
                 )
             )
             # The replacement conversation has no tenant context of its own.
@@ -217,10 +222,10 @@ class ChatService:
                 agent_ref=agent_ref,
             )
         # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless and not self._get_stateless_session_id():
+        if stateless and not self._get_stateless_session_id(agent_name):
             extra = getattr(response, "model_extra", None) or {}
             captured = extra.get("agent_session_id")
-            self._set_stateless_session_id(captured)
+            self._set_stateless_session_id(agent_name, captured)
             logger.info("Stateless request: captured warm session=%s", captured)
 
         logger.info(
@@ -377,9 +382,9 @@ class ChatService:
         self,
         conversation_id: str | None,
         conversation_type: ConversationType | None,
+        openai_client: AsyncOpenAI,
     ) -> tuple[str, list[ResponseInputItemParam]]:
         """Replace corrupted history and replay only safe message items."""
-        openai_client = self._get_openai_client()
         replay_items = await self._list_message_items(
             conversation_id,
             conversation_type,

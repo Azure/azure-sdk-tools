@@ -20,7 +20,11 @@ export function parseArgs(argv, options = {}) {
     if (value === undefined || value.startsWith("--")) {
       throw new Error(`Missing value for --${rawName}.`);
     }
-    result[name] = value;
+    if (options.arrays?.includes(rawName)) {
+      (result[name] ??= []).push(value);
+    } else {
+      result[name] = value;
+    }
   }
   for (const required of options.required ?? []) {
     if (result[required.replaceAll("-", "_")] === undefined) {

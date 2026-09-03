@@ -4,7 +4,13 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { collectChanges, deriveServiceRoot, resolveComparison } from "./git-evidence.mjs";
+import {
+  collectChanges,
+  createSparseWorktree,
+  deriveServiceRoot,
+  normalizeSparseRoots,
+  resolveComparison,
+} from "./git-evidence.mjs";
 
 function git(repo, ...args) {
   const result = spawnSync("git", ["-C", repo, ...args], { encoding: "utf8" });
@@ -48,4 +54,85 @@ test("deriveServiceRoot rejects paths outside specification", () => {
     "specification/widget",
   );
   assert.throws(() => deriveServiceRoot("tools/widget"), /specification/);
+});
+
+test("normalizes explicit sparse roots without collapsing them", () => {
+  assert.deepEqual(
+    normalizeSparseRoots(
+      [
+        "specification/recoveryservicesbackup/",
+        "specification\\recoveryservices",
+        "specification/recoveryservices",
+      ],
+      "specification",
+    ),
+    ["specification/recoveryservices", "specification/recoveryservicesbackup"],
+  );
+  assert.deepEqual(
+    normalizeSparseRoots(
+      undefined,
+      "specification/widget/resource-manager/Widget",
+    ),
+    ["specification/widget"],
+  );
+});
+
+test("creates a worktree with multiple sparse roots", () => {
+  const repo = fs.mkdtempSync(
+    path.join(os.tmpdir(), "typespec-sparse-source-"),
+  );
+  const worktreeRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "typespec-sparse-worktree-"),
+  );
+  const destination = path.join(worktreeRoot, "checkout");
+  try {
+    git(repo, "init", "-q");
+    git(repo, "config", "user.email", "test@example.com");
+    git(repo, "config", "user.name", "Test");
+    for (const service of ["one", "two", "excluded"]) {
+      const directory = path.join(repo, "specification", service);
+      fs.mkdirSync(directory, { recursive: true });
+      fs.writeFileSync(
+        path.join(directory, "main.tsp"),
+        `namespace ${service};\n`,
+      );
+    }
+    git(repo, "add", ".");
+    git(repo, "commit", "-qm", "base");
+    const commit = git(repo, "rev-parse", "HEAD");
+
+    const roots = createSparseWorktree(
+      repo,
+      commit,
+      ["specification/one", "specification/two"],
+      destination,
+    );
+
+    assert.deepEqual(roots, ["specification/one", "specification/two"]);
+    assert.equal(
+      fs.existsSync(path.join(destination, "specification", "one", "main.tsp")),
+      true,
+    );
+    assert.equal(
+      fs.existsSync(path.join(destination, "specification", "two", "main.tsp")),
+      true,
+    );
+    assert.equal(
+      fs.existsSync(
+        path.join(destination, "specification", "excluded", "main.tsp"),
+      ),
+      false,
+    );
+  } finally {
+    spawnSync("git", [
+      "-C",
+      repo,
+      "worktree",
+      "remove",
+      "--force",
+      destination,
+    ]);
+    fs.rmSync(repo, { recursive: true, force: true });
+    fs.rmSync(worktreeRoot, { recursive: true, force: true });
+  }
 });

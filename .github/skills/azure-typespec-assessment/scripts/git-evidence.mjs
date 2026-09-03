@@ -91,6 +91,19 @@ export function deriveServiceRoot(specification) {
   return match[1];
 }
 
+export function normalizeSparseRoots(sparseRoots, specification) {
+  const roots = sparseRoots?.length ? sparseRoots : [deriveServiceRoot(specification)];
+  const normalized = [
+    ...new Set(
+      roots.map((root) => root.replaceAll("\\", "/").replace(/^\.?\//, "").replace(/\/$/, "")),
+    ),
+  ].sort();
+  if (normalized.some((root) => !/^specification\/[^/]+(?:\/.*)?$/.test(root))) {
+    throw new Error("Sparse roots must be under specification/<service>.");
+  }
+  return normalized;
+}
+
 export function discoverProjects(repo, files, serviceRoot) {
   const projects = new Set();
   let hasSharedChange = false;
@@ -127,24 +140,26 @@ export function discoverProjects(repo, files, serviceRoot) {
   return [...projects].sort();
 }
 
-export function createSparseWorktree(repo, commit, serviceRoot, destination) {
+export function createSparseWorktree(repo, commit, sparseRoots, destination) {
   if (fs.existsSync(destination)) {
     throw new Error(`Worktree destination already exists: ${destination}`);
   }
+  const roots = Array.isArray(sparseRoots) ? sparseRoots : [sparseRoots];
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   git(repo, ["worktree", "add", "--detach", "--no-checkout", destination, commit]);
   git(destination, ["sparse-checkout", "init", "--cone"]);
-  git(destination, ["sparse-checkout", "set", serviceRoot]);
+  git(destination, ["sparse-checkout", "set", ...roots]);
   git(destination, ["checkout", "--detach", commit]);
-  const roots = git(destination, ["sparse-checkout", "list"]).stdout
+  const actualRoots = git(destination, ["sparse-checkout", "list"]).stdout
     .trim()
     .split(/\r?\n/)
     .filter(Boolean)
-    .map((item) => item.replaceAll("\\", "/"));
-  if (roots.length !== 1 || roots[0] !== serviceRoot) {
+    .map((item) => item.replaceAll("\\", "/"))
+    .sort();
+  if (JSON.stringify(actualRoots) !== JSON.stringify([...roots].sort())) {
     throw new Error(`Sparse checkout verification failed for ${destination}.`);
   }
-  return roots;
+  return actualRoots;
 }
 
 export function removeWorktree(repo, destination) {

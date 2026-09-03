@@ -1367,6 +1367,7 @@ if (isMain(import.meta.url)) {
     const args = parseArgs(process.argv.slice(2), {
       required: ["specification", "output"],
       defaults: { repo: process.cwd(), base: "origin/main" },
+      arrays: ["sparse-root"],
     });
     const result = await runAssessmentAnalysis(args);
     console.log(

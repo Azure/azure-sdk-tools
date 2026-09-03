@@ -13,6 +13,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  analysisArguments,
   commonSpecificationRoot,
   parseArgs,
   runNetworkPilot,
@@ -39,6 +40,34 @@ test("uses the common specification root for multi-root cases", () => {
   assert.equal(
     commonSpecificationRoot(["specification/network/resource-manager"]),
     "specification/network/resource-manager",
+  );
+});
+
+test("preserves each sparse root for multi-root analysis", () => {
+  const args = analysisArguments(
+    {
+      headWorkspace: "head",
+      analysisOutput: "analysis",
+      documentCache: "documents",
+      artifactCache: "artifacts",
+      checkoutCache: "checkouts",
+    },
+    {
+      baseCommit: "base",
+      sparseRoots: [
+        "specification/recoveryservices",
+        "specification/recoveryservicesbackup",
+      ],
+    },
+    300 * 1024,
+  );
+
+  assert.equal(args[args.indexOf("--specification") + 1], "specification");
+  assert.deepEqual(
+    args.flatMap((argument, index) =>
+      argument === "--sparse-root" ? [args[index + 1]] : [],
+    ),
+    ["specification/recoveryservices", "specification/recoveryservicesbackup"],
   );
 });
 
@@ -177,6 +206,12 @@ test("coordinates deterministic analysis and prepares an Agent work item", () =>
     assert.equal(
       args[args.indexOf("--model-input-budget-bytes") + 1],
       String(300 * 1024),
+    );
+    assert.deepEqual(
+      args.flatMap((argument, index) =>
+        argument === "--sparse-root" ? [args[index + 1]] : [],
+      ),
+      ["specification/network/resource-manager/Microsoft.Network/Network"],
     );
 
     const workItem = JSON.parse(readFileSync(summary.agentWorkItem, "utf8"));

@@ -23,7 +23,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result. |
 | azsdk_engsys_codeowner_audit |  | Audit the repository's ownership YAML against cached org, team, and label data. Update the CODEOWNERS cache before calling this. |
 | azsdk_engsys_codeowner_check_package |  | Check that a package has sufficient owners, PR labels, and service owners. |
-| azsdk_engsys_codeowner_generate |  | Render .github/CODEOWNERS from the repository's ownership YAML. Use check mode to verify the checked-in file is up to date without writing it. |
+| azsdk_engsys_codeowner_generate |  | Render .github/CODEOWNERS from the repository's ownership YAML. |
 | azsdk_engsys_codeowner_update_cache | `azsdk config codeowners update-cache` | Run the CODEOWNERS cache update pipeline. Use this after making changes to ownership information to unblock releases or other pipelines. |
 | azsdk_example_agent_fibonacci | `azsdk example demo agent` | Demonstrates agent computing Nth Fibonacci number via iterative tool calls |
 | azsdk_example_ai_service | `azsdk example demo ai` | Demonstrates AI service integration using Azure OpenAI |

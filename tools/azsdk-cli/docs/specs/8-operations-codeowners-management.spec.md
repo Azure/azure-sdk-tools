@@ -194,6 +194,12 @@ sections:
   - name: Client Libraries
     defined-in-files: true
     sort: true             # entries ordered by CodeownersEntrySorter.SortEntries
+
+  - name: SDK
+    exclude-from-check-package: true   # a repo-wide guardrail, not per-package ownership
+    paths:
+      - path: /sdk/
+        owners: [Azure/azure-sdk-write]
 ```
 
 | Key | Type | Required | Meaning |
@@ -208,6 +214,7 @@ sections:
 | `sections[].name` | string | yes | Unique. Also the key used by `export-section` and `CodeownersSectionFinder`. |
 | `sections[].defined-in-files` | bool | no | Default `false`. Marks the section as a target for fragment entries. |
 | `sections[].sort` | bool | no | Default `false`. `true` orders the section's entries with `CodeownersEntrySorter.SortEntries`; `false` renders them in authored order. Independent of `defined-in-files`. |
+| `sections[].exclude-from-check-package` | bool | no | Default `false`. Hides the section from `check-package` ownership resolution. Affects nothing about rendering. |
 | `sections[].paths[]` | list | no | Static path entries. Ordered by `sections[].sort`. |
 | `sections[].label-owners[]` | list | no | Static label-owner entries. Ordered by `sections[].sort`. |
 
@@ -310,7 +317,7 @@ fragment cannot express as written: `/sdk/` itself, the three `/sdk/agentserver/
 entries, and the two `/sdk/ai/Azure.AI.Extensions.OpenAI/` and `/sdk/ai/Azure.AI.Projects.Agents/`
 entries. `convert` does not fix these. It transcribes them faithfully into fragments without labels
 and reports them, so migration is a two-step operation: convert, then work through what
-`generate --check` rejects. Each entry has two non-equivalent resolutions — assign a label and keep
+`generate` rejects. Each entry has two non-equivalent resolutions — assign a label and keep
 it in the fragment, or move it to a static owners config entry — and they place the entry on
 opposite sides of its service catch-all under last-match-wins. The reference assets take the second
 option for the two `/sdk/ai/` entries, which preserves what the hand-written file resolves to today.
@@ -333,38 +340,36 @@ and they stay in the source file.
 
 ### Component 3: Path containment rules
 
-Fragments may only own their own subtree. Containment is enforced for **paths**, and is enforced in
-two independent steps:
+Fragments may only own their own subtree, and every expression they produce must be one the matcher
+can actually evaluate.
 
 1. **Literal `..` rejection.** If a fragment `path` value contains a `..` path segment anywhere, the
    load fails immediately with `CFG-PATH-001` before any resolution or normalization is attempted.
    `../some-other-service`, `Azure.AI.Inference/../../storage`, and `./..` are all rejected on sight.
    This check is textual and runs first so that no clever expression can reach the resolver.
-2. **Resolved-path containment.** After the path is resolved against the fragment directory and
-   normalized, the result must be the fragment directory itself or a descendant of it. A path that
-   resolves outside the fragment directory for any other reason (absolute path, symlink-style
-   trickery, drive-qualified path) fails with `CFG-PATH-002`.
+2. **Repo-absolute rejection.** A leading `/` in a fragment `path` is an error (`CFG-PATH-003`).
+   Repo-absolute expressions belong in the owners config. This removes the ambiguity of whether
+   `/sdk/ai` means "repo root" or "fragment directory".
+
+Together these two rules are containment in full: a fragment path is joined to the fragment's own
+directory, so once it can neither climb out with `..` nor start over at the root, the result is
+always inside the fragment's subtree.
 
 Additional path rules:
 
-- A leading `/` in a fragment `path` is an error (`CFG-PATH-003`). Repo-absolute expressions belong in
-  the owners config. This removes the ambiguity of whether `/sdk/ai` means "repo root" or "fragment
-  directory".
-- Glob metacharacters `*` and `**` are allowed within the fragment subtree — `Azure.AI.*` is valid
-  in `sdk/ai/owners.yaml` and resolves to `/sdk/ai/Azure.AI.*`. `?` is **not** allowed: the
-  CodeownersUtils matcher rejects any expression containing it
-  (`ErrorMessageConstants.ContainsQuestionMarkPartial`, "contains ?. Please use * instead."), and
-  the globber treats `?` as a literal rather than a wildcard.
+- A fragment path expression must be one `DirectoryUtils.IsValidCodeownersPathExpression` accepts —
+  `CFG-PATH-002` otherwise. This rejects `?`, `[`, `]`, `!`, escaped `#`, a glob ending in a bare
+  `*` that is not `/*`, and the redundant `/**` and `/**/` suffixes. Glob metacharacters `*` and
+  `**` are otherwise allowed within the fragment subtree: `Azure.AI.*/` is valid in
+  `sdk/ai/owners.yaml` and resolves to `/sdk/ai/Azure.AI.*/`.
 - Owners config `path` values must be repo-absolute (leading `/`) — `CFG-PATH-004` otherwise.
 - A glob-free fragment path that names a directory on disk must be authored with a trailing `/`.
   `CFG-PATH-005` otherwise. See [Normalization](#normalization).
 
 ##### Path validation applies to fragments only
 
-Every `CFG-PATH-*` rule, and the expression-validity gate in
-[Component 6](#component-6-rendering-algorithm), applies **only to paths contributed by
-`owners.yaml` fragments**. Path expressions written directly in the owners config are accepted as
-authored.
+Every `CFG-PATH-*` rule applies **only to paths contributed by `owners.yaml` fragments**. Path
+expressions written directly in the owners config are accepted as authored.
 
 The reason is that the owners config is seeded from each repository's existing CODEOWNERS file, and
 those expressions are valid today by definition — they are what GitHub is already enforcing. Some of
@@ -396,9 +401,10 @@ path is used as written. Nothing else is added or removed.
 ```text
 sdk/ai/owners.yaml  path: .                      ->  /sdk/ai/
 sdk/ai/owners.yaml  path: Azure.AI.Inference/    ->  /sdk/ai/Azure.AI.Inference/
-sdk/ai/owners.yaml  path: Azure.AI.*             ->  /sdk/ai/Azure.AI.*
+sdk/ai/owners.yaml  path: Azure.AI.*/            ->  /sdk/ai/Azure.AI.*/
 sdk/ai/owners.yaml  path: ci.yml                 ->  /sdk/ai/ci.yml
 sdk/ai/owners.yaml  path: ../storage             ->  ERROR CFG-PATH-001
+sdk/ai/owners.yaml  path: Azure.AI.*             ->  ERROR CFG-PATH-002
 sdk/ai/owners.yaml  path: /sdk/storage/          ->  ERROR CFG-PATH-003
 sdk/ai/owners.yaml  path: Azure.AI.Inference     ->  ERROR CFG-PATH-005
 ```
@@ -449,11 +455,24 @@ filesystem is unambiguous and needs no list.
 `CodeownersEntrySorter.NormalizePath` is therefore **not** reused for rendering. It remains in use
 only where it already is, on parsed entries.
 
+#### Owner and label normalization
+
 Owners are normalized by trimming, stripping a leading `@`, and de-duplicating. They render with an
 `@` prefix.
 
 Labels are normalized by trimming, stripping a leading `%`, and de-duplicating. They render with a
 `%` prefix.
+
+Both happen **once, as the YAML is loaded**, before any entry reaches the renderer, the validator,
+the audit, or `check-package`. Nothing downstream re-normalizes and nothing downstream sees an
+un-normalized value, so `@alice` and `alice` are the same owner everywhere and `[AI Projects]` and
+`[ai projects]` are the same label set everywhere — including in the union key, the duplicate
+checks, and the `# Sources:` provenance. De-duplication is applied at the same moment, so an entry
+that lists a label twice under two spellings carries it once.
+
+This is the design's answer to a failure mode the previous implementation had: normalization scattered
+across each consumer, each with its own idea of what a leading `@` meant, and two consumers reaching
+different conclusions about whether two entries collide.
 
 #### Owners and labels are never sorted
 
@@ -495,10 +514,14 @@ call site, so an implementation cannot drift between them.
 
 ### Component 4: Label-owner union
 
-Label-owner entries **contributed by fragments** are grouped by their **label set**: the normalized
-set of labels, compared order-insensitively and case-insensitively. Sets that differ by even one
-label are distinct blocks, because a `ServiceLabel` block's label set is what triage automation
-matches on.
+Label-owner entries **contributed by fragments** are grouped by **label set and target section**.
+The label set is compared order-insensitively (labels are already normalized and case-folded when
+the YAML loads). Sets that differ by even one label are distinct blocks, because a `ServiceLabel`
+block's label set is what triage automation matches on.
+
+Section is part of the key because two fragments claiming the same labels in different sections are
+asking for the block to land in two different places, and no merge can satisfy both. See
+[Contributors that disagree about the section](#contributors-that-disagree-about-the-section).
 
 Label-owner entries written **directly in the owners config are never grouped**. Each renders as its
 own block, even if another static entry declares the same label set. This is a rule about *merging*,
@@ -517,7 +540,7 @@ For each fragment group:
    order**, in that contributor's authored order and casing. Later contributors' spellings of the
    same label set are discarded. Without this rule, two fragments spelling a label `AI Projects` and
    `ai projects` would render nondeterministically.
-5. The target section is the section of the first contributor in provenance order.
+5. The target section is the group's own — every contributor to a group named it.
 
 A `# Sources:` comment is emitted as the first line of any block that has **at least one fragment
 contributor** — including single-contributor blocks, where it answers "which file put this here?".
@@ -542,6 +565,22 @@ Given `sdk/ai/owners.yaml` and `sdk/openai/owners.yaml` both declaring `labels: 
 
 The `ServiceOwners` line is in provenance order — `sdk/ai`'s three owners, then `sdk/openai`'s two —
 not alphabetical order.
+
+#### Contributors that disagree about the section
+
+If `sdk/ai/owners.yaml` sends `[AI Projects]` to `Client Libraries` and `sdk/openai/owners.yaml`
+sends the same label set to `Management Libraries`, two blocks render, one in each section, each
+carrying only its own contributors.
+
+That is almost certainly a mistake, but which fragment is wrong is a human judgement the renderer
+cannot make. Picking a winner would silently discard one team's service owners; failing the render
+would block an unrelated pull request over a disagreement between two other teams. Rendering both,
+as written, leaves the evidence in the output where the owning teams can see it.
+
+A fragment naming a section that does not exist, or one without `defined-in-files: true`, is a
+different case: there is no output to render it into. The entry is **dropped** and `CFG-SEC-001` is
+reported. Every other entry still renders, and `generate` exits non-zero, so the mistake cannot
+merge.
 
 #### Static entries are never merged
 
@@ -678,13 +717,18 @@ Deterministic. The same inputs always produce a byte-identical file.
 2. **Schema validate.** Reject unknown keys, missing required keys, non-canonical key spellings, and
    version mismatches.
 3. **Normalize.** Apply the path, owner, and label normalization rules above. Fragment path
-   containment (`CFG-PATH-001` / `CFG-PATH-002`) is enforced here.
+   containment and expression validity (`CFG-PATH-001` / `CFG-PATH-002` / `CFG-PATH-003`) are
+   enforced here.
 4. **Bind sections.** Resolve each entry's target section: entry `section` → file `section` →
    `configs.default-section` for fragments; the declaring section for static entries. A fragment
    entry targeting a missing section, or one without `defined-in-files: true`, fails with
    `CFG-SEC-001`.
 5. **Union label owners.** As described in Component 4.
-6. **Validate.** Run the `CFG-*` rules. Any error aborts generation; nothing is written.
+6. **Validate.** Run the `CFG-*` rules. An entry that cannot be bound — an unknown section, an
+   invalid path — is **dropped and reported**; the remaining entries still render. Rendering
+   continues so one bad entry does not hide the state of every other one, and so the report names
+   every problem in the file rather than the first. `generate` prints the report, writes nothing,
+   and exits non-zero.
 7. **Order.** Sections render in declaration order. What happens *within* a section is controlled by
    `sections[].sort`, and by nothing else. `sort` and `defined-in-files` are independent: a section
    may be fragment-populated and unsorted, or static-only and sorted.
@@ -816,29 +860,22 @@ by hand gets one unambiguous error instead of a byte-level diff they cannot act 
 **Gate 2 — YAML validity.** Runs on any PR touching `.github/owners.config.yaml` or an
 `owners.yaml`, and is the whole of what a contributor has to satisfy. It is checks 1 and 2 below.
 
-**The regeneration job.** Runs on `main` after merge. Renders, compares, and opens or updates a PR
-when the committed file is stale.
+**The regeneration job.** Runs on `main` after merge. Renders, and opens or updates a PR when the
+result differs from the committed file.
 
-`generate --check` serves gate 2 and the regeneration job from one code path, distinguished by exit
-code:
+`generate` has one job — render the YAML and write the result — and one failure mode: it exits
+non-zero when something in the YAML could not be rendered. Whether the committed file happens to be
+in sync is not `generate`'s question. The regeneration job answers it with `git diff --exit-code`,
+which is what actually decides whether there is a PR to open, and gate 2 does not care at all: a
+contributor's PR is *expected* to leave the committed file stale.
 
-| Exit | Meaning | Gate 2 | Regeneration job |
-|------|---------|--------|------------------|
-| 0 | YAML is valid and the committed file is in sync | pass | nothing to do |
-| 1 | A `CFG-*` validation error; nothing could be rendered | **fail** | alert; do not open a PR |
-| 2 | YAML is valid but the committed file is out of sync | **pass** | open or update the regeneration PR |
+Gate 2 performs two checks.
 
-Exit 2 is the *expected* state of a contributor's PR — they changed YAML and, correctly, did not
-regenerate. Gate 2 treating it as a pass is what makes the workflow coherent; treating it as a
-failure is the trap this design exists to avoid.
-
-`generate --check` performs two checks, in this order.
-
-**Check 1 — the YAML renders.** Load, normalize, and validate every ownership file in the checkout
-and render in memory, then compare against the committed file. Rendering is a pure function of
-repository contents (see [Component 8](#component-8-invalid-owner-handling)), so this needs no
-network, no cache, and no knowledge of when it runs. A `CFG-*` failure is exit 1; a clean render
-that does not match the committed bytes is exit 2.
+**Check 1 — the YAML renders.** Load, normalize, validate, and render every ownership file in the
+checkout. Rendering is a pure function of repository contents (see
+[Component 8](#component-8-invalid-owner-handling)), so this needs no network, no cache, and no
+knowledge of when it runs. The gate passes when `generate` exits 0. The rendered file it produces in
+the contributor's working tree is discarded, not committed.
 
 **Check 2 — owner validity, scoped to the paths the PR touches.** For each ownership file the PR
 changes, collect the owners declared there and validate them against the publicly downloadable owner
@@ -851,8 +888,9 @@ not run it and cannot be blocked by it.
 
 #### The regeneration job
 
-After a PR merges to `main`, the job checks out `main`, runs `generate --check`, and on exit 2
-renders the file and opens a pull request titled *Regenerate CODEOWNERS*.
+After a PR merges to `main`, the job checks out `main`, runs `generate`, and if `git diff
+--exit-code` reports a change to `.github/CODEOWNERS`, opens a pull request titled
+*Regenerate CODEOWNERS*.
 
 - **Fixed head branch `codeowners/regenerate`.** If a PR from that branch is already open, the job
   force-updates the branch and lets the existing PR pick it up rather than opening a second one.
@@ -860,9 +898,9 @@ renders the file and opens a pull request titled *Regenerate CODEOWNERS*.
   carrying the union of their effects. This is the same mechanism `audit --fix` uses for its removal
   PR ([Component 8](#component-8-invalid-owner-handling)), and the two jobs deliberately use
   different branches so neither clobbers the other.
-- **On exit 1 it does not open a PR.** A validation error on `main` means the tree is in a state
-  that cannot render. Opening a PR is impossible and silently skipping is worse, so the job alerts.
-  Gate 2 makes this nearly unreachable: a `CFG-*` error cannot merge in the first place.
+- **If `generate` fails it does not open a PR.** A validation error on `main` means the tree is in a
+  state that cannot render. Opening a PR is impossible and silently skipping is worse, so the job
+  alerts. Gate 2 makes this nearly unreachable: a `CFG-*` error cannot merge in the first place.
 - **The regeneration PR is reviewed like any other.** It modifies `.github/CODEOWNERS`, which the
   repository-root section assigns to repository maintainers, so it lands in front of the people
   responsible for the file. It is exempt from gate 1 by virtue of its head branch, and it satisfies
@@ -996,7 +1034,7 @@ neither downgrades a cache failure to a warning.
 
 | Operation | Unusable cache | Consequence of the alternative |
 |-----------|----------------|--------------------------------|
-| `generate --check` check 2 (gate 2) | **Fail the check.** | A gate that silently skips is a gate nobody can rely on |
+| Gate 2 check 2 (owner validity) | **Fail the check.** | A gate that silently skips is a gate nobody can rely on |
 | `audit --fix` (editing YAML) | **Fail. Refuse to fix.** | Deletes owners from source files, which the job then commits and opens as a PR |
 
 Check 1 is unaffected in all cases; it never consults the cache and stays a pure function of
@@ -1144,9 +1182,9 @@ the moment access is revoked, whether or not our file still lists the alias.
 The costs are concrete:
 
 - **The generated file stops being verifiable.** Its content would depend on cache state at the
-  moment of the run, which no later check can reconstruct. `generate --check` would have to either
-  report drift forever or re-query the cache, making structural drift detection network-dependent
-  and time-dependent — so a cache outage would block every CODEOWNERS pull request.
+  moment of the run, which no later check can reconstruct. The regeneration job would have to
+  either report drift forever or re-query the cache, making drift detection network-dependent and
+  time-dependent — so a cache outage would block every CODEOWNERS pull request.
 - **Ownership could transfer silently.** If filtering emptied an entry's owner list, the renderer
   would have to drop the entry, and under last-match-wins the path would fall through to the
   previous matching entry — usually a broad catch-all. A change in remote cache state would reassign
@@ -1163,9 +1201,9 @@ and the rejecting cache named in the pull request description.
 
 | Command | Change |
 |---------|--------|
-| `azsdk config codeowners generate` | Reads YAML instead of Azure DevOps. New `--check`. `--package-types`, `--section`, and `--invalid-owner-lookback-days` removed (sections come from the config; the grace period is gone). |
+| `azsdk config codeowners generate` | Reads YAML instead of Azure DevOps. `--package-types`, `--section`, and `--invalid-owner-lookback-days` removed (sections come from the config; the grace period is gone). |
 | `azsdk config codeowners audit` | Rules rebased onto YAML. New `--repo-root`. `--fix` edits YAML instead of work items; `--force` keeps its `SafetyThreshold` override meaning. |
-| `azsdk config codeowners check-package` | Resolves ownership from the owning `owners.yaml` fragment instead of a rendered CODEOWNERS artifact. `--codeowners-cache` and the blob fallback are removed. Validation rules unchanged. |
+| `azsdk config codeowners check-package` | Resolves ownership by rendering the checkout's ownership YAML instead of downloading a rendered CODEOWNERS artifact. `--codeowners-cache` and the blob fallback are removed. Validation rules unchanged. |
 | `azsdk config codeowners export-section` | Unchanged. Operates on the rendered file; its remaining caller is `Test-CodeownersSections.ps1`. |
 | `azsdk config codeowners update-cache` | Unchanged trigger. The pipeline it starts now refreshes only the org- and team-membership caches. |
 | `azsdk config github-label check` | Unchanged. |
@@ -1185,8 +1223,8 @@ and the rejecting cache named in the pull request description.
 | `azsdk config github-label sync-ado` | (none) |
 
 Ownership mutation is now a file edit in a pull request. An agent edits `sdk/<service>/owners.yaml`
-directly, then runs `generate --check` and `audit`. It does not run `generate` and does not stage
-`.github/CODEOWNERS`.
+directly, then runs `generate` and `audit` to confirm the result is valid. It does not stage
+`.github/CODEOWNERS`; the regeneration job owns that file.
 
 #### `view` is deleted, not reimplemented
 
@@ -1244,6 +1282,18 @@ fail-fast behavior, and the `update-cache` remediation path documented in
 `AUD-PATH-001` is newly implementable. Generation now runs inside a repo checkout, so the legacy
 linter's `PATH-001` / `PATH-003` gap closes.
 
+##### The audit reads fragments, not the owners config
+
+Every rule above evaluates `owners.yaml` fragments. `.github/owners.config.yaml` is not audited, and
+`audit --fix` never edits it.
+
+The config is maintained by repository maintainers, is small, and changes rarely; the fragments are
+where the churn is and where an owner goes stale unnoticed. Auditing the config would also mean
+`--fix` opening pull requests against the one file whose review already routes to the people best
+placed to catch the problem by hand. If invalid aliases do accumulate there, extending the rules to
+cover it is a later change and not a structural one — the loader already produces the same entry
+shape for both sources.
+
 The previous `AUD-STR-001` (label owner with zero owners) and `AUD-STR-002` (label owner with zero
 labels) are retired as audit rules. They become schema violations that fail at load, before anything
 can be rendered.
@@ -1293,53 +1343,57 @@ adjacent signal that is actually decidable: an expression matching nothing in th
 ### Component 11: `check-package` source resolution
 
 `check-package` keeps its four validation rules and its output contract. What changes is where it
-reads ownership from: **the `owners.yaml` fragment that governs the package directory.**
+reads ownership from: **the CODEOWNERS file the checkout's ownership YAML renders to**, computed in
+memory rather than downloaded.
 
 Given `--directory-path sdk/ai/Azure.AI.Inference`:
 
-1. **Find the governing fragment.** Walk up from the directory until an `owners.yaml` is found —
-   `sdk/ai/owners.yaml` here. If none exists, report `no_matching_path`.
-2. **Find the path entry.** Match the remainder of the directory path (`Azure.AI.Inference/`) against
-   that fragment's `paths` entries. Fall back to the fragment's own-directory entry (`path: .`) when
-   nothing more specific matches. If neither matches, report `no_matching_path`.
-3. **Read owners and PR labels off that entry.** `owners` supplies the source owners;
-   `pr-labels` supplies the PR labels.
-4. **Find the service owners in the same file.** Select the `label-owners` block whose `labels` are
-   fully contained in the entry's `pr-labels` — the containment rule `CheckPackageHelper` already
-   implements (`CheckPackageHelper.cs:215-222`) — and read its `service-owners`.
+1. **Render the repository.** Load `.github/owners.config.yaml` and every fragment, and render, as
+   [Component 6](#component-6-rendering-algorithm) describes. Nothing is written to disk.
+2. **Drop the excluded sections.** Discard every entry belonging to a section marked
+   `exclude-from-check-package`.
+3. **Resolve the directory** against what remains, last-match-wins, the same way GitHub resolves the
+   whole file. If nothing matches, report `no_matching_path`.
+4. **Read owners, PR labels, and service owners** off the matched entry and off the label-owner
+   block whose `labels` are fully contained in the entry's `pr-labels` — the containment rule
+   `CheckPackageHelper` already implements.
 5. **Validate against the caches.** Individual owners are checked against the org- and
    team-membership caches, subject to [Cache availability](#cache-availability).
 6. **Report the same `CheckPackageIssue.Codes` as today.**
 
-Everything the command needs is in one file. The example `sdk/ai/owners.yaml` in
-[the assets](./assets/codeowners/sdk-ai-owners.yaml) resolves `Azure.AI.Inference` to owners
-`test-user-07, test-user-09, test-user-23`, PR label `AI Model Inference`, and service owners
-`test-user-07, test-user-09, test-user-23` — without consulting the config, any other fragment, or the rendered
-file.
+The example assets resolve `Azure.AI.Inference` to owners `test-user-07, test-user-09,
+test-user-23`, PR label `AI Model Inference`, and service owners `test-user-07, test-user-09,
+test-user-23`.
 
-#### Why not resolve through the renderer
+#### Why resolve through the renderer
 
-Because `check-package` does not need to. Its question is "does this package declare enough owners to
-release?", which is a question about what a team wrote down, and a team writes it down in exactly one
-file. The renderer's ordering exists to decide which of several *competing* declarations GitHub will
-honor; that is a different question, and the release gate does not ask it.
+Because the rendered file is what GitHub enforces, and the release gate should ask its question of
+the thing that decides the answer. Reading a single fragment directly is simpler, but it answers a
+different question — "what did this team write down" rather than "who owns this package" — and the
+two diverge exactly where it matters: when a static config entry, a parent fragment, or another
+section also claims the path. The renderer already resolves that competition; reproducing any part
+of it in the release gate would create a second ordering implementation to keep in sync forever.
 
-Resolving through the renderer would mean loading the config, ordering every section, sorting every
-fragment, and applying last-match-wins — reproducing the renderer's ordering in a second place that
-then has to stay in sync with it forever. The single-file lookup has no ordering to reproduce, so
-there is nothing to drift.
+The cost is that `check-package` loads the whole model instead of one file. That is the same work
+`generate` does, on a checkout that is already on disk, with no network access.
 
-#### The accepted limitation
+#### Why guardrail sections are excluded
 
-A package whose owners are declared **only** in a static `owners.config.yaml` section, with no
-fragment covering its directory, resolves as `no_matching_path`. That is correct in the sense that
-the package has no fragment, and it is the intended migration signal: packages are expected to be
-owned by fragments.
+Rendering the whole file makes every repo-wide catch-all a potential match. `/sdk/` owned by
+`@Azure/azure-sdk-write` is a deliberate backstop so that no path in the repository is unowned; it is
+not a statement that any particular package has owners. Without the exclusion, every package in the
+repository would resolve to the backstop and pass, and `check-package` would report nothing ever
+again.
 
-If a case appears where a static config entry legitimately governs a package directory,
-`check-package` gains a second pass that renders the sections and resolves through them. It is
-deliberately not built now, because nothing today requires it and it would import the renderer's full
-ordering into the release gate for a case that may never occur.
+`exclude-from-check-package: true` marks those sections. Rendering ignores the flag entirely — the
+entries still appear in `.github/CODEOWNERS` and GitHub still honours them — but ownership
+resolution steps over them, so a package that has no ownership of its own reports
+`no_matching_path` and names the fragment its team should create.
+
+The sections carrying the flag in the reference config are the repository-root, `/sdk/`, end-to-end
+sample, management-fallback, provisioning, EngSys, code-generation, automation, and
+repository-configuration guardrails. The `Core Libraries`, `Client Libraries`, and
+`Management Libraries` sections are **not** excluded: they hold real per-package ownership.
 
 #### The rendered-CODEOWNERS cache is deleted
 
@@ -1423,8 +1477,8 @@ service wrong. Phase 5 gates each repo's migration on running the same survey fi
 Adding an owner to a service:
 
 ```bash
-$EDITOR sdk/ai/owners.yaml                 # add the alias under the right path entry
-azsdk config codeowners generate --check   # confirms the YAML is valid (exit 2 = valid, not yet rendered)
+$EDITOR sdk/ai/owners.yaml           # add the alias under the right path entry
+azsdk config codeowners generate     # confirms the YAML renders; discard the rendered file
 git commit -am "Add @alice as an owner of sdk/ai"
 ```
 
@@ -1507,7 +1561,7 @@ land in schema `version: 2` without breaking anything.
 - [ ] **Migration cutover per repo**: Should the two systems run in parallel for a period, with the
       YAML renderer writing only into a subset of sections?
   - Context: `generate` already targets specific sections today. A partial cutover is possible but
-    means `generate --check` cannot gate the whole file until the last section migrates.
+    means gate 2 cannot cover the whole file until the last section migrates.
   - Options: (a) big-bang per repo; (b) section-by-section with the drift gate enabled last.
 
 ---
@@ -1523,8 +1577,8 @@ This feature is complete when:
       <https://aka.ms/azsdk/codeowners>, regardless of whether the edit happens to match what
       `generate` would produce.
 - [ ] A pull request that changes only ownership YAML passes gate 2 without regenerating
-      `.github/CODEOWNERS` (`generate --check` exit 2), and the regeneration job opens a PR carrying
-      the rendered result after it merges.
+      `.github/CODEOWNERS`, and the regeneration job opens a PR carrying the rendered result after
+      it merges.
 - [ ] Two ownership PRs merging in quick succession produce one regeneration PR, not two.
 - [ ] A service team can add or remove an owner by editing only `sdk/<service>/owners.yaml`, and the
       resulting PR is routed to the existing owners for review.
@@ -1563,8 +1617,8 @@ Add @alice as an owner of sdk/ai in azure-sdk-for-net.
 
 1. Locate `sdk/ai/owners.yaml`.
 2. Add `alice` to the `owners` list of the `path: .` entry.
-3. Run `azsdk config codeowners generate --check` to confirm the file still validates. Exit 2 is the
-   expected result and means success.
+3. Run `azsdk config codeowners generate` to confirm the file still renders, then discard the
+   rendered `.github/CODEOWNERS`.
 4. Run `azsdk config codeowners audit --repo Azure/azure-sdk-for-net` and report any
    `AUD-OWN-*` finding for `alice` (for example, not a member of an `azure-sdk-write` team).
 5. Remind the user to open a PR containing **only** the YAML change, and that `.github/CODEOWNERS`
@@ -1585,7 +1639,8 @@ Create ownership for the new sdk/contoso service. Owners are @alice and @bob, PR
 2. Create `sdk/contoso/owners.yaml` with a `path: .` entry (with `pr-labels: [Contoso]`, which is
    required) and a `label-owners` entry for `Contoso`.
 3. Run `azsdk config github-label check contoso` and offer `create` if the service label is missing.
-4. Run `azsdk config codeowners generate --check` and `azsdk config codeowners audit`.
+4. Run `azsdk config codeowners generate` and `azsdk config codeowners audit`, then discard the
+   rendered `.github/CODEOWNERS`.
 5. Report the block that *will* land in the `Client Libraries` section once the regeneration job
    runs, and remind the user not to commit `.github/CODEOWNERS`.
 
@@ -1651,10 +1706,9 @@ azsdk config codeowners generate --repo-root .
 - `--repo-root <path>`: Repository root. Defaults to the current git repo root.
 - `--config <path>`: Owners config path. Default `<repo-root>/.github/owners.config.yaml`.
 - `--output <path>`: Override `configs.output`.
-- `--check`: Do not write. Validate all ownership YAML, render in memory, and compare against the
-  committed file. Exit **1** on a `CFG-*` validation error, **2** when the YAML is valid but the
-  committed file is stale, **0** when it is valid and in sync. Only exit 1 fails the PR gate; exit 2
-  is the expected state of a contributor's PR and is what triggers the regeneration job.
+
+Exits **0** after writing the rendered file, or **1** when any entry failed to bind. Nothing is
+written on failure.
 
 **Expected Output:**
 
@@ -1681,36 +1735,21 @@ Rendered 1,004 lines to .github/CODEOWNERS
 Generation aborted. .github/CODEOWNERS was not modified.
 ```
 
-### Check for generation drift
+### Check the YAML without keeping the result
+
+There is no separate drift-check mode. `generate` renders and writes; whether the committed file was
+already in sync is a question for `git`, not the CLI.
 
 **Command:**
 
 ```bash
-azsdk config codeowners generate --check
+azsdk config codeowners generate && git diff --stat .github/CODEOWNERS
 ```
 
-**Expected Output:**
-
-```text
-✓ .github/CODEOWNERS is up to date.
-```
-
-**Drift (exit 2 — not a failure on a contributor's PR):**
-
-```text
-● .github/CODEOWNERS is out of date (exit 2).
-
-  --- committed
-  +++ rendered
-  @@ -412,7 +412,7 @@
-   # PRLabel: %AI Projects
-  -/sdk/ai/Azure.AI.Projects/    @test-user-07 @test-user-18 @test-user-23
-  +/sdk/ai/Azure.AI.Projects/    @test-user-07 @test-user-18 @test-user-22 @test-user-23 @test-user-24
-
-  The YAML is valid. Do not regenerate or commit .github/CODEOWNERS — the
-  regeneration job opens a pull request with this diff after your change merges.
-  See https://aka.ms/azsdk/codeowners
-```
+A contributor validating a YAML change runs `generate` and then discards the rendered file — a stale
+`.github/CODEOWNERS` is the *expected* state of their branch, and the regeneration job produces the
+real one after the change merges. The same two commands in the regeneration job, with `git diff
+--exit-code`, are what decide whether there is a pull request to open.
 
 **Error Cases (exit 1):**
 
@@ -1719,7 +1758,7 @@ azsdk config codeowners generate --check
   pr-labels is required on fragment path entries. Every entry in this file is
   validated, including ones your change did not touch.
 
-Nothing was rendered.
+.github/CODEOWNERS was not modified.
 ```
 
 **Gate 1 (a hand edit to the generated file):**
@@ -2094,9 +2133,10 @@ migrated.
 - **Required PR labels**: a fragment path entry with `pr-labels` absent, `null`, or `[]` fails with
   `CFG-LBL-001`; the same shapes on a static owners config path entry render without a `# PRLabel:`
   moniker and produce no diagnostic.
-- **Exit codes**: `generate --check` returns 0 on a valid, in-sync tree; 1 on any `CFG-*` error; and
-  2 on valid YAML whose render differs from the committed file. Exit 1 takes precedence over exit 2
-  when a tree is both invalid and stale.
+- **Exit codes**: `generate` returns 0 after writing the rendered file and 1 when any entry failed
+  to bind, in which case nothing is written.
+- **Partial rendering**: a tree with one unbindable entry still renders every other entry, reports
+  the unbindable one, and writes nothing.
 - **Whole-file validation**: a file containing one valid and one invalid entry reports the invalid
   one regardless of which entry a simulated diff touched; multiple independent violations in one
   file are all reported in a single run rather than stopping at the first; a violation in a
@@ -2116,10 +2156,10 @@ migrated.
   `assets/codeowners/CODEOWNERS.rendered`. This is the executable contract for the whole design.
   The asset is generated mechanically by the renderer, never hand-edited; it currently parses to 52
   entries (38 with paths, 14 label-only) across 12 discoverable sections with zero block errors.
-- `generate --check` returns 0 on a clean, in-sync tree; 1 on a `CFG-*` error; and 2 when valid YAML
-  has not yet been rendered. Gate 1 rejects a hand edit to `.github/CODEOWNERS` on the changed-file
-  list alone, including one that renders identically.
-- `check-package` against the **YAML assets** (not the rendered file) for a package that passes, and
+- `generate` returns 0 and writes the file on a clean tree, and 1 without writing on a `CFG-*`
+  error. Gate 1 rejects a hand edit to `.github/CODEOWNERS` on the changed-file list alone,
+  including one that renders identically.
+- `check-package` against the **YAML assets** for a package that passes, and
   one that fails each of the four package-validation codes in `CheckPackageIssue.Codes` —
   `no_matching_path`, `insufficient_owners`, `missing_pr_label`, and `insufficient_service_owners`.
   The remaining codes (`invalid_directory_path`, `invalid_repo`, `invalid_cache_source`,

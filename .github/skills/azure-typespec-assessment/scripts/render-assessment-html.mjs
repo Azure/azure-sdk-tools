@@ -422,35 +422,27 @@ ${complianceCode(expectedCode)}
 }
 
 function fetchedComplianceDocument(document) {
-  return `<li><a href="${escapeHtml(document.canonicalUrl)}">${escapeHtml(document.title)}</a></li>`;
+  const url = document.canonicalUrl ?? document.url;
+  return `<li><a href="${escapeHtml(url)}">${escapeHtml(document.title ?? url)}</a></li>`;
 }
 
-function complianceEvidenceAppendix(dimension, semanticItems) {
-  const semanticTitles = new Map(
-    semanticItems.map((item) => [item.id, item.title]),
-  );
-  const active = (dimension.intentAssessments ?? [])
-    .map((item) => {
-      const title =
-        semanticTitles.get(item.semanticIntentId) ?? item.semanticIntentId;
-      return `<details class="compliance-intent" id="compliance-intent-${anchor(item.semanticIntentId)}"><summary><strong><a href="#intent-${anchor(item.semanticIntentId)}">${escapeHtml(title)}</a></strong></summary>
-<div class="compliance-intent-body">
-<ul>${(item.documents ?? []).map(fetchedComplianceDocument).join("")}</ul>
-</div></details>`;
-    })
-    .join("");
-  const legacyDocuments = (dimension.legacyDocuments ?? [])
-    .map(
-      (document) =>
-        `<li><a href="${escapeHtml(document.url)}">${escapeHtml(document.title)}</a> · ${escapeHtml(document.section ?? "")}<blockquote>${escapeHtml(document.guidanceExcerpt ?? "")}</blockquote></li>`,
-    )
-    .join("");
-  const legacy = legacyDocuments
-    ? `<details class="panel"><summary><strong>Official documents</strong></summary><ul>${legacyDocuments}</ul></details>`
-    : "";
-  return (
-    `${active}${legacy}` || '<div class="panel">No guidance fetched.</div>'
-  );
+function complianceEvidenceAppendix(dimension) {
+  const documents = [
+    ...(dimension.intentAssessments ?? []).flatMap(
+      (item) => item.documents ?? [],
+    ),
+    ...(dimension.legacyDocuments ?? []),
+  ];
+  const seenUrls = new Set();
+  const uniqueDocuments = documents.filter((document) => {
+    const url = document.canonicalUrl ?? document.url;
+    if (!url || seenUrls.has(url)) return false;
+    seenUrls.add(url);
+    return true;
+  });
+  return uniqueDocuments.length
+    ? `<ul class="guidance-document-list">${uniqueDocuments.map(fetchedComplianceDocument).join("")}</ul>`
+    : '<div class="panel">No guidance fetched.</div>';
 }
 
 function intentTitleLinks(ids, semanticItems) {
@@ -713,6 +705,373 @@ function findingMatchesOperation(finding, operation, semanticIntentId) {
   );
 }
 
+function contractValueEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function schemaShape(schema) {
+  if (!schema) return undefined;
+  return {
+    kind: schema.kind,
+    type: schema.type,
+    format: schema.format,
+    identity: schemaIdentity(schema),
+    values: schema.kind === "enum" ? schema.values : undefined,
+  };
+}
+
+function structuralSchemaDisplay(schema) {
+  if (schema?.kind === "array" && !schema.items) return "array";
+  return schemaDisplay(schema);
+}
+
+function propertyDisplay(property, missing) {
+  if (!property) return missing;
+  return `${structuralSchemaDisplay(property.schema)}${property.required ? " (required)" : " (optional)"}`;
+}
+
+function schemaContractRows(before, after, area) {
+  if (contractValueEqual(before, after)) return [];
+  if (!before || !after) {
+    return [
+      {
+        area,
+        before: before ? structuralSchemaDisplay(before) : "not present",
+        after: after ? structuralSchemaDisplay(after) : "removed",
+      },
+    ];
+  }
+  if (!contractValueEqual(schemaShape(before), schemaShape(after))) {
+    return [
+      {
+        area,
+        before: structuralSchemaDisplay(before),
+        after: structuralSchemaDisplay(after),
+      },
+    ];
+  }
+
+  const rows = [];
+  if (before.kind === "array" || after.kind === "array") {
+    rows.push(...schemaContractRows(before.items, after.items, `${area}[]`));
+  }
+  const beforeProperties = new Map(
+    (before.properties ?? []).map((property) => [property.name, property]),
+  );
+  const afterProperties = new Map(
+    (after.properties ?? []).map((property) => [property.name, property]),
+  );
+  for (const name of [
+    ...new Set([...beforeProperties.keys(), ...afterProperties.keys()]),
+  ].sort()) {
+    const previous = beforeProperties.get(name);
+    const current = afterProperties.get(name);
+    const propertyArea = `${area}.${name}`;
+    if (!previous || !current || previous.required !== current.required) {
+      rows.push({
+        area: propertyArea,
+        before: propertyDisplay(previous, "not present"),
+        after: propertyDisplay(current, "removed"),
+      });
+      continue;
+    }
+    rows.push(
+      ...schemaContractRows(previous.schema, current.schema, propertyArea),
+    );
+  }
+  return rows;
+}
+
+function parameterDisplay(parameter, missing) {
+  if (!parameter) return missing;
+  const details = [
+    structuralSchemaDisplay(parameter.schema),
+    parameter.required ? "required" : "optional",
+    parameter.collectionFormat
+      ? `collection: ${parameter.collectionFormat}`
+      : undefined,
+  ].filter(Boolean);
+  return details.join(" · ");
+}
+
+function parameterContractRows(before = [], after = []) {
+  const key = (parameter) => `${parameter.in ?? "body"}:${parameter.name}`;
+  const beforeParameters = new Map(before.map((item) => [key(item), item]));
+  const afterParameters = new Map(after.map((item) => [key(item), item]));
+  const rows = [];
+  for (const area of [
+    ...new Set([...beforeParameters.keys(), ...afterParameters.keys()]),
+  ].sort()) {
+    const previous = beforeParameters.get(area);
+    const current = afterParameters.get(area);
+    if (!previous || !current) {
+      rows.push({
+        area,
+        before: parameterDisplay(previous, "not present"),
+        after: parameterDisplay(current, "removed"),
+      });
+      continue;
+    }
+    const schemaRows = schemaContractRows(
+      previous.schema,
+      current.schema,
+      area,
+    );
+    if (
+      previous.required !== current.required ||
+      previous.collectionFormat !== current.collectionFormat
+    ) {
+      rows.push({
+        area,
+        before: parameterDisplay(previous),
+        after: parameterDisplay(current),
+      });
+    } else {
+      rows.push(...schemaRows);
+    }
+  }
+  return rows;
+}
+
+function requestContractRows(before, after) {
+  if (!before || !after) {
+    return [
+      {
+        area: "request body",
+        before: before ? before.kind : "not present",
+        after: after ? after.kind : "removed",
+      },
+    ];
+  }
+  if (
+    before.kind !== after.kind ||
+    before.name !== after.name ||
+    before.required !== after.required
+  ) {
+    return [
+      {
+        area: "request body",
+        before: `${before.kind}${before.required ? " · required" : ""}`,
+        after: `${after.kind}${after.required ? " · required" : ""}`,
+      },
+    ];
+  }
+  if (before.kind === "multipart" || after.kind === "multipart") {
+    return parameterContractRows(before.members, after.members).map((row) => ({
+      ...row,
+      area: `request multipart:${row.area}`,
+    }));
+  }
+  return schemaContractRows(before.schema, after.schema, "request body");
+}
+
+function responseHeaderDisplay(header, missing) {
+  if (!header) return missing;
+  return [
+    structuralSchemaDisplay(header.schema),
+    header.collectionFormat
+      ? `collection: ${header.collectionFormat}`
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function responseDisplay(response, missing) {
+  if (!response) return missing;
+  return (
+    [
+      response.statusKind,
+      response.schema ? structuralSchemaDisplay(response.schema) : undefined,
+    ]
+      .filter(Boolean)
+      .join(" · ") || "present"
+  );
+}
+
+function responseContractRows(before = [], after = []) {
+  const beforeResponses = new Map(
+    before.map((response) => [response.status, response]),
+  );
+  const afterResponses = new Map(
+    after.map((response) => [response.status, response]),
+  );
+  const rows = [];
+  for (const status of [
+    ...new Set([...beforeResponses.keys(), ...afterResponses.keys()]),
+  ].sort()) {
+    const previous = beforeResponses.get(status);
+    const current = afterResponses.get(status);
+    const responseArea = `response ${status}`;
+    if (!previous || !current) {
+      rows.push({
+        area: responseArea,
+        before: responseDisplay(previous, "not present"),
+        after: responseDisplay(current, "removed"),
+      });
+      continue;
+    }
+    if (previous.statusKind !== current.statusKind) {
+      rows.push({
+        area: `${responseArea}.kind`,
+        before: previous.statusKind,
+        after: current.statusKind,
+      });
+    }
+    rows.push(
+      ...schemaContractRows(
+        previous.schema,
+        current.schema,
+        `${responseArea}.body`,
+      ),
+    );
+    const beforeHeaders = new Map(
+      (previous.headers ?? []).map((header) => [
+        header.name.toLowerCase(),
+        header,
+      ]),
+    );
+    const afterHeaders = new Map(
+      (current.headers ?? []).map((header) => [
+        header.name.toLowerCase(),
+        header,
+      ]),
+    );
+    for (const headerName of [
+      ...new Set([...beforeHeaders.keys(), ...afterHeaders.keys()]),
+    ].sort()) {
+      const previousHeader = beforeHeaders.get(headerName);
+      const currentHeader = afterHeaders.get(headerName);
+      if (contractValueEqual(previousHeader, currentHeader)) continue;
+      const headerArea = `${responseArea}.header:${currentHeader?.name ?? previousHeader?.name ?? headerName}`;
+      const schemaRows = schemaContractRows(
+        previousHeader?.schema,
+        currentHeader?.schema,
+        headerArea,
+      );
+      if (
+        previousHeader &&
+        currentHeader &&
+        previousHeader.collectionFormat === currentHeader.collectionFormat &&
+        schemaRows.length
+      ) {
+        rows.push(...schemaRows);
+      } else {
+        rows.push({
+          area: headerArea,
+          before: responseHeaderDisplay(previousHeader, "not present"),
+          after: responseHeaderDisplay(currentHeader, "removed"),
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+function simpleContractRows(before, after, area) {
+  if (contractValueEqual(before, after)) return [];
+  const beforeObject = before && typeof before === "object";
+  const afterObject = after && typeof after === "object";
+  if (
+    (beforeObject || afterObject) &&
+    !Array.isArray(before) &&
+    !Array.isArray(after)
+  ) {
+    const rows = [];
+    for (const key of [
+      ...new Set([
+        ...Object.keys(before ?? {}),
+        ...Object.keys(after ?? {}),
+      ]),
+    ].sort()) {
+      rows.push(
+        ...simpleContractRows(
+          before?.[key],
+          after?.[key],
+          `${area}.${key}`,
+        ),
+      );
+    }
+    if (rows.length) return rows;
+  }
+  const display = (value, missing) => {
+    if (value === undefined) return missing;
+    if (typeof value === "string") return value;
+    return JSON.stringify(value);
+  };
+  return [
+    {
+      area,
+      before: display(before, "not present"),
+      after: display(after, "removed"),
+    },
+  ];
+}
+
+function structuralOperationRows(operation) {
+  const operationExists = (value) =>
+    Boolean(
+      value &&
+        (value.method ||
+          value.path ||
+          value.request ||
+          value.parameters?.length ||
+          value.responses?.length),
+    );
+  const beforeExists = operationExists(operation.before);
+  const afterExists = operationExists(operation.after);
+  if (beforeExists !== afterExists) {
+    const display = (value, missing) =>
+      [value?.method?.toUpperCase(), value?.path].filter(Boolean).join(" ") ||
+      missing;
+    return [
+      {
+        area: "operation",
+        before: display(operation.before, "not present"),
+        after: display(operation.after, "removed"),
+      },
+    ];
+  }
+
+  const rows = [];
+  for (const field of operation.changedAspects ?? []) {
+    const before = operation.before?.[field];
+    const after = operation.after?.[field];
+    if (field === "parameters") {
+      rows.push(...parameterContractRows(before, after));
+    } else if (field === "request") {
+      rows.push(...requestContractRows(before, after));
+    } else if (field === "responses") {
+      rows.push(...responseContractRows(before, after));
+    } else if (field === "paging" || field === "lro") {
+      rows.push(...simpleContractRows(before, after, field));
+    } else if (field === "operation") {
+      rows.push({
+        area: field,
+        before: operation.before
+          ? `${operation.before.method?.toUpperCase()} ${operation.before.path}`
+          : "not present",
+        after: operation.after
+          ? `${operation.after.method?.toUpperCase()} ${operation.after.path}`
+          : "removed",
+      });
+    } else {
+      rows.push({
+        area: field,
+        before: contractSummary(before, field),
+        after: contractSummary(after, field),
+      });
+    }
+  }
+  return rows.length
+    ? rows
+    : (operation.changedAspects ?? []).map((field) => ({
+        area: field,
+        before: contractSummary(operation.before?.[field], field),
+        after: contractSummary(operation.after?.[field], field),
+      }));
+}
+
 export function operationContractRows(
   operation,
   restFindings = [],
@@ -725,11 +1084,7 @@ export function operationContractRows(
     .map(restContractDelta);
   const rows = detailedRows.length
     ? detailedRows
-    : (operation.changedAspects ?? []).map((field) => ({
-        area: field,
-        before: contractSummary(operation.before?.[field], field),
-        after: contractSummary(operation.after?.[field], field),
-      }));
+    : structuralOperationRows(operation);
   return [
     ...new Map(
       rows
@@ -1152,7 +1507,7 @@ function representativeExample(item) {
   }
   return `<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 ${renderSourceHunks([source])}
-<p class="sources"><strong>Source:</strong> ${sourceLinks([source])}. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>`;
+<p class="sources"><strong>Source:</strong> ${sourceLinks([source])}.</p></details>`;
 }
 
 function operationCard(operation, restFindings, semanticIntentId) {
@@ -1259,19 +1614,6 @@ ${representativeExample(item)}
 ${operationContent}
 <p id="related-findings-${anchor(item.id)}"><strong>Related findings:</strong> ${relatedFindingLinks(findingReferences)}</p>
 </div></details>`;
-}
-
-function completeTypeSpecEvidence(items = []) {
-  const content = items
-    .map(
-      (item) =>
-        `<section><h4>${escapeHtml(item.title)}</h4>
-${renderSourceHunks(item.sources)}
-<p class="sources"><strong>Sources:</strong> ${sourceLinks(item.sources)}</p></section>`,
-    )
-    .join("");
-  return `<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-${content || '<p class="empty">No TypeSpec source evidence.</p>'}</details>`;
 }
 
 function downstreamOperationGroups(dimension, semanticItems) {
@@ -1628,9 +1970,8 @@ function renderCurrent(assessment) {
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>
-${completeTypeSpecEvidence(dimensions.semantic.items)}
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-${complianceEvidenceAppendix(dimensions.compliance, dimensions.semantic.items)}
+${complianceEvidenceAppendix(dimensions.compliance)}
 <h3>Changed files</h3><ul>${assessment.changedFiles.map((file) => `<li><code>${escapeHtml(file.path)}</code> (${escapeHtml(file.origins.join(", "))})</li>`).join("")}</ul>
 <h3>Timing and model input</h3><pre>${escapeHtml(JSON.stringify({ timings: assessment.timings, inputAccounting: assessment.inputAccounting }, null, 2))}</pre>
 <p><strong>Provenance:</strong> ${Object.values(assessment.provenance).map(escapeHtml).join(", ")}</p></div></details></section>

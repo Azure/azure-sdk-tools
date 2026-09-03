@@ -10,6 +10,7 @@ import {
   typeIdentity,
 } from "./sdk-method-delta.mjs";
 import { assembleCompliance } from "./compliance-assessment.mjs";
+import { sameAutorestContract } from "./autorest-contract.mjs";
 
 function duplicates(values) {
   const seen = new Set();
@@ -374,11 +375,9 @@ function joinFindings(candidates, decisions, facts, sources) {
 }
 
 function changedFields(before, after, fields) {
-  const equal = (left, right) =>
-    left === undefined || right === undefined
-      ? left === right
-      : canonicalJson(left) === canonicalJson(right);
-  return fields.filter((field) => !equal(before?.[field], after?.[field]));
+  return fields.filter(
+    (field) => !sameAutorestContract(before?.[field], after?.[field]),
+  );
 }
 
 function operationPresentation(operation, facts) {

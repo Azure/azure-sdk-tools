@@ -6,11 +6,47 @@ import {
   discoverAutorestDocuments,
   normalizeAutorestDocuments,
   responseStatusKind,
+  sameAutorestContract,
 } from "./autorest-contract.mjs";
 
 function fixtureDirectory() {
   return fs.mkdtempSync(path.join(process.cwd(), ".autorest-contract-test-"));
 }
+
+test("ignores version-specific document prefixes in equivalent schema references", () => {
+  const before = {
+    kind: "object",
+    reference:
+      "stable/2026-02-23/confidentialledger.json#/definitions/LedgerUser",
+    references: [
+      "stable/2026-02-23/confidentialledger.json#/definitions/LedgerUser",
+    ],
+    properties: [
+      {
+        name: "userId",
+        required: false,
+        schema: { kind: "scalar", type: "string" },
+      },
+    ],
+  };
+  const after = {
+    kind: "object",
+    reference:
+      "preview/2026-07-31-preview/confidentialledger.json#/definitions/LedgerUser",
+    references: [
+      "preview/2026-07-31-preview/confidentialledger.json#/definitions/LedgerUser",
+    ],
+    properties: [
+      {
+        name: "userId",
+        required: false,
+        schema: { kind: "scalar", type: "string" },
+      },
+    ],
+  };
+
+  assert.equal(sameAutorestContract(before, after), true);
+});
 
 test("normalizes Swagger 2 paths, x-ms-paths, refs, allOf, multipart, and response statuses", () => {
   const root = path.resolve("virtual-autorest");

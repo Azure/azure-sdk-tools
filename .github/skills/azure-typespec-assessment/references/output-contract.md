@@ -166,5 +166,7 @@ cards.
 Semantic operation cards use the same `Contract area | Before | After` table
 and removal/addition styling. They reuse confirmed REST finding rows associated
 with both the operation ID and current Semantic intent. If no fine-grained
-confirmed row is available, they render changed top-level operation aspects as
-fallback rows.
+confirmed row is available, they structurally compare normalized before/after
+operation facts and render the narrowest changed parameter, request schema,
+response status/body/header, paging, LRO, method, or path areas. Do not render
+identical top-level summaries when a deeper changed path is available.

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using YamlDotNet.Serialization;
+
 namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 /// <summary>
@@ -24,11 +26,13 @@ public class OwnersFragment
     /// Set by the loader, not by the YAML, and used to attribute errors, audit violations, and the
     /// provenance comments on unioned label-owner blocks.
     /// </summary>
+    [YamlIgnore]
     public string FilePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Repo-relative directory containing the fragment, e.g. <c>sdk/ai</c>. Fragment paths resolve
     /// against this. Set by the loader.
     /// </summary>
+    [YamlIgnore]
     public string Directory { get; set; } = string.Empty;
 }

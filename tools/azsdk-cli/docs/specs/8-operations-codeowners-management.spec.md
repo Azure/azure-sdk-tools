@@ -1157,8 +1157,10 @@ This is a separation of concerns: **`audit` decides what the state of the reposi
    (`azure-sdk-write-teams-blob`, `user-org-visibility-blob`) and reports failures as `AUD-OWN-001` /
    `AUD-OWN-003`.
 2. `audit --fix` removes those owners from the `owners.yaml` or `owners.config.yaml` file that
-   declared them, editing the YAML in place and preserving surrounding comments. Removals are capped
-   by `SafetyThreshold` ([above](#the-safety-threshold-survives-on-the-one-path-that-mutates)).
+   declared them, rewriting the file from the parsed model. Comments and formatting are not
+   preserved — the rewrite is whole-file, and everything the schema carries survives because the
+   model is the schema. Removals are capped by `SafetyThreshold`
+   ([above](#the-safety-threshold-survives-on-the-one-path-that-mutates)).
 3. The job that invoked `audit --fix` commits the edited YAML, runs `generate` to re-render
    `.github/CODEOWNERS`, and opens a pull request containing both changes. Committing and opening the
    PR are the job's responsibility, not the command's: `audit` mutates only the working tree, which

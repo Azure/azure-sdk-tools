@@ -110,11 +110,13 @@ class HostedAgentClient:
         self,
         openai_client: AsyncOpenAI,
         *,
+        local_mode: bool = False,
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
         stream_timeout: float = STREAM_COMPLETE_TIMEOUT_SECS,
     ) -> None:
         self._client = openai_client
+        self._local_mode = local_mode
         self._max_retries = max_retries
         self._retry_delay = retry_delay
         self._stream_timeout = stream_timeout
@@ -136,19 +138,19 @@ class HostedAgentClient:
         last_error: Exception | None = None
 
         for attempt in range(1, self._max_retries + 1):
-            extra_body: dict[str, Any] = {"agent_reference": agent_ref}
-            kwargs: dict[str, Any] = {}
-            if agent_conversation_id:
-                kwargs["conversation"] = agent_conversation_id
-            if agent_session_id:
-                extra_body["agent_session_id"] = agent_session_id
+            kwargs: dict[str, Any] = {"store": not self._local_mode}
+            if not self._local_mode:
+                extra_body: dict[str, Any] = {"agent_reference": agent_ref}
+                if agent_conversation_id:
+                    kwargs["conversation"] = agent_conversation_id
+                if agent_session_id:
+                    extra_body["agent_session_id"] = agent_session_id
+                kwargs["extra_body"] = extra_body
             stream = None
             try:
                 stream = await self._client.responses.create(
                     input=conversation_items,
-                    store=True,
                     stream=True,
-                    extra_body=extra_body,
                     **kwargs,
                 )
                 # Bound the wait for the stream to complete.

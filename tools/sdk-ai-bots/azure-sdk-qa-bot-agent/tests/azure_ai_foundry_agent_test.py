@@ -26,6 +26,7 @@ from utils.azure_ai_foundry_agent import (
     HostedAgentClient,
     ConversationBrokenError,
 )
+from utils.azure_ai_foundry import get_agent_mode, is_local_agent_mode
 
 
 class _FakeResponse:
@@ -37,6 +38,30 @@ class _FakeResponse:
         self.output_text = output_text
         self.status = status
         self.id = id
+
+
+def test_agent_mode_defaults_to_remote(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AGENT_MODE", raising=False)
+    monkeypatch.setenv("LOCAL_AGENT_ENDPOINT", "http://localhost:8088")
+
+    assert get_agent_mode() == "remote"
+    assert is_local_agent_mode() is False
+
+
+def test_agent_mode_accepts_local_case_insensitively(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AGENT_MODE", " LOCAL ")
+
+    assert get_agent_mode() == "local"
+    assert is_local_agent_mode() is True
+
+
+def test_agent_mode_rejects_unknown_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENT_MODE", "auto")
+
+    with pytest.raises(RuntimeError, match="AGENT_MODE"):
+        get_agent_mode()
 
 
 class _FakeEvent:
@@ -111,6 +136,56 @@ async def test_invoke_returns_trace_id_and_closes_stream_on_success() -> None:
     assert trace_id == "trace-123"
     assert stream.closed is True
     assert client.responses.create.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_invoke_local_mode_omits_hosted_only_parameters() -> None:
+    """Local Responses servers receive no Foundry deployment metadata."""
+    resp = _FakeResponse(output_text="hello", status="completed", id="r1")
+    client = _mock_client([_completed_stream(resp)])
+
+    _, out = await HostedAgentClient(
+        client, local_mode=True, retry_delay=0
+    ).invoke(
+        conversation_items=[],
+        agent_ref={"name": "deployed-agent", "version": "1"},
+        agent_conversation_id="hosted-conversation",
+        agent_session_id="hosted-session",
+    )
+
+    assert out is resp
+    client.responses.create.assert_awaited_once_with(
+        input=[],
+        store=False,
+        stream=True,
+    )
+
+
+@pytest.mark.asyncio
+async def test_invoke_remote_mode_preserves_foundry_trace_parameters() -> None:
+    """Remote requests retain the metadata required by hosted Foundry agents."""
+    resp = _FakeResponse(output_text="hello", status="completed", id="r1")
+    client = _mock_client([_completed_stream(resp)])
+    agent_ref = {"name": "deployed-agent", "version": "1"}
+
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref=agent_ref,
+        agent_conversation_id="hosted-conversation",
+        agent_session_id="hosted-session",
+    )
+
+    assert out is resp
+    client.responses.create.assert_awaited_once_with(
+        input=[],
+        store=True,
+        stream=True,
+        conversation="hosted-conversation",
+        extra_body={
+            "agent_reference": agent_ref,
+            "agent_session_id": "hosted-session",
+        },
+    )
 
 
 @pytest.mark.asyncio

@@ -133,9 +133,9 @@ but are not scored by an evaluator.
 
 | Pipeline | Purpose |
 |---|---|
-| `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
+| `offline-evaluation.yml` | Nightly/manual curated `basic` evaluation. `agentMode` defaults to `local` so branch agent code runs without deployment; select `remote` for Foundry traces. |
 | `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
-| `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
+| `perf-evaluation.yml` | Weekly/manual large per-scenario datasets. `agentMode` defaults to `remote` for Foundry traces; select `local` to test branch agent code without deployment. |
 
 The online pipeline evaluates the **freshly collected weekly md** (not the static
 `basic` set): `dataset.online_snapshot` downloads recent md and converts it to

@@ -93,6 +93,8 @@ Ensure your Azure identity has:
 
    | Variable | Purpose | Default |
    |----------|---------|---------|
+   | `AGENT_MODE` | Selects the branch-local agent (`local`) or deployed Foundry agent (`remote`). | `remote` |
+   | `LOCAL_AGENT_ENDPOINT` | Responses endpoint used when `AGENT_MODE=local`. Ignored in remote mode. | `http://localhost:8088` |
    | `GITHUB_TOKEN` | [GitHub PAT](https://github.com/settings/tokens) for local GitHub MCP tool testing. Without it, the agent uses GitHub App JWT via Key Vault (production only). | — |
    | `MEMORY_UPDATE_DELAY` | Seconds before processing memory updates. Set to `0` for immediate updates during development. | `300` |
 
@@ -103,6 +105,60 @@ Ensure your Azure identity has:
    ```
 
 ## Running and Debugging Locally
+
+### Choosing the Agent Execution Mode
+
+The backend uses `AGENT_MODE` to choose where agent requests run:
+
+| Mode | Behavior | Foundry agent deployment required | Hosted traces |
+|------|----------|-----------------------------------|---------------|
+| `local` | Calls the branch-local agent at `LOCAL_AGENT_ENDPOINT` | No | No |
+| `remote` | Calls the deployed agent configured by `AI_FOUNDRY_AGENT_NAME` and `AI_FOUNDRY_AGENT_VERSION` | Yes | Yes |
+
+`AGENT_MODE` defaults to `remote`. `LOCAL_AGENT_ENDPOINT` defaults to
+`http://localhost:8088` and is ignored in remote mode.
+
+#### Configure the debugger with Copilot
+
+Ask GitHub Copilot to create or update `.vscode/launch.json` and
+`.vscode/tasks.json` with this prompt:
+
+> Set up VS Code debugging for `azure-sdk-qa-bot-agent`. Preserve existing
+> configurations. Add `Debug Chat Agent HTTP Server` using `agentdev` on port
+> `8088`, `Debug Backend Server (Local Agent)` with `AGENT_MODE=local`,
+> `Debug Backend Server (Remote Agent)` with `AGENT_MODE=remote`, and a
+> `Debug Local Agent + Backend` compound that starts the chat agent and local
+> backend together. Configure the chat agent to open the Foundry Toolkit Agent
+> Inspector.
+
+Then select the appropriate entry in **Run and Debug**:
+
+| Debug configuration | Starts | Use when |
+|---------------------|--------|----------|
+| `Debug Local Agent + Backend` | Local agent on `8088` and backend on `8089` | Testing branch-local agent changes end to end without deployment |
+| `Debug Backend Server (Local Agent)` | Backend only on `8089` with `AGENT_MODE=local` | The local agent is already running separately |
+| `Debug Backend Server (Remote Agent)` | Backend only on `8089` with `AGENT_MODE=remote` | Testing the deployed Foundry agent and collecting hosted traces |
+| `Debug Chat Agent HTTP Server` | Local agent only on `8088` plus Agent Inspector | Iterating directly on prompts and tools |
+
+#### Manual fallback
+
+For local mode, start the agent and backend in separate terminals:
+
+```powershell
+# Terminal 1
+python -m agentdev run agents/chat_agent/init.py --port 8088
+
+# Terminal 2
+$env:AGENT_MODE = "local"
+python server.py
+```
+
+For remote mode, only the backend is needed:
+
+```powershell
+$env:AGENT_MODE = "remote"
+python server.py
+```
 
 ### Debugging the Chat Agent
 
@@ -161,20 +217,9 @@ To exercise the loop locally:
 
 ### Debugging the Server
 
-1. Add a launch configuration for the FastAPI server:
-
-   ```json
-   {
-       "name": "Debug Backend Server",
-       "type": "debugpy",
-       "request": "launch",
-       "module": "uvicorn",
-       "args": ["server:app", "--host", "0.0.0.0", "--port", "8089"],
-       "cwd": "${workspaceFolder}"
-   }
-   ```
-
-2. Press **F5** to start debugging the server.
+1. Set `AGENT_MODE` to `local` or `remote`, then start `server.py` with the
+   debugger on port `8089`.
+2. For local mode, start `agents/chat_agent/init.py` on port `8088` first.
 3. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension.
 4. Run tests under `tests/api_test.rest` to verify the server is working.
 5. Open `http://localhost:8089/dashboard/qa-records` to inspect QA and

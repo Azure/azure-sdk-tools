@@ -35,6 +35,7 @@ from utils.azure_ai_foundry import (
     get_openai_client,
     get_project_client,
     get_stateless_session_id,
+    is_local_agent_mode,
     set_stateless_session_id,
 )
 from utils.teams_image import get_image_data_uri
@@ -105,15 +106,21 @@ class ChatService:
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        project_client = self._get_project_client()
-
-        agent = await self._get_agent(project_client)
+        local_mode = is_local_agent_mode()
         openai_client = self._get_openai_client()
+
+        agent = None
+        if not local_mode:
+            agent = await self._get_agent(self._get_project_client())
 
         # Stateless calls (no customer conversation_id) skip conversation
         # threading and reuse a warm sandbox; threaded calls resolve history.
-        stateless = not req.conversation_id
-        if stateless:
+        stateless = not req.conversation_id or local_mode
+        if local_mode:
+            agent_conversation_id, is_new = None, True
+            agent_session_id = None
+            logger.info("Using local agent endpoint")
+        elif stateless:
             agent_conversation_id, is_new = None, True
             agent_session_id = self._get_stateless_session_id()
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
@@ -175,13 +182,15 @@ class ChatService:
         )
         conversation_items.extend(additional_items)
 
-        agent_ref: dict = {
-            "name": agent.name,
-            "version": agent.version,
-            "type": AgentReferenceType.agent_reference.value,
-        }
+        agent_ref: dict[str, str] = {}
+        if agent is not None:
+            agent_ref = {
+                "name": agent.name,
+                "version": agent.version,
+                "type": AgentReferenceType.agent_reference.value,
+            }
 
-        agent_client = HostedAgentClient(openai_client)
+        agent_client = HostedAgentClient(openai_client, local_mode=local_mode)
         try:
             trace_id, response = await agent_client.invoke(
                 conversation_items=conversation_items,
@@ -214,7 +223,7 @@ class ChatService:
                 agent_ref=agent_ref,
             )
         # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless and not self._get_stateless_session_id():
+        if stateless and not local_mode and not self._get_stateless_session_id():
             extra = getattr(response, "model_extra", None) or {}
             captured = extra.get("agent_session_id")
             self._set_stateless_session_id(captured)

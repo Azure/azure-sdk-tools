@@ -9,8 +9,18 @@ schedules:
 trigger: none
 pr: none
 
+parameters:
+  - name: agentMode
+    displayName: Agent execution mode
+    type: string
+    default: local
+    values:
+      - local
+      - remote
+
 #
-# Starts the agent server.py locally, then evaluates via completion mode:
+# Starts server.py locally, then evaluates via completion mode. Local mode also
+# starts the agent from this branch; remote mode invokes the deployed Foundry agent.
 # evals_run.py calls the local /completion endpoint concurrently, collects answers,
 # and grades them inline with the Foundry builtin LLM evaluators.
 extends:
@@ -55,7 +65,7 @@ extends:
                   python --version
                 displayName: 'check python'
               - task: AzureCLI@2
-                displayName: 'start agent server'
+                displayName: 'start evaluation services (${{ parameters.agentMode }})'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
                   addSpnToEnvironment: true
@@ -68,10 +78,19 @@ extends:
                     export AZURE_TENANT_ID=$tenantId
                     EVAL_CACHE="$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache"
                     mkdir -p "$EVAL_CACHE"
+
+                    if [ "$AGENT_MODE" = "local" ]; then
+                      nohup python agents/chat_agent/init.py </dev/null > "$EVAL_CACHE/agent.log" 2>&1 &
+                      sleep 20
+                      lsof -ti:8088 || { echo "##[error]local agent failed to start"; cat "$EVAL_CACHE/agent.log" || true; exit 1; }
+                    fi
+
                     nohup python server.py </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
                     sleep 20
-                    lsof -ti:8089 || { echo "##[error]agent server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
+                    lsof -ti:8089 || { echo "##[error]backend server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
                 env:
+                  AGENT_MODE: ${{ parameters.agentMode }}
+                  LOCAL_AGENT_ENDPOINT: http://localhost:8088
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

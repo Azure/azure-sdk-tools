@@ -6,6 +6,7 @@ the process.
 
 import asyncio
 import logging
+import os
 import re
 
 from agent_framework import TruncationStrategy
@@ -26,6 +27,30 @@ _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
 _openai_client: AsyncOpenAI | None = None
 _embedding_client: AsyncAzureOpenAI | None = None
+
+AGENT_MODE_LOCAL = "local"
+AGENT_MODE_REMOTE = "remote"
+DEFAULT_LOCAL_AGENT_ENDPOINT = "http://localhost:8088"
+
+
+def get_agent_mode() -> str:
+    """Return the configured agent execution mode."""
+    mode = os.environ.get("AGENT_MODE", AGENT_MODE_REMOTE).strip().lower()
+    if mode not in {AGENT_MODE_LOCAL, AGENT_MODE_REMOTE}:
+        raise RuntimeError("AGENT_MODE must be either 'local' or 'remote'.")
+    return mode
+
+
+def is_local_agent_mode() -> bool:
+    """Return whether requests should use the locally running agent."""
+    return get_agent_mode() == AGENT_MODE_LOCAL
+
+
+def get_local_agent_endpoint() -> str:
+    """Return the local Responses server endpoint without a trailing slash."""
+    return os.environ.get(
+        "LOCAL_AGENT_ENDPOINT", DEFAULT_LOCAL_AGENT_ENDPOINT
+    ).rstrip("/")
 
 
 def create_project_client(
@@ -81,7 +106,13 @@ def get_openai_client() -> AsyncOpenAI:
     """Return the shared OpenAI client (created once on first call)."""
     global _openai_client
     if _openai_client is None:
-        _openai_client = create_openai_client(get_project_client(), cfg)
+        if is_local_agent_mode():
+            _openai_client = AsyncOpenAI(
+                base_url=get_local_agent_endpoint(),
+                api_key="local",
+            )
+        else:
+            _openai_client = create_openai_client(get_project_client(), cfg)
     return _openai_client
 
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T14:14:01.641Z",
+  "generatedAt": "2026-09-03T08:39:56.301Z",
   "title": "TypeSpec assessment: specification/confidentialledger/data-plane/ConfidentialLedger",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\head",
@@ -62,7 +62,7 @@
       "status": "assessed",
       "items": [
         {
-          "id": "semantic-0444245ca7d40975",
+          "id": "semantic-14845e93054010a4",
           "projectId": "project-819de5ecc40e",
           "projectIds": [
             "project-819de5ecc40e"
@@ -70,8 +70,8 @@
           "action": "modify",
           "changeKind": "modify",
           "sourceChangeIds": [
-            "source-32adcc91a5c91ef1",
-            "source-b38b1258c85d4631"
+            "source-2a6a8cd1c1b06810",
+            "source-a1b03decaab4b3df"
           ],
           "hunkIds": [
             "hunk-679b78323c1526ce",
@@ -198,7 +198,7 @@
               "restChanged": true,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -213,7 +213,6 @@
               "path": "/app/transactions",
               "changedAspects": [
                 "parameters",
-                "request",
                 "responses"
               ],
               "before": {
@@ -743,10 +742,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: parameters, request, responses.",
+              "outcome": "REST contract changed: parameters, responses.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -837,10 +836,10 @@
               "operationId": "CreateOrUpdateLedgerUser",
               "beforeFactId": "operation-a144b9953808e1e8",
               "afterFactId": "operation-86df9979f7da562f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -853,10 +852,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "patch",
               "path": "/app/ledgerUsers/{userId}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a144b9953808e1e8",
                 "projectId": "project-819de5ecc40e",
@@ -1167,10 +1163,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -1261,10 +1257,10 @@
               "operationId": "CreateOrUpdateUser",
               "beforeFactId": "operation-b6eb871126e02dd9",
               "afterFactId": "operation-1165774704d9135c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -1277,10 +1273,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "patch",
               "path": "/app/users/{userId}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b6eb871126e02dd9",
                 "projectId": "project-819de5ecc40e",
@@ -1579,10 +1572,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -1673,10 +1666,10 @@
               "operationId": "CreateUserDefinedEndpoint",
               "beforeFactId": "operation-edb0d939716e7f06",
               "afterFactId": "operation-7d1a31764366e689",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -1689,10 +1682,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "put",
               "path": "/app/userDefinedEndpoints",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-edb0d939716e7f06",
                 "projectId": "project-819de5ecc40e",
@@ -1943,10 +1933,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -2037,10 +2027,10 @@
               "operationId": "CreateUserDefinedFunction",
               "beforeFactId": "operation-a15d17998ce07a3f",
               "afterFactId": "operation-4a549f3b94efd87c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -2053,10 +2043,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "put",
               "path": "/app/userDefinedFunctions/{functionId}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a15d17998ce07a3f",
                 "projectId": "project-819de5ecc40e",
@@ -2429,10 +2416,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -2523,10 +2510,10 @@
               "operationId": "CreateUserDefinedRole",
               "beforeFactId": "operation-2ec45b5a13f0e1d1",
               "afterFactId": "operation-5b43d5ed6627826b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -2539,10 +2526,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "put",
               "path": "/app/roles",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-2ec45b5a13f0e1d1",
                 "projectId": "project-819de5ecc40e",
@@ -2799,10 +2783,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -2893,10 +2877,10 @@
               "operationId": "DeleteLedgerUser",
               "beforeFactId": "operation-f806e3035a1cbce5",
               "afterFactId": "operation-533cd7f58e045b0a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -2909,9 +2893,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "delete",
               "path": "/app/ledgerUsers/{userId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f806e3035a1cbce5",
                 "projectId": "project-819de5ecc40e",
@@ -3084,10 +3066,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -3178,10 +3160,10 @@
               "operationId": "DeleteUser",
               "beforeFactId": "operation-06193249427862f9",
               "afterFactId": "operation-ec8d0b7c763a8bd7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -3194,9 +3176,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "delete",
               "path": "/app/users/{userId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-06193249427862f9",
                 "projectId": "project-819de5ecc40e",
@@ -3369,10 +3349,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -3463,10 +3443,10 @@
               "operationId": "DeleteUserDefinedFunction",
               "beforeFactId": "operation-3baac4e7d7b7c0d1",
               "afterFactId": "operation-d11901bfcd12c58d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -3479,9 +3459,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "delete",
               "path": "/app/userDefinedFunctions/{functionId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-3baac4e7d7b7c0d1",
                 "projectId": "project-819de5ecc40e",
@@ -3654,10 +3632,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -3748,10 +3726,10 @@
               "operationId": "DeleteUserDefinedRole",
               "beforeFactId": "operation-19050a733beb2f2c",
               "afterFactId": "operation-67a4bcf8140d5ad6",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -3764,9 +3742,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "delete",
               "path": "/app/roles",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-19050a733beb2f2c",
                 "projectId": "project-819de5ecc40e",
@@ -3939,10 +3915,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -4033,10 +4009,10 @@
               "operationId": "ExecuteUserDefinedFunction",
               "beforeFactId": "operation-86be9a13f264bd0b",
               "afterFactId": "operation-75c37b8979841061",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -4049,10 +4025,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "post",
               "path": "/app/userDefinedFunctions/{functionId}:execute",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-86be9a13f264bd0b",
                 "projectId": "project-819de5ecc40e",
@@ -4547,10 +4520,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -4641,10 +4614,10 @@
               "operationId": "GetConstitution",
               "beforeFactId": "operation-bbb2babed73f0a10",
               "afterFactId": "operation-8eb692b126f8242e",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -4657,9 +4630,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/governance/constitution",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-bbb2babed73f0a10",
                 "projectId": "project-819de5ecc40e",
@@ -4864,10 +4835,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -4958,10 +4929,10 @@
               "operationId": "GetCurrentLedgerEntry",
               "beforeFactId": "operation-00a3b0ff3875dc13",
               "afterFactId": "operation-58b46b2ab829d8d8",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -4974,9 +4945,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/transactions/current",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-00a3b0ff3875dc13",
                 "projectId": "project-819de5ecc40e",
@@ -5271,10 +5240,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -5365,10 +5334,10 @@
               "operationId": "GetEnclaveQuotes",
               "beforeFactId": "operation-88e90bffb34d3dd8",
               "afterFactId": "operation-68b150f033c18bfd",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -5381,9 +5350,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/enclaveQuotes",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-88e90bffb34d3dd8",
                 "projectId": "project-819de5ecc40e",
@@ -5586,10 +5553,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -5680,10 +5647,10 @@
               "operationId": "GetLedgerEntry",
               "beforeFactId": "operation-141c4546c4046927",
               "afterFactId": "operation-af60a05ba6a2f324",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -5696,9 +5663,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/transactions/{transactionId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-141c4546c4046927",
                 "projectId": "project-819de5ecc40e",
@@ -6033,10 +5998,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -6127,10 +6092,10 @@
               "operationId": "GetLedgerUser",
               "beforeFactId": "operation-5d21d0e867f00605",
               "afterFactId": "operation-bc4182d2329d7d4f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -6143,9 +6108,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/ledgerUsers/{userId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-5d21d0e867f00605",
                 "projectId": "project-819de5ecc40e",
@@ -6382,10 +6345,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -6476,10 +6439,10 @@
               "operationId": "GetReceipt",
               "beforeFactId": "operation-7998cfc28f8e9e25",
               "afterFactId": "operation-9f7e0f5fecba5ff4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -6492,9 +6455,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/transactions/{transactionId}/receipt",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-7998cfc28f8e9e25",
                 "projectId": "project-819de5ecc40e",
@@ -6909,10 +6870,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -7003,10 +6964,10 @@
               "operationId": "GetRuntimeOptions",
               "beforeFactId": "operation-940f717426018e2c",
               "afterFactId": "operation-f8339ad34db1040f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -7019,9 +6980,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/userDefinedEndpoints/runtimeOptions",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-940f717426018e2c",
                 "projectId": "project-819de5ecc40e",
@@ -7298,10 +7257,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -7392,10 +7351,10 @@
               "operationId": "GetTransactionStatus",
               "beforeFactId": "operation-2f43c2d929a350bc",
               "afterFactId": "operation-a1be754f4d469bf6",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -7408,9 +7367,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/transactions/{transactionId}/status",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-2f43c2d929a350bc",
                 "projectId": "project-819de5ecc40e",
@@ -7641,10 +7598,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -7735,10 +7692,10 @@
               "operationId": "GetUser",
               "beforeFactId": "operation-67042114c63991ae",
               "afterFactId": "operation-a8e102571341cb3d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -7751,9 +7708,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/users/{userId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-67042114c63991ae",
                 "projectId": "project-819de5ecc40e",
@@ -7984,10 +7939,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -8078,10 +8033,10 @@
               "operationId": "GetUserDefinedEndpoint",
               "beforeFactId": "operation-9ee0681883d6fa27",
               "afterFactId": "operation-4c4aa97cbc443fcd",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -8094,9 +8049,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/userDefinedEndpoints",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9ee0681883d6fa27",
                 "projectId": "project-819de5ecc40e",
@@ -8337,10 +8290,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -8431,10 +8384,10 @@
               "operationId": "GetUserDefinedEndpointsModule",
               "beforeFactId": "operation-150eb824a888dc85",
               "afterFactId": "operation-10ef0d5b1226d44f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -8447,9 +8400,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/userDefinedEndpoints/modules",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-150eb824a888dc85",
                 "projectId": "project-819de5ecc40e",
@@ -8672,10 +8623,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -8766,10 +8717,10 @@
               "operationId": "GetUserDefinedFunction",
               "beforeFactId": "operation-168b461f8939962b",
               "afterFactId": "operation-5fa49bc15effda4b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -8782,9 +8733,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/userDefinedFunctions/{functionId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-168b461f8939962b",
                 "projectId": "project-819de5ecc40e",
@@ -9007,10 +8956,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -9101,10 +9050,10 @@
               "operationId": "GetUserDefinedRole",
               "beforeFactId": "operation-870d7707d6c2ae73",
               "afterFactId": "operation-f9c2cf190c61f50d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -9117,9 +9066,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/roles",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-870d7707d6c2ae73",
                 "projectId": "project-819de5ecc40e",
@@ -9338,10 +9285,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -9432,10 +9379,10 @@
               "operationId": "ListCollections",
               "beforeFactId": "operation-5f7d06a08278989c",
               "afterFactId": "operation-44ee021e1554498a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -9448,9 +9395,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/collections",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-5f7d06a08278989c",
                 "projectId": "project-819de5ecc40e",
@@ -9675,10 +9620,10 @@
                   "itemName": "collections"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -9769,10 +9714,10 @@
               "operationId": "ListConsortiumMembers",
               "beforeFactId": "operation-1cf7de66f4c6e155",
               "afterFactId": "operation-c6c5d7cd570d781a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -9785,9 +9730,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/governance/members",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-1cf7de66f4c6e155",
                 "projectId": "project-819de5ecc40e",
@@ -10012,10 +9955,10 @@
                   "itemName": "members"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -10106,10 +10049,10 @@
               "operationId": "ListLedgerEntries",
               "beforeFactId": "operation-b5bad937ba2d8676",
               "afterFactId": "operation-a81c3fa1230b161e",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -10122,9 +10065,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/transactions",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b5bad937ba2d8676",
                 "projectId": "project-819de5ecc40e",
@@ -10445,10 +10386,10 @@
                   "itemName": "entries"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -10539,10 +10480,10 @@
               "operationId": "ListLedgerUsers",
               "beforeFactId": "operation-91d59c44ba2d61c0",
               "afterFactId": "operation-202ee566512ad7e3",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -10555,9 +10496,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/ledgerUsers",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-91d59c44ba2d61c0",
                 "projectId": "project-819de5ecc40e",
@@ -10782,10 +10721,10 @@
                   "itemName": "ledgerUsers"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -10876,10 +10815,10 @@
               "operationId": "ListTags",
               "beforeFactId": "operation-e63c5815d966c1a0",
               "afterFactId": "operation-1a32cd248f5c1eb8",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -10892,9 +10831,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/collections/tags",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-e63c5815d966c1a0",
                 "projectId": "project-819de5ecc40e",
@@ -11131,10 +11068,10 @@
                   "itemName": "tags"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -11225,10 +11162,10 @@
               "operationId": "ListUserDefinedFunctions",
               "beforeFactId": "operation-92740302febf049f",
               "afterFactId": "operation-eaa4b35b87963642",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -11241,9 +11178,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/userDefinedFunctions",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-92740302febf049f",
                 "projectId": "project-819de5ecc40e",
@@ -11468,10 +11403,10 @@
                   "itemName": "functions"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -11562,10 +11497,10 @@
               "operationId": "ListUsers",
               "beforeFactId": "operation-699d11aded2d1320",
               "afterFactId": "operation-d2b241d5c9bbefbc",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -11578,9 +11513,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/users",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-699d11aded2d1320",
                 "projectId": "project-819de5ecc40e",
@@ -11805,10 +11738,10 @@
                   "itemName": "ledgerUsers"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -11899,10 +11832,10 @@
               "operationId": "UpdateRuntimeOptions",
               "beforeFactId": "operation-48dc5dd246f485d6",
               "afterFactId": "operation-480833a924006d2a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -11915,10 +11848,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "patch",
               "path": "/app/userDefinedEndpoints/runtimeOptions",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-48dc5dd246f485d6",
                 "projectId": "project-819de5ecc40e",
@@ -12327,10 +12257,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -12421,10 +12351,10 @@
               "operationId": "UpdateUserDefinedRole",
               "beforeFactId": "operation-60c4c63d477ee07e",
               "afterFactId": "operation-6b57da5bee16f9bb",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
-                "source-32adcc91a5c91ef1"
+                "source-2a6a8cd1c1b06810"
               ],
               "hunkIds": [
                 "hunk-dbd2632f5370c750"
@@ -12437,10 +12367,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "patch",
               "path": "/app/roles",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-60c4c63d477ee07e",
                 "projectId": "project-819de5ecc40e",
@@ -12697,10 +12624,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-32adcc91a5c91ef1",
+                  "id": "source-2a6a8cd1c1b06810",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
                   "status": "modified",
                   "origins": [
@@ -12895,7 +12822,6 @@
           ],
           "changedAspects": [
             "parameters",
-            "request",
             "responses"
           ],
           "groupingEvidence": {
@@ -12910,16 +12836,16 @@
               "hunk-dbd2632f5370c750"
             ]
           },
-          "title": "Add the 2026-07-31 preview response models and versioning",
-          "summary": "Add a preview API version and evolve ledger write response models to expose commit state, receipt, and application claims while preserving the prior stable model through versioning decorators; the version propagates across 33 operations.",
+          "title": "Add a preview ledger-write result contract",
+          "summary": "Adds the 2026-07-31-preview version and versions the ledger-write response into a transaction-id response wrapper plus a body model containing collectionId, optional receipt and application claims, and required transaction state; it also adds a typed 503 rollback error while preserving the earlier result model for older API versions.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [
-              "downstream-3964c055b0b313d9",
-              "downstream-5ef8b7eb28501644"
+              "downstream-c806ee9b3d6e5ab1",
+              "downstream-de03a1e305b0fe20"
             ],
             "complianceSearchRequestIds": [
-              "compliance-search-ce025c90ed3bada0"
+              "compliance-search-f407dc2b667111b6"
             ],
             "relatedOperationIds": [
               "CreateLedgerEntry",
@@ -12977,8 +12903,8 @@
                 "reason": "mapped-deterministic-candidate",
                 "restCandidateIds": [],
                 "downstreamCandidateIds": [
-                  "downstream-3964c055b0b313d9",
-                  "downstream-5ef8b7eb28501644"
+                  "downstream-c806ee9b3d6e5ab1",
+                  "downstream-de03a1e305b0fe20"
                 ]
               },
               {
@@ -13003,23 +12929,23 @@
           "inferenceRequired": true,
           "inferenceResults": [
             {
-              "requestId": "inference-request-114b21fab6dfb05f",
+              "requestId": "inference-request-9ecc51220cd6fb3f",
               "hunkId": "hunk-679b78323c1526ce",
               "decision": "no-impact",
-              "rationale": "The versioning and shared-route scaffolding preserves the prior-version declaration and introduces no additional incompatibility beyond the deterministic before/after candidates.",
+              "rationale": "The renamed historical response model is explicitly retained for versions before 2026-07-31-preview; the hunk itself does not remove a wire member or public SDK symbol in the selected target contract.",
               "candidateIds": []
             },
             {
-              "requestId": "inference-request-707f9f79d6ebf533",
+              "requestId": "inference-request-6cf670bc719c9ad3",
               "hunkId": "hunk-dbd2632f5370c750",
               "decision": "no-impact",
-              "rationale": "The new preview enum member only establishes the selected API version; the compiled before/after artifacts already capture its REST and SDK effects.",
+              "rationale": "Adding the chronologically later preview version and marking it with @Azure.Core.previewVersion selects a new API surface without changing existing version contracts.",
               "candidateIds": []
             }
           ],
           "sources": [
             {
-              "id": "source-32adcc91a5c91ef1",
+              "id": "source-2a6a8cd1c1b06810",
               "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
               "status": "modified",
               "origins": [
@@ -13105,7 +13031,7 @@
               ]
             },
             {
-              "id": "source-b38b1258c85d4631",
+              "id": "source-a1b03decaab4b3df",
               "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
               "status": "modified",
               "origins": [
@@ -13834,7 +13760,7 @@
           }
         },
         {
-          "id": "semantic-dc076128a0053073",
+          "id": "semantic-f7f018d1d5eec36c",
           "projectId": "project-819de5ecc40e",
           "projectIds": [
             "project-819de5ecc40e"
@@ -13842,7 +13768,7 @@
           "action": "modify",
           "changeKind": "modify",
           "sourceChangeIds": [
-            "source-92194453c243acd1"
+            "source-6b90b1a5f4c3ae2a"
           ],
           "hunkIds": [
             "hunk-6e7df05713d29f27",
@@ -13894,7 +13820,7 @@
               "restChanged": true,
               "matchBasis": "operation-identity",
               "sourceChangeIds": [
-                "source-92194453c243acd1"
+                "source-6b90b1a5f4c3ae2a"
               ],
               "hunkIds": [
                 "hunk-6e7df05713d29f27",
@@ -13918,7 +13844,6 @@
               "path": "/app/transactions",
               "changedAspects": [
                 "parameters",
-                "request",
                 "responses"
               ],
               "before": {
@@ -14448,10 +14373,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: parameters, request, responses.",
+              "outcome": "REST contract changed: parameters, responses.",
               "sources": [
                 {
-                  "id": "source-92194453c243acd1",
+                  "id": "source-6b90b1a5f4c3ae2a",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
                   "status": "modified",
                   "origins": [
@@ -15035,10 +14960,10 @@
               "operationId": "GetLedgerEntry",
               "beforeFactId": "operation-141c4546c4046927",
               "afterFactId": "operation-af60a05ba6a2f324",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "operation-identity",
               "sourceChangeIds": [
-                "source-92194453c243acd1"
+                "source-6b90b1a5f4c3ae2a"
               ],
               "hunkIds": [
                 "hunk-6e7df05713d29f27"
@@ -15055,9 +14980,7 @@
               "apiVersion": "2026-07-31-preview",
               "method": "get",
               "path": "/app/transactions/{transactionId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-141c4546c4046927",
                 "projectId": "project-819de5ecc40e",
@@ -15392,10 +15315,10 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
-                  "id": "source-92194453c243acd1",
+                  "id": "source-6b90b1a5f4c3ae2a",
                   "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
                   "status": "modified",
                   "origins": [
@@ -15789,7 +15712,6 @@
           ],
           "changedAspects": [
             "parameters",
-            "request",
             "responses"
           ],
           "groupingEvidence": {
@@ -15802,15 +15724,15 @@
               "hunk-a09507a339750d2f"
             ]
           },
-          "title": "Add wait-for-commit behavior to ledger entry writes",
-          "summary": "Replace the preview ledger-entry write shape with a versioned shared-route operation that adds the optional waitForCommit query parameter and returns commit state, receipt, and rollback error information.",
+          "title": "Add optional wait-for-commit ledger writes",
+          "summary": "Versions CreateLedgerEntry so the new preview accepts an optional waitForCommit query parameter and returns the enriched ledger-write result or rollback error, while retaining the prior operation shape on the shared route for older API versions.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [
-              "downstream-3a04f2b3a1f64b06"
+              "downstream-6bcd2ee7c060757b"
             ],
             "complianceSearchRequestIds": [
-              "compliance-search-29e57d03960fd140"
+              "compliance-search-b6d5aebfdd438403"
             ],
             "relatedOperationIds": [
               "CreateLedgerEntry",
@@ -15829,7 +15751,7 @@
                 "reason": "mapped-deterministic-candidate",
                 "restCandidateIds": [],
                 "downstreamCandidateIds": [
-                  "downstream-3a04f2b3a1f64b06"
+                  "downstream-6bcd2ee7c060757b"
                 ]
               },
               {
@@ -15850,16 +15772,16 @@
           "inferenceRequired": true,
           "inferenceResults": [
             {
-              "requestId": "inference-request-7f144273d33b2b5a",
+              "requestId": "inference-request-cac11c491f1cdba7",
               "hunkId": "hunk-a09507a339750d2f",
               "decision": "no-impact",
-              "rationale": "The versioning and shared-route scaffolding preserves the prior-version declaration and introduces no additional incompatibility beyond the deterministic before/after candidates.",
+              "rationale": "The prior createLedgerEntry shape is retained under createLedgerEntryAsync for older versions with @removed and @renamedFrom, while the new operation is added only in the preview and shares the existing route; this hunk preserves historical contracts and introduces no separate incompatibility candidate.",
               "candidateIds": []
             }
           ],
           "sources": [
             {
-              "id": "source-92194453c243acd1",
+              "id": "source-6b90b1a5f4c3ae2a",
               "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
               "status": "modified",
               "origins": [
@@ -16467,14 +16389,14 @@
       "sharedTypeImpacts": [],
       "rootCauses": [
         {
-          "id": "downstream-root-cause-96658d6eb85b3445",
+          "id": "downstream-root-cause-ea7a0b3ba14bdad8",
           "kind": "method-return-propagation",
           "directCandidateIds": [
-            "downstream-3a04f2b3a1f64b06"
+            "downstream-6bcd2ee7c060757b"
           ],
           "propagatedCandidateIds": [
-            "downstream-3964c055b0b313d9",
-            "downstream-5ef8b7eb28501644"
+            "downstream-c806ee9b3d6e5ab1",
+            "downstream-de03a1e305b0fe20"
           ],
           "operationFactIds": [
             "sdk-fact-63d34c6573fe93f0",
@@ -16493,7 +16415,7 @@
         }
       ],
       "impliedByRest": [],
-      "rejectedCandidateCount": 1,
+      "rejectedCandidateCount": 3,
       "blockers": []
     },
     "compliance": {
@@ -16507,12 +16429,12 @@
       },
       "intentAssessments": [
         {
-          "semanticIntentId": "semantic-0444245ca7d40975",
-          "reviewUnitId": "semantic-0444245ca7d40975",
+          "semanticIntentId": "semantic-14845e93054010a4",
+          "reviewUnitId": "semantic-14845e93054010a4",
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "guidanceSection": "Preview API versions"
+              "guidanceSection": "Versioning overview"
             },
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
@@ -16520,12 +16442,12 @@
             },
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Evolving APIs using the Versioning Library"
+              "guidanceSection": "Adding, removing, and renaming API elements"
             }
           ],
           "sourceChangeIds": [
-            "source-32adcc91a5c91ef1",
-            "source-b38b1258c85d4631"
+            "source-2a6a8cd1c1b06810",
+            "source-a1b03decaab4b3df"
           ],
           "hunkIds": [
             "hunk-679b78323c1526ce",
@@ -16548,10 +16470,10 @@
             "declaration-eca5ca394eedaec5"
           ],
           "decision": "applicable-pass",
-          "expected": "A preview added after a stable version is the final Versions enum member, uses @Azure.Core.previewVersion, and models added, removed, renamed, or changed declarations with versioning decorators while preserving prior-version shapes.",
-          "actual": "The PR appends v2026_07_31_preview, marks it with @Azure.Core.previewVersion, and uses @added, @removed, and @renamedFrom to preserve the stable response model while introducing the preview response models.",
-          "rationale": "The changed TypeSpec follows the fetched preview-after-stable and API-evolution patterns, including explicit version decorators and preserved prior-version declarations.",
-          "gap": "The changed TypeSpec follows the fetched preview-after-stable and API-evolution patterns, including explicit version decorators and preserved prior-version declarations.",
+          "expected": "A preview after a stable version is the last Versions member, is marked @Azure.Core.previewVersion, and versions added, removed, or renamed models and properties with the corresponding decorators.",
+          "actual": "The change appends 2026-07-31-preview with @Azure.Core.previewVersion and uses @added, @removed, and @renamedFrom to preserve the old result model while introducing the new response wrapper, output body, and rollback error.",
+          "rationale": "The changed version enum and model evolution follow the fetched preview-after-stable and evolving-API patterns.",
+          "gap": "The changed version enum and model evolution follow the fetched preview-after-stable and evolving-API patterns.",
           "sourceLinks": [
             {
               "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
@@ -16668,13 +16590,13 @@
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 2,
@@ -16682,13 +16604,13 @@
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 3,
@@ -16696,44 +16618,30 @@
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 4,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
+                "total": 7
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 5,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 6,
               "catalogOrder": 15,
               "title": "Add stable after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
@@ -16741,27 +16649,55 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 6,
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 7,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "catalogOrder": 3,
+              "title": "Agent base type",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
               "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
+                "exactSymbol": 4,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's models and enums category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 8,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 5
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 9,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -16772,10 +16708,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's models and enums category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 9,
+              "rank": 10,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -16786,27 +16722,13 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's models and enums category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 10,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 11,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
@@ -16814,13 +16736,13 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 12,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
@@ -16828,24 +16750,66 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 13,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 14,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 15,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 16,
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 17,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -16856,52 +16820,66 @@
                 "changeContext": 0,
                 "total": 3
               },
-              "selectionRationale": "Matches the intent's models and enums category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 15,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 16,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 17,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 18,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 19,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 20,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 21,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 22,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -16912,80 +16890,52 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 19,
-              "catalogOrder": 18,
-              "title": "Azure.Core long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 20,
-              "catalogOrder": 19,
-              "title": "TypeSpec pagination",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 21,
-              "catalogOrder": 32,
-              "title": "Directives",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 22,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 23,
-              "catalogOrder": 1,
-              "title": "ARM resource types and modeling",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
+                "changeContext": 1,
+                "total": 1
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 24,
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 26,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -16996,66 +16946,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 25,
-              "catalogOrder": 3,
-              "title": "Agent base type",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 4,
-              "title": "Private endpoints",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 27,
-              "catalogOrder": 5,
-              "title": "Private links",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 28,
-              "catalogOrder": 6,
-              "title": "Network security perimeter",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 29,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -17066,10 +16960,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 30,
+              "rank": 28,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -17080,10 +16974,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 31,
+              "rank": 29,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -17094,10 +16988,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 32,
+              "rank": 30,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 31,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -17108,7 +17016,21 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             }
           ],
           "documents": [
@@ -17118,24 +17040,24 @@
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API.",
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
               "guidance": [
                 {
-                  "section": "Preview API versions",
-                  "excerpt": "Always make the last enum value the preview and apply `@previewVersion` to it. Only one version may be marked with the `@previewVersion` decorator. Mark all changes from the latest stable with appropriate versioning decorators, using `Versions.<PreviewVersion>` as the version argument.",
+                  "section": "Versioning overview",
+                  "excerpt": "Always make the last enum value the preview and apply @previewVersion to it. Mark all changes from the latest stable with appropriate versioning decorators.",
                   "queryTerms": [
-                    "@Azure.Core.previewVersion",
-                    "@added",
-                    "@removed",
-                    "@renamedFrom"
+                    "@previewVersion",
+                    "Versions"
                   ],
-                  "examples": [],
+                  "examples": [
+                    "Use Versions.<PreviewVersion> as the version argument."
+                  ],
                   "applicableDeclarationIds": [
                     "declaration-06c449df4b1322b9",
                     "declaration-1ea4404bbc1f2475",
@@ -17154,8 +17076,8 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:ab0948c69824b49ce59dc2b7a89aa5f3b611a43efcd067436252600db0a41a86"
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             },
             {
               "rank": 2,
@@ -17163,17 +17085,17 @@
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API.",
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
               "guidance": [
                 {
                   "section": "Add preview after stable",
-                  "excerpt": "Add a new version to the `Versions` enum for the new preview, decorate it with `@Azure.Core.previewVersion`, and mark added, removed, renamed, or otherwise modified types and operations with the appropriate versioning decorators.",
+                  "excerpt": "Add a new version to the Versions enum, decorate it with @Azure.Core.previewVersion, and mark added, removed, or renamed types with the appropriate versioning decorator.",
                   "queryTerms": [
                     "@Azure.Core.previewVersion",
                     "@added",
@@ -17181,8 +17103,7 @@
                     "@renamedFrom"
                   ],
                   "examples": [
-                    "@Azure.Core.previewVersion\nv2026_01_01_preview: \"2026-01-01-preview\";",
-                    "@added(Versions.v2026_01_01_preview)\n@renamedFrom(Versions.v2026_01_01_preview, \"Bar\")"
+                    "@Azure.Core.previewVersion; @added(Versions.<preview>); @renamedFrom(Versions.<preview>, \"Bar\")"
                   ],
                   "applicableDeclarationIds": [
                     "declaration-06c449df4b1322b9",
@@ -17202,8 +17123,8 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:54cfa2ad80679e7158620627d509e74784741be6b3e7b4706fa34fbce7f1149c"
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:1aa4c80ddb8cbb7ee85fed392795d18f0f6cae495dd5c3df44638c7b9ded9253"
             },
             {
               "rank": 3,
@@ -17211,27 +17132,24 @@
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API.",
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
               "guidance": [
                 {
-                  "section": "Evolving APIs using the Versioning Library",
-                  "excerpt": "Versioning allows an API to evolve without breaking existing clients by specifying when models, operations, properties, and parameters are added, removed, renamed, or changed. New elements use `@added`; removed elements use `@removed`; prior names use `@renamedFrom`; versioned operation replacements can share a route.",
+                  "section": "Adding, removing, and renaming API elements",
+                  "excerpt": "Versioning allows you to evolve your API without breaking existing clients. By using versioning decorators, you can specify when resources, operations, or properties are added, removed, or changed.",
                   "queryTerms": [
                     "@added",
                     "@removed",
-                    "@renamedFrom",
-                    "@sharedRoute",
-                    "waitForCommit"
+                    "@renamedFrom"
                   ],
                   "examples": [
-                    "@added(Versions.v2)\norderBy?: string;",
-                    "@removed(Versions.v2)\n@renamedFrom(Versions.v2, \"createOrReplaceWidget\")\n@sharedRoute"
+                    "Use @added for new models and properties, @removed for elements absent from the new version, and @renamedFrom for renamed declarations."
                   ],
                   "applicableDeclarationIds": [
                     "declaration-06c449df4b1322b9",
@@ -17251,49 +17169,73 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:f6a15776691083dc114fa4024706e3162336758b72153dde181ce9b223f77ab9"
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
               "rank": 4,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
+                "total": 7
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:0e1762ea2620169a72a7ef626e836bb916e358fa2a8c75b0ff379dc8ed4b83d6"
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
+              "guidance": [
+                {
+                  "section": "Models and properties",
+                  "excerpt": "Models define data structures with named properties; properties can be optional with ? and model spreads insert shared properties at the spread location.",
+                  "queryTerms": [
+                    "model",
+                    "property",
+                    "@bodyRoot"
+                  ],
+                  "examples": [
+                    "Properties can be designated optional using ?; the spread operator copies members into the target model."
+                  ],
+                  "applicableDeclarationIds": [
+                    "declaration-06c449df4b1322b9",
+                    "declaration-1ea4404bbc1f2475",
+                    "declaration-3921b6e194bf6900",
+                    "declaration-464978f111824a22",
+                    "declaration-5ecc05a024463454",
+                    "declaration-619fab206c833526",
+                    "declaration-68c10e9e933401e0",
+                    "declaration-7ff424c62b845fe6",
+                    "declaration-aaddd686534b4afb",
+                    "declaration-be06c0f80ad1aff3",
+                    "declaration-bf69936e4c168b4c",
+                    "declaration-c2af33e048d69150",
+                    "declaration-eca5ca394eedaec5"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
             }
           ],
           "blockers": []
         },
         {
-          "semanticIntentId": "semantic-dc076128a0053073",
-          "reviewUnitId": "semantic-dc076128a0053073",
+          "semanticIntentId": "semantic-f7f018d1d5eec36c",
+          "reviewUnitId": "semantic-f7f018d1d5eec36c",
           "applicableGuidance": [
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "guidanceSection": "Preview API versions"
-            },
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
               "guidanceSection": "Add preview after stable"
             },
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Evolving APIs using the Versioning Library"
+              "guidanceSection": "Adding an optional operation parameter"
             }
           ],
           "sourceChangeIds": [
-            "source-92194453c243acd1"
+            "source-6b90b1a5f4c3ae2a"
           ],
           "hunkIds": [
             "hunk-6e7df05713d29f27",
@@ -17309,10 +17251,10 @@
             "declaration-e8a7420c11bdbc9e"
           ],
           "decision": "applicable-pass",
-          "expected": "A preview added after a stable version is the final Versions enum member, uses @Azure.Core.previewVersion, and models added, removed, renamed, or changed declarations with versioning decorators while preserving prior-version shapes.",
-          "actual": "The PR preserves the earlier createLedgerEntry declaration with @removed and @renamedFrom, adds the preview replacement with @added, and uses @sharedRoute for the same POST route while adding waitForCommit.",
-          "rationale": "The changed TypeSpec follows the fetched preview-after-stable and API-evolution patterns, including explicit version decorators and preserved prior-version declarations.",
-          "gap": "The changed TypeSpec follows the fetched preview-after-stable and API-evolution patterns, including explicit version decorators and preserved prior-version declarations.",
+          "expected": "New preview operation behavior is versioned with @added/@removed/@renamedFrom; an optional query parameter is introduced with versioning, and old and new operation shapes may share the route.",
+          "actual": "The prior createLedgerEntry shape is retained for older versions, the new preview operation is added on the shared route, and waitForCommit is optional with a false default.",
+          "rationale": "The operation split and optional parameter match the fetched version-evolution guidance and preserve earlier-version behavior.",
+          "gap": "The operation split and optional parameter match the fetched version-evolution guidance and preserve earlier-version behavior.",
           "sourceLinks": [
             {
               "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
@@ -17390,104 +17332,76 @@
           "catalogRanking": [
             {
               "rank": 1,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API."
-            },
-            {
-              "rank": 2,
               "catalogOrder": 14,
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 3,
+              "rank": 2,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 4,
+              "rank": 3,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 5
+                "total": 9
               },
-              "selectionRationale": "Matches the intent's operations category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 5,
+              "rank": 4,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 5
+                "total": 9
               },
-              "selectionRationale": "Matches the intent's operations category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 5,
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 8
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 6,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 7,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 8,
               "catalogOrder": 15,
               "title": "Add stable after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
@@ -17495,55 +17409,41 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 7,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 8,
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 9,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 10,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 11,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 12,
               "catalogOrder": 31,
               "title": "Content negotiation",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
@@ -17554,10 +17454,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the intent's decorators category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 13,
+              "rank": 10,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -17565,30 +17465,72 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Matches the intent's operations category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 11,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 12,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 14,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
               "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
+                "exactSymbol": 4,
+                "patternCategory": 0,
                 "servicePlane": 0,
                 "changeContext": 0,
-                "total": 3
+                "total": 4
               },
-              "selectionRationale": "Matches the intent's operations category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 15,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
@@ -17596,24 +17538,10 @@
                 "changeContext": 0,
                 "total": 3
               },
-              "selectionRationale": "Matches the intent's decorators category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 16,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "Matches the intent's decorators category. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 17,
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -17621,97 +17549,125 @@
                 "exactSymbol": 0,
                 "patternCategory": 0,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "changeContext": 1,
+                "total": 3
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 17,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 18,
-              "catalogOrder": 19,
-              "title": "TypeSpec pagination",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
+                "patternCategory": 3,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 3
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 19,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
+                "patternCategory": 3,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 3
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 20,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "catalogOrder": 2,
+              "title": "Specific extension resource sample",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 21,
-              "catalogOrder": 25,
-              "title": "Scalars",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 22,
-              "catalogOrder": 32,
-              "title": "Directives",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 23,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
               },
-              "selectionRationale": "No direct pattern-category match. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 24,
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 25,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -17722,21 +17678,7 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 25,
-              "catalogOrder": 2,
-              "title": "Specific extension resource sample",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 26,
@@ -17750,66 +17692,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
               "rank": 27,
-              "catalogOrder": 4,
-              "title": "Private endpoints",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 28,
-              "catalogOrder": 5,
-              "title": "Private links",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 29,
-              "catalogOrder": 6,
-              "title": "Network security perimeter",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 30,
-              "catalogOrder": 17,
-              "title": "ARM long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
-            },
-            {
-              "rank": 31,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -17820,10 +17706,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             },
             {
-              "rank": 32,
+              "rank": 28,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -17834,75 +17720,90 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct pattern-category match. The guidance is ARM-specific. No direct preview-transition or modify-action match."
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 29,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context."
             }
           ],
           "documents": [
             {
               "rank": 1,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API.",
-              "guidance": [
-                {
-                  "section": "Preview API versions",
-                  "excerpt": "Always make the last enum value the preview and apply `@previewVersion` to it. Only one version may be marked with the `@previewVersion` decorator. Mark all changes from the latest stable with appropriate versioning decorators, using `Versions.<PreviewVersion>` as the version argument.",
-                  "queryTerms": [
-                    "@Azure.Core.previewVersion",
-                    "@added",
-                    "@removed",
-                    "@renamedFrom"
-                  ],
-                  "examples": [],
-                  "applicableDeclarationIds": [
-                    "declaration-070f8752261b14ba",
-                    "declaration-7feb90faf7759dae",
-                    "declaration-8d389098545eacc7",
-                    "declaration-abb1c8cc929d6afa",
-                    "declaration-b04a9749ce64dc34",
-                    "declaration-bd02832ac14f6383",
-                    "declaration-e8a7420c11bdbc9e"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:ab0948c69824b49ce59dc2b7a89aa5f3b611a43efcd067436252600db0a41a86"
-            },
-            {
-              "rank": 2,
               "catalogOrder": 14,
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API.",
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
               "guidance": [
                 {
                   "section": "Add preview after stable",
-                  "excerpt": "Add a new version to the `Versions` enum for the new preview, decorate it with `@Azure.Core.previewVersion`, and mark added, removed, renamed, or otherwise modified types and operations with the appropriate versioning decorators.",
+                  "excerpt": "Add the preview enum member, mark it @Azure.Core.previewVersion, and apply the appropriate versioning decoration to added, removed, renamed, or modified API elements.",
                   "queryTerms": [
-                    "@Azure.Core.previewVersion",
                     "@added",
                     "@removed",
                     "@renamedFrom"
                   ],
                   "examples": [
-                    "@Azure.Core.previewVersion\nv2026_01_01_preview: \"2026-01-01-preview\";",
-                    "@added(Versions.v2026_01_01_preview)\n@renamedFrom(Versions.v2026_01_01_preview, \"Bar\")"
+                    "Mark new preview changes with the appropriate versioning decorator."
                   ],
                   "applicableDeclarationIds": [
                     "declaration-070f8752261b14ba",
@@ -17916,36 +17817,35 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:54cfa2ad80679e7158620627d509e74784741be6b3e7b4706fa34fbce7f1149c"
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:1aa4c80ddb8cbb7ee85fed392795d18f0f6cae495dd5c3df44638c7b9ded9253"
             },
             {
-              "rank": 3,
+              "rank": 2,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Matches the intent's versioning category. The guidance applies to data-plane TypeSpec. The guidance covers adding a preview after stable or evolving an existing API.",
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
               "guidance": [
                 {
-                  "section": "Evolving APIs using the Versioning Library",
-                  "excerpt": "Versioning allows an API to evolve without breaking existing clients by specifying when models, operations, properties, and parameters are added, removed, renamed, or changed. New elements use `@added`; removed elements use `@removed`; prior names use `@renamedFrom`; versioned operation replacements can share a route.",
+                  "section": "Adding an optional operation parameter",
+                  "excerpt": "The evolving-APIs guidance shows adding a new optional query parameter with @added, and uses @removed, @renamedFrom, @added, and @sharedRoute when retaining an old operation shape while introducing a new one.",
                   "queryTerms": [
+                    "waitForCommit",
                     "@added",
                     "@removed",
                     "@renamedFrom",
-                    "@sharedRoute",
-                    "waitForCommit"
+                    "@sharedRoute"
                   ],
                   "examples": [
-                    "@added(Versions.v2)\norderBy?: string;",
-                    "@removed(Versions.v2)\n@renamedFrom(Versions.v2, \"createOrReplaceWidget\")\n@sharedRoute"
+                    "Use @added on a new optional query parameter; use versioned old/new operations with @sharedRoute when operation behavior changes."
                   ],
                   "applicableDeclarationIds": [
                     "declaration-070f8752261b14ba",
@@ -17959,26 +17859,44 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:f6a15776691083dc114fa4024706e3162336758b72153dde181ce9b223f77ab9"
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
-              "rank": 4,
+              "rank": 3,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 5
+                "total": 9
               },
-              "selectionRationale": "Matches the intent's operations category. The guidance applies to data-plane TypeSpec. No direct preview-transition or modify-action match.",
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-02T13:02:12.475Z",
-              "contentHash": "sha256:c802d846ca7f66cf72023b10ede9fafb5d06868f67d9ae05a2f355e67ef06722"
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:9f69fb8679088b5b378c46fc747d1271bd775348ce9cb82326f0a28b660c9fe7"
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "Catalog entry scored against exact symbols, pattern category, service plane, and change context.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:38:03.353940Z",
+              "contentHash": "sha256:a6ea517231ee1e3f1d81f35109f5744f2d49995e81d1d2851051eded05dd765b"
             }
           ],
           "blockers": []
@@ -18024,9 +17942,9 @@
       "id": "project-819de5ecc40e",
       "path": "specification/confidentialledger/data-plane/ConfidentialLedger",
       "sourceChangeIds": [
-        "source-32adcc91a5c91ef1",
-        "source-b38b1258c85d4631",
-        "source-92194453c243acd1"
+        "source-2a6a8cd1c1b06810",
+        "source-a1b03decaab4b3df",
+        "source-6b90b1a5f4c3ae2a"
       ],
       "artifacts": {
         "baseline": {
@@ -18040,15 +17958,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\projects\\project-819de5ecc40e\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-23"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7519,
+            "durationMs": 11452,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-baseline-autorest.log",
@@ -18072,16 +17990,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\projects\\project-819de5ecc40e\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-23"
               ]
             },
             "exitCode": 0,
-            "durationMs": 4730,
+            "durationMs": 10906,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-baseline-tcgc.log",
@@ -18109,15 +18027,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\projects\\project-819de5ecc40e\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-07-31-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 4785,
+            "durationMs": 11927,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-target-autorest.log",
@@ -18141,16 +18059,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\projects\\project-819de5ecc40e\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\analysis-v2\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-07-31-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 4473,
+            "durationMs": 12387,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-target-tcgc.log",
@@ -18262,21 +18180,20 @@
     "compliance": {
       "catalogEntriesScored": 64,
       "documentsFetched": 8,
-      "documentBytesFetched": 2522921,
+      "documentBytesFetched": 2773545,
       "guidanceExcerptsRetained": 6,
-      "guidanceExcerptBytesRetained": 1668
+      "guidanceExcerptBytesRetained": 1049
     }
   },
   "timings": {
-    "totalMs": 94569,
-    "semanticAnalysisMs": 99,
-    "restAnalysisMs": 29,
-    "downstreamAnalysisMs": 677
+    "totalMs": 73007,
+    "semanticAnalysisMs": 208,
+    "restAnalysisMs": 64,
+    "downstreamAnalysisMs": 1483
   },
   "pr": 45162,
   "pullRequest": {
     "number": 45162,
     "url": "https://github.com/Azure/azure-rest-api-specs/pull/45162"
-  },
-  "displayTitle": "[Confidential Ledger] Add waitForCommit preview API"
+  }
 }

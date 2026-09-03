@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T07:24:23.342Z",
+  "generatedAt": "2026-09-03T08:47:31.802Z",
   "title": "TypeSpec assessment: specification/deviceregistry/DeviceRegistry.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45348\\head",
@@ -65,7 +65,7 @@
       }
     }
   ],
-  "confidence": "low",
+  "confidence": "high",
   "safety": {
     "scope": "rest-and-downstream-only",
     "status": "passed"
@@ -75,7 +75,7 @@
       "status": "assessed",
       "items": [
         {
-          "id": "semantic-9aa453e5a18d9499",
+          "id": "semantic-19dbeda22c08823b",
           "projectId": "project-dd25e6db7b7b",
           "action": "modify",
           "changeKind": "modify",
@@ -98,7 +98,7 @@
               "operationId": "AssetEndpointProfiles_CreateOrReplace",
               "beforeFactId": "operation-3129dd623a0ad309",
               "afterFactId": "operation-f4dbe1bb6e262c90",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -114,9 +114,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles/{assetEndpointProfileName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-3129dd623a0ad309",
                 "projectId": "project-dd25e6db7b7b",
@@ -1053,7 +1051,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -1151,7 +1149,7 @@
               "operationId": "AssetEndpointProfiles_Delete",
               "beforeFactId": "operation-828e67a927dec9b3",
               "afterFactId": "operation-621f0bf8f9e90958",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -1167,9 +1165,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles/{assetEndpointProfileName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-828e67a927dec9b3",
                 "projectId": "project-dd25e6db7b7b",
@@ -1340,7 +1336,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -1438,7 +1434,7 @@
               "operationId": "AssetEndpointProfiles_Get",
               "beforeFactId": "operation-5c9ea8075e9e5f4d",
               "afterFactId": "operation-97512c18da5de339",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -1454,9 +1450,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles/{assetEndpointProfileName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-5c9ea8075e9e5f4d",
                 "projectId": "project-dd25e6db7b7b",
@@ -1827,7 +1821,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -1925,7 +1919,7 @@
               "operationId": "AssetEndpointProfiles_ListByResourceGroup",
               "beforeFactId": "operation-d9fc2a3c9483dd45",
               "afterFactId": "operation-bc3b03ff4cf5461b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -1941,9 +1935,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d9fc2a3c9483dd45",
                 "projectId": "project-dd25e6db7b7b",
@@ -2114,7 +2106,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -2212,7 +2204,7 @@
               "operationId": "AssetEndpointProfiles_ListBySubscription",
               "beforeFactId": "operation-a8f115dcc9195f97",
               "afterFactId": "operation-e3e4080c099006e6",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -2228,9 +2220,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a8f115dcc9195f97",
                 "projectId": "project-dd25e6db7b7b",
@@ -2391,7 +2381,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -2489,7 +2479,7 @@
               "operationId": "AssetEndpointProfiles_Update",
               "beforeFactId": "operation-3de284c673ae2f2e",
               "afterFactId": "operation-13cb4d7261d90c38",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -2505,9 +2495,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles/{assetEndpointProfileName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-3de284c673ae2f2e",
                 "projectId": "project-dd25e6db7b7b",
@@ -3070,7 +3058,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -3168,7 +3156,7 @@
               "operationId": "Assets_CreateOrReplace",
               "beforeFactId": "operation-e517b7c1dffc9429",
               "afterFactId": "operation-71c954103e1e2491",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -3184,9 +3172,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-e517b7c1dffc9429",
                 "projectId": "project-dd25e6db7b7b",
@@ -4867,7 +4853,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -4965,7 +4951,7 @@
               "operationId": "Assets_Delete",
               "beforeFactId": "operation-9478cb9e69b51934",
               "afterFactId": "operation-a97ce1e6ac4b6fc4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -4981,9 +4967,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9478cb9e69b51934",
                 "projectId": "project-dd25e6db7b7b",
@@ -5154,7 +5138,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -5252,7 +5236,7 @@
               "operationId": "Assets_Get",
               "beforeFactId": "operation-9b07154de8aeb9b8",
               "afterFactId": "operation-54db569acb94020c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -5268,9 +5252,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9b07154de8aeb9b8",
                 "projectId": "project-dd25e6db7b7b",
@@ -5889,7 +5871,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -5987,7 +5969,7 @@
               "operationId": "Assets_ListByResourceGroup",
               "beforeFactId": "operation-b92cce391005dfc6",
               "afterFactId": "operation-79f4e51ce8af8684",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -6003,9 +5985,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assets",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b92cce391005dfc6",
                 "projectId": "project-dd25e6db7b7b",
@@ -6176,7 +6156,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -6274,7 +6254,7 @@
               "operationId": "Assets_ListBySubscription",
               "beforeFactId": "operation-1e919a9cd0aba954",
               "afterFactId": "operation-89f930cf64454c8c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -6290,9 +6270,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/assets",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-1e919a9cd0aba954",
                 "projectId": "project-dd25e6db7b7b",
@@ -6453,7 +6431,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -6551,7 +6529,7 @@
               "operationId": "Assets_Update",
               "beforeFactId": "operation-0da6b62dbb4d1699",
               "afterFactId": "operation-aaff830be24b7b53",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -6567,9 +6545,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-0da6b62dbb4d1699",
                 "projectId": "project-dd25e6db7b7b",
@@ -7580,7 +7556,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -7678,7 +7654,7 @@
               "operationId": "AsyncOperationStatus_Get",
               "beforeFactId": "operation-acdcef899d70e5bb",
               "afterFactId": "operation-e317109182d8b2d4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -7694,9 +7670,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/locations/{location}/asyncOperationStatuses/{operationId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-acdcef899d70e5bb",
                 "projectId": "project-dd25e6db7b7b",
@@ -7817,7 +7791,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -7915,7 +7889,7 @@
               "operationId": "BillingContainers_Get",
               "beforeFactId": "operation-f44fa3e39ed4a0bf",
               "afterFactId": "operation-79fb700565b171aa",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -7931,9 +7905,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/billingContainers/{billingContainerName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f44fa3e39ed4a0bf",
                 "projectId": "project-dd25e6db7b7b",
@@ -8126,7 +8098,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -8224,7 +8196,7 @@
               "operationId": "BillingContainers_ListBySubscription",
               "beforeFactId": "operation-b26f1f6493b447e6",
               "afterFactId": "operation-a03076d0a2d17ac8",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -8240,9 +8212,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/billingContainers",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b26f1f6493b447e6",
                 "projectId": "project-dd25e6db7b7b",
@@ -8403,7 +8373,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -8501,7 +8471,7 @@
               "operationId": "CertificateAuthorities_Activate",
               "beforeFactId": "operation-1d6962c61edf7a20",
               "afterFactId": "operation-22d7cbd6623407f4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -8517,9 +8487,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/activate",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-1d6962c61edf7a20",
                 "projectId": "project-dd25e6db7b7b",
@@ -8752,7 +8720,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -8850,7 +8818,7 @@
               "operationId": "CertificateAuthorities_CreateOrReplace",
               "beforeFactId": "operation-9ef50f856318c7aa",
               "afterFactId": "operation-024c6e82553dfdd5",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -8866,9 +8834,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9ef50f856318c7aa",
                 "projectId": "project-dd25e6db7b7b",
@@ -9619,7 +9585,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -9717,7 +9683,7 @@
               "operationId": "CertificateAuthorities_Delete",
               "beforeFactId": "operation-f6ae78625b621bd3",
               "afterFactId": "operation-ad2315ed06d6268b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -9733,9 +9699,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f6ae78625b621bd3",
                 "projectId": "project-dd25e6db7b7b",
@@ -9924,7 +9888,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -10022,7 +9986,7 @@
               "operationId": "CertificateAuthorities_Get",
               "beforeFactId": "operation-12429a94e06468a8",
               "afterFactId": "operation-9827c08bfd97d67b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -10038,9 +10002,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-12429a94e06468a8",
                 "projectId": "project-dd25e6db7b7b",
@@ -10361,7 +10323,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -10459,7 +10421,7 @@
               "operationId": "CertificateAuthorities_ListByNamespace",
               "beforeFactId": "operation-0a95033440d785f6",
               "afterFactId": "operation-120e7ee4f439ea54",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -10475,9 +10437,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-0a95033440d785f6",
                 "projectId": "project-dd25e6db7b7b",
@@ -10666,7 +10626,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -10764,7 +10724,7 @@
               "operationId": "CertificateAuthorities_RevokeAndRotate",
               "beforeFactId": "operation-84c8030a70eeb04c",
               "afterFactId": "operation-7963069c14b70151",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -10780,9 +10740,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/revokeAndRotate",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-84c8030a70eeb04c",
                 "projectId": "project-dd25e6db7b7b",
@@ -10971,7 +10929,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -11069,7 +11027,7 @@
               "operationId": "CertificateAuthorities_Update",
               "beforeFactId": "operation-c752792d9e2dc14a",
               "afterFactId": "operation-664f7273ccc84590",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -11085,9 +11043,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-c752792d9e2dc14a",
                 "projectId": "project-dd25e6db7b7b",
@@ -11502,7 +11458,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -11600,7 +11556,7 @@
               "operationId": "CertificatePolicies_CreateOrUpdate",
               "beforeFactId": "operation-0758817fb44d3405",
               "afterFactId": "operation-5e648692a33fe447",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -11616,9 +11572,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/certificatePolicies/{certificatePolicyName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-0758817fb44d3405",
                 "projectId": "project-dd25e6db7b7b",
@@ -12153,7 +12107,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -12251,7 +12205,7 @@
               "operationId": "CertificatePolicies_Delete",
               "beforeFactId": "operation-8bb6e49fab8e4664",
               "afterFactId": "operation-2867121889f32e70",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -12267,9 +12221,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/certificatePolicies/{certificatePolicyName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-8bb6e49fab8e4664",
                 "projectId": "project-dd25e6db7b7b",
@@ -12476,7 +12428,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -12574,7 +12526,7 @@
               "operationId": "CertificatePolicies_Get",
               "beforeFactId": "operation-07416f516d8e92a5",
               "afterFactId": "operation-57f248fa3ce038da",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -12590,9 +12542,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/certificatePolicies/{certificatePolicyName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-07416f516d8e92a5",
                 "projectId": "project-dd25e6db7b7b",
@@ -12853,7 +12803,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -12951,7 +12901,7 @@
               "operationId": "CertificatePolicies_ListByCertificateAuthority",
               "beforeFactId": "operation-d3626b213647163c",
               "afterFactId": "operation-74a6bc48dd9df872",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -12967,9 +12917,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/certificatePolicies",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d3626b213647163c",
                 "projectId": "project-dd25e6db7b7b",
@@ -13176,7 +13124,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -13274,7 +13222,7 @@
               "operationId": "CertificatePolicies_Update",
               "beforeFactId": "operation-9708a93e6e649867",
               "afterFactId": "operation-ed7c789086fc4158",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -13290,9 +13238,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/certificateAuthorities/{certificateAuthorityName}/certificatePolicies/{certificatePolicyName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9708a93e6e649867",
                 "projectId": "project-dd25e6db7b7b",
@@ -13687,7 +13633,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -13785,7 +13731,7 @@
               "operationId": "Groups_CountMembers",
               "beforeFactId": "operation-46bc76c515c52c63",
               "afterFactId": "operation-b659fd1eaff28fa1",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -13801,9 +13747,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}/countMembers",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-46bc76c515c52c63",
                 "projectId": "project-dd25e6db7b7b",
@@ -13976,7 +13920,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -14074,7 +14018,7 @@
               "operationId": "Groups_CreateOrReplace",
               "beforeFactId": "operation-21462f632f65f9ce",
               "afterFactId": "operation-42dca4bdec820955",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -14090,9 +14034,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-21462f632f65f9ce",
                 "projectId": "project-dd25e6db7b7b",
@@ -14841,7 +14783,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -14939,7 +14881,7 @@
               "operationId": "Groups_Delete",
               "beforeFactId": "operation-0f1c491c926c70d8",
               "afterFactId": "operation-05c32c2691d41e3f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -14955,9 +14897,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-0f1c491c926c70d8",
                 "projectId": "project-dd25e6db7b7b",
@@ -15146,7 +15086,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -15244,7 +15184,7 @@
               "operationId": "Groups_Get",
               "beforeFactId": "operation-3d3a24e727af647e",
               "afterFactId": "operation-2c7e195c5ebc6c43",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -15260,9 +15200,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-3d3a24e727af647e",
                 "projectId": "project-dd25e6db7b7b",
@@ -15597,7 +15535,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -15695,7 +15633,7 @@
               "operationId": "Groups_ListByNamespace",
               "beforeFactId": "operation-3bec9aa9b2659a4e",
               "afterFactId": "operation-32de40aff3b4122a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -15711,9 +15649,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-3bec9aa9b2659a4e",
                 "projectId": "project-dd25e6db7b7b",
@@ -15902,7 +15838,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -16000,7 +15936,7 @@
               "operationId": "Groups_ListMembers",
               "beforeFactId": "operation-2a8ea839d1d999b8",
               "afterFactId": "operation-6baecd47c76e3b73",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -16016,9 +15952,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}/listMembers",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-2a8ea839d1d999b8",
                 "projectId": "project-dd25e6db7b7b",
@@ -16279,7 +16213,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -16377,7 +16311,7 @@
               "operationId": "Groups_RefreshMembers",
               "beforeFactId": "operation-a8a8acde4e4eb833",
               "afterFactId": "operation-0308e0793769a6c3",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -16393,9 +16327,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}/refreshMembers",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a8a8acde4e4eb833",
                 "projectId": "project-dd25e6db7b7b",
@@ -16600,7 +16532,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -16698,7 +16630,7 @@
               "operationId": "Groups_Update",
               "beforeFactId": "operation-fa2d9d90dd131376",
               "afterFactId": "operation-11c825ece27502d2",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -16714,9 +16646,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/groups/{groupName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-fa2d9d90dd131376",
                 "projectId": "project-dd25e6db7b7b",
@@ -17151,7 +17081,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -17249,7 +17179,7 @@
               "operationId": "JobRuns_Cancel",
               "beforeFactId": "operation-48cf532bef8a9cbe",
               "afterFactId": "operation-dc4769d4fe76d106",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -17265,9 +17195,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs/{runName}/cancel",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-48cf532bef8a9cbe",
                 "projectId": "project-dd25e6db7b7b",
@@ -17474,7 +17402,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -17572,7 +17500,7 @@
               "operationId": "JobRuns_CreateOrReplace",
               "beforeFactId": "operation-53a1d5cb5611b5c6",
               "afterFactId": "operation-69ccd2a86c6a9757",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -17588,9 +17516,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs/{runName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-53a1d5cb5611b5c6",
                 "projectId": "project-dd25e6db7b7b",
@@ -18365,7 +18291,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -18463,7 +18389,7 @@
               "operationId": "JobRuns_Delete",
               "beforeFactId": "operation-808f04287b04fecc",
               "afterFactId": "operation-79d01a8153036543",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -18479,9 +18405,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs/{runName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-808f04287b04fecc",
                 "projectId": "project-dd25e6db7b7b",
@@ -18688,7 +18612,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -18786,7 +18710,7 @@
               "operationId": "JobRuns_Get",
               "beforeFactId": "operation-44a8dcec7efd60ab",
               "afterFactId": "operation-6e77bc1219f872c2",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -18802,9 +18726,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs/{runName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-44a8dcec7efd60ab",
                 "projectId": "project-dd25e6db7b7b",
@@ -19145,7 +19067,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -19243,7 +19165,7 @@
               "operationId": "JobRuns_GetSummary",
               "beforeFactId": "operation-53d35574387a155d",
               "afterFactId": "operation-3339d5b1c9c0e54c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -19259,9 +19181,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs/{runName}/getSummary",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-53d35574387a155d",
                 "projectId": "project-dd25e6db7b7b",
@@ -19560,7 +19480,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -19658,7 +19578,7 @@
               "operationId": "JobRuns_ListByJob",
               "beforeFactId": "operation-f575f80cd78fe0b0",
               "afterFactId": "operation-1fa1b78a867fdeb1",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -19674,9 +19594,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f575f80cd78fe0b0",
                 "projectId": "project-dd25e6db7b7b",
@@ -19919,7 +19837,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -20017,7 +19935,7 @@
               "operationId": "JobRuns_ListByNamespace",
               "beforeFactId": "operation-b1425cb416c11d50",
               "afterFactId": "operation-666a2a73b33cebe7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -20033,9 +19951,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobRuns",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b1425cb416c11d50",
                 "projectId": "project-dd25e6db7b7b",
@@ -20260,7 +20176,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -20358,7 +20274,7 @@
               "operationId": "JobRuns_ListResults",
               "beforeFactId": "operation-4a8c8322af9f001d",
               "afterFactId": "operation-401e68762fcc36e6",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -20374,9 +20290,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}/runs/{runName}/listResults",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-4a8c8322af9f001d",
                 "projectId": "project-dd25e6db7b7b",
@@ -20669,7 +20583,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -20767,7 +20681,7 @@
               "operationId": "Jobs_CreateOrReplace",
               "beforeFactId": "operation-1b42276f85886fc9",
               "afterFactId": "operation-7827bfeda40d301d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -20783,9 +20697,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-1b42276f85886fc9",
                 "projectId": "project-dd25e6db7b7b",
@@ -21404,7 +21316,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -21502,7 +21414,7 @@
               "operationId": "Jobs_Delete",
               "beforeFactId": "operation-df1759c95d1217c9",
               "afterFactId": "operation-b6ae7dfa91b1f619",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -21518,9 +21430,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-df1759c95d1217c9",
                 "projectId": "project-dd25e6db7b7b",
@@ -21709,7 +21619,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -21807,7 +21717,7 @@
               "operationId": "Jobs_Get",
               "beforeFactId": "operation-b5e3f559ca0aac40",
               "afterFactId": "operation-f38e64eddf5b9e3e",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -21823,9 +21733,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b5e3f559ca0aac40",
                 "projectId": "project-dd25e6db7b7b",
@@ -22102,7 +22010,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -22200,7 +22108,7 @@
               "operationId": "Jobs_ListByNamespace",
               "beforeFactId": "operation-f864646d2333e049",
               "afterFactId": "operation-d8696355f7c0874d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -22216,9 +22124,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f864646d2333e049",
                 "projectId": "project-dd25e6db7b7b",
@@ -22407,7 +22313,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -22505,7 +22411,7 @@
               "operationId": "Jobs_Update",
               "beforeFactId": "operation-9a7a4c512feb1810",
               "afterFactId": "operation-540ddd69dd3c7c8e",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -22521,9 +22427,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/jobs/{jobName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9a7a4c512feb1810",
                 "projectId": "project-dd25e6db7b7b",
@@ -22842,7 +22746,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -22940,7 +22844,7 @@
               "operationId": "NamespaceAssets_CreateOrReplace",
               "beforeFactId": "operation-560e9d5ecf9cc409",
               "afterFactId": "operation-6e42bdef916646c4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -22956,9 +22860,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-560e9d5ecf9cc409",
                 "projectId": "project-dd25e6db7b7b",
@@ -25011,7 +24913,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -25109,7 +25011,7 @@
               "operationId": "NamespaceAssets_Delete",
               "beforeFactId": "operation-7e73e87dd9a449bc",
               "afterFactId": "operation-bce00be1c03aa8b5",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -25125,9 +25027,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-7e73e87dd9a449bc",
                 "projectId": "project-dd25e6db7b7b",
@@ -25316,7 +25216,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -25414,7 +25314,7 @@
               "operationId": "NamespaceAssets_ExecuteAction",
               "beforeFactId": "operation-ea169fa16853ee64",
               "afterFactId": "operation-85c5bff337958040",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -25430,9 +25330,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/assets/{assetName}/executeAction",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-ea169fa16853ee64",
                 "projectId": "project-dd25e6db7b7b",
@@ -25887,7 +25785,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -25985,7 +25883,7 @@
               "operationId": "NamespaceAssets_Get",
               "beforeFactId": "operation-42a8bebad2f698a7",
               "afterFactId": "operation-41ef77e673e8ecde",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -26001,9 +25899,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-42a8bebad2f698a7",
                 "projectId": "project-dd25e6db7b7b",
@@ -26758,7 +26654,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -26856,7 +26752,7 @@
               "operationId": "NamespaceAssets_ListByResourceGroup",
               "beforeFactId": "operation-8e9dcde7d8612049",
               "afterFactId": "operation-3f74083f88daaab2",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -26872,9 +26768,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/assets",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-8e9dcde7d8612049",
                 "projectId": "project-dd25e6db7b7b",
@@ -27063,7 +26957,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -27161,7 +27055,7 @@
               "operationId": "NamespaceAssets_Update",
               "beforeFactId": "operation-378dc7665f495b30",
               "afterFactId": "operation-2651186144d00d4d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -27177,9 +27071,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/assets/{assetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-378dc7665f495b30",
                 "projectId": "project-dd25e6db7b7b",
@@ -28420,7 +28312,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -28518,7 +28410,7 @@
               "operationId": "NamespaceDevices_CreateOrReplace",
               "beforeFactId": "operation-339f457b5ae29b67",
               "afterFactId": "operation-a1ddd3b33949129b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -28534,9 +28426,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/devices/{deviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-339f457b5ae29b67",
                 "projectId": "project-dd25e6db7b7b",
@@ -29827,7 +29717,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -29925,7 +29815,7 @@
               "operationId": "NamespaceDevices_Delete",
               "beforeFactId": "operation-5a73dd97ad9f6010",
               "afterFactId": "operation-45fe010dfc8c409c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -29941,9 +29831,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/devices/{deviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-5a73dd97ad9f6010",
                 "projectId": "project-dd25e6db7b7b",
@@ -30132,7 +30020,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -30230,7 +30118,7 @@
               "operationId": "NamespaceDevices_Get",
               "beforeFactId": "operation-528a97f3b907d7e9",
               "afterFactId": "operation-c229728b1b887c84",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -30246,9 +30134,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/devices/{deviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-528a97f3b907d7e9",
                 "projectId": "project-dd25e6db7b7b",
@@ -30749,7 +30635,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -30847,7 +30733,7 @@
               "operationId": "NamespaceDevices_ListByResourceGroup",
               "beforeFactId": "operation-c421db55abb024b9",
               "afterFactId": "operation-a0db5fe81d1904a7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -30863,9 +30749,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/devices",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-c421db55abb024b9",
                 "projectId": "project-dd25e6db7b7b",
@@ -31054,7 +30938,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -31152,7 +31036,7 @@
               "operationId": "NamespaceDevices_Update",
               "beforeFactId": "operation-c58a3764e8fb0dd7",
               "afterFactId": "operation-2bd89c8a2d8a85c1",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -31168,9 +31052,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/devices/{deviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-c58a3764e8fb0dd7",
                 "projectId": "project-dd25e6db7b7b",
@@ -31859,7 +31741,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -31957,7 +31839,7 @@
               "operationId": "NamespaceDiscoveredAssets_CreateOrReplace",
               "beforeFactId": "operation-14a7a1d2adbecc92",
               "afterFactId": "operation-51a2f343ff7fa7b9",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -31973,9 +31855,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredAssets/{discoveredAssetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-14a7a1d2adbecc92",
                 "projectId": "project-dd25e6db7b7b",
@@ -33818,7 +33698,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -33916,7 +33796,7 @@
               "operationId": "NamespaceDiscoveredAssets_Delete",
               "beforeFactId": "operation-8da43a4ed8ed8da5",
               "afterFactId": "operation-a18377d94f77bbb4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -33932,9 +33812,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredAssets/{discoveredAssetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-8da43a4ed8ed8da5",
                 "projectId": "project-dd25e6db7b7b",
@@ -34123,7 +34001,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -34221,7 +34099,7 @@
               "operationId": "NamespaceDiscoveredAssets_Get",
               "beforeFactId": "operation-59949922b1a9b991",
               "afterFactId": "operation-7c5484921e4fc3e0",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -34237,9 +34115,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredAssets/{discoveredAssetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-59949922b1a9b991",
                 "projectId": "project-dd25e6db7b7b",
@@ -34924,7 +34800,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -35022,7 +34898,7 @@
               "operationId": "NamespaceDiscoveredAssets_ListByResourceGroup",
               "beforeFactId": "operation-c5c92b6dc860d22e",
               "afterFactId": "operation-a2fd2072ede80df9",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -35038,9 +34914,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredAssets",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-c5c92b6dc860d22e",
                 "projectId": "project-dd25e6db7b7b",
@@ -35229,7 +35103,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -35327,7 +35201,7 @@
               "operationId": "NamespaceDiscoveredAssets_Update",
               "beforeFactId": "operation-2158d1bb78f829d5",
               "afterFactId": "operation-cdb17ae496a430ba",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -35343,9 +35217,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredAssets/{discoveredAssetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-2158d1bb78f829d5",
                 "projectId": "project-dd25e6db7b7b",
@@ -36556,7 +36428,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -36654,7 +36526,7 @@
               "operationId": "NamespaceDiscoveredDevices_CreateOrReplace",
               "beforeFactId": "operation-544ec6729740b4b0",
               "afterFactId": "operation-56ce0aaba7028ba9",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -36670,9 +36542,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredDevices/{discoveredDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-544ec6729740b4b0",
                 "projectId": "project-dd25e6db7b7b",
@@ -37699,7 +37569,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -37797,7 +37667,7 @@
               "operationId": "NamespaceDiscoveredDevices_Delete",
               "beforeFactId": "operation-06a349b0a8229e83",
               "afterFactId": "operation-537da17db39598c7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -37813,9 +37683,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredDevices/{discoveredDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-06a349b0a8229e83",
                 "projectId": "project-dd25e6db7b7b",
@@ -38004,7 +37872,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -38102,7 +37970,7 @@
               "operationId": "NamespaceDiscoveredDevices_Get",
               "beforeFactId": "operation-32df27544fb47177",
               "afterFactId": "operation-53e95e964d955959",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -38118,9 +37986,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredDevices/{discoveredDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-32df27544fb47177",
                 "projectId": "project-dd25e6db7b7b",
@@ -38533,7 +38399,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -38631,7 +38497,7 @@
               "operationId": "NamespaceDiscoveredDevices_ListByResourceGroup",
               "beforeFactId": "operation-21d1e9da61dcfc63",
               "afterFactId": "operation-b1dc3f2ffcb63166",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -38647,9 +38513,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredDevices",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-21d1e9da61dcfc63",
                 "projectId": "project-dd25e6db7b7b",
@@ -38838,7 +38702,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -38936,7 +38800,7 @@
               "operationId": "NamespaceDiscoveredDevices_Update",
               "beforeFactId": "operation-da159aecc513e466",
               "afterFactId": "operation-9cc35ce8ffbedeb4",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -38952,9 +38816,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/discoveredDevices/{discoveredDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-da159aecc513e466",
                 "projectId": "project-dd25e6db7b7b",
@@ -39589,7 +39451,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -39687,7 +39549,7 @@
               "operationId": "Namespaces_CreateOrReplace",
               "beforeFactId": "operation-3430452277d3a5c2",
               "afterFactId": "operation-cf03736d4b767b19",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -39703,10 +39565,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-3430452277d3a5c2",
                 "projectId": "project-dd25e6db7b7b",
@@ -40589,7 +40448,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -40687,7 +40546,7 @@
               "operationId": "Namespaces_Delete",
               "beforeFactId": "operation-ad336841a2b0beb2",
               "afterFactId": "operation-f1af7ec1080ec3df",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -40703,9 +40562,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-ad336841a2b0beb2",
                 "projectId": "project-dd25e6db7b7b",
@@ -40876,7 +40733,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -40974,7 +40831,7 @@
               "operationId": "Namespaces_GenerateReport",
               "beforeFactId": "operation-ca94366ef2c5db46",
               "afterFactId": "operation-106e831267257073",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -40990,9 +40847,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/generateReport",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-ca94366ef2c5db46",
                 "projectId": "project-dd25e6db7b7b",
@@ -41339,7 +41194,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -41437,7 +41292,7 @@
               "operationId": "Namespaces_Get",
               "beforeFactId": "operation-06aeb013b3f4b146",
               "afterFactId": "operation-61a5ec611e77b2a9",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -41453,9 +41308,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-06aeb013b3f4b146",
                 "projectId": "project-dd25e6db7b7b",
@@ -41808,7 +41661,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -41906,7 +41759,7 @@
               "operationId": "Namespaces_GetLatestReport",
               "beforeFactId": "operation-a9abb3855f587812",
               "afterFactId": "operation-885b6c2cd089eb3b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -41922,9 +41775,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/getLatestReport",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a9abb3855f587812",
                 "projectId": "project-dd25e6db7b7b",
@@ -42205,7 +42056,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -42303,7 +42154,7 @@
               "operationId": "Namespaces_ListByResourceGroup",
               "beforeFactId": "operation-92542ee283694cfa",
               "afterFactId": "operation-7a9b14ed5db0ecfa",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -42319,9 +42170,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-92542ee283694cfa",
                 "projectId": "project-dd25e6db7b7b",
@@ -42492,7 +42341,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -42590,7 +42439,7 @@
               "operationId": "Namespaces_ListBySubscription",
               "beforeFactId": "operation-11f68caa9ca91a7b",
               "afterFactId": "operation-e907fc52f3516c91",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -42606,9 +42455,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/namespaces",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-11f68caa9ca91a7b",
                 "projectId": "project-dd25e6db7b7b",
@@ -42769,7 +42616,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -42867,7 +42714,7 @@
               "operationId": "Namespaces_Migrate",
               "beforeFactId": "operation-708e5992d373506b",
               "afterFactId": "operation-7c178c0b4fffaf13",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -42883,9 +42730,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/migrate",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-708e5992d373506b",
                 "projectId": "project-dd25e6db7b7b",
@@ -43190,7 +43035,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -43288,7 +43133,7 @@
               "operationId": "Namespaces_Update",
               "beforeFactId": "operation-a2a31b6832de70db",
               "afterFactId": "operation-dba053992933dff1",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -43304,10 +43149,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a2a31b6832de70db",
                 "projectId": "project-dd25e6db7b7b",
@@ -43930,7 +43772,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -44028,7 +43870,7 @@
               "operationId": "Operations_List",
               "beforeFactId": "operation-339020e61da99c22",
               "afterFactId": "operation-ceb281809b295210",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -44044,9 +43886,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/providers/Microsoft.DeviceRegistry/operations",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-339020e61da99c22",
                 "projectId": "project-dd25e6db7b7b",
@@ -44143,7 +43983,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -44241,7 +44081,7 @@
               "operationId": "OperationStatus_Get",
               "beforeFactId": "operation-a6426217e83b2037",
               "afterFactId": "operation-64924a933584165d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -44257,9 +44097,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/locations/{location}/operationStatuses/{operationId}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a6426217e83b2037",
                 "projectId": "project-dd25e6db7b7b",
@@ -44380,7 +44218,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -44478,7 +44316,7 @@
               "operationId": "RegistryDeviceAttributes_CreateOrReplace",
               "beforeFactId": "operation-9d16bcbdee474290",
               "afterFactId": "operation-912360566758f4b6",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -44494,9 +44332,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/attributes/{attributeName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9d16bcbdee474290",
                 "projectId": "project-dd25e6db7b7b",
@@ -44927,7 +44763,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -45025,7 +44861,7 @@
               "operationId": "RegistryDeviceAttributes_Delete",
               "beforeFactId": "operation-9cb9fd273e2393c6",
               "afterFactId": "operation-dfc58c137b61191f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -45041,9 +44877,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/attributes/{attributeName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9cb9fd273e2393c6",
                 "projectId": "project-dd25e6db7b7b",
@@ -45206,7 +45040,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -45304,7 +45138,7 @@
               "operationId": "RegistryDeviceAttributes_Get",
               "beforeFactId": "operation-f2258f5a4cc16fe1",
               "afterFactId": "operation-550282a7269c9717",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -45320,9 +45154,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/attributes/{attributeName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f2258f5a4cc16fe1",
                 "projectId": "project-dd25e6db7b7b",
@@ -45563,7 +45395,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -45661,7 +45493,7 @@
               "operationId": "RegistryDeviceAttributes_ListByDevice",
               "beforeFactId": "operation-988fff30ba36eed2",
               "afterFactId": "operation-ea5d78132c224c7e",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -45677,9 +45509,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/attributes",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-988fff30ba36eed2",
                 "projectId": "project-dd25e6db7b7b",
@@ -45886,7 +45716,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -45984,7 +45814,7 @@
               "operationId": "RegistryDeviceAuthenticationProfiles_Get",
               "beforeFactId": "operation-d04f8f441974fc24",
               "afterFactId": "operation-6a17211c25102a99",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -46000,9 +45830,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/authenticationProfiles/{authenticationProfileName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d04f8f441974fc24",
                 "projectId": "project-dd25e6db7b7b",
@@ -46225,7 +46053,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -46323,7 +46151,7 @@
               "operationId": "RegistryDeviceAuthenticationProfiles_GetKeys",
               "beforeFactId": "operation-d8138cc7fe3883b3",
               "afterFactId": "operation-4d6d7f1f703e1ef2",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -46339,9 +46167,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/authenticationProfiles/{authenticationProfileName}/getKeys",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d8138cc7fe3883b3",
                 "projectId": "project-dd25e6db7b7b",
@@ -46576,7 +46402,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -46674,7 +46500,7 @@
               "operationId": "RegistryDeviceAuthenticationProfiles_ListByDevice",
               "beforeFactId": "operation-16be47f89537a494",
               "afterFactId": "operation-f31635f9cd49b945",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -46690,9 +46516,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/authenticationProfiles",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-16be47f89537a494",
                 "projectId": "project-dd25e6db7b7b",
@@ -46899,7 +46723,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -46997,7 +46821,7 @@
               "operationId": "RegistryDeviceAuthenticationProfiles_RevokeCertificates",
               "beforeFactId": "operation-495de73bfbd82195",
               "afterFactId": "operation-042b5ab9cbbc606f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -47013,9 +46837,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/authenticationProfiles/{authenticationProfileName}/revokeCertificates",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-495de73bfbd82195",
                 "projectId": "project-dd25e6db7b7b",
@@ -47222,7 +47044,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -47320,7 +47142,7 @@
               "operationId": "RegistryDeviceCapabilities_Get",
               "beforeFactId": "operation-daabb2ef6ec69f2e",
               "afterFactId": "operation-ea9ca989428d4d2a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -47336,9 +47158,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/capabilities/{capabilityName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-daabb2ef6ec69f2e",
                 "projectId": "project-dd25e6db7b7b",
@@ -47609,7 +47429,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -47707,7 +47527,7 @@
               "operationId": "RegistryDeviceCapabilities_ListByDevice",
               "beforeFactId": "operation-a62850a3cc6572b3",
               "afterFactId": "operation-6a32a8d3659a3150",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -47723,9 +47543,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}/capabilities",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-a62850a3cc6572b3",
                 "projectId": "project-dd25e6db7b7b",
@@ -47932,7 +47750,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -48030,7 +47848,7 @@
               "operationId": "RegistryDevices_CreateOrReplace",
               "beforeFactId": "operation-7bb02273b53fb351",
               "afterFactId": "operation-1aa9d367ceb0d07e",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -48046,9 +47864,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-7bb02273b53fb351",
                 "projectId": "project-dd25e6db7b7b",
@@ -48859,7 +48675,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -48957,7 +48773,7 @@
               "operationId": "RegistryDevices_Delete",
               "beforeFactId": "operation-6ffe7cfbfd27113e",
               "afterFactId": "operation-8cd8df374fb201a7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -48973,9 +48789,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-6ffe7cfbfd27113e",
                 "projectId": "project-dd25e6db7b7b",
@@ -49164,7 +48978,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -49262,7 +49076,7 @@
               "operationId": "RegistryDevices_Get",
               "beforeFactId": "operation-4f2f63d70487cda1",
               "afterFactId": "operation-79137fb3268ca9a3",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -49278,9 +49092,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-4f2f63d70487cda1",
                 "projectId": "project-dd25e6db7b7b",
@@ -49621,7 +49433,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -49719,7 +49531,7 @@
               "operationId": "RegistryDevices_ListByNamespace",
               "beforeFactId": "operation-433677abbb942417",
               "afterFactId": "operation-de19803af286de22",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -49735,9 +49547,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-433677abbb942417",
                 "projectId": "project-dd25e6db7b7b",
@@ -49926,7 +49736,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -50024,7 +49834,7 @@
               "operationId": "RegistryDevices_Update",
               "beforeFactId": "operation-5fc5e3d3de9060ee",
               "afterFactId": "operation-c06cf965f7066909",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -50040,9 +49850,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}/registryDevices/{registryDeviceName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-5fc5e3d3de9060ee",
                 "projectId": "project-dd25e6db7b7b",
@@ -50591,7 +50399,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -50689,7 +50497,7 @@
               "operationId": "SchemaRegistries_CreateOrReplace",
               "beforeFactId": "operation-9a72088dbcde54aa",
               "afterFactId": "operation-60929a32363b147d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -50705,10 +50513,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9a72088dbcde54aa",
                 "projectId": "project-dd25e6db7b7b",
@@ -51453,7 +51258,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -51551,7 +51356,7 @@
               "operationId": "SchemaRegistries_Delete",
               "beforeFactId": "operation-8264dcb402b98b3e",
               "afterFactId": "operation-e5c8797b294dc69a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -51567,9 +51372,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-8264dcb402b98b3e",
                 "projectId": "project-dd25e6db7b7b",
@@ -51740,7 +51543,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -51838,7 +51641,7 @@
               "operationId": "SchemaRegistries_Get",
               "beforeFactId": "operation-783817d8697315d0",
               "afterFactId": "operation-e249855c66b71b1c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -51854,9 +51657,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-783817d8697315d0",
                 "projectId": "project-dd25e6db7b7b",
@@ -52163,7 +51964,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -52261,7 +52062,7 @@
               "operationId": "SchemaRegistries_ListByResourceGroup",
               "beforeFactId": "operation-d1c292ba032d90a7",
               "afterFactId": "operation-78ed285fb6555836",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -52277,9 +52078,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d1c292ba032d90a7",
                 "projectId": "project-dd25e6db7b7b",
@@ -52450,7 +52249,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -52548,7 +52347,7 @@
               "operationId": "SchemaRegistries_ListBySubscription",
               "beforeFactId": "operation-ef211031f5477eec",
               "afterFactId": "operation-dc757bb66a9fa47f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -52564,9 +52363,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/Microsoft.DeviceRegistry/schemaRegistries",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-ef211031f5477eec",
                 "projectId": "project-dd25e6db7b7b",
@@ -52727,7 +52524,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -52825,7 +52622,7 @@
               "operationId": "SchemaRegistries_Update",
               "beforeFactId": "operation-8b59879739ff1d6f",
               "afterFactId": "operation-12a5fb6b17e4fd6d",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -52841,10 +52638,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-8b59879739ff1d6f",
                 "projectId": "project-dd25e6db7b7b",
@@ -53343,7 +53137,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -53441,7 +53235,7 @@
               "operationId": "Schemas_CreateOrReplace",
               "beforeFactId": "operation-26d1afb34366145f",
               "afterFactId": "operation-8897754ab0aa7489",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -53457,9 +53251,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-26d1afb34366145f",
                 "projectId": "project-dd25e6db7b7b",
@@ -54148,7 +53940,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -54246,7 +54038,7 @@
               "operationId": "Schemas_Delete",
               "beforeFactId": "operation-ca5e5d083d558f1a",
               "afterFactId": "operation-b1a3b268d7eba538",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -54262,9 +54054,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-ca5e5d083d558f1a",
                 "projectId": "project-dd25e6db7b7b",
@@ -54453,7 +54243,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -54551,7 +54341,7 @@
               "operationId": "Schemas_Get",
               "beforeFactId": "operation-69c0797c22ca52e7",
               "afterFactId": "operation-d5f87b5a355f0130",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -54567,9 +54357,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-69c0797c22ca52e7",
                 "projectId": "project-dd25e6db7b7b",
@@ -54884,7 +54672,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -54982,7 +54770,7 @@
               "operationId": "Schemas_ListBySchemaRegistry",
               "beforeFactId": "operation-45398db915eb4fb0",
               "afterFactId": "operation-cb331e0a2b98cc3c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -54998,9 +54786,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-45398db915eb4fb0",
                 "projectId": "project-dd25e6db7b7b",
@@ -55189,7 +54975,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -55287,7 +55073,7 @@
               "operationId": "SchemaVersions_CreateOrReplace",
               "beforeFactId": "operation-d50b3788be91897e",
               "afterFactId": "operation-d8be20ca812a4c5c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -55303,9 +55089,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}/schemaVersions/{schemaVersionName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d50b3788be91897e",
                 "projectId": "project-dd25e6db7b7b",
@@ -55874,7 +55658,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -55972,7 +55756,7 @@
               "operationId": "SchemaVersions_Delete",
               "beforeFactId": "operation-55fac5e66a8a1fd2",
               "afterFactId": "operation-01f08820290b5a0f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -55988,9 +55772,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "delete",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}/schemaVersions/{schemaVersionName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-55fac5e66a8a1fd2",
                 "projectId": "project-dd25e6db7b7b",
@@ -56197,7 +55979,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -56295,7 +56077,7 @@
               "operationId": "SchemaVersions_Get",
               "beforeFactId": "operation-60de915ba551e94a",
               "afterFactId": "operation-a81afa0735263d71",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -56311,9 +56093,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}/schemaVersions/{schemaVersionName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-60de915ba551e94a",
                 "projectId": "project-dd25e6db7b7b",
@@ -56600,7 +56380,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -56698,7 +56478,7 @@
               "operationId": "SchemaVersions_ListBySchema",
               "beforeFactId": "operation-f4acdaedd2d634f6",
               "afterFactId": "operation-d52d748dfe9595ec",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "version-transition-change",
               "sourceChangeIds": [
                 "source-c2c94e5d884d2317"
@@ -56714,9 +56494,7 @@
               "apiVersion": "2026-11-02-preview",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}/schemas/{schemaName}/schemaVersions",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f4acdaedd2d634f6",
                 "projectId": "project-dd25e6db7b7b",
@@ -56923,7 +56701,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-c2c94e5d884d2317",
@@ -57351,12 +57129,9 @@
             "operation-f38e64eddf5b9e3e",
             "operation-f4dbe1bb6e262c90"
           ],
-          "changedAspects": [
-            "request",
-            "responses"
-          ],
-          "title": "Downgrade ARM common-types references from v6 to v5",
-          "summary": "Two @armCommonTypesVersion arguments change from Azure.ResourceManager.CommonTypes.Versions.v6 to v5. The version selection propagates through 109 affected operations, for which deterministic analysis supplied 237 REST review candidates.",
+          "changedAspects": [],
+          "title": "Align preview API versions to ARM common types v5",
+          "summary": "Changes the two 2026-11 preview version declarations from ARM common types v6 to v5. All 109 mapped operations retain identical normalized request and response contracts, so the change restores cross-version wrapper compatibility without a REST or downstream SDK break.",
           "deterministicCoverage": {
             "restCandidateIds": [
               "rest-011635e4956acc62",
@@ -57599,7 +57374,7 @@
             ],
             "downstreamCandidateIds": [],
             "complianceSearchRequestIds": [
-              "compliance-search-8ae17b185955ff09"
+              "compliance-search-4e20719101e45ce7"
             ],
             "relatedOperationIds": [
               "AssetEndpointProfiles_CreateOrReplace",
@@ -58088,7 +57863,7 @@
     },
     "compliance": {
       "status": "passed",
-      "summary": "All Semantic intents were assessed; no applicable guidance was found for one or more intents.",
+      "summary": "All Semantic intents match applicable fetched guidance.",
       "coverage": {
         "semanticIntentCount": 1,
         "assessedIntentCount": 1,
@@ -58097,9 +57872,14 @@
       },
       "intentAssessments": [
         {
-          "semanticIntentId": "semantic-9aa453e5a18d9499",
-          "reviewUnitId": "semantic-9aa453e5a18d9499",
-          "applicableGuidance": [],
+          "semanticIntentId": "semantic-19dbeda22c08823b",
+          "reviewUnitId": "semantic-19dbeda22c08823b",
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "guidanceSection": "Evolving APIs > Define API versions"
+            }
+          ],
           "sourceChangeIds": [
             "source-c2c94e5d884d2317"
           ],
@@ -58109,10 +57889,11 @@
           "declarationIds": [
             "declaration-2216badbb8c3488e"
           ],
-          "decision": "no-applicable-guidance",
-          "actual": "Both changed @armCommonTypesVersion arguments select Azure.ResourceManager.CommonTypes.Versions.v5 instead of v6, affecting 109 represented operations.",
-          "rationale": "The fetched documents explain authoring common types and generic enum/decorator syntax, but none defines how an ARM service consumer must select a common-types version or whether a v6-to-v5 change is permitted. The deterministic query profile also labels this ARM Management change as data-plane, so a compliance pass or failure cannot be grounded without inventing guidance.",
-          "gap": "The fetched documents explain authoring common types and generic enum/decorator syntax, but none defines how an ARM service consumer must select a common-types version or whether a v6-to-v5 change is permitted. The deterministic query profile also labels this ARM Management change as data-plane, so a compliance pass or failure cannot be grounded without inventing guidance.",
+          "decision": "applicable-pass",
+          "expected": "Define API versions in an enum and specify dependencies and common types as needed for each version.",
+          "actual": "Both modified 2026-11 preview enum members explicitly select Azure.ResourceManager.CommonTypes.Versions.v5 with @armCommonTypesVersion.",
+          "rationale": "The modified version declarations follow the documented per-version common-types dependency pattern; the selected common-types version is explicit on each affected enum member.",
+          "gap": "The modified version declarations follow the documented per-version common-types dependency pattern; the selected common-types version is explicit on each affected enum member.",
           "sourceLinks": [
             {
               "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
@@ -58145,10 +57926,38 @@
                 "changeContext": 1,
                 "total": 8
               },
-              "selectionRationale": "Directly names the changed Azure.ResourceManager.CommonTypes construct, covers the common-types enum pattern, and discusses modifying an existing common-type version; the request itself labels the plane as data-plane."
+              "selectionRationale": "Directly names the changed ARM CommonTypes construct and covers versioned common-type definitions."
             },
             {
               "rank": 2,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Covers Versions enums and preview version dependencies relevant to the modified version declarations."
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly documents @armCommonTypesVersion on each API-version enum member and modifying versioned APIs."
+            },
+            {
+              "rank": 4,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -58159,10 +57968,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Directly covers the changed enum declaration category and applies across TypeSpec service planes."
+              "selectionRationale": "Covers enum declarations and member references used by the changed Versions declaration."
             },
             {
-              "rank": 3,
+              "rank": 5,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -58173,10 +57982,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Directly covers decorator invocation syntax and applies across TypeSpec service planes."
+              "selectionRationale": "Covers TypeSpec decorators used by the changed declaration."
             },
             {
-              "rank": 4,
+              "rank": 6,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -58187,24 +57996,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Covers the request's decorator category and applies across TypeSpec service planes, though it documents built-in rather than ARM decorators."
+              "selectionRationale": "Covers TypeSpec decorators used by the changed declaration."
             },
             {
-              "rank": 5,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 3
-              },
-              "selectionRationale": "Applies across Azure service planes and explicitly covers modifying API declarations, but not ARM common-types selection."
-            },
-            {
-              "rank": 6,
+              "rank": 7,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -58215,10 +58010,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 7,
+              "rank": 8,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -58229,21 +58024,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
-            },
-            {
-              "rank": 8,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
               "rank": 9,
@@ -58257,7 +58038,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
               "rank": 10,
@@ -58271,7 +58052,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
               "rank": 11,
@@ -58285,7 +58066,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
               "rank": 12,
@@ -58299,7 +58080,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
               "rank": 13,
@@ -58313,24 +58094,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
               "rank": 14,
-              "catalogOrder": 19,
-              "title": "TypeSpec pagination",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
-            },
-            {
-              "rank": 15,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -58341,10 +58108,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 16,
+              "rank": 15,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -58355,24 +58122,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 17,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
-            },
-            {
-              "rank": 18,
+              "rank": 16,
               "catalogOrder": 31,
               "title": "Content negotiation",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
@@ -58383,38 +58136,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 19,
-              "catalogOrder": 32,
-              "title": "Directives",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
-            },
-            {
-              "rank": 20,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane or service-neutral TypeSpec, but does not match the changed ARM common-types decorator or version enum."
-            },
-            {
-              "rank": 21,
+              "rank": 17,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -58425,10 +58150,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 22,
+              "rank": 18,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -58439,10 +58164,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 23,
+              "rank": 19,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -58453,10 +58178,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 24,
+              "rank": 20,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -58467,10 +58192,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 25,
+              "rank": 21,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -58481,10 +58206,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 26,
+              "rank": 22,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -58495,10 +58220,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 27,
+              "rank": 23,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -58509,10 +58234,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 28,
+              "rank": 24,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -58523,10 +58248,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 29,
+              "rank": 25,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -58537,10 +58262,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 30,
+              "rank": 26,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
+            },
+            {
+              "rank": 27,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -58551,10 +58290,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 31,
+              "rank": 28,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
+            },
+            {
+              "rank": 29,
               "catalogOrder": 29,
               "title": "Change provider namespace",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
@@ -58565,10 +58318,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             },
             {
-              "rank": 32,
+              "rank": 30,
               "catalogOrder": 30,
               "title": "Azure Portal default experiences",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
@@ -58579,7 +58332,35 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the data-plane profile, changed common-types version enum, or decorator modification context."
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Catalog entry has lower relevance to changing an ARM common-types version dependency."
             }
           ],
           "documents": [
@@ -58595,18 +58376,54 @@
                 "changeContext": 1,
                 "total": 8
               },
-              "selectionRationale": "Directly names the changed Azure.ResourceManager.CommonTypes construct, covers the common-types enum pattern, and discusses modifying an existing common-type version; the request itself labels the plane as data-plane.",
+              "selectionRationale": "Directly names the changed ARM CommonTypes construct and covers versioned common-type definitions.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:46:53.670652Z",
+              "contentHash": "sha256:18a5c6374d552b964058717b07178681036191e9489da3fa4089d9f9509ed229"
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Covers Versions enums and preview version dependencies relevant to the modified version declarations.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:46:53.670652Z",
+              "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly documents @armCommonTypesVersion on each API-version enum member and modifying versioned APIs.",
               "guidance": [
                 {
-                  "section": "Creating a new version of an existing common type",
-                  "excerpt": "Creating a new version of an existing common type mostly involves editing what is already there and adding the new version. Make all necessary versioning changes using @added, @removed, and @typeChangedFrom, then update the common-type-ref file with @@armCommonDefinition for all definitions present in the new version.",
+                  "section": "Evolving APIs > Define API versions",
+                  "excerpt": "Define your API versions in an enum. For each version, specify dependencies and common types as needed.",
                   "queryTerms": [
-                    "common type",
-                    "Versions.v6",
-                    "@@armCommonDefinition"
+                    "@armCommonTypesVersion",
+                    "CommonTypes",
+                    "Versions"
                   ],
                   "examples": [
-                    "Azure.ResourceManager.CommonTypes.Versions.v6"
+                    "@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)"
                   ],
                   "applicableDeclarationIds": [
                     "declaration-2216badbb8c3488e"
@@ -58614,11 +58431,11 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:26:19.095Z",
-              "contentHash": "sha256:1c5caa7ba3861e1af59790ee5c55e5b9c65de01afd9057973d4e91dd98eaf81d"
+              "retrievedAt": "2026-09-03T08:46:53.670652Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
-              "rank": 2,
+              "rank": 4,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -58629,78 +58446,11 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Directly covers the changed enum declaration category and applies across TypeSpec service planes.",
-              "guidance": [
-                {
-                  "section": "Referencing enum members",
-                  "excerpt": "You can reference enum members using the `.` operator for identifiers.",
-                  "queryTerms": [
-                    "enum",
-                    "enum members"
-                  ],
-                  "examples": [
-                    "aliasNorth=Direction.North;"
-                  ],
-                  "applicableDeclarationIds": [
-                    "declaration-2216badbb8c3488e"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:26:19.098Z",
-              "contentHash": "sha256:e30a33c99723a74cdb46e6b9443e376024b1f990564f606629d6ff0d2af1cc88"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Directly covers decorator invocation syntax and applies across TypeSpec service planes.",
-              "guidance": [
-                {
-                  "section": "Using decorators",
-                  "excerpt": "Decorators are referenced using the `@` prefix and must be placed before the entity they are decorating. Arguments can be provided by using parentheses, similar to function calls.",
-                  "queryTerms": [
-                    "decorators",
-                    "@ prefix",
-                    "arguments"
-                  ],
-                  "examples": [
-                    "@myDec1(\"hi\", { a: string })"
-                  ],
-                  "applicableDeclarationIds": [
-                    "declaration-2216badbb8c3488e"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:26:19.099Z",
-              "contentHash": "sha256:9b82a56ecf5d3502dc8a638878d4ed20c9c98236acf74158c6046e82da75e0a4"
-            },
-            {
-              "rank": 4,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Covers the request's decorator category and applies across TypeSpec service planes, though it documents built-in rather than ARM decorators.",
+              "selectionRationale": "Covers enum declarations and member references used by the changed Versions declaration.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:26:19.104Z",
-              "contentHash": "sha256:1aae143add1ad30890aca2d278655bfe3ba74e6e4cc35928256795e9951333ed"
+              "retrievedAt": "2026-09-03T08:46:53.670652Z",
+              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
             }
           ],
           "blockers": []
@@ -58744,15 +58494,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 19935,
+            "durationMs": 30266,
             "configPath": "worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
             "logPath": "logs\\project-dd25e6db7b7b-baseline-autorest.log",
@@ -58776,16 +58526,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 21698,
+            "durationMs": 22925,
             "configPath": "worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
             "logPath": "logs\\project-dd25e6db7b7b-baseline-tcgc.log",
@@ -58813,15 +58563,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 26676,
+            "durationMs": 19222,
             "configPath": "worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
             "logPath": "logs\\project-dd25e6db7b7b-target-autorest.log",
@@ -58845,16 +58595,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\45348\\fresh-98990a4f\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45348\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 19701,
+            "durationMs": 19965,
             "configPath": "worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
             "logPath": "logs\\project-dd25e6db7b7b-target-tcgc.log",
@@ -58953,9 +58703,7 @@
       }
     }
   ],
-  "blockers": [
-    "All 237 REST candidates have bounded before/after fact records that are identical except for generated fact IDs, so the supplied evidence cannot establish caller-visible incompatibility."
-  ],
+  "blockers": [],
   "provenance": {
     "modelInput": "model-input.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
@@ -58963,10 +58711,10 @@
     "preparationManifest": "preparation-manifest.json"
   },
   "inputAccounting": {
-    "budgetTier": "maximum",
+    "budgetTier": "configured-maximum",
     "budgetBytes": 1048576,
-    "bytes": 662258,
-    "estimatedTokens": 165565,
+    "bytes": 680619,
+    "estimatedTokens": 170155,
     "retained": {
       "sourceChanges": 1,
       "facts": 218,
@@ -58987,16 +58735,20 @@
     "compliance": {
       "catalogEntriesScored": 32,
       "documentsFetched": 4,
-      "documentBytesFetched": 1593844,
-      "guidanceExcerptsRetained": 3,
-      "guidanceExcerptBytesRetained": 568
+      "documentBytesFetched": 1281961,
+      "guidanceExcerptsRetained": 1,
+      "guidanceExcerptBytesRetained": 103
     }
   },
   "timings": {
-    "totalMs": 123487,
-    "semanticAnalysisMs": 253,
-    "restAnalysisMs": 165,
-    "downstreamAnalysisMs": 4862
+    "totalMs": 148251,
+    "semanticAnalysisMs": 418,
+    "restAnalysisMs": 197,
+    "downstreamAnalysisMs": 7434
   },
-  "pr": 45348
+  "pr": 45348,
+  "pullRequest": {
+    "number": 45348,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45348"
+  }
 }

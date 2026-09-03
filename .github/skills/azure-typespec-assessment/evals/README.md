@@ -1,6 +1,6 @@
 # TypeSpec assessment end-to-end evidence
 
-This directory is the repeatable regression suite for the 11 historical
+This directory is the repeatable regression suite for the 12 historical
 TypeSpec assessments. It separates inputs, accepted outputs, generated outputs,
 and legacy evidence:
 
@@ -206,7 +206,7 @@ the existing `run-assessment-analysis.mjs` contract unchanged.
 
 The skill eval at `assessment.eval.yaml` covers routing boundaries and uses PR
 44988 as the representative report-generation capability case. The deterministic
-Node E2E test covers all 11 cases without model or network variability:
+Node E2E test covers all 12 cases without model or network variability:
 
 ```powershell
 node --test .github\skills\azure-typespec-assessment\evals\scripts\run-e2e.test.mjs

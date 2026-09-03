@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T07:24:22.636Z",
+  "generatedAt": "2026-09-03T08:17:00.829Z",
   "title": "TypeSpec assessment: specification/elastic/Elastic.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44454\\head",
@@ -88,8 +88,8 @@
               "hunk-083033f3d0862b87"
             ]
           },
-          "title": "Preserve Python operation-group casing for traffic-filter methods",
-          "summary": "The compatibility customizations exclude Python from the existing client-location rules for listAssociatedTrafficFilters and createAndAssociateIPFilter, then add Python-specific placements under PascalCase operation-group names.",
+          "title": "Preserve Python casing for traffic and IP filter operation groups",
+          "summary": "Modify client-location augment decorators so Python uses PascalCase operation-group locations for listing associated traffic filters and creating/associating IP filters, while the existing lower-camel locations remain in effect for other targeted languages. The wire API is unchanged.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -123,7 +123,7 @@
               "requestId": "inference-request-2bee93223944b6bf",
               "hunkId": "hunk-083033f3d0862b87",
               "decision": "no-impact",
-              "rationale": "The Python-specific client locations preserve the released PascalCase operation-group placement; no breaking move is inferred.",
+              "rationale": "The hunk keeps the existing lower-camel client locations for all previously targeted languages by adding Python to the exclusions, then adds Python-only PascalCase locations. It changes generated Python wrapper placement to preserve its established operation-group casing, without changing the REST contract or establishing a language-neutral public SDK break from the bounded evidence.",
               "candidateIds": []
             }
           ],
@@ -216,8 +216,8 @@
               "hunk-9834454183c6cab6"
             ]
           },
-          "title": "Preserve Python operation-group casing for PL-filter creation",
-          "summary": "The compatibility customization excludes Python from the existing createAndAssociatePLFilter client-location rule and adds a Python-specific placement under the PascalCase CreateAndAssociatePLFilter operation-group name.",
+          "title": "Preserve Python casing for private-link filter operation group",
+          "summary": "Modify the private-link filter create-and-associate client location so Python uses the PascalCase operation-group location while non-Python generators retain the existing lower-camel location. The wire API is unchanged.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -251,7 +251,7 @@
               "requestId": "inference-request-ca9ef9c46010a3c2",
               "hunkId": "hunk-9834454183c6cab6",
               "decision": "no-impact",
-              "rationale": "The Python-specific client locations preserve the released PascalCase operation-group placement; no breaking move is inferred.",
+              "rationale": "The hunk preserves the existing lower-camel location for non-Python generators and adds a Python-only PascalCase location. This is a wrapper-compatibility mapping for Python casing; the bounded evidence supplies no REST change or language-neutral SDK contract change that warrants a candidate.",
               "candidateIds": []
             }
           ],
@@ -346,9 +346,9 @@
           ],
           "declarationIds": [],
           "decision": "no-applicable-guidance",
-          "actual": "The change applies Python-specific @@clientLocation operation-group names to listAssociatedTrafficFilters and createAndAssociateIPFilter while excluding Python from their prior placements.",
-          "rationale": "All four fetched official documents discuss decorators generally or unrelated decorator families; none documents @clientLocation or generated Python operation-group casing, so no catalog-grounded requirement can be assessed.",
-          "gap": "All four fetched official documents discuss decorators generally or unrelated decorator families; none documents @clientLocation or generated Python operation-group casing, so no catalog-grounded requirement can be assessed.",
+          "actual": "The change partitions @@clientLocation by language and adds Python-only PascalCase locations for two existing methods.",
+          "rationale": "The completed catalog search found general decorator syntax, built-in/OpenAPI decorator references, and API-evolution guidance, but none governs @clientLocation language filters or Python wrapper operation-group casing. No compliance requirement can be applied without inventing guidance.",
+          "gap": "The completed catalog search found general decorator syntax, built-in/OpenAPI decorator references, and API-evolution guidance, but none governs @clientLocation language filters or Python wrapper operation-group casing. No compliance requirement can be applied without inventing guidance.",
           "sourceLinks": [],
           "codeSnippets": [
             {
@@ -377,13 +377,13 @@
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "General decorator guidance matches the changed augment-decorator category and applies to data-plane TypeSpec."
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements."
             },
             {
               "rank": 2,
@@ -397,7 +397,7 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The decorator reference matches the changed category and applies to data-plane TypeSpec, although it does not name @clientLocation."
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
             },
             {
               "rank": 3,
@@ -411,38 +411,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The document is a data-plane-applicable decorator reference, but it covers OpenAPI decorators rather than client placement."
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
             },
             {
               "rank": 4,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "This data-plane decorator guidance matches the broad decorator category but addresses content negotiation rather than client placement."
-            },
-            {
-              "rank": 5,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "This data-plane rule concerns decorator use, but not the changed client-location customization."
-            },
-            {
-              "rank": 6,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
@@ -453,24 +425,10 @@
                 "changeContext": 1,
                 "total": 3
               },
-              "selectionRationale": "The document applies to data-plane TypeSpec and modification context, but not client customization."
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers."
             },
             {
-              "rank": 7,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "The page concerns a decorator pattern, but it is ARM-specific and unrelated to client placement."
-            },
-            {
-              "rank": 8,
+              "rank": 5,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -481,10 +439,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "The document applies to data-plane TypeSpec but not the changed customization category."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 9,
+              "rank": 6,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -495,80 +453,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "The interface reference applies to data-plane TypeSpec but not client-location decorators."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 10,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The Azure TypeSpec guidance applies to data-plane services but does not govern this non-versioning change."
-            },
-            {
-              "rank": 11,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but its preview-addition pattern is absent from this modification."
-            },
-            {
-              "rank": 12,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but no stable-after-preview transition is changed."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but no preview-after-stable transition is changed."
-            },
-            {
-              "rank": 14,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but no stable-after-stable transition is changed."
-            },
-            {
-              "rank": 15,
+              "rank": 7,
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -579,10 +467,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "The page applies to data-plane TypeSpec but no LRO construct changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 16,
+              "rank": 8,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -593,10 +481,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic pagination guidance can apply to data-plane TypeSpec, but pagination is not changed."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 17,
+              "rank": 9,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -607,10 +495,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic model guidance applies to data-plane TypeSpec, but no model changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 18,
+              "rank": 10,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -621,10 +509,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic enum guidance applies to data-plane TypeSpec, but no enum changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 19,
+              "rank": 11,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -635,10 +523,24 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic scalar guidance applies to data-plane TypeSpec, but no scalar changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 20,
+              "rank": 12,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 13,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -649,10 +551,24 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic directive guidance applies to data-plane TypeSpec, but no directive changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 21,
+              "rank": 14,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 15,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -663,10 +579,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM resource-modeling document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 22,
+              "rank": 16,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -677,10 +593,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM extension-resource sample."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 23,
+              "rank": 17,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -691,10 +607,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM agent-resource document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 24,
+              "rank": 18,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -705,10 +621,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM private-endpoint document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 25,
+              "rank": 19,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -719,10 +635,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM private-link document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 26,
+              "rank": 20,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -733,10 +649,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM network-security-perimeter document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 27,
+              "rank": 21,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -747,10 +663,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM resource-operation document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 28,
+              "rank": 22,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -761,10 +677,80 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM interface reference."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 29,
+              "rank": 23,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 24,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 26,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 27,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 28,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -775,10 +761,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM LRO document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 30,
+              "rank": 29,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -789,10 +775,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM data-type reference."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 31,
+              "rank": 30,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -803,7 +789,21 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM common-types document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
               "rank": 32,
@@ -817,7 +817,7 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Portal customization is ARM-specific and does not govern generated data-plane client placement."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             }
           ],
           "documents": [
@@ -827,17 +827,17 @@
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "General decorator guidance matches the changed augment-decorator category and applies to data-plane TypeSpec.",
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:34.7364625Z",
-              "contentHash": "sha256:9b82a56ecf5d3502dc8a638878d4ed20c9c98236acf74158c6046e82da75e0a4"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             },
             {
               "rank": 2,
@@ -851,11 +851,11 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The decorator reference matches the changed category and applies to data-plane TypeSpec, although it does not name @clientLocation.",
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:34.8752373Z",
-              "contentHash": "sha256:1aae143add1ad30890aca2d278655bfe3ba74e6e4cc35928256795e9951333ed"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
             },
             {
               "rank": 3,
@@ -869,29 +869,29 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The document is a data-plane-applicable decorator reference, but it covers OpenAPI decorators rather than client placement.",
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:34.9311995Z",
-              "contentHash": "sha256:75652ad8ac5ca3be3f19b574be2a8c102aed9217a7aa6b3b7c3a7c962fb4626d"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e"
             },
             {
               "rank": 4,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
+                "patternCategory": 0,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 3
               },
-              "selectionRationale": "This data-plane decorator guidance matches the broad decorator category but addresses content negotiation rather than client placement.",
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:35.2173708Z",
-              "contentHash": "sha256:f7ae811461bab670894431a25cbfdfa823d9ba8f3251d20d45cdf3b8d8f949c2"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             }
           ],
           "blockers": []
@@ -908,9 +908,9 @@
           ],
           "declarationIds": [],
           "decision": "no-applicable-guidance",
-          "actual": "The change applies a Python-specific @@clientLocation operation-group name to createAndAssociatePLFilter while excluding Python from its prior placement.",
-          "rationale": "All four fetched official documents discuss decorators generally or unrelated decorator families; none documents @clientLocation or generated Python operation-group casing, so no catalog-grounded requirement can be assessed.",
-          "gap": "All four fetched official documents discuss decorators generally or unrelated decorator families; none documents @clientLocation or generated Python operation-group casing, so no catalog-grounded requirement can be assessed.",
+          "actual": "The change partitions @@clientLocation by language and adds a Python-only PascalCase location for the private-link filter method.",
+          "rationale": "The completed catalog search contains no official document governing @clientLocation language filters or Python wrapper operation-group casing. General decorator and API-evolution pages do not establish a requirement for this customization.",
+          "gap": "The completed catalog search contains no official document governing @clientLocation language filters or Python wrapper operation-group casing. General decorator and API-evolution pages do not establish a requirement for this customization.",
           "sourceLinks": [],
           "codeSnippets": [
             {
@@ -934,13 +934,13 @@
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "General decorator guidance matches the changed augment-decorator category and applies to data-plane TypeSpec."
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements."
             },
             {
               "rank": 2,
@@ -954,7 +954,7 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The decorator reference matches the changed category and applies to data-plane TypeSpec, although it does not name @clientLocation."
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
             },
             {
               "rank": 3,
@@ -968,38 +968,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The document is a data-plane-applicable decorator reference, but it covers OpenAPI decorators rather than client placement."
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
             },
             {
               "rank": 4,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "This data-plane decorator guidance matches the broad decorator category but addresses content negotiation rather than client placement."
-            },
-            {
-              "rank": 5,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "This data-plane rule concerns decorator use, but not the changed client-location customization."
-            },
-            {
-              "rank": 6,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
@@ -1010,24 +982,10 @@
                 "changeContext": 1,
                 "total": 3
               },
-              "selectionRationale": "The document applies to data-plane TypeSpec and modification context, but not client customization."
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers."
             },
             {
-              "rank": 7,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "The page concerns a decorator pattern, but it is ARM-specific and unrelated to client placement."
-            },
-            {
-              "rank": 8,
+              "rank": 5,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -1038,10 +996,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "The document applies to data-plane TypeSpec but not the changed customization category."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 9,
+              "rank": 6,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -1052,80 +1010,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "The interface reference applies to data-plane TypeSpec but not client-location decorators."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 10,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The Azure TypeSpec guidance applies to data-plane services but does not govern this non-versioning change."
-            },
-            {
-              "rank": 11,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but its preview-addition pattern is absent from this modification."
-            },
-            {
-              "rank": 12,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but no stable-after-preview transition is changed."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but no preview-after-stable transition is changed."
-            },
-            {
-              "rank": 14,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The page applies to data-plane APIs but no stable-after-stable transition is changed."
-            },
-            {
-              "rank": 15,
+              "rank": 7,
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -1136,10 +1024,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "The page applies to data-plane TypeSpec but no LRO construct changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 16,
+              "rank": 8,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -1150,10 +1038,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic pagination guidance can apply to data-plane TypeSpec, but pagination is not changed."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 17,
+              "rank": 9,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -1164,10 +1052,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic model guidance applies to data-plane TypeSpec, but no model changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 18,
+              "rank": 10,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -1178,10 +1066,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic enum guidance applies to data-plane TypeSpec, but no enum changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 19,
+              "rank": 11,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -1192,10 +1080,24 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic scalar guidance applies to data-plane TypeSpec, but no scalar changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 20,
+              "rank": 12,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 13,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -1206,10 +1108,24 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Generic directive guidance applies to data-plane TypeSpec, but no directive changes."
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
             },
             {
-              "rank": 21,
+              "rank": 14,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 15,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -1220,10 +1136,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM resource-modeling document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 22,
+              "rank": 16,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -1234,10 +1150,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM extension-resource sample."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 23,
+              "rank": 17,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -1248,10 +1164,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM agent-resource document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 24,
+              "rank": 18,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -1262,10 +1178,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM private-endpoint document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 25,
+              "rank": 19,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -1276,10 +1192,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM private-link document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 26,
+              "rank": 20,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -1290,10 +1206,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM network-security-perimeter document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 27,
+              "rank": 21,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -1304,10 +1220,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM resource-operation document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 28,
+              "rank": 22,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -1318,10 +1234,80 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM interface reference."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 29,
+              "rank": 23,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 24,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 26,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 27,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 28,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -1332,10 +1318,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM LRO document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 30,
+              "rank": 29,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -1346,10 +1332,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM data-type reference."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
-              "rank": 31,
+              "rank": 30,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -1360,7 +1346,21 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No query-profile signal matches this ARM common-types document."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             },
             {
               "rank": 32,
@@ -1374,7 +1374,7 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Portal customization is ARM-specific and does not govern generated data-plane client placement."
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
             }
           ],
           "documents": [
@@ -1384,17 +1384,17 @@
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "General decorator guidance matches the changed augment-decorator category and applies to data-plane TypeSpec.",
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:34.7364625Z",
-              "contentHash": "sha256:9b82a56ecf5d3502dc8a638878d4ed20c9c98236acf74158c6046e82da75e0a4"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             },
             {
               "rank": 2,
@@ -1408,11 +1408,11 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The decorator reference matches the changed category and applies to data-plane TypeSpec, although it does not name @clientLocation.",
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:34.8752373Z",
-              "contentHash": "sha256:1aae143add1ad30890aca2d278655bfe3ba74e6e4cc35928256795e9951333ed"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
             },
             {
               "rank": 3,
@@ -1426,29 +1426,29 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "The document is a data-plane-applicable decorator reference, but it covers OpenAPI decorators rather than client placement.",
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:34.9311995Z",
-              "contentHash": "sha256:75652ad8ac5ca3be3f19b574be2a8c102aed9217a7aa6b3b7c3a7c962fb4626d"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e"
             },
             {
               "rank": 4,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
+                "patternCategory": 0,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 3
               },
-              "selectionRationale": "This data-plane decorator guidance matches the broad decorator category but addresses content negotiation rather than client placement.",
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:18:35.2173708Z",
-              "contentHash": "sha256:f7ae811461bab670894431a25cbfdfa823d9ba8f3251d20d45cdf3b8d8f949c2"
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             }
           ],
           "blockers": []
@@ -1492,15 +1492,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 21427,
+            "durationMs": 10265,
             "configPath": "worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
             "logPath": "logs\\project-77e02a92a87a-baseline-autorest.log",
@@ -1524,16 +1524,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 17764,
+            "durationMs": 9713,
             "configPath": "worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
             "logPath": "logs\\project-77e02a92a87a-baseline-tcgc.log",
@@ -1561,15 +1561,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 15640,
+            "durationMs": 10040,
             "configPath": "worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
             "logPath": "logs\\project-77e02a92a87a-target-autorest.log",
@@ -1593,16 +1593,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44454\\reassessment-20260901-190919\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44454\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 24901,
+            "durationMs": 11877,
             "configPath": "worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
             "logPath": "logs\\project-77e02a92a87a-target-tcgc.log",
@@ -1704,16 +1704,20 @@
     "compliance": {
       "catalogEntriesScored": 64,
       "documentsFetched": 8,
-      "documentBytesFetched": 3238578,
+      "documentBytesFetched": 3483062,
       "guidanceExcerptsRetained": 0,
       "guidanceExcerptBytesRetained": 0
     }
   },
   "timings": {
-    "totalMs": 159800,
-    "semanticAnalysisMs": 60,
-    "restAnalysisMs": 57,
-    "downstreamAnalysisMs": 3003
+    "totalMs": 61731,
+    "semanticAnalysisMs": 53,
+    "restAnalysisMs": 66,
+    "downstreamAnalysisMs": 2909
   },
-  "pr": 44454
+  "pr": 44454,
+  "pullRequest": {
+    "number": 44454,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454"
+  }
 }

@@ -11,7 +11,7 @@
     "expected": {
       "semanticIntents": 1,
       "restBreakingFindings": 0,
-      "downstreamFindings": 3,
+      "downstreamFindings": 2,
       "complianceFindings": 0
     }
   },
@@ -31,7 +31,7 @@
     "expected": {
       "semanticIntents": 3,
       "restBreakingFindings": 0,
-      "downstreamFindings": 1,
+      "downstreamFindings": 0,
       "complianceFindings": 0
     }
   },
@@ -61,7 +61,7 @@
     "expected": {
       "semanticIntents": 1,
       "restBreakingFindings": 0,
-      "downstreamFindings": 1,
+      "downstreamFindings": 0,
       "complianceFindings": 0
     }
   },
@@ -140,6 +140,22 @@
       "restBreakingFindings": 0,
       "downstreamFindings": 7,
       "complianceFindings": 3
+    }
+  },
+  {
+    "pr": 45162,
+    "title": "[Confidential Ledger] Add waitForCommit preview API",
+    "baseCommit": "5874aa28fcfbbddafa82b52c02f2622ed0862a8b",
+    "headCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
+    "sparseRoots": ["specification/confidentialledger"],
+    "projects": [
+      "specification/confidentialledger/data-plane/ConfidentialLedger"
+    ],
+    "expected": {
+      "semanticIntents": 2,
+      "restBreakingFindings": 0,
+      "downstreamFindings": 0,
+      "complianceFindings": 0
     }
   },
   {

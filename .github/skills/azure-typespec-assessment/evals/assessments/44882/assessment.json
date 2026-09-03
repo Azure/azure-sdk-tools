@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T07:24:22.737Z",
+  "generatedAt": "2026-09-03T08:39:18.858Z",
   "title": "TypeSpec assessment: specification/newrelic/NewRelicObservability.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44882\\head",
@@ -60,7 +60,7 @@
       "status": "assessed",
       "items": [
         {
-          "id": "semantic-689d93649516029d",
+          "id": "semantic-2f3dcd5a82870702",
           "projectId": "project-7270f17ca191",
           "projectIds": [
             "project-7270f17ca191"
@@ -195,7 +195,7 @@
               "operationId": "Accounts_List",
               "beforeFactId": "operation-9141386c9a221a04",
               "afterFactId": "operation-e5b70a55e4fb8f14",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -213,9 +213,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/accounts",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9141386c9a221a04",
                 "projectId": "project-7270f17ca191",
@@ -412,7 +410,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -557,7 +555,7 @@
               "operationId": "BillingInfo_Get",
               "beforeFactId": "operation-e8475acc4db509b6",
               "afterFactId": "operation-b7978192d670f340",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -575,9 +573,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getBillingInfo",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-e8475acc4db509b6",
                 "projectId": "project-7270f17ca191",
@@ -910,7 +906,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -1055,7 +1051,7 @@
               "operationId": "ConnectedPartnerResources_List",
               "beforeFactId": "operation-7173e3567482175b",
               "afterFactId": "operation-4244d4641c6e1f97",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -1073,10 +1069,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listConnectedPartnerResources",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-7173e3567482175b",
                 "projectId": "project-7270f17ca191",
@@ -1291,7 +1284,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -1436,7 +1429,7 @@
               "operationId": "MonitoredSubscriptions_CreateOrUpdate",
               "beforeFactId": "operation-e14996a52ae9460e",
               "afterFactId": "operation-a26dfbecb76dd140",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -1452,10 +1445,7 @@
               "apiVersion": "2026-06-01",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-e14996a52ae9460e",
                 "projectId": "project-7270f17ca191",
@@ -1974,7 +1964,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -2493,7 +2483,7 @@
               "operationId": "MonitoredSubscriptions_Get",
               "beforeFactId": "operation-b889a6c247279fc1",
               "afterFactId": "operation-09d62907983a8d03",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -2509,9 +2499,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b889a6c247279fc1",
                 "projectId": "project-7270f17ca191",
@@ -2754,7 +2742,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -2911,7 +2899,7 @@
               "operationId": "MonitoredSubscriptions_List",
               "beforeFactId": "operation-9e0774a58fdda97c",
               "afterFactId": "operation-77b15577242bebd5",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -2927,9 +2915,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-9e0774a58fdda97c",
                 "projectId": "project-7270f17ca191",
@@ -3118,7 +3104,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -3275,7 +3261,7 @@
               "operationId": "MonitoredSubscriptions_Update",
               "beforeFactId": "operation-2db44ecca8832ea3",
               "afterFactId": "operation-2b6a18b5a3aaf285",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -3291,10 +3277,7 @@
               "apiVersion": "2026-06-01",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredSubscriptions/{configurationName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-2db44ecca8832ea3",
                 "projectId": "project-7270f17ca191",
@@ -3707,7 +3690,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -3864,7 +3847,7 @@
               "operationId": "Monitors_CreateOrUpdate",
               "beforeFactId": "operation-bc73ffae22d3fe5f",
               "afterFactId": "operation-9abae67ac92cd216",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -3882,10 +3865,7 @@
               "apiVersion": "2026-06-01",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-bc73ffae22d3fe5f",
                 "projectId": "project-7270f17ca191",
@@ -5148,7 +5128,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -5653,7 +5633,7 @@
               "operationId": "Monitors_Get",
               "beforeFactId": "operation-b836d3ee1886bab9",
               "afterFactId": "operation-512c3495838c6b80",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -5671,9 +5651,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b836d3ee1886bab9",
                 "projectId": "project-7270f17ca191",
@@ -6152,7 +6130,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -6297,7 +6275,7 @@
               "operationId": "Monitors_GetMetricRules",
               "beforeFactId": "operation-fcc40998a19a0f1c",
               "afterFactId": "operation-8b9c898d079dac67",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -6315,10 +6293,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getMetricRules",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-fcc40998a19a0f1c",
                 "projectId": "project-7270f17ca191",
@@ -6567,7 +6542,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -6712,7 +6687,7 @@
               "operationId": "Monitors_GetMetricStatus",
               "beforeFactId": "operation-485bd53567ebc7a7",
               "afterFactId": "operation-9e840900775ff3c7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -6730,10 +6705,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/getMetricStatus",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-485bd53567ebc7a7",
                 "projectId": "project-7270f17ca191",
@@ -6958,7 +6930,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -7103,7 +7075,7 @@
               "operationId": "Monitors_LatestLinkedSaaS",
               "beforeFactId": "operation-c426865b371e0643",
               "afterFactId": "operation-ea2983f6eb2508cd",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -7121,9 +7093,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/latestLinkedSaaS",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-c426865b371e0643",
                 "projectId": "project-7270f17ca191",
@@ -7292,7 +7262,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -7437,7 +7407,7 @@
               "operationId": "Monitors_LinkSaaS",
               "beforeFactId": "operation-b45e2adcbed905fa",
               "afterFactId": "operation-03871f0a5c852515",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -7455,10 +7425,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/linkSaaS",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b45e2adcbed905fa",
                 "projectId": "project-7270f17ca191",
@@ -8051,7 +8018,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -8196,7 +8163,7 @@
               "operationId": "Monitors_ListAppServices",
               "beforeFactId": "operation-296c4960b12670a4",
               "afterFactId": "operation-5564608e078c64c1",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -8214,10 +8181,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listAppServices",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-296c4960b12670a4",
                 "projectId": "project-7270f17ca191",
@@ -8472,7 +8436,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -8617,7 +8581,7 @@
               "operationId": "Monitors_ListByResourceGroup",
               "beforeFactId": "operation-54a03213bef915ee",
               "afterFactId": "operation-be1fbecdf900f253",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -8635,9 +8599,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-54a03213bef915ee",
                 "projectId": "project-7270f17ca191",
@@ -8808,7 +8770,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -8953,7 +8915,7 @@
               "operationId": "Monitors_ListBySubscription",
               "beforeFactId": "operation-953e7c61f0ef75e7",
               "afterFactId": "operation-125e59cc64d88492",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -8971,9 +8933,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/monitors",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-953e7c61f0ef75e7",
                 "projectId": "project-7270f17ca191",
@@ -9134,7 +9094,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -9279,7 +9239,7 @@
               "operationId": "Monitors_ListHosts",
               "beforeFactId": "operation-d51816da8ee7ea02",
               "afterFactId": "operation-0de7cbaf4d329884",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -9297,10 +9257,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listHosts",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d51816da8ee7ea02",
                 "projectId": "project-7270f17ca191",
@@ -9555,7 +9512,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -9700,7 +9657,7 @@
               "operationId": "Monitors_ListLinkedResources",
               "beforeFactId": "operation-5c484e341930181a",
               "afterFactId": "operation-e9ff2b0eafcf7fc3",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -9718,9 +9675,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/listLinkedResources",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-5c484e341930181a",
                 "projectId": "project-7270f17ca191",
@@ -9909,7 +9864,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -10054,7 +10009,7 @@
               "operationId": "Monitors_ListMonitoredResources",
               "beforeFactId": "operation-eaa9ff7f54c5f330",
               "afterFactId": "operation-4fc65df37f4694c7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -10072,9 +10027,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/monitoredResources",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-eaa9ff7f54c5f330",
                 "projectId": "project-7270f17ca191",
@@ -10263,7 +10216,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -10690,7 +10643,7 @@
               "operationId": "Monitors_Resubscribe",
               "beforeFactId": "operation-d391f4e3aeab6808",
               "afterFactId": "operation-e6f013c150e7bbce",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -10708,10 +10661,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/resubscribe",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-d391f4e3aeab6808",
                 "projectId": "project-7270f17ca191",
@@ -11400,7 +11350,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -11545,7 +11495,7 @@
               "operationId": "Monitors_SwitchBilling",
               "beforeFactId": "operation-b1cf2ed0ba974113",
               "afterFactId": "operation-37ba57e5745733f8",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -11563,10 +11513,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/switchBilling",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-b1cf2ed0ba974113",
                 "projectId": "project-7270f17ca191",
@@ -12255,7 +12202,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -12400,7 +12347,7 @@
               "operationId": "Monitors_Update",
               "beforeFactId": "operation-8121e828b4b0288c",
               "afterFactId": "operation-59ed3a0fdcf1276f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -12418,10 +12365,7 @@
               "apiVersion": "2026-06-01",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-8121e828b4b0288c",
                 "projectId": "project-7270f17ca191",
@@ -13176,7 +13120,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -13321,7 +13265,7 @@
               "operationId": "Monitors_VmHostPayload",
               "beforeFactId": "operation-f00a8e7d265080c7",
               "afterFactId": "operation-f97b6d973163499a",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -13339,9 +13283,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/vmHostPayloads",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f00a8e7d265080c7",
                 "projectId": "project-7270f17ca191",
@@ -13494,7 +13436,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -13899,7 +13841,7 @@
               "operationId": "Organizations_List",
               "beforeFactId": "operation-96b82af5103b8b63",
               "afterFactId": "operation-895f94dab8bc5d1f",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -13917,9 +13859,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/organizations",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-96b82af5103b8b63",
                 "projectId": "project-7270f17ca191",
@@ -14116,7 +14056,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -14261,7 +14201,7 @@
               "operationId": "Plans_List",
               "beforeFactId": "operation-2923bd485a12dc73",
               "afterFactId": "operation-08976e59412a79e7",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -14279,9 +14219,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/plans",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-2923bd485a12dc73",
                 "projectId": "project-7270f17ca191",
@@ -14478,7 +14416,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -14623,7 +14561,7 @@
               "operationId": "SaaS_ActivateResource",
               "beforeFactId": "operation-435ce3d2d1c918d1",
               "afterFactId": "operation-e2d54c36d04d567b",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "direct-version-governance",
               "sourceChangeIds": [
                 "source-8ba05666e67298cc"
@@ -14641,10 +14579,7 @@
               "apiVersion": "2026-06-01",
               "method": "post",
               "path": "/subscriptions/{subscriptionId}/providers/NewRelic.Observability/activateSaaS",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-435ce3d2d1c918d1",
                 "projectId": "project-7270f17ca191",
@@ -14829,7 +14764,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-8ba05666e67298cc",
@@ -14974,7 +14909,7 @@
               "operationId": "TagRules_CreateOrUpdate",
               "beforeFactId": "operation-40a79581e7701b72",
               "afterFactId": "operation-e0a572e59138f846",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -14990,10 +14925,7 @@
               "apiVersion": "2026-06-01",
               "method": "put",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-40a79581e7701b72",
                 "projectId": "project-7270f17ca191",
@@ -15530,7 +15462,7 @@
                   }
                 }
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -16057,7 +15989,7 @@
               "operationId": "TagRules_Get",
               "beforeFactId": "operation-cd3e2fb75ebc7b43",
               "afterFactId": "operation-4f39024218735808",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -16073,9 +16005,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-cd3e2fb75ebc7b43",
                 "projectId": "project-7270f17ca191",
@@ -16324,7 +16254,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -16481,7 +16411,7 @@
               "operationId": "TagRules_ListByNewRelicMonitorResource",
               "beforeFactId": "operation-f03f35b9d0870307",
               "afterFactId": "operation-c3fe472f10074d2c",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -16497,9 +16427,7 @@
               "apiVersion": "2026-06-01",
               "method": "get",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules",
-              "changedAspects": [
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-f03f35b9d0870307",
                 "projectId": "project-7270f17ca191",
@@ -16688,7 +16616,7 @@
                   "nextLinkName": "nextLink"
                 }
               },
-              "outcome": "REST contract changed: responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -16845,7 +16773,7 @@
               "operationId": "TagRules_Update",
               "beforeFactId": "operation-32739effa3aeed26",
               "afterFactId": "operation-e50cb95a0f798150",
-              "restChanged": true,
+              "restChanged": false,
               "matchBasis": "compiler-reference",
               "sourceChangeIds": [
                 "source-4e6907dd80e7ab37"
@@ -16861,10 +16789,7 @@
               "apiVersion": "2026-06-01",
               "method": "patch",
               "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}/tagRules/{ruleSetName}",
-              "changedAspects": [
-                "request",
-                "responses"
-              ],
+              "changedAspects": [],
               "before": {
                 "id": "operation-32739effa3aeed26",
                 "projectId": "project-7270f17ca191",
@@ -17211,7 +17136,7 @@
                   "application/json"
                 ]
               },
-              "outcome": "REST contract changed: request, responses.",
+              "outcome": "HTTP signature and represented payload contract unchanged.",
               "sources": [
                 {
                   "id": "source-4e6907dd80e7ab37",
@@ -17476,10 +17401,7 @@
             "operation-f4ca680c17658b97",
             "operation-f97b6d973163499a"
           ],
-          "changedAspects": [
-            "request",
-            "responses"
-          ],
+          "changedAspects": [],
           "groupingEvidence": {
             "kind": "deterministic-coherent-change",
             "reasons": [
@@ -17491,13 +17413,13 @@
               "hunk-cc07b509898c89fe"
             ]
           },
-          "title": "Publish the stable New Relic API and preserve Go delete ordering",
-          "summary": "The change publishes the 2026-06-01 New Relic API projection and adds a Go-only delete override that retains the legacy SDK parameter order while leaving the bounded REST and language-neutral SDK compatibility candidates empty.",
+          "title": "Promote New Relic to 2026-06-01 and preserve Go delete compatibility",
+          "summary": "Adds the stable 2026-06-01 API version across 35 existing operations and introduces a Go-only client override that reorders the monitor delete parameters while leaving the REST wire contract and language-neutral downstream SDK surface unchanged.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
             "complianceSearchRequestIds": [
-              "compliance-search-83fea19c1ccef85a"
+              "compliance-search-381684785d24611e"
             ],
             "relatedOperationIds": [
               "Accounts_List",
@@ -17919,20 +17841,20 @@
       },
       "intentAssessments": [
         {
-          "semanticIntentId": "semantic-689d93649516029d",
-          "reviewUnitId": "semantic-689d93649516029d",
+          "semanticIntentId": "semantic-2f3dcd5a82870702",
+          "reviewUnitId": "semantic-2f3dcd5a82870702",
           "applicableGuidance": [
             {
-              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/directives/",
-              "guidanceSection": "Suppress directive"
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "guidanceSection": "Delete"
             },
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "guidanceSection": "Azure.ResourceManager.Operations"
+              "guidanceSection": "Azure.ResourceManager resource operation interfaces"
             },
             {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "guidanceSection": "Version progression"
+              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/directives/",
+              "guidanceSection": "Suppress directive"
             }
           ],
           "sourceChangeIds": [
@@ -17952,10 +17874,10 @@
             "declaration-eae2f0259e77398d"
           ],
           "decision": "applicable-pass",
-          "expected": "Suppressions identify the diagnostic and provide a justification, an ARM service keeps exactly one standard Operations declaration, and API versions use unique dates in increasing order in the Versions enum.",
-          "actual": "The Go-only delete override suppresses the ARM resource-operation diagnostic with its full code and an explicit parameter-order justification; the service retains one Operations interface based on Azure.ResourceManager.Operations; and 2026-06-01 follows 2025-05-01-preview chronologically in Versions.",
-          "rationale": "The fetched guidance that governs the bounded declarations is satisfied, and none of the four fetched documents establishes a contradictory requirement for this combined publication and Go compatibility intent.",
-          "gap": "The fetched guidance that governs the bounded declarations is satisfied, and none of the four fetched documents establishes a contradictory requirement for this combined publication and Go compatibility intent.",
+          "expected": "ARM delete operations retain the standard resource-operation wire shape, and any warning suppression names the diagnostic and includes a justification.",
+          "actual": "The stable version propagates the existing 35-operation contract. The custom delete declaration is used only by a Go client @@override to preserve its parameter order; deterministic AutoRest and TCGC comparisons found no contract candidates. Its #suppress supplies both the full diagnostic code and a compatibility justification.",
+          "rationale": "The change follows the fetched operation and directive guidance: it preserves the standard REST operation, scopes the compatibility wrapper to Go client generation, and documents the intentional ARM operation-rule suppression.",
+          "gap": "The change follows the fetched operation and directive guidance: it preserves the standard REST operation, scopes the compatibility wrapper to Go client generation, and documents the intentional ARM operation-rule suppression.",
           "sourceLinks": [
             {
               "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
@@ -18024,18 +17946,488 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Directly names Azure Resource Manager resource delete operation templates and standard ARM parameters used by the changed override.",
+              "rank": 1
+            },
+            {
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Directly names Azure.ResourceManager operation interfaces and their exact operation signatures.",
+              "rank": 2
+            },
+            {
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 9
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 8
               },
-              "selectionRationale": "The catalog explicitly names the changed #suppress directive and its required justification."
+              "selectionRationale": "Directly documents the changed #suppress directive and its required diagnostic code and justification.",
+              "rank": 3
+            },
+            {
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Matches the operation-interface category; selected next by catalog order after higher-scoring ARM and directive guidance.",
+              "rank": 4
+            },
+            {
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 5
+            },
+            {
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 6
+            },
+            {
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 7
+            },
+            {
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 8
+            },
+            {
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 9
+            },
+            {
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 10
+            },
+            {
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 11
+            },
+            {
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; the modify or stable-version context.",
+              "rank": 12
+            },
+            {
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 13
+            },
+            {
+              "catalogOrder": 2,
+              "title": "Specific extension resource sample",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 14
+            },
+            {
+              "catalogOrder": 3,
+              "title": "Agent base type",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 15
+            },
+            {
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 16
+            },
+            {
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 17
+            },
+            {
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 18
+            },
+            {
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; no additional context match.",
+              "rank": 19
+            },
+            {
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; no additional context match.",
+              "rank": 20
+            },
+            {
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the changed pattern/category; no additional context match.",
+              "rank": 21
+            },
+            {
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 22
+            },
+            {
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 23
+            },
+            {
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 24
+            },
+            {
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 25
+            },
+            {
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Catalog entry scored for the ARM service plane; the modify or stable-version context.",
+              "rank": 26
+            },
+            {
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored for the modify or stable-version context.",
+              "rank": 27
+            },
+            {
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored for the modify or stable-version context.",
+              "rank": 28
+            },
+            {
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored for the modify or stable-version context.",
+              "rank": 29
+            },
+            {
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored for the modify or stable-version context.",
+              "rank": 30
+            },
+            {
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored for the modify or stable-version context.",
+              "rank": 31
+            },
+            {
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Catalog entry scored for the modify or stable-version context.",
+              "rank": 32
+            }
+          ],
+          "documents": [
+            {
+              "rank": 1,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Directly names Azure Resource Manager resource delete operation templates and standard ARM parameters used by the changed override.",
+              "guidance": [
+                {
+                  "section": "Delete",
+                  "excerpt": "The Delete operation may be synchronous or asynchronous. The standard representations are `delete is ArmResourceDeleteSync<ResourceType>;` and `delete is ArmResourceDeleteWithoutOkAsync<ResourceType>;`.",
+                  "queryTerms": [
+                    "delete",
+                    "Azure.ResourceManager",
+                    "ApiVersionParameter"
+                  ],
+                  "examples": [
+                    "delete is ArmResourceDeleteSync<ResourceType>;"
+                  ],
+                  "applicableDeclarationIds": [
+                    "declaration-c8cb740c4b547ab5"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:38:28.978Z",
+              "contentHash": "sha256:e0a4343c26fe361fb7f857636c7d11a80d51ac68a525369f6caafba9e461c790"
             },
             {
               "rank": 2,
@@ -18045,453 +18437,54 @@
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 7
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "The catalog names Azure.ResourceManager and directly covers operation-interface signatures used by the changed source."
+              "selectionRationale": "Directly names Azure.ResourceManager operation interfaces and their exact operation signatures.",
+              "guidance": [
+                {
+                  "section": "Azure.ResourceManager resource operation interfaces",
+                  "excerpt": "Azure.ResourceManager operation interfaces define exact delete signatures with the standard api-version, scope, provider, and resource parameters.",
+                  "queryTerms": [
+                    "Azure.ResourceManager",
+                    "delete",
+                    "provider",
+                    "apiVersion"
+                  ],
+                  "examples": [
+                    "op Azure.ResourceManager.ExtensionResourceInstanceOperations<Resource, Properties>.delete(apiVersion: string, resourceUri: string, provider: \"Microsoft.ThisWillBeReplaced\"): ..."
+                  ],
+                  "applicableDeclarationIds": [
+                    "declaration-c8cb740c4b547ab5"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:38:28.978Z",
+              "contentHash": "sha256:ad72469f78d5cf5151c78921f2075677630402d767ad0bd5f214da0b290dc933"
             },
             {
               "rank": 3,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "The change adds a stable API version to the Versions enum after an existing preview version."
-            },
-            {
-              "rank": 4,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "The catalog transition exactly matches adding 2026-06-01 after 2025-05-01-preview."
-            },
-            {
-              "rank": 5,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "The document covers modifying operations and properties across API versions."
-            },
-            {
-              "rank": 6,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "The query profile is data-plane and operation-focused, matching Azure.Core operation interfaces."
-            },
-            {
-              "rank": 7,
-              "catalogOrder": 10,
-              "title": "Azure.Core interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "The query profile is data-plane and operation-focused, matching the Azure.Core interface reference."
-            },
-            {
-              "rank": 8,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "The changed declaration set includes the service-facing Versions enum."
-            },
-            {
-              "rank": 9,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "The changed operation uses @query, @path, and the @@override augment decorator."
-            },
-            {
-              "rank": 10,
-              "catalogOrder": 7,
-              "title": "ARM resource operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "The custom delete operation matches the operation category, but not the supplied data-plane service profile."
-            },
-            {
-              "rank": 11,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The Azure versioning guidance applies to the service plane, but its preview-after-preview transition does not match."
-            },
-            {
-              "rank": 12,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The Azure versioning guidance applies to the service plane, but its preview-after-stable transition does not match."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The Azure versioning guidance applies to the service plane, but its stable-after-stable transition does not match."
-            },
-            {
-              "rank": 14,
-              "catalogOrder": 18,
-              "title": "Azure.Core long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document applies to data-plane services, but no LRO construct changed."
-            },
-            {
-              "rank": 15,
-              "catalogOrder": 19,
-              "title": "TypeSpec pagination",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document is service-plane neutral, but no paging construct changed."
-            },
-            {
-              "rank": 16,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document is service-plane neutral, but the intent does not add or modify a model."
-            },
-            {
-              "rank": 17,
-              "catalogOrder": 25,
-              "title": "Scalars",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document is service-plane neutral, but no scalar declaration changed."
-            },
-            {
-              "rank": 18,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document is service-plane neutral, but the changed decorators are not the documented built-in constraint decorators."
-            },
-            {
-              "rank": 19,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document applies across service planes, but no OpenAPI-specific decorator changed."
-            },
-            {
-              "rank": 20,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document applies to data-plane services, but no content-negotiation construct changed."
-            },
-            {
-              "rank": 21,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "The document applies to data-plane services, but the suppressed diagnostic is not no-openapi."
-            },
-            {
-              "rank": 22,
-              "catalogOrder": 1,
-              "title": "ARM resource types and modeling",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No resource type is added and the supplied service profile is data-plane."
-            },
-            {
-              "rank": 23,
-              "catalogOrder": 2,
-              "title": "Specific extension resource sample",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No extension resource pattern changed and the supplied service profile is data-plane."
-            },
-            {
-              "rank": 24,
-              "catalogOrder": 3,
-              "title": "Agent base type",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No ARM agent resource pattern changed."
-            },
-            {
-              "rank": 25,
-              "catalogOrder": 4,
-              "title": "Private endpoints",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No private endpoint resource pattern changed."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 5,
-              "title": "Private links",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No private link resource pattern changed."
-            },
-            {
-              "rank": 27,
-              "catalogOrder": 6,
-              "title": "Network security perimeter",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No network security perimeter construct changed."
-            },
-            {
-              "rank": 28,
-              "catalogOrder": 17,
-              "title": "ARM long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No LRO construct changed and the supplied service profile is data-plane."
-            },
-            {
-              "rank": 29,
-              "catalogOrder": 20,
-              "title": "Azure.ResourceManager data types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No paging data type changed and the supplied service profile is data-plane."
-            },
-            {
-              "rank": 30,
-              "catalogOrder": 22,
-              "title": "ARM common types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No ARM common type changed and the supplied service profile is data-plane."
-            },
-            {
-              "rank": 31,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No provider namespace decorator changed."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No Azure Portal experience construct changed."
-            }
-          ],
-          "documents": [
-            {
-              "rank": 1,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 9
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 8
               },
-              "selectionRationale": "The catalog explicitly names the changed #suppress directive and its required justification.",
+              "selectionRationale": "Directly documents the changed #suppress directive and its required diagnostic code and justification.",
               "guidance": [
                 {
                   "section": "Suppress directive",
-                  "excerpt": "Suppress directive allows suppressing a specific warning diagnostic. It takes 2 arguments: the diagnostic code to suppress and a message to justify the suppression.",
+                  "excerpt": "The suppress directive suppresses a specific warning diagnostic and takes two arguments: the diagnostic code to suppress and a message to justify the suppression.",
                   "queryTerms": [
-                    "#suppress"
+                    "#suppress",
+                    "diagnostic code",
+                    "justification"
                   ],
                   "examples": [
                     "#suppress \"deprecated\" \"We are not ready to migrate yet\""
@@ -18502,91 +18495,26 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:29.1192280Z",
-              "contentHash": "sha256:eb33026726c9d71352f36403473d9a48085f7de6fe6f2efaf357aa7d22d8e6fa"
-            },
-            {
-              "rank": 2,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 7
-              },
-              "selectionRationale": "The catalog names Azure.ResourceManager and directly covers operation-interface signatures used by the changed source.",
-              "guidance": [
-                {
-                  "section": "Azure.ResourceManager.Operations",
-                  "excerpt": "This is the interface that implements the standard Azure Resource Manager operation that returns all supported RP operations. You should have exactly one declaration for each Azure Resource Manager service.",
-                  "queryTerms": [
-                    "Azure.ResourceManager",
-                    "Operations"
-                  ],
-                  "examples": [
-                    "interface Azure.ResourceManager.Operations<>"
-                  ],
-                  "applicableDeclarationIds": [
-                    "declaration-72fa913049f2e6f0"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:29.3449645Z",
-              "contentHash": "sha256:5b0f96da330933e64a7ac41fa8ccf5603fad91703648dd0e023bd1bc9642d684"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "The change adds a stable API version to the Versions enum after an existing preview version.",
-              "guidance": [
-                {
-                  "section": "Version progression",
-                  "excerpt": "The version-progression linter rule helps enforce that every api-version uses a unique YYYY-MM-DD date and that versions are declared in strictly increasing chronological order from top to bottom of the Versions enum.",
-                  "queryTerms": [
-                    "api-version",
-                    "Versions",
-                    "enum"
-                  ],
-                  "examples": [],
-                  "applicableDeclarationIds": [
-                    "declaration-920bf5e773d8b500"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:29.4250177Z",
-              "contentHash": "sha256:5e12376a5a249e5777f947bacb5703382bd9a4e9028ac6415102249390e7c62d"
+              "retrievedAt": "2026-09-03T08:38:28.978Z",
+              "contentHash": "sha256:dd2de927d98582c444dfd946513a2267499852001c0b9e5b20f73e78e2a88791"
             },
             {
               "rank": 4,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 1,
-                "total": 6
+                "total": 4
               },
-              "selectionRationale": "The catalog transition exactly matches adding 2026-06-01 after 2025-05-01-preview.",
+              "selectionRationale": "Matches the operation-interface category; selected next by catalog order after higher-scoring ARM and directive guidance.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:29.7890363Z",
-              "contentHash": "sha256:8154911ae70136bcb2e293784d0f181424f914aa3c87bc069f4a272aa28caa37"
+              "retrievedAt": "2026-09-03T08:38:28.978Z",
+              "contentHash": "sha256:9f69fb8679088b5b378c46fc747d1271bd775348ce9cb82326f0a28b660c9fe7"
             }
           ],
           "blockers": []
@@ -18639,15 +18567,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 18428,
+            "durationMs": 26913,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-baseline-autorest.log",
@@ -18671,16 +18599,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 20770,
+            "durationMs": 13163,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-baseline-tcgc.log",
@@ -18708,15 +18636,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 24000,
+            "durationMs": 16828,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-target-autorest.log",
@@ -18740,16 +18668,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\44882\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 26290,
+            "durationMs": 19152,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-target-tcgc.log",
@@ -18828,7 +18756,7 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 13456,
+    "bytes": 13455,
     "estimatedTokens": 3364,
     "retained": {
       "sourceChanges": 2,
@@ -18850,16 +18778,20 @@
     "compliance": {
       "catalogEntriesScored": 32,
       "documentsFetched": 4,
-      "documentBytesFetched": 2110890,
+      "documentBytesFetched": 2149945,
       "guidanceExcerptsRetained": 3,
-      "guidanceExcerptBytesRetained": 513
+      "guidanceExcerptBytesRetained": 789
     }
   },
   "timings": {
-    "totalMs": 143165,
-    "semanticAnalysisMs": 208,
-    "restAnalysisMs": 82,
-    "downstreamAnalysisMs": 2478
+    "totalMs": 166936,
+    "semanticAnalysisMs": 206,
+    "restAnalysisMs": 99,
+    "downstreamAnalysisMs": 2898
   },
-  "pr": 44882
+  "pr": 44882,
+  "pullRequest": {
+    "number": 44882,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882"
+  }
 }

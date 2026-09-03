@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T07:24:22.572Z",
+  "generatedAt": "2026-09-03T08:09:04.006Z",
   "title": "TypeSpec assessment: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43745\\head",
@@ -50,7 +50,7 @@
   "confidence": "high",
   "safety": {
     "scope": "rest-and-downstream-only",
-    "status": "failed"
+    "status": "passed"
   },
   "dimensions": {
     "semantic": {
@@ -3148,8 +3148,8 @@
             "operation-cba7167648b322fa"
           ],
           "changedAspects": [],
-          "title": "Make Cloud HSM SKU names extensible",
-          "summary": "The TypeSpec change replaces the fixed CloudHsmClusterSkuName enum with an open string union while retaining both known service wire values.",
+          "title": "Make the Cloud HSM cluster SKU name extensible",
+          "summary": "Replaces the closed CloudHsmClusterSkuName enum with a string-backed union while retaining the Standard_B1 and Standard B10 wire values for create, get, and update operations.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [
@@ -3508,9 +3508,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": [
-              "shared-type-impact-2c9bf3a182588490"
-            ]
+            "sharedTypeImpact": []
           }
         }
       ],
@@ -3526,454 +3524,10 @@
       "blockers": []
     },
     "downstream": {
-      "status": "failed",
-      "findings": [
-        {
-          "id": "downstream-24adebf95043e303",
-          "rule": "enum-values-removed",
-          "defaultSeverity": "high",
-          "actual": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName removed enum values: Standard B10.",
-          "expected": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName preserves its existing language-neutral generated SDK contract.",
-          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
-          "sourceChangeIds": [
-            "source-9a813171a81d57c2"
-          ],
-          "declarationIds": [
-            "declaration-4db70df1e4ae8531",
-            "declaration-6f59f326dfa59a93",
-            "declaration-aa4fa48fc7239de9",
-            "declaration-b248c9fd9eb008fb",
-            "declaration-d7759b7ca4dd59aa",
-            "declaration-ec7b99f0e7bc0b26"
-          ],
-          "evidenceFactIds": [
-            "sdk-fact-7ae880bb3a345ff3",
-            "sdk-fact-25cf3836ca43865e"
-          ],
-          "reviewRequired": true,
-          "rootCauseIds": [
-            "downstream-root-cause-dd6d22c74313409c"
-          ],
-          "severity": "high",
-          "rationale": "The language-neutral public enum member identity changes from `Standard B10` to `StandardB10`. Existing generated-SDK source that refers to the prior member can require migration even though its wire value remains `Standard B10`.",
-          "evidence": [
-            {
-              "projectId": "project-14b3babacb1d",
-              "comparisonRole": "baseline",
-              "sourceRevision": "base",
-              "sourceCommit": "a6887d2260f26285d4b1f5fba97da370be9200b4",
-              "apiVersion": "2025-03-31",
-              "factKind": "enum",
-              "id": "sdk-fact-7ae880bb3a345ff3",
-              "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
-              "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
-              "name": "CloudHsmClusterSkuName",
-              "access": "public",
-              "usage": 10502,
-              "isFixed": true,
-              "isFlags": false,
-              "isUnionAsEnum": false,
-              "valueType": {
-                "kind": "string"
-              },
-              "values": [
-                {
-                  "name": "Standard B10",
-                  "value": "Standard B10"
-                },
-                {
-                  "name": "Standard_B1",
-                  "value": "Standard_B1"
-                }
-              ],
-              "reachable": true
-            },
-            {
-              "projectId": "project-14b3babacb1d",
-              "comparisonRole": "target",
-              "sourceRevision": "current",
-              "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
-              "apiVersion": "2025-03-31",
-              "factKind": "enum",
-              "id": "sdk-fact-25cf3836ca43865e",
-              "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
-              "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
-              "name": "CloudHsmClusterSkuName",
-              "access": "public",
-              "usage": 10502,
-              "isFixed": false,
-              "isFlags": false,
-              "isUnionAsEnum": true,
-              "valueType": {
-                "kind": "string"
-              },
-              "values": [
-                {
-                  "name": "StandardB10",
-                  "value": "Standard B10"
-                },
-                {
-                  "name": "Standard_B1",
-                  "value": "Standard_B1"
-                }
-              ],
-              "reachable": true
-            }
-          ],
-          "sources": [
-            {
-              "id": "source-9a813171a81d57c2",
-              "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-              "status": "modified",
-              "origins": [
-                "committed"
-              ],
-              "hunks": [
-                {
-                  "id": "hunk-b45fb303f8a4e2c9",
-                  "base": {
-                    "startLine": 283,
-                    "endLine": 292
-                  },
-                  "current": {
-                    "startLine": 283,
-                    "endLine": 296
-                  },
-                  "lines": [
-                    " /**",
-                    "  * Sku name of the Cloud HSM Cluster",
-                    "  */",
-                    "-#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
-                    "-enum CloudHsmClusterSkuName {",
-                    "-  Standard_B1,",
-                    "-  `Standard B10`,",
-                    "+union CloudHsmClusterSkuName {",
-                    "+  string,",
-                    "+",
-                    "+  /** Standard_B1 SKU */",
-                    "+  Standard_B1: \"Standard_B1\",",
-                    "+",
-                    "+  /** Standard B10 SKU */",
-                    "+  StandardB10: \"Standard B10\",",
-                    " }",
-                    " ",
-                    " /**",
-                    ""
-                  ]
-                }
-              ],
-              "declarations": [
-                {
-                  "id": "declaration-4db70df1e4ae8531",
-                  "kind": "enum",
-                  "qualifiedName": "CloudHsmClusterSkuName",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-b45fb303f8a4e2c9"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Enum",
-                    "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-                    "position": {
-                      "start": 12396,
-                      "end": 12634
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 283,
-                    "endLine": 290
-                  }
-                },
-                {
-                  "id": "declaration-6f59f326dfa59a93",
-                  "kind": "union",
-                  "qualifiedName": "CloudHsmClusterSkuName",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-b45fb303f8a4e2c9"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Union",
-                    "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-                    "position": {
-                      "start": 12396,
-                      "end": 12597
-                    },
-                    "referencedNames": [
-                      "StandardB10",
-                      "Standard_B1",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 283,
-                    "endLine": 294
-                  }
-                },
-                {
-                  "id": "declaration-b248c9fd9eb008fb",
-                  "kind": "union-variant",
-                  "qualifiedName": "CloudHsmClusterSkuName.Standard_B1",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-b45fb303f8a4e2c9"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-                    "position": {
-                      "start": 12485,
-                      "end": 12536
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 289,
-                    "endLine": 290
-                  }
-                },
-                {
-                  "id": "declaration-aa4fa48fc7239de9",
-                  "kind": "model",
-                  "qualifiedName": "CloudHsmClusterProperties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-b45fb303f8a4e2c9"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-                    "position": {
-                      "start": 12636,
-                      "end": 13658
-                    },
-                    "referencedNames": [
-                      "ActivationState",
-                      "Active",
-                      "Array",
-                      "AutoGeneratedDomainNameLabelScope",
-                      "Canceled",
-                      "CloudHsmClusterProperties.activationState",
-                      "CloudHsmClusterProperties.autoGeneratedDomainNameLabelScope",
-                      "CloudHsmClusterProperties.hsms",
-                      "CloudHsmClusterProperties.privateEndpointConnections",
-                      "CloudHsmClusterProperties.provisioningState",
-                      "CloudHsmClusterProperties.publicNetworkAccess",
-                      "CloudHsmClusterProperties.statusMessage",
-                      "CloudHsmProperties",
-                      "CloudHsmProperties.fqdn",
-                      "CloudHsmProperties.state",
-                      "CloudHsmProperties.stateMessage",
-                      "Deleting",
-                      "Disabled",
-                      "Failed",
-                      "NoReuse",
-                      "NotActivated",
-                      "NotDefined",
-                      "PrivateEndpoint",
-                      "PrivateEndpointConnection",
-                      "PrivateEndpointConnection.etag",
-                      "PrivateEndpointConnection.name",
-                      "PrivateEndpointConnection.properties",
-                      "PrivateEndpointConnectionProperties",
-                      "PrivateEndpointConnectionProperties.groupIds",
-                      "PrivateEndpointConnectionProperties.privateEndpoint",
-                      "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
-                      "PrivateEndpointConnectionProperties.provisioningState",
-                      "PrivateEndpointConnectionProvisioningState",
-                      "PrivateLinkServiceConnectionState",
-                      "Provisioning",
-                      "ProvisioningState",
-                      "ProxyResource",
-                      "ProxyResource.properties",
-                      "PublicNetworkAccess",
-                      "Resource",
-                      "Resource.id",
-                      "Resource.name",
-                      "Resource.systemData",
-                      "Resource.type",
-                      "ResourceGroupReuse",
-                      "SubscriptionReuse",
-                      "Succeeded",
-                      "SystemData",
-                      "SystemData.createdAt",
-                      "SystemData.createdBy",
-                      "SystemData.createdByType",
-                      "SystemData.lastModifiedAt",
-                      "SystemData.lastModifiedBy",
-                      "SystemData.lastModifiedByType",
-                      "TenantReuse",
-                      "Unknown",
-                      "Updating",
-                      "armResourceIdentifier",
-                      "armResourceType",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 292,
-                    "endLine": 337
-                  }
-                },
-                {
-                  "id": "declaration-ec7b99f0e7bc0b26",
-                  "kind": "union-variant",
-                  "qualifiedName": "CloudHsmClusterSkuName.StandardB10",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-b45fb303f8a4e2c9"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-                    "position": {
-                      "start": 12541,
-                      "end": 12594
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 292,
-                    "endLine": 293
-                  }
-                },
-                {
-                  "id": "declaration-d7759b7ca4dd59aa",
-                  "kind": "model",
-                  "qualifiedName": "CloudHsmClusterProperties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-b45fb303f8a4e2c9"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
-                    "position": {
-                      "start": 12599,
-                      "end": 13621
-                    },
-                    "referencedNames": [
-                      "ActivationState",
-                      "Active",
-                      "Array",
-                      "AutoGeneratedDomainNameLabelScope",
-                      "Canceled",
-                      "CloudHsmClusterProperties.activationState",
-                      "CloudHsmClusterProperties.autoGeneratedDomainNameLabelScope",
-                      "CloudHsmClusterProperties.hsms",
-                      "CloudHsmClusterProperties.privateEndpointConnections",
-                      "CloudHsmClusterProperties.provisioningState",
-                      "CloudHsmClusterProperties.publicNetworkAccess",
-                      "CloudHsmClusterProperties.statusMessage",
-                      "CloudHsmProperties",
-                      "CloudHsmProperties.fqdn",
-                      "CloudHsmProperties.state",
-                      "CloudHsmProperties.stateMessage",
-                      "Deleting",
-                      "Disabled",
-                      "Failed",
-                      "NoReuse",
-                      "NotActivated",
-                      "NotDefined",
-                      "PrivateEndpoint",
-                      "PrivateEndpointConnection",
-                      "PrivateEndpointConnection.etag",
-                      "PrivateEndpointConnection.name",
-                      "PrivateEndpointConnection.properties",
-                      "PrivateEndpointConnectionProperties",
-                      "PrivateEndpointConnectionProperties.groupIds",
-                      "PrivateEndpointConnectionProperties.privateEndpoint",
-                      "PrivateEndpointConnectionProperties.privateLinkServiceConnectionState",
-                      "PrivateEndpointConnectionProperties.provisioningState",
-                      "PrivateEndpointConnectionProvisioningState",
-                      "PrivateLinkServiceConnectionState",
-                      "Provisioning",
-                      "ProvisioningState",
-                      "ProxyResource",
-                      "ProxyResource.properties",
-                      "PublicNetworkAccess",
-                      "Resource",
-                      "Resource.id",
-                      "Resource.name",
-                      "Resource.systemData",
-                      "Resource.type",
-                      "ResourceGroupReuse",
-                      "SubscriptionReuse",
-                      "Succeeded",
-                      "SystemData",
-                      "SystemData.createdAt",
-                      "SystemData.createdBy",
-                      "SystemData.createdByType",
-                      "SystemData.lastModifiedAt",
-                      "SystemData.lastModifiedBy",
-                      "SystemData.lastModifiedByType",
-                      "TenantReuse",
-                      "Unknown",
-                      "Updating",
-                      "armResourceIdentifier",
-                      "armResourceType",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 296,
-                    "endLine": 341
-                  }
-                }
-              ]
-            }
-          ],
-          "relatedSemanticIntents": [
-            "semantic-6c953bac4d5ca5b2"
-          ],
-          "semanticMatchBasis": "declaration-identity"
-        }
-      ],
+      "status": "passed",
+      "findings": [],
       "operationGroups": [],
-      "sharedTypeImpacts": [
-        {
-          "id": "shared-type-impact-2c9bf3a182588490",
-          "rootCauseId": "downstream-root-cause-dd6d22c74313409c",
-          "rootCause": "unresolved",
-          "summary": "These SDK types share the same generated public-surface change.",
-          "findingIds": [
-            "downstream-24adebf95043e303"
-          ],
-          "typeCount": 1,
-          "types": [
-            "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName"
-          ],
-          "sampleTypes": [
-            "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName"
-          ],
-          "affectedOperationCount": 0,
-          "affectedMethodCount": 0,
-          "affectedMethods": [],
-          "sampleMethods": [],
-          "relatedSemanticIntents": [
-            "semantic-6c953bac4d5ca5b2"
-          ]
-        }
-      ],
+      "sharedTypeImpacts": [],
       "rootCauses": [
         {
           "id": "downstream-root-cause-dd6d22c74313409c",
@@ -3993,7 +3547,7 @@
         }
       ],
       "impliedByRest": [],
-      "rejectedCandidateCount": 1,
+      "rejectedCandidateCount": 2,
       "blockers": []
     },
     "compliance": {
@@ -4028,10 +3582,10 @@
             "declaration-ec7b99f0e7bc0b26"
           ],
           "decision": "applicable-pass",
-          "expected": "Use an enum for a fixed collection of named numeric or string constants, and consider a union when the represented type set is not limited to those constants.",
-          "actual": "CloudHsmClusterSkuName is changed from a fixed enum to a union containing an unconstrained string arm plus named variants for the existing `Standard_B1` and `Standard B10` wire values.",
-          "rationale": "The changed declaration is no longer limited to a fixed collection of constants, so representing the open value set as a union follows the fetched enum guidance while preserving the known service values.",
-          "gap": "The changed declaration is no longer limited to a fixed collection of constants, so representing the open value set as a union follows the fetched enum guidance while preserving the known service values.",
+          "expected": "Use an enum for a closed collection of named constants and consider a union when the value set must also admit other string values.",
+          "actual": "CloudHsmClusterSkuName is changed from a closed enum to a union containing string plus literal variants for the two existing SKU wire values.",
+          "rationale": "The changed declaration follows the fetched TypeSpec guidance: it retains named values while using a union to represent an extensible string value set.",
+          "gap": "The changed declaration follows the fetched TypeSpec guidance: it retains named values while using a union to represent an extensible string value set.",
           "sourceLinks": [
             {
               "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
@@ -4072,202 +3626,146 @@
           "catalogRanking": [
             {
               "rank": 1,
-              "catalogOrder": 22,
-              "title": "ARM common types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 10
-              },
-              "selectionRationale": "Matches the ARM model category and the modification of an existing named type."
-            },
-            {
-              "rank": 2,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 9
+                "total": 7
               },
-              "selectionRationale": "Directly matches the changed model declarations and TypeSpec model category."
+              "selectionRationale": "Selected because it names an exact changed TypeSpec construct (models) and matches the models and enums query category."
             },
             {
-              "rank": 3,
+              "rank": 2,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 9
+                "total": 7
               },
-              "selectionRationale": "Directly matches the replaced enum, its named values, and the enum category."
+              "selectionRationale": "Selected because it names an exact changed TypeSpec construct (enums) and matches the models and enums query category."
             },
             {
-              "rank": 4,
-              "catalogOrder": 25,
-              "title": "Scalars",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "rank": 3,
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
               "score": {
-                "exactSymbol": 4,
+                "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 9
+                "total": 5
               },
-              "selectionRationale": "Directly matches the added string arm and constrained primitive-value category."
+              "selectionRationale": "Selected because it matches the models and enums query category and applies to ARM model definitions."
             },
             {
-              "rank": 5,
+              "rank": 4,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 7
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 4
               },
-              "selectionRationale": "Directly matches removal of the #suppress directive from the changed source."
+              "selectionRationale": "Selected because it names an exact changed TypeSpec construct (#suppress)."
+            },
+            {
+              "rank": 5,
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "Selected because it matches the models and enums query category."
             },
             {
               "rank": 6,
-              "catalogOrder": 4,
-              "title": "Private endpoints",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 6
-              },
-              "selectionRationale": "Matches the PrivateEndpoint symbols present in the bounded query profile."
-            },
-            {
-              "rank": 7,
-              "catalogOrder": 5,
-              "title": "Private links",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 6
-              },
-              "selectionRationale": "Matches the PrivateLink symbols present in the bounded query profile."
-            },
-            {
-              "rank": 8,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 6
-              },
-              "selectionRationale": "Names the enum construct but concerns API-version enums rather than this service type."
-            },
-            {
-              "rank": 9,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
+                "total": 3
               },
-              "selectionRationale": "Matches the deterministic decorators category but no changed decorator symbol."
+              "selectionRationale": "Selected because it matches the decorators query category."
             },
             {
-              "rank": 10,
+              "rank": 7,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
+                "total": 3
               },
-              "selectionRationale": "Matches the deterministic decorators category but no changed built-in decorator."
+              "selectionRationale": "Selected because it matches the decorators query category."
             },
             {
-              "rank": 11,
+              "rank": 8,
               "catalogOrder": 28,
               "title": "OpenAPI decorators",
               "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
+                "total": 3
               },
-              "selectionRationale": "Matches the deterministic decorators category but no changed OpenAPI decorator."
+              "selectionRationale": "Selected because it matches the decorators query category."
             },
             {
-              "rank": 12,
+              "rank": 9,
               "catalogOrder": 29,
               "title": "Change provider namespace",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
+                "total": 3
               },
-              "selectionRationale": "Matches the decorators category and ARM plane but not the changed provider namespace."
+              "selectionRationale": "Selected because it matches the decorators query category."
             },
             {
-              "rank": 13,
+              "rank": 10,
               "catalogOrder": 30,
               "title": "Azure Portal default experiences",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches the decorators category and ARM plane but not the changed enum/union behavior."
-            },
-            {
-              "rank": 14,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 1,
                 "total": 3
               },
-              "selectionRationale": "Matches modification context and the ARM plane but not an API-version evolution."
+              "selectionRationale": "Selected because it matches the decorators query category."
             },
             {
-              "rank": 15,
+              "rank": 11,
               "catalogOrder": 31,
               "title": "Content negotiation",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
@@ -4278,206 +3776,136 @@
                 "changeContext": 0,
                 "total": 3
               },
-              "selectionRationale": "Matches the decorators category but is data-plane content-negotiation guidance."
+              "selectionRationale": "Selected because it matches the decorators query category."
             },
             {
-              "rank": 16,
+              "rank": 12,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 1
+              },
+              "selectionRationale": "Selected because it covers modifying existing API definitions."
+            },
+            {
+              "rank": 13,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 17,
+              "rank": 14,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 18,
+              "rank": 15,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 19,
+              "rank": 16,
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 17,
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 18,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 20,
+              "rank": 19,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 21,
+              "rank": 20,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 22,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 23,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 24,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 25,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 17,
-              "title": "ARM long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 27,
-              "catalogOrder": 19,
-              "title": "TypeSpec pagination",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 28,
-              "catalogOrder": 20,
-              "title": "Azure.ResourceManager data types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 29,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to the resource-manager plane but does not match the model/enum change category."
-            },
-            {
-              "rank": 30,
+              "rank": 21,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -4488,10 +3916,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the resource-manager model/enum intent or its changed TypeSpec constructs."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 31,
+              "rank": 22,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -4502,10 +3930,94 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the resource-manager model/enum intent or its changed TypeSpec constructs."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             },
             {
-              "rank": 32,
+              "rank": 23,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 24,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 26,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 27,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 28,
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 29,
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -4516,68 +4028,90 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Does not match the resource-manager model/enum intent or its changed TypeSpec constructs."
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Cataloged official guidance has no direct query-profile signal for this intent."
             }
           ],
           "documents": [
             {
               "rank": 1,
-              "catalogOrder": 22,
-              "title": "ARM common types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 10
-              },
-              "selectionRationale": "Matches the ARM model category and the modification of an existing named type.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:21:00.356Z",
-              "contentHash": "sha256:1c5caa7ba3861e1af59790ee5c55e5b9c65de01afd9057973d4e91dd98eaf81d"
-            },
-            {
-              "rank": 2,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 9
+                "total": 7
               },
-              "selectionRationale": "Directly matches the changed model declarations and TypeSpec model category.",
+              "selectionRationale": "Selected because it names an exact changed TypeSpec construct (models) and matches the models and enums query category.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:21:00.356Z",
-              "contentHash": "sha256:681781691afef9f80560431f5154c19b72d6b4cb97bb45634c8dcd3e9e0557a8"
+              "retrievedAt": "2026-09-03T08:08:56.690Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
             },
             {
-              "rank": 3,
+              "rank": 2,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 9
+                "total": 7
               },
-              "selectionRationale": "Directly matches the replaced enum, its named values, and the enum category.",
+              "selectionRationale": "Selected because it names an exact changed TypeSpec construct (enums) and matches the models and enums query category.",
               "guidance": [
                 {
                   "section": "Enums",
-                  "excerpt": "Enums, short for enumerations, provide a way for developers to define a collection of named constants. Enums can be either numeric or string-based. For other data types, consider using unions.",
+                  "excerpt": "Enums, short for enumerations, provide a way for developers to define a collection of named constants. They are useful for documenting the purpose of the code or for establishing a set of distinct scenarios. Enums can be either numeric or string-based. For other data types, consider using unions.",
                   "queryTerms": [
                     "enum",
-                    "union",
-                    "Standard_B1",
-                    "StandardB10"
+                    "unions"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -4588,26 +4122,44 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:21:00.356Z",
-              "contentHash": "sha256:e30a33c99723a74cdb46e6b9443e376024b1f990564f606629d6ff0d2af1cc88"
+              "retrievedAt": "2026-09-03T08:08:56.690Z",
+              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
             },
             {
-              "rank": 4,
-              "catalogOrder": 25,
-              "title": "Scalars",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "rank": 3,
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
               "score": {
-                "exactSymbol": 4,
+                "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 9
+                "total": 5
               },
-              "selectionRationale": "Directly matches the added string arm and constrained primitive-value category.",
+              "selectionRationale": "Selected because it matches the models and enums query category and applies to ARM model definitions.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:21:00.356Z",
-              "contentHash": "sha256:6449d1308d358d4e29b1d1712a73f687cbfb6efd6b2098009b878cdca495ef1c"
+              "retrievedAt": "2026-09-03T08:08:56.690Z",
+              "contentHash": "sha256:18a5c6374d552b964058717b07178681036191e9489da3fa4089d9f9509ed229"
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 4
+              },
+              "selectionRationale": "Selected because it names an exact changed TypeSpec construct (#suppress).",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:08:56.690Z",
+              "contentHash": "sha256:dd2de927d98582c444dfd946513a2267499852001c0b9e5b20f73e78e2a88791"
             }
           ],
           "blockers": []
@@ -4651,15 +4203,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 15987,
+            "durationMs": 8171,
             "configPath": "worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-baseline-autorest.log",
@@ -4683,16 +4235,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12645,
+            "durationMs": 9882,
             "configPath": "worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-baseline-tcgc.log",
@@ -4720,15 +4272,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10805,
+            "durationMs": 8537,
             "configPath": "worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-target-autorest.log",
@@ -4752,16 +4304,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43745\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9504,
+            "durationMs": 9732,
             "configPath": "worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-target-tcgc.log",
@@ -4856,16 +4408,20 @@
     "compliance": {
       "catalogEntriesScored": 32,
       "documentsFetched": 4,
-      "documentBytesFetched": 1273324,
+      "documentBytesFetched": 1283990,
       "guidanceExcerptsRetained": 1,
-      "guidanceExcerptBytesRetained": 192
+      "guidanceExcerptBytesRetained": 297
     }
   },
   "timings": {
-    "totalMs": 89245,
-    "semanticAnalysisMs": 40,
-    "restAnalysisMs": 29,
-    "downstreamAnalysisMs": 1298
+    "totalMs": 55272,
+    "semanticAnalysisMs": 58,
+    "restAnalysisMs": 51,
+    "downstreamAnalysisMs": 1251
   },
-  "pr": 43745
+  "pr": 43745,
+  "pullRequest": {
+    "number": 43745,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/43745"
+  }
 }

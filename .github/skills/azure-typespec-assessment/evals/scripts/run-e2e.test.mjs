@@ -7,16 +7,16 @@ import test from "node:test";
 import { loadCases, runE2e } from "./run-e2e.mjs";
 import { compareComplianceRollout } from "./compare-compliance-rollout.mjs";
 
-test("replays all 11 historical assessments and retains HTML", () => {
+test("replays all 12 historical assessments and retains HTML", () => {
   const output = mkdtempSync(join(tmpdir(), "typespec-assessment-e2e-"));
   const summary = runE2e({ case: "all", output });
 
-  assert.equal(loadCases().length, 11);
-  assert.equal(summary.caseCount, 11);
-  assert.equal(summary.results.length, 11);
+  assert.equal(loadCases().length, 12);
+  assert.equal(summary.caseCount, 12);
+  assert.equal(summary.results.length, 12);
   assert.ok(summary.results.every((item) => Number.isInteger(item.elapsedMs)));
   const comparison = compareComplianceRollout({ output });
-  assert.equal(comparison.caseCount, 11);
+  assert.equal(comparison.caseCount, 12);
   assert.equal(comparison.allFindingTitlesPreserved, true);
   for (const pr of summary.prs) {
     const html = readFileSync(join(output, String(pr), "assessment.html"), "utf8");

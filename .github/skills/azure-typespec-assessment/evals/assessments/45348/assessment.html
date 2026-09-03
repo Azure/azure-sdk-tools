@@ -9,7 +9,7 @@
 .notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
 .compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
 </style></head><body>
-<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Downgrade ARM common-types references from v6 to v5</h1>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Align preview API versions to ARM common types v5</h1>
 <p class="hero-meta">TypeSpec source diff: <code>2991970c5377110244bcf9614be03e5aaf32362f</code> → <code>b209254310b3e569b16210d3c59fc8b8ac3b84b4</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
@@ -25,11 +25,11 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intent <a href="#intent-semantic-9aa453e5a18d9499">Downgrade ARM common-types references from v6 to v5</a>.</p>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">No Azure Guidelines findings.</p>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-9aa453e5a18d9499"><summary><strong><span class="action">modify</span> Downgrade ARM common-types references from v6 to v5</strong></summary><div class="intent-body">
-<p>Two @armCommonTypesVersion arguments change from Azure.ResourceManager.CommonTypes.Versions.v6 to v5. The version selection propagates through 109 affected operations, for which deterministic analysis supplied 237 REST review candidates.</p>
+<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-19dbeda22c08823b"><summary><strong><span class="action">modify</span> Align preview API versions to ARM common types v5</strong></summary><div class="intent-body">
+<p>Changes the two 2026-11 preview version declarations from ARM common types v6 to v5. All 109 mapped operations retain identical normalized request and response contracts, so the change restores cross-version wrapper compatibility without a REST or downstream SDK break.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/deviceregistry/DeviceRegistry.Management/main.tsp</div><pre><span class="context">   v2026_04_01: &quot;2026-04-01&quot;,</span>
@@ -59,26 +59,26 @@
 <details class="operation"><summary><strong>AssetEndpointProfiles_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles/{assetEndpointProfileName}</code> <span>2026-11-02-preview</span></summary>
 <div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
 <p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
-<p id="related-findings-semantic-9aa453e5a18d9499"><strong>Related findings:</strong> None</p>
+<p id="related-findings-semantic-19dbeda22c08823b"><strong>Related findings:</strong> None</p>
 </div></details></section>
-<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><ul><li>All 237 REST candidates have bounded before/after fact records that are identical except for generated fact IDs, so the supplied evidence cannot establish caller-visible incompatibility.</li></ul>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/deviceregistry/DeviceRegistry.Management</code></td><td>existing-api-version</td><td><code>2991970c5377110244bcf9614be03e5aaf32362f@2026-11-02-preview</code><br><small>base · affected-existing-version</small></td><td><code>b209254310b3e569b16210d3c59fc8b8ac3b84b4@2026-11-02-preview</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45348">#45348</a></p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li></ul>
+<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/deviceregistry/DeviceRegistry.Management/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 123487,
-    &quot;semanticAnalysisMs&quot;: 253,
-    &quot;restAnalysisMs&quot;: 165,
-    &quot;downstreamAnalysisMs&quot;: 4862
+    &quot;totalMs&quot;: 148251,
+    &quot;semanticAnalysisMs&quot;: 418,
+    &quot;restAnalysisMs&quot;: 197,
+    &quot;downstreamAnalysisMs&quot;: 7434
   },
   &quot;inputAccounting&quot;: {
-    &quot;budgetTier&quot;: &quot;maximum&quot;,
+    &quot;budgetTier&quot;: &quot;configured-maximum&quot;,
     &quot;budgetBytes&quot;: 1048576,
-    &quot;bytes&quot;: 662258,
-    &quot;estimatedTokens&quot;: 165565,
+    &quot;bytes&quot;: 680619,
+    &quot;estimatedTokens&quot;: 170155,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 1,
       &quot;facts&quot;: 218,
@@ -99,9 +99,9 @@
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 32,
       &quot;documentsFetched&quot;: 4,
-      &quot;documentBytesFetched&quot;: 1593844,
-      &quot;guidanceExcerptsRetained&quot;: 3,
-      &quot;guidanceExcerptBytesRetained&quot;: 568
+      &quot;documentBytesFetched&quot;: 1281961,
+      &quot;guidanceExcerptsRetained&quot;: 1,
+      &quot;guidanceExcerptBytesRetained&quot;: 103
     }
   }
 }</pre>

@@ -61,6 +61,10 @@ stimuli:
     prompt: |
       @azure-typespec-author In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
+    rubric: &shared_rubric
+      - Employee has a HEAD operation named checkExistence using ArmResourceCheckExistence<Employee>.
+      - The operation follows TypeSpec Azure ARM resource-operation guidelines.
+      - Changes are limited to the requested operation and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
@@ -100,6 +104,7 @@ stimuli:
       mode: "no-skill"
     prompt: "In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines."
     environment: *shared_environment
+    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:

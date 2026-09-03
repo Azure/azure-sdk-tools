@@ -148,6 +148,10 @@ stimuli:
       mode: "no-skill"
     prompt: "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version"
     environment: *shared_environment
+    rubric:
+      - API version 2025-05-04-preview is added as a preview version after the latest stable version.
+      - The new preview carries forward all features and examples from the latest stable version without removing existing versions.
+      - Changes are limited to adding and correctly configuring the requested API version.
     graders:
       - type: "tool-calls"
         config:

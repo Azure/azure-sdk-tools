@@ -114,6 +114,10 @@ stimuli:
       mode: "no-skill"
     prompt: "Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template."
     environment: *shared_environment
+    rubric:
+      - The Employees createOrUpdate operation still uses ArmResourceCreateOrReplaceAsync<Employee> and returns Azure-AsyncOperation without Retry-After in the 201 response.
+      - Existing update and delete operations remain unchanged.
+      - Changes are limited to the requested response-header customization and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:

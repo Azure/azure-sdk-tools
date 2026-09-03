@@ -65,6 +65,10 @@ stimuli:
     prompt: |
       @azure-typespec-author add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
     environment: *shared_environment
+    rubric: &shared_rubric
+      - The Employee resource name parameter has a minLength constraint of 1.
+      - The constraint is applied to Employee.name using a valid TypeSpec decorator pattern.
+      - Changes are limited to the requested constraint and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
@@ -104,6 +108,7 @@ stimuli:
       mode: "no-skill"
     prompt: "add minLength decorator to set the minLength 1 for resource name parameter of Employee resource"
     environment: *shared_environment
+    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:

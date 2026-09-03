@@ -111,6 +111,10 @@ stimuli:
       mode: "no-skill"
     prompt: "add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01"
     environment: *shared_environment
+    rubric:
+      - EmployeeProperties.age has a default value of 21 only in API version 2025-11-01.
+      - The previous age property shape is preserved for earlier versions through valid TypeSpec versioning decorators.
+      - Changes are limited to the requested versioned default-value behavior.
     graders:
       - type: "tool-calls"
         config:

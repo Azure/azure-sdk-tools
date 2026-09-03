@@ -93,6 +93,10 @@ stimuli:
       mode: "no-skill"
     prompt: "In the Widget project, add an update operation for the existing Employee ARM resource. The operation should complete synchronously and allow clients to update the resource's tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change."
     environment: *shared_environment
+    rubric:
+      - Employee has a synchronous PATCH update operation implemented with the ARM custom patch template.
+      - The update request supports tags and mutable Employee properties while preserving ARM update semantics.
+      - Changes follow TypeSpec Azure guidelines and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:

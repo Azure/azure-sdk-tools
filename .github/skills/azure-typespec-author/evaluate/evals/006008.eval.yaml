@@ -49,6 +49,10 @@ stimuli:
     mode: forced
   prompt: '@azure-typespec-author Remove the `color` property from the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.'
   environment: *id001
+  rubric: &shared_rubric
+  - WidgetSuite.color is marked as removed only in API version 2023-06-01-preview rather than being deleted from the model.
+  - Version 2023-06-01-preview is added to the Versions enum and the property uses valid TypeSpec versioning.
+  - Earlier API versions retain color, and changes contain no unrelated edits.
   graders:
   - *id002
   - type: run-command
@@ -89,6 +93,7 @@ stimuli:
     mode: no-skill
   prompt: Remove the `color` property from the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.
   environment: *id001
+  rubric: *shared_rubric
   graders:
   - type: tool-calls
     config:

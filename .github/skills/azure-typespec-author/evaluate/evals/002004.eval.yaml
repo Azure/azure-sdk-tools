@@ -113,6 +113,10 @@ stimuli:
       mode: "no-skill"
     prompt: 'Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.'
     environment: *shared_environment
+    rubric:
+      - BadgeAssignment is defined as an extension resource that can be attached to an Employee resource.
+      - It has the expected read-only property behavior and standard extension-resource CRUD and list-by-target operations.
+      - The implementation follows TypeSpec Azure guidelines and contains no unrelated edits.
     graders:
       - type: "tool-calls"
         config:

@@ -108,6 +108,10 @@ stimuli:
       mode: "no-skill"
     prompt: "Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation."
     environment: *shared_environment
+    rubric:
+      - Employee is converted from a tracked resource to an extension resource that can be scoped to any ARM resource.
+      - Its operations use the ARM extension templates, including a single list-by-target operation instead of separate resource-group and subscription lists.
+      - The implementation follows TypeSpec Azure guidelines and contains no unrelated edits.
     graders:
       - type: "tool-calls"
         config:

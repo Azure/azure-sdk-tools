@@ -99,6 +99,10 @@ stimuli:
       mode: "no-skill"
     prompt: "change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only"
     environment: *shared_environment
+    rubric:
+      - EmployeeProperties.provisioningState has Lifecycle.Read and Lifecycle.Create visibility only in API version 2025-05-04-preview.
+      - Earlier API versions retain the original Lifecycle.Read visibility.
+      - Changes use valid TypeSpec versioning and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:

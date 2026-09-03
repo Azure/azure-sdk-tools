@@ -74,7 +74,6 @@ stimuli:
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-        My setup has already been verified, do not run azsdk_verify_setup.
       - |
         Now run SDK generation for all languages for the release plan you just
         created.
@@ -94,8 +93,6 @@ stimuli:
           required:
             - azsdk_get_release_plan
             - azsdk_create_release_plan
-          disallowed:
-            - azsdk_verify_setup
       # Turn 1 — generate for the plan created in turn 0 (session context).
       - type: skill-invocation
         turn: 1
@@ -111,7 +108,6 @@ stimuli:
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_release_sdk
-            - azsdk_verify_setup
             - azsdk_create_release_plan
 
   # --- Scenario 2: Generate SDKs, then fetch the SDK pull request link -
@@ -143,7 +139,6 @@ stimuli:
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_release_sdk
-            - azsdk_verify_setup
       # Turn 1 — retrieve the generated PR link (legitimate here, unlike as a
       # substitute for generation).
       - type: tool-calls
@@ -167,8 +162,8 @@ stimuli:
       max_tokens: 20000
     graders:
       # Session-scoped: the conversation must update the spec PR on the plan and
-      # regenerate via the pipeline, never publishing, re-verifying, creating a
-      # new plan, or generating locally. Turn-pinning is avoided because the agent
+      # regenerate via the pipeline, never publishing, creating a new plan, or
+      # generating locally. Turn-pinning is avoided because the agent
       # may call `azsdk_get_release_plan` during either the update or the
       # regenerate step.
       - type: skill-invocation
@@ -186,14 +181,12 @@ stimuli:
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_release_sdk
-            - azsdk_verify_setup
             - azsdk_create_release_plan
             - azsdk_package_generate_code
 
   # --- Scenario 4: Vague first turn, then clarify with the release plan
-  # A vague opening must not jump to azsdk_release_sdk (or re-verify setup);
-  # the clarifying turn carries the release plan and must route to pipeline
-  # generation.
+  # A vague opening must not jump to azsdk_release_sdk; the clarifying turn
+  # carries the release plan and must route to pipeline generation.
   - name: vague-then-clarify-generate-conversation
     environment: *multiTurnEnv
     turns:
@@ -208,7 +201,7 @@ stimuli:
       max_tokens: 20000
     graders:
       # Session-scoped: the conversation must route to pipeline generation and
-      # must never publish (release_sdk), re-verify, or generate locally
+      # must never publish (release_sdk) or generate locally
       # (package_generate_code). The vague opener may trigger brief local
       # exploration, so the local *skill* is not disallowed at session scope; the
       # tool-level guard (no package_generate_code) is what enforces correct
@@ -224,7 +217,6 @@ stimuli:
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_release_sdk
-            - azsdk_verify_setup
             - azsdk_package_generate_code
 
   # --- Scenario 5: vague opening, then reveals LOCAL intent (#16226) ---
@@ -246,8 +238,8 @@ stimuli:
       max_tokens: 22000
     graders:
       # Session-scoped: the conversation must route to LOCAL generation (local
-      # skill + package_generate_code) and never touch the pipeline/publish path
-      # or re-verify. The agent commonly acts on the first, already-actionable
+      # skill + package_generate_code) and never touch the pipeline/publish path.
+      # The agent commonly acts on the first, already-actionable
       # turn rather than waiting for the clarifying turn, so these are asserted
       # session-wide rather than pinned to a single turn.
       - type: skill-invocation
@@ -263,7 +255,6 @@ stimuli:
           disallowed:
             - azsdk_run_generate_sdk
             - azsdk_release_sdk
-            - azsdk_verify_setup
 
   # --- Scenario 6: local first, then the user switches to pipeline (#16226)
   # A self-contained local request, then the user changes their mind mid-session

@@ -86,8 +86,6 @@ stimuli:
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-        My setup has already been verified, do not run azsdk_verify_setup. Use
-        real tools — no dry-run, no simulation.
       - |
         Now fetch that release plan back from DevOps to confirm it was saved,
         and tell me its work-item ID.
@@ -129,7 +127,6 @@ stimuli:
           required:
             - azsdk_create_release_plan
           disallowed:
-            - azsdk_verify_setup
             - azsdk_run_generate_sdk
             - azsdk_link_sdk_pull_request_to_release_plan
       # Turn 1 — fetch back and report the work-item ID.

@@ -64,7 +64,8 @@ stimuli:
         My .NET SDK pipeline failed for Azure DevOps build 6455504 in the
         internal project. Analyze the run.
       - |
-        Yes, please go ahead and apply that fix.
+        Yes, please go ahead and apply that fix to the package, then verify it
+        builds, passes the checks, and the tests are green.
     constraints:
       max_turns: 20
       max_tokens: 40000

@@ -63,7 +63,6 @@ stimuli:
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-        My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 10
       max_tokens: 12000
@@ -77,8 +76,6 @@ stimuli:
           required:
             - azsdk_get_release_plan
             - azsdk_create_release_plan
-          disallowed:
-            - azsdk_verify_setup
 
   # --- End-to-end demo: create, then (in a separate turn) generate -----
   # Rewritten from a single "create X, then generate SDK" compound prompt
@@ -100,7 +97,6 @@ stimuli:
           - API version: "2022-11-01-preview"
           - SDK release type: "beta"
           - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-        My setup has already been verified, do not run azsdk_verify_setup.
       - |
         Now generate SDK for all languages using the work-item ID from the
         release plan you just created.
@@ -121,7 +117,6 @@ stimuli:
             - azsdk_get_release_plan
             - azsdk_create_release_plan
           disallowed:
-            - azsdk_verify_setup
             - azsdk_run_generate_sdk
       # Turn 1 — generate for the plan created in turn 0; never re-create.
       - type: skill-invocation
@@ -140,7 +135,6 @@ stimuli:
           required:
             - azsdk_run_generate_sdk
           disallowed:
-            - azsdk_verify_setup
             - azsdk_create_release_plan
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
@@ -152,7 +146,6 @@ stimuli:
       release plan. Here is the context you need:
         - release plan work item ID: "29262"
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 8
       max_tokens: 10000
@@ -172,7 +165,6 @@ stimuli:
             - azsdk_get_release_plan
             - azsdk_run_generate_sdk
           disallowed:
-            - azsdk_verify_setup
             - azsdk_create_release_plan
 
   # --- Scenario 3: Link a different spec PR to an existing release plan
@@ -184,7 +176,6 @@ stimuli:
       Manager release plan. Here is the context you need:
         - release plan work item ID: "29262"
         - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
       max_tokens: 8000
@@ -199,7 +190,6 @@ stimuli:
             - azsdk_get_release_plan
             - azsdk_update_api_spec_pull_request_in_release_plan
           disallowed:
-            - azsdk_verify_setup
             - azsdk_create_release_plan
 
   # --- Scenario 4: Update SDK details (package names) ------------------
@@ -213,7 +203,6 @@ stimuli:
         - release plan work item ID: "29262"
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
         - tspconfig path: "specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml"
-      My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 8
       max_tokens: 10000
@@ -228,7 +217,6 @@ stimuli:
             - azsdk_get_release_plan
             - azsdk_update_sdk_details_in_release_plan
           disallowed:
-            - azsdk_verify_setup
             - azsdk_create_release_plan
 
   # --- Scenario 5: Generate SDK for all languages + link to release plan (issue #16072)
@@ -269,8 +257,6 @@ stimuli:
           required:
             - azsdk_get_release_plan
             - azsdk_run_generate_sdk
-          disallowed:
-            - azsdk_verify_setup
 
   # --- Scenario 6: Vague "generate SDK for all languages" must not grab PR-link tool
   # Second regression prompt from issue #16072. With minimal context the agent must head
@@ -290,7 +276,6 @@ stimuli:
           disallowed:
             - azsdk_get_sdk_pull_request_link
             - azsdk_get_pull_request
-            - azsdk_verify_setup
 
   # --- Scenario 7: Pipeline SDK generation skill routing (issue #16226)
   # Regression for https://github.com/Azure/azure-sdk-tools/issues/16226. The prompt
@@ -335,7 +320,6 @@ stimuli:
             - azsdk_release_sdk
             - azsdk_get_pipeline_llm_artifacts
             - azsdk_get_service_details_by_typespec_path
-            - azsdk_verify_setup
 
   # --- Scenario 8: LOCAL routing must NOT cross to the pipeline (#16226)
   # Counterpart to scenario 7: a clearly-local single-language request must route
@@ -413,7 +397,6 @@ stimuli:
           disallowed:
             - azsdk_release_sdk
             - azsdk_package_generate_code
-            - azsdk_verify_setup
 
   # --- Scenario 11: PRIVATE PREVIEW release plans cannot generate via pipeline (#16226)
   # The azsdk-common-generate-sdk-pipeline skill documents that private preview release
@@ -440,7 +423,6 @@ stimuli:
           disallowed:
             - azsdk_run_generate_sdk
             - azsdk_release_sdk
-            - azsdk_verify_setup
 
 scoring:
   weights:

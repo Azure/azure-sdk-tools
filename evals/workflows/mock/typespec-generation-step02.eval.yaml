@@ -36,7 +36,6 @@ stimuli:
         Widget Manager. Add an optional string property named "category" to
         the WidgetSuite model, then validate the project. The project is at
         specification/contosowidgetmanager/Contoso.WidgetManager.
-        My setup has already been verified, do not run azsdk_verify_setup.
       - |
         Now check whether this project is in the public azure-rest-api-specs
         repo.
@@ -51,7 +50,6 @@ stimuli:
           required:
             - azsdk_run_typespec_validation
           disallowed:
-            - azsdk_verify_setup
             - azsdk_typespec_check_project_in_public_repo
       # Turn 1 — the follow-up check, using the project from turn 0.
       - type: tool-calls

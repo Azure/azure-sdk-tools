@@ -58,7 +58,7 @@
 <span class="context"> );</span>
 <span class="context"> </span>
 <span class="context"> @@clientLocation(PrivateEndpointConnectionResources.get,</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-74cbdf542ff995de"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-d9f146e576a25dc9">shared-type-impact-d9f146e576a25dc9</a></p>
@@ -75,7 +75,7 @@
 <span class="context">   update is ArmCustomPatchSync&lt;</span>
 <span class="context">     RecoveryPointResource,</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp:40</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp:40</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-6d07bf007daf93c9"><strong>Related findings:</strong> None</p>
@@ -96,7 +96,7 @@
 <span class="context"> </span>
 <span class="context"> interface Operations</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp:37</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp:37</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (88)</h4>
 <p><strong>Operation impact:</strong> 88 REST operations are affected; 3 representative operation(s) are shown below and 85 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>BackupEngines_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupEngines/{backupEngineName}</code> <span>2026-02-01</span></summary>
@@ -113,8 +113,255 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/42853">#42853</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Remove the recovery-point update operation in 2026-02-01</h4>
+<div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp</div><pre><span class="context">    */</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-patch&quot; &quot;Recovery point updates use UpdateRecoveryPointRequest model which does not include tags property&quot;</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   @patch(#{ implicitOptionality: true })</span>
+<span class="context">   update is ArmCustomPatchSync&lt;</span>
+<span class="context">     RecoveryPointResource,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp:40</code></p></section><section><h4>Extend compatibility scopes to Go</h4>
+<div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div><pre><span class="context"> </span>
+<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsPrepareDataMove,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientLocation(BackupResourceStorageConfigsNonCRR.bmsTriggerDataMove,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientLocation(BackupResourceConfigOperationStatuses.getOperationStatus,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> </span>
+<span class="context"> @@clientLocation(PrivateEndpointConnectionResources.get,</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div><pre><span class="context"> </span>
+<span class="context"> @@clientLocation(RecoveryPoints.moveRecoveryPoint,</span>
+<span class="context">   Microsoft.RecoveryServices,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!go&quot;</span>
+<span class="context"> );</span>
+<span class="context"> </span>
+<span class="context"> @@clientLocation(ProtectionContainersOperationGroup.refresh,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</code></p></section><section><h4>Publish and evolve the 2026-02-01 Recovery Services APIs</h4>
+<div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Threat status of the container</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union SourceSideScanStatus {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Threat summary for the container</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union SourceSideScanSummary {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Source side threat information</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model SourceSideScanInfo {</span>
+<span class="context">   /**</span>
+<span class="context">    * Threat status of the container</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Threat status of the recovery point</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union ThreatStatus {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Threat Status Types</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union ThreatState {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Threat Severity Types</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union ThreatSeverity {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Recovery Point Threat information</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model ThreatInfo {</span>
+<span class="context">   /**</span>
+<span class="context">    * Threat Subject</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Type of the protection policy</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union VMWorkloadPolicyType {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Protection type in case protected as part of a parent.</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union ProtectionLevel {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * The state of instance protection.</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> union InstanceProtectionReadiness {</span>
+<span class="context">   string,</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** Snapshot restore point type */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   Snapshot: &quot;Snapshot&quot;,</span>
+<span class="context"> </span>
+<span class="context">   /** Full, differential, and snapshot restore point types */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   FullDifferentialAndSnapshot: &quot;FullDifferentialAndSnapshot&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context"> </span>
+<span class="context">   /** HANA scale-out container type */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   HanaScaleoutContainer: &quot;HanaScaleoutContainer&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    * Source side threat information</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   sourceSideScanInfo?: SourceSideScanInfo;</span>
+<span class="context"> }</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    * Threat status of the recovery point</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   threatStatus?: ThreatStatus;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * Recovery point threat information.</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   @identifiers(#[])</span>
+<span class="context">   threatInfo?: ThreatInfo[];</span>
+<span class="context"> }</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Patch Request content to update recovery point for given RecoveryPointId</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model UpdateRecoveryPointRequest {</span>
+<span class="context">   /**</span>
+<span class="context">    * Resource properties.</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Recovery Point Contract for Update Recovery Point API.</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model PatchRecoveryPointInput {</span>
+<span class="context">   /**</span>
+<span class="context">    * Properties of Recovery Point</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  * Recovery Point Properties Contract for Update Recovery Point API.</span>
+<span class="context">  */</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model PatchRecoveryPointPropertiesInput {</span>
+<span class="context">   /**</span>
+<span class="context">    * Expiry time of Recovery Point in UTC.</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    * Type of the protection policy</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   vmWorkloadPolicyType?: VMWorkloadPolicyType;</span>
+<span class="context"> </span>
+<span class="context">   /**</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    * Name of the parent protected item (e.g., SQL Instance name) when this database is protected as part of a parent.</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   parentProtectedItem?: string;</span>
+<span class="context"> </span>
+<span class="context">   /**</span>
+<span class="context">    * Protection type in case protected as part of a parent.</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   protectionLevel?: ProtectionLevel;</span>
+<span class="context"> }</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  */</span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/casing-style&quot; &quot;Existing API uses SQL acronym in naming&quot;</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model AzureVmWorkloadSQLInstanceProtectedItem extends ProtectedItem {</span>
+<span class="context">   /**</span>
+<span class="context">    * This property will be used as the discriminator for deciding the specific types in the polymorphic chain of types.</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    * List of databases included in recovery point.</span>
+<span class="context">    */</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   @identifiers(#[])</span>
+<span class="context">   includedDatabases?: DatabaseInRP[];</span>
+<span class="context"> }</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    */</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/casing-style&quot; &quot;Preserving existing API naming convention from prior swagger versions&quot;</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   baseSnapshotRPId?: string;</span>
+<span class="context"> </span>
+<span class="context">   /**</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    */</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/casing-style&quot; &quot;Preserving existing API naming convention from prior swagger versions&quot;</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   baseRPDatasourceId?: string;</span>
+<span class="context"> </span>
+<span class="context">   /**</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">    */</span>
+<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/casing-style&quot; &quot;Preserving existing API naming convention from prior swagger versions&quot;</span>
+<span class="context">   @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+  @removed(Versions.v2026_02_01)</span>
+<span class="context">   getLatestRPOnly?: boolean;</span>
+<span class="context"> }</span>
+<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  */</span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/casing-style&quot; &quot;Preserving original API naming convention&quot;</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model DatabaseInRP {</span>
+<span class="context">   /**</span>
+<span class="context">    * Datasource Id for the database.</span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</div><pre><span class="context">  */</span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/casing-style&quot; &quot;Existing API uses SAP acronym in naming&quot;</span>
+<span class="context"> @added(Versions.v2026_01_31_preview)</span>
+<span class="add">+@removed(Versions.v2026_02_01)</span>
+<span class="context"> model AzureVmWorkloadSAPHanaScaleoutProtectableItem</span>
+<span class="context">   extends WorkloadProtectableItem {</span>
+<span class="context">   /**</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp</div><pre><span class="context">    * The 2026-01-01 API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2026_01_01: &quot;2026-01-01&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2026-02-01 API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  v2026_02_01: &quot;2026-02-01&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> interface Operations</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp</div><pre><span class="context">    * The 2026-01-31-preview API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2026_01_31_preview: &quot;2026-01-31-preview&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2026-02-01 API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  v2026_02_01: &quot;2026-02-01&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> interface Operations</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp:267</code>, <code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp:37</code>, <code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp:43</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/">Add stable after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/">Specific extension resource sample</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/">Agent base type</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-6d07bf007daf93c9"><summary><strong><a href="#intent-semantic-6d07bf007daf93c9">Remove the recovery-point update operation in 2026-02-01</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/">Add stable after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-74cbdf542ff995de"><summary><strong><a href="#intent-semantic-74cbdf542ff995de">Extend compatibility scopes to Go</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/">Specific extension resource sample</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/">Agent base type</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-831f19ce86ef8b65"><summary><strong><a href="#intent-semantic-831f19ce86ef8b65">Publish and evolve the 2026-02-01 Recovery Services APIs</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/">Add stable after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

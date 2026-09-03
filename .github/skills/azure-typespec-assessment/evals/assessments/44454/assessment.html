@@ -57,7 +57,7 @@
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-3d8a84ab0984f292"><strong>Related findings:</strong> None</p>
@@ -80,7 +80,7 @@
 <span class="context"> @@clientName(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-a3ce2a2ef2e5fba3"><strong>Related findings:</strong> None</p>
@@ -88,8 +88,57 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/elastic/Elastic.Management</code></td><td>existing-api-version</td><td><code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6@2025-06-01</code><br><small>base · affected-existing-version</small></td><td><code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2@2025-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44454">#44454</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Preserve Python operation-group casing for traffic-filter methods</h4>
+<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
+<span class="context">   &quot;listAssociatedTrafficFilters&quot;,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!python&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientLocation(</span>
+<span class="add">+  ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
+<span class="add">+  &quot;ListAssociatedTrafficFilters&quot;,</span>
+<span class="add">+  &quot;python&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, &quot;list&quot;);</span>
+<span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
+<span class="context">   &quot;createAndAssociateIPFilter&quot;,</span>
+<span class="remove">-  &quot;!csharp,!java&quot;</span>
+<span class="add">+  &quot;!csharp,!java,!python&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientLocation(</span>
+<span class="add">+  ElasticMonitorResources.createAndAssociateIPFilterCreate,</span>
+<span class="add">+  &quot;CreateAndAssociateIPFilter&quot;,</span>
+<span class="add">+  &quot;python&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientName(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code></p></section><section><h4>Preserve Python operation-group casing for PL-filter creation</h4>
+<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
+<span class="context">   &quot;createAndAssociatePLFilter&quot;,</span>
+<span class="remove">-  &quot;!csharp&quot;</span>
+<span class="add">+  &quot;!csharp,!python&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientLocation(</span>
+<span class="add">+  ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
+<span class="add">+  &quot;CreateAndAssociatePLFilter&quot;,</span>
+<span class="add">+  &quot;python&quot;</span>
+<span class="context"> );</span>
+<span class="context"> @@clientName(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/">Content negotiation</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-3d8a84ab0984f292"><summary><strong><a href="#intent-semantic-3d8a84ab0984f292">Preserve Python operation-group casing for traffic-filter methods</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/">Content negotiation</a></li></ul>
+</div></details><details class="compliance-intent" id="compliance-intent-semantic-a3ce2a2ef2e5fba3"><summary><strong><a href="#intent-semantic-a3ce2a2ef2e5fba3">Preserve Python operation-group casing for PL-filter creation</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/">Content negotiation</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/elastic/Elastic.Management/back-compatible.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

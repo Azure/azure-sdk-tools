@@ -422,27 +422,35 @@ ${complianceCode(expectedCode)}
 }
 
 function fetchedComplianceDocument(document) {
-  const url = document.canonicalUrl ?? document.url;
-  return `<li><a href="${escapeHtml(url)}">${escapeHtml(document.title ?? url)}</a></li>`;
+  return `<li><a href="${escapeHtml(document.canonicalUrl)}">${escapeHtml(document.title)}</a></li>`;
 }
 
-function complianceEvidenceAppendix(dimension) {
-  const documents = [
-    ...(dimension.intentAssessments ?? []).flatMap(
-      (item) => item.documents ?? [],
-    ),
-    ...(dimension.legacyDocuments ?? []),
-  ];
-  const seenUrls = new Set();
-  const uniqueDocuments = documents.filter((document) => {
-    const url = document.canonicalUrl ?? document.url;
-    if (!url || seenUrls.has(url)) return false;
-    seenUrls.add(url);
-    return true;
-  });
-  return uniqueDocuments.length
-    ? `<ul class="guidance-document-list">${uniqueDocuments.map(fetchedComplianceDocument).join("")}</ul>`
-    : '<div class="panel">No guidance fetched.</div>';
+function complianceEvidenceAppendix(dimension, semanticItems) {
+  const semanticTitles = new Map(
+    semanticItems.map((item) => [item.id, item.title]),
+  );
+  const active = (dimension.intentAssessments ?? [])
+    .map((item) => {
+      const title =
+        semanticTitles.get(item.semanticIntentId) ?? item.semanticIntentId;
+      return `<details class="compliance-intent" id="compliance-intent-${anchor(item.semanticIntentId)}"><summary><strong><a href="#intent-${anchor(item.semanticIntentId)}">${escapeHtml(title)}</a></strong></summary>
+<div class="compliance-intent-body">
+<ul>${(item.documents ?? []).map(fetchedComplianceDocument).join("")}</ul>
+</div></details>`;
+    })
+    .join("");
+  const legacyDocuments = (dimension.legacyDocuments ?? [])
+    .map(
+      (document) =>
+        `<li><a href="${escapeHtml(document.url)}">${escapeHtml(document.title)}</a> · ${escapeHtml(document.section ?? "")}<blockquote>${escapeHtml(document.guidanceExcerpt ?? "")}</blockquote></li>`,
+    )
+    .join("");
+  const legacy = legacyDocuments
+    ? `<details class="panel"><summary><strong>Official documents</strong></summary><ul>${legacyDocuments}</ul></details>`
+    : "";
+  return (
+    `${active}${legacy}` || '<div class="panel">No guidance fetched.</div>'
+  );
 }
 
 function intentTitleLinks(ids, semanticItems) {
@@ -1144,7 +1152,7 @@ function representativeExample(item) {
   }
   return `<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 ${renderSourceHunks([source])}
-<p class="sources"><strong>Source:</strong> ${sourceLinks([source])}.</p></details>`;
+<p class="sources"><strong>Source:</strong> ${sourceLinks([source])}. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>`;
 }
 
 function operationCard(operation, restFindings, semanticIntentId) {
@@ -1251,6 +1259,19 @@ ${representativeExample(item)}
 ${operationContent}
 <p id="related-findings-${anchor(item.id)}"><strong>Related findings:</strong> ${relatedFindingLinks(findingReferences)}</p>
 </div></details>`;
+}
+
+function completeTypeSpecEvidence(items = []) {
+  const content = items
+    .map(
+      (item) =>
+        `<section><h4>${escapeHtml(item.title)}</h4>
+${renderSourceHunks(item.sources)}
+<p class="sources"><strong>Sources:</strong> ${sourceLinks(item.sources)}</p></section>`,
+    )
+    .join("");
+  return `<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+${content || '<p class="empty">No TypeSpec source evidence.</p>'}</details>`;
 }
 
 function downstreamOperationGroups(dimension, semanticItems) {
@@ -1607,8 +1628,9 @@ function renderCurrent(assessment) {
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>
+${completeTypeSpecEvidence(dimensions.semantic.items)}
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-${complianceEvidenceAppendix(dimensions.compliance)}
+${complianceEvidenceAppendix(dimensions.compliance, dimensions.semantic.items)}
 <h3>Changed files</h3><ul>${assessment.changedFiles.map((file) => `<li><code>${escapeHtml(file.path)}</code> (${escapeHtml(file.origins.join(", "))})</li>`).join("")}</ul>
 <h3>Timing and model input</h3><pre>${escapeHtml(JSON.stringify({ timings: assessment.timings, inputAccounting: assessment.inputAccounting }, null, 2))}</pre>
 <p><strong>Provenance:</strong> ${Object.values(assessment.provenance).map(escapeHtml).join(", ")}</p></div></details></section>

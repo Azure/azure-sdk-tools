@@ -2098,7 +2098,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return new ProductInfoResponse
                     {
-                        Message = $"No release plan found for TypeSpec project path: {specRelativePath}",
+                        Message = $"No release plan found for TypeSpec project path: {specRelativePath}. Visit https://aka.ms/servicetree to look up the Service Tree ID and Product Service Tree ID.",
                         TypeSpecProject = specRelativePath
                     };
                 }

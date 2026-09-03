@@ -2278,8 +2278,16 @@ row presentation as SDK method and SDK type cards:
   query, path, request-header, or request-body origin when that mapping is
   unambiguous, and otherwise use `Method parameter`;
 - SDK type property rows derive the concrete property name, type, optionality,
-  and request/response body role from baseline/target TCGC facts and related
-  operation schemas; ambiguous direction falls back to `Model property`;
+  and wire role from baseline/target TCGC facts and related operation evidence;
+  a property is labeled `Request body property` or `Response body property`
+  only when that concrete member appears in the corresponding normalized body
+  schema, not merely because its containing SDK type is reachable from that
+  schema;
+- a generated SDK property corresponding to a normalized response header is
+  labeled `Response header property`; request/response body reachability of the
+  containing type must not override member-level header evidence;
+- when member-level body or header evidence is absent or ambiguous, the
+  contract area falls back to `Model property`;
 - internal rules such as `model-property-removed` or
   `method-parameters-changed` never appear as contract-area members, and full
   expected/actual finding sentences never replace concise member values;

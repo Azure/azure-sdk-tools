@@ -178,6 +178,10 @@ All REST, Semantic operation, SDK method, and SDK type contract tables use the
 same two-line contract-area cell: a human-readable area kind above the concrete
 member name or path. SDK rows derive concise before/after values from retained
 TCGC facts and use related operation evidence for wire origin only when
-unambiguous. Do not render internal rule identifiers such as
+unambiguous. SDK property location is member-level: label a body property only
+when the concrete property is present in the normalized body schema, label a
+property mapped to a response header as `Response header property`, and
+otherwise fall back to `Model property`. Containing-type reachability alone
+must not classify every property as a body property. Do not render internal rule identifiers such as
 `model-property-removed` as members or use full finding sentences as contract
 values.

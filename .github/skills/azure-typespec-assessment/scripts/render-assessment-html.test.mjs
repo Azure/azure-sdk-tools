@@ -1471,6 +1471,29 @@ test("labels response header contract rows consistently", () => {
   );
 });
 
+test("uses member-level evidence for SDK property wire locations", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/45162/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const html = renderAssessmentHtml(assessment);
+
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Response header property<\/span><code>transactionId<\/code><\/td><td class="contract-before"><code class="contract-value before">string<\/code>/,
+  );
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Response body property<\/span><code>state<\/code><\/td><td class="contract-before"><code class="contract-value before">not present<\/code>/,
+  );
+  assert.doesNotMatch(
+    html,
+    /<span class="contract-area-kind">Response body property<\/span><code>transactionId<\/code>/,
+  );
+});
+
 test("derives narrow structural rows without confirmed REST findings", () => {
   const rows = operationContractRows({
     operationId: "Widgets_Get",

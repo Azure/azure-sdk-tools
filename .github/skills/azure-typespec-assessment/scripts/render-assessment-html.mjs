@@ -1958,8 +1958,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
   const propertyName = (finding) =>
     finding.actual?.match(/\bproperty\s+([A-Za-z_$][\w$]*)\b/)?.[1] ??
     finding.expected?.match(/\bproperty\s+([A-Za-z_$][\w$]*)\b/)?.[1];
-  const schemaReferencesType = (schema, type) => {
-    if (!schema || typeof schema !== "object") return false;
+  const schemaMatchesType = (schema, type) => {
     const shortName = shortTypeName(type);
     const identities = [
       schemaIdentity(schema),
@@ -1978,6 +1977,11 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
     ) {
       return true;
     }
+    return false;
+  };
+  const schemaReferencesType = (schema, type) => {
+    if (!schema || typeof schema !== "object") return false;
+    if (schemaMatchesType(schema, type)) return true;
     return (
       schemaReferencesType(schema.items, type) ||
       schemaReferencesType(schema.valueType, type) ||
@@ -1986,20 +1990,87 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       )
     );
   };
-  const typePropertyAreaKind = (type, operations) => {
-    let request = false;
-    let response = false;
+  const schemasForType = (schema, type) => {
+    if (!schema || typeof schema !== "object") return [];
+    return [
+      ...(schemaMatchesType(schema, type) ? [schema] : []),
+      ...schemasForType(schema.items, type),
+      ...schemasForType(schema.valueType, type),
+      ...(schema.properties ?? []).flatMap((property) =>
+        schemasForType(property.schema ?? property.type, type),
+      ),
+    ];
+  };
+  const normalizedWireName = (value) =>
+    String(value ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  const headerMatchesProperty = (headerName, propertyNames) => {
+    const header = normalizedWireName(headerName);
+    return propertyNames.some((propertyName) => {
+      const property = normalizedWireName(propertyName);
+      return (
+        property &&
+        (header === property ||
+          (property.length >= 6 && header.endsWith(property)))
+      );
+    });
+  };
+  const schemaTypeHasProperty = (schema, type, propertyNames) =>
+    schemasForType(schema, type).some((typeSchema) =>
+      (typeSchema.properties ?? []).some((property) =>
+        propertyNames.includes(property.name),
+      ),
+    );
+  const typePropertyAreaKind = (
+    type,
+    beforeProperty,
+    afterProperty,
+    operations,
+  ) => {
+    const propertyNames = [
+      beforeProperty?.name,
+      beforeProperty?.serializedName,
+      afterProperty?.name,
+      afterProperty?.serializedName,
+    ].filter(Boolean);
+    let requestBody = false;
+    let responseBody = false;
+    let responseHeader = false;
     for (const operation of operations) {
       for (const fact of [operation.before, operation.after]) {
-        request ||= schemaReferencesType(fact?.request?.schema, type);
-        response ||= (fact?.responses ?? []).some((item) =>
-          schemaReferencesType(item.schema, type),
+        requestBody ||= schemaTypeHasProperty(
+          fact?.request?.schema,
+          type,
+          propertyNames,
         );
+        for (const response of fact?.responses ?? []) {
+          const responseUsesType = schemaReferencesType(response.schema, type);
+          responseBody ||= schemaTypeHasProperty(
+            response.schema,
+            type,
+            propertyNames,
+          );
+          responseHeader ||=
+            responseUsesType &&
+            (response.headers ?? []).some((header) =>
+              headerMatchesProperty(header.name, propertyNames),
+            );
+        }
       }
     }
-    if (request && response) return "Body property · request/response";
-    if (request) return "Request body property";
-    if (response) return "Response body property";
+    if (responseHeader && !requestBody && !responseBody) {
+      return "Response header property";
+    }
+    if (requestBody && responseBody && !responseHeader) {
+      return "Body property · request/response";
+    }
+    if (requestBody && !responseBody && !responseHeader) {
+      return "Request body property";
+    }
+    if (responseBody && !requestBody && !responseHeader) {
+      return "Response body property";
+    }
     return "Model property";
   };
   const modelContractRows = (card, findings, operations) =>
@@ -2015,7 +2086,12 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       );
       return [
         {
-          areaKind: typePropertyAreaKind(card.type, operations),
+          areaKind: typePropertyAreaKind(
+            card.type,
+            beforeProperty,
+            afterProperty,
+            operations,
+          ),
           member: name,
           before: propertyDisplay(beforeProperty) ?? "not present",
           after: propertyDisplay(afterProperty) ?? "removed",

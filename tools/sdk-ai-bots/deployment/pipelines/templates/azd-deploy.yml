@@ -55,6 +55,9 @@ steps:
               if [ "${{ parameters.service }}" = "frontend" ] && [ "${AZD_SKIP_TEAMS_PROVISION:-0}" != "1" ]; then
                 azd env refresh "$AZURE_ENV_NAME" --layer frontend --no-prompt
               fi
+              if [ "${{ parameters.service }}" = "agent" ]; then
+                azd env refresh "$AZURE_ENV_NAME" --layer agent --no-prompt
+              fi
               if [ "${{ parameters.service }}" = "function-app" ]; then
                 for LAYER in frontend agent-server function-app logic-app; do
                   azd env refresh "$AZURE_ENV_NAME" --layer "$LAYER" --no-prompt

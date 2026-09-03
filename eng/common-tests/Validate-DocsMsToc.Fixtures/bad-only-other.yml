@@ -1,0 +1,11 @@
+- name: Reference
+  landingPageType: Root
+  expanded: false
+  items:
+  - name: Other
+    landingPageType: Service
+    items:
+    - name: Uncategorized Packages
+      landingPageType: Service
+      children:
+      - '**'

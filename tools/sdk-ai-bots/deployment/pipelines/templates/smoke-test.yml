@@ -25,7 +25,7 @@ steps:
     - task: AzureCLI@2
       displayName: 'Smoke test ${{ parameters.appName }}/${{ parameters.slot }}${{ parameters.healthPath }}'
       inputs:
-          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |

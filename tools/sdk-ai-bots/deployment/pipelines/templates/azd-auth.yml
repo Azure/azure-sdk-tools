@@ -3,8 +3,8 @@
 # Installs azd and its required extensions, then uses AzureCLI@2 service
 # connection metadata to establish azd's Azure Pipelines federated login.
 #
-# AZURE_SERVICE_CONNECTION is defined by service-connection.yml at compile time
-# so Azure DevOps can authorize the endpoint before the task starts.
+# AZURE_SERVICE_CONNECTION is statically defined by service-connection.yml and
+# expanded as a task-input macro before the task starts.
 
 steps:
     - bash: |
@@ -16,7 +16,7 @@ steps:
     - task: AzureCLI@2
       displayName: 'azd / az auth (federated)'
       inputs:
-          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
           addSpnToEnvironment: true
           scriptType: bash
           scriptLocation: inlineScript

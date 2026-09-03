@@ -78,7 +78,7 @@ extends:
                         - task: AzureCLI@2
                           displayName: 'Validate Search index doc count'
                           inputs:
-                              azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
+                              azureSubscription: $(AZURE_SERVICE_CONNECTION)
                               scriptType: bash
                               scriptLocation: inlineScript
                               inlineScript: |

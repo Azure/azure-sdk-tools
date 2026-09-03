@@ -39,7 +39,7 @@ steps:
       displayName: 'azd provision (${{ parameters.operation }})'
       env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
       inputs:
-          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
           scriptType: bash
           scriptLocation: inlineScript
           workingDirectory: '${{ parameters.workingDirectory }}'

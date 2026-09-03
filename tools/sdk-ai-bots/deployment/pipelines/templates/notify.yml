@@ -22,7 +22,7 @@ steps:
       displayName: 'Notify Teams (${{ parameters.status }})'
       condition: ${{ parameters.condition }}
       inputs:
-          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |

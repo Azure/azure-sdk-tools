@@ -15,7 +15,7 @@ steps:
     - task: AzureCLI@2
       displayName: 'Swap ${{ parameters.appName }}: ${{ parameters.sourceSlot }} → ${{ parameters.targetSlot }}'
       inputs:
-          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |

@@ -59,7 +59,7 @@ def get_agent_client() -> FoundryChatClient:
     if _agent_client is None:
         _agent_client = FoundryChatClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            model="gpt-5.6-sol",
+            model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
             credential=get_credential(),
             compaction_strategy=TruncationStrategy(
                 max_n=COMPACTION_TRIGGER_TOKENS,

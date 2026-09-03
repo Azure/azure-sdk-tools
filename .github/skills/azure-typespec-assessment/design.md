@@ -1216,6 +1216,19 @@ multiple source declarations and guidance sections, but it must describe one
 coherent compliance gap for the intent. Affected operations never receive
 separate Compliance decisions or findings.
 
+HTML may group several intent-level findings into one visual guideline issue
+when they cite the same set of canonical guidance document sections and state
+the same expected behavior. This is a presentation-only projection:
+
+- `assessment.json` retains every intent-level finding and its stable ID;
+- Azure Guidelines counts remain the number of intent-level findings, not the
+  number of visual groups;
+- shared expected behavior and guidance are rendered once;
+- each affected Semantic intent retains its own actual behavior, changed-code
+  evidence, finding anchor, and human-readable Semantic intent link; and
+- an identical Agent-authored title alone is insufficient to group findings
+  when the guidance identity or expected behavior differs.
+
 ### Dimension status and safety
 
 - `failed`: one or more intent decisions are `applicable-fail`.
@@ -2116,6 +2129,11 @@ The report must show:
    containing only findings, without
    a separate status or coverage summary card, plus an explicit not-assessed
    Document Quality and Agent Friendliness dimension;
+   findings with identical canonical guidance-section sets and expected
+   behavior may share one visual guideline-issue card. The section and summary
+   counts still report the underlying intent-level finding count. The grouped
+   card renders shared guidance once and lists each affected Semantic intent
+   with its own actual behavior and changed-code evidence;
    per-intent assessments, ranked search documents, and retrieval details
    appear only in the appendix;
 7. source-first Semantic intents;
@@ -2215,6 +2233,10 @@ Presentation rules:
 Compliance rendering is source-first:
 
 - show status, assessed-intent coverage, and finding count;
+- group repeated visual findings only by identical canonical guidance-section
+  identity and normalized expected behavior, never by title alone;
+- render one shared expected/guidance block and one actual-evidence entry per
+  affected Semantic intent, preserving every finding anchor and intent link;
 - under each Semantic intent, show the four ranked documents, score
   components, fetched section, and canonical source link;
 - show one fetched-guidance synthesis beside the intent's representative

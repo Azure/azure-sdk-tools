@@ -136,6 +136,14 @@ dimensions as REST breaking changes, downstream breaking changes, Azure
 Guidelines, Document Quality and Agent Friendliness, and Semantic intents. The
 Azure Guidelines card uses its finding count as the primary numeric value;
 status remains represented by its icon and color.
+The numbered Azure Guidelines section and summary card count intent-level
+findings. HTML may present multiple findings in one guideline-issue card only
+when their canonical guidance document-section sets and normalized expected
+behavior are identical. Grouping is presentation-only: JSON findings and
+stable finding anchors remain unchanged, shared expected behavior and guidance
+are rendered once, and each affected Semantic intent retains its own actual
+behavior, changed-code evidence, and human-readable intent link. Matching
+titles alone must not cause grouping.
 Immediately below the header, render a compact `Preview Notice` details element
 that is collapsed by default. Its one-line summary should occupy approximately
 46 pixels vertically. The expanded body must preserve the complete approved

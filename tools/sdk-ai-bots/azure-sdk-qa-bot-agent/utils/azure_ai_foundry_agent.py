@@ -231,7 +231,7 @@ class HostedAgentClient:
                     agent_conversation_id,
                     ex,
                 )
-            except (RuntimeError, JSONDecodeError) as ex:
+            except RuntimeError as ex:
                 last_error = ex
                 await self.close_stream(stream)
                 logger.warning(

@@ -22,6 +22,7 @@ parameters:
       - apispec
       - authoring
       - mcpserver
+      - sdkagent
 
 #
 # Starts the agent server.py locally, then evaluates via completion mode:
@@ -64,6 +65,9 @@ extends:
                 ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'mcpserver')) }}:
                   mcpserver:
                     scenario: mcpserver
+                ${{ if or(eq(parameters.scenario, 'all'), eq(parameters.scenario, 'sdkagent')) }}:
+                  sdkagent:
+                    scenario: sdkagent
             steps:
               - task: UsePythonVersion@0
                 displayName: "Use Python 3.12"

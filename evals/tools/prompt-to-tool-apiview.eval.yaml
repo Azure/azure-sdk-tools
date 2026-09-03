@@ -7,7 +7,7 @@ type: capability
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
@@ -18,8 +18,10 @@ tags:
   area: apiview
   priority: p0
 
-stimuli:
+scoring:
+  threshold: 0.8
 
+stimuli:
   # ==== azsdk_apiview_get_comments triggers ====
   - name: invoke-azsdk-apiview-get-comments-1
     prompt: "Get all the APIView comments for the Azure.Template.Contoso .NET package. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
@@ -111,4 +113,3 @@ stimuli:
         config:
           required:
             - name: "azsdk_apiview_request_copilot_review"
-

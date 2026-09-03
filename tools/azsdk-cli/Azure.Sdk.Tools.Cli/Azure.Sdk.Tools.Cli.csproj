@@ -13,7 +13,7 @@
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.6.41</VersionPrefix>
+    <VersionPrefix>0.6.42</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->
@@ -78,10 +78,6 @@
   <!-- START Exclude asp net configs from release archives -->
   <ItemGroup>
     <Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\Responses\ProductOnboarding\" />
-    <Folder Include="Tools\ProductOnboarding\" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -11,6 +11,7 @@
 !models/
 !prompts/
 !services/
+!static/
 !tools/
 !utils/
 !skills/

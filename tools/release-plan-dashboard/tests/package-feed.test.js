@@ -953,6 +953,55 @@ describe("PM view: ready to complete private preview", () => {
   });
 });
 
+describe("Review required SDK pull requests", () => {
+  function shouldIncludeReviewRequiredPr(plan, language) {
+    const specStatus = (plan.apiReadiness || "").toLowerCase();
+    const specPrMerged = specStatus === "completed" || specStatus === "merged";
+    const sdkPrStatus = (
+      language.sdkPrGitHubStatus ||
+      language.prStatus ||
+      ""
+    ).toLowerCase();
+    return specPrMerged && sdkPrStatus === "open";
+  }
+
+  test("includes an open SDK PR after the spec PR is merged", () => {
+    expect(
+      shouldIncludeReviewRequiredPr(
+        { apiReadiness: "completed" },
+        { sdkPrGitHubStatus: "open" },
+      ),
+    ).toBe(true);
+  });
+
+  test("excludes a draft SDK PR", () => {
+    expect(
+      shouldIncludeReviewRequiredPr(
+        { apiReadiness: "completed" },
+        { sdkPrGitHubStatus: "draft" },
+      ),
+    ).toBe(false);
+  });
+
+  test("excludes an SDK PR while the spec PR is still open", () => {
+    expect(
+      shouldIncludeReviewRequiredPr(
+        { apiReadiness: "pending" },
+        { sdkPrGitHubStatus: "open" },
+      ),
+    ).toBe(false);
+  });
+
+  test("excludes an SDK PR when the spec PR status is unavailable", () => {
+    expect(
+      shouldIncludeReviewRequiredPr(
+        { apiReadiness: "unknown" },
+        { sdkPrGitHubStatus: "open" },
+      ),
+    ).toBe(false);
+  });
+});
+
 describe("PM view: missing namespace approval", () => {
   function classifyPlane(p) {
     if (p.mgmtScope === "Yes") return "mgmt";

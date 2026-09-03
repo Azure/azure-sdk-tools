@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  complianceFindingGroups,
   downstreamTypeCards,
   escapeHtml,
   relatedImpactOperations,
@@ -1307,6 +1308,103 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
   assert.doesNotMatch(html, /<span class="severity/);
   assert.doesNotMatch(html, /class="finding [^"]*\b(?:high|medium|low)\b/);
   assert.match(html, /\.finding\{border-left:1px solid var\(--line\)\}/);
+});
+
+test("groups repeated Azure guideline findings without changing intent-level counts", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/44742/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const findings = assessment.dimensions.compliance.findings;
+  const html = renderAssessmentHtml(assessment);
+  const complianceHtml = html.slice(
+    html.indexOf('<section id="azure-compliance">'),
+    html.indexOf('<section id="document-quality">'),
+  );
+
+  assert.equal(complianceFindingGroups(findings).length, 1);
+  assert.match(complianceHtml, /<h2>Azure Guidelines \(4\)<\/h2>/);
+  assert.equal(
+    (complianceHtml.match(/class="finding compliance-finding /g) ?? []).length,
+    1,
+  );
+  assert.match(
+    complianceHtml,
+    /class="finding-summary">4 affected intents<\/span>/,
+  );
+  assert.equal(
+    (complianceHtml.match(/class="compliance-affected-intent"/g) ?? []).length,
+    4,
+  );
+  assert.equal(
+    (
+      complianceHtml.match(
+        /<summary><strong>Expected<\/strong><\/summary>/g,
+      ) ?? []
+    ).length,
+    1,
+  );
+  assert.equal(
+    (
+      complianceHtml.match(
+        /Existing stable API members are deleted without versioned removal/g,
+      ) ?? []
+    ).length,
+    1,
+  );
+  for (const finding of findings) {
+    const intent = assessment.dimensions.semantic.items.find(
+      (item) => item.id === finding.semanticIntentId,
+    );
+    assert.ok(
+      complianceHtml.includes(`id="compliance-finding-${finding.id}"`),
+    );
+    assert.ok(
+      complianceHtml.includes(
+        `href="#intent-${intent.id}">${intent.title}</a>`,
+      ),
+    );
+    assert.ok(complianceHtml.includes(finding.actual));
+  }
+});
+
+test("does not group Azure guideline findings by title alone", () => {
+  const base = {
+    id: "compliance-1",
+    title: "Repeated title",
+    expected: "Use the documented pattern.",
+    applicableGuidance: [
+      {
+        canonicalDocumentUrl: "https://example.com/guidance",
+        guidanceSection: "Pattern",
+      },
+    ],
+  };
+  const groups = complianceFindingGroups([
+    base,
+    {
+      ...base,
+      id: "compliance-2",
+      applicableGuidance: [
+        {
+          canonicalDocumentUrl: "https://example.com/guidance",
+          guidanceSection: "Different pattern",
+        },
+      ],
+    },
+    {
+      ...base,
+      id: "compliance-3",
+      expected: "Use a different documented pattern.",
+    },
+  ]);
+
+  assert.deepEqual(
+    groups.map((group) => group.findings.map((finding) => finding.id)),
+    [["compliance-1"], ["compliance-2"], ["compliance-3"]],
+  );
 });
 
 test("renderer links assessed intents with no applicable guidance by title", () => {

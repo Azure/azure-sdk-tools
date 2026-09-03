@@ -7,6 +7,7 @@
 .finding{border-left:1px solid var(--line)}
 .rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}
 .notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
+.compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
 </style></head><body>
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>4 TypeSpec changes for FileStorage</h1>
 <p class="hero-meta">TypeSpec source diff: <code>e75a07cd7ea1b2207190a362305db02b639715ec</code> → <code>656ca8b0741973760f8a60ee0fd293ba9c31e708</code></p>
@@ -197,17 +198,21 @@
 <div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
 <div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (4)</h2><details class="finding compliance-finding" id="compliance-finding-compliance-e780fc908e1002f9">
-<summary><strong>Existing stable API members are deleted without versioned removal</strong></summary>
+<section id="azure-compliance"><h2>Azure Guidelines (4)</h2><details class="finding compliance-finding compliance-finding-group">
+<summary><strong>Existing stable API members are deleted without versioned removal</strong><span class="finding-summary">4 affected intents</span></summary>
 <div class="finding-body">
 <p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
 <details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
 <p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs — Removing models, properties, or operations</a></p>
 
 </div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:595-612</div><pre><span class="remove"><span class="line-number">595</span>-</span>
+<h3>Affected intents (4)</h3>
+<div class="compliance-affected-intents"><article class="compliance-affected-intent" id="compliance-finding-compliance-e780fc908e1002f9">
+<h4><a href="#intent-semantic-106722e15dc2d25d">Remove NFS file and handle response fields</a></h4>
+<p><strong>Actual:</strong> The change directly deletes @added(Versions.v2026_12_06) NFS file fields and their supporting item models from the existing stable version.</p>
+
+<h5>TypeSpec code</h5><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:595-612</div><pre><span class="remove"><span class="line-number">595</span>-</span>
 <span class="remove"><span class="line-number">596</span>-  /** NFS only. The link count of the file. */</span>
 <span class="remove"><span class="line-number">597</span>-  @added(Versions.v2026_12_06)</span>
 <span class="remove"><span class="line-number">598</span>-  @Xml.name(&quot;LinkCount&quot;)</span>
@@ -219,19 +224,11 @@
 <span class="remove"><span class="line-number">604</span>-  fileType?: NfsFileType;</span>
 <span class="remove"><span class="line-number">605</span>-}</span>
 <span class="remove"><span class="line-number">606</span>-</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></p>
-</div></details>
-</div></details><details class="finding compliance-finding" id="compliance-finding-compliance-174c61a785e3c0bf">
-<summary><strong>Existing stable API members are deleted without versioned removal</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+</article><article class="compliance-affected-intent" id="compliance-finding-compliance-174c61a785e3c0bf">
+<h4><a href="#intent-semantic-259f67bc56ae9c3d">Remove NFS directory listing shapes and include values</a></h4>
+<p><strong>Actual:</strong> The change directly deletes @added(Versions.v2026_12_06) directory fields, special-file collections, and include enum members from the existing stable version.</p>
 
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:378-392</div><pre><span class="remove"><span class="line-number">378</span>-</span>
+<h5>TypeSpec code</h5><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:378-392</div><pre><span class="remove"><span class="line-number">378</span>-</span>
 <span class="remove"><span class="line-number">379</span>-  /** NFS only. The link count of the directory. */</span>
 <span class="remove"><span class="line-number">380</span>-  @added(Versions.v2026_12_06)</span>
 <span class="remove"><span class="line-number">381</span>-  @Xml.name(&quot;LinkCount&quot;)</span>
@@ -247,19 +244,11 @@
 <span class="remove"><span class="line-number">387</span>-  /** NfsAttributes */</span>
 <span class="remove"><span class="line-number">388</span>-  @added(Versions.v2026_12_06)</span>
 <span class="remove"><span class="line-number">389</span>-  NfsAttributes,</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-259f67bc56ae9c3d"><code>semantic-259f67bc56ae9c3d</code></a></p>
-</div></details>
-</div></details><details class="finding compliance-finding" id="compliance-finding-compliance-e82f62dade6a8f8e">
-<summary><strong>Existing stable API members are deleted without versioned removal</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+</article><article class="compliance-affected-intent" id="compliance-finding-compliance-e82f62dade6a8f8e">
+<h4><a href="#intent-semantic-bdd43786bf6adae0">Remove NFS ownership and mode properties</a></h4>
+<p><strong>Actual:</strong> The change directly deletes @added(Versions.v2026_12_06) owner, group, and fileMode properties from FileProperty in the existing stable version.</p>
 
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:560-593</div><pre><span class="remove"><span class="line-number">560</span>-</span>
+<h5>TypeSpec code</h5><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:560-593</div><pre><span class="remove"><span class="line-number">560</span>-</span>
 <span class="remove"><span class="line-number">561</span>-  /** NFS only. The owner user identifier (UID) of the file. */</span>
 <span class="remove"><span class="line-number">562</span>-  @added(Versions.v2026_12_06)</span>
 <span class="remove"><span class="line-number">563</span>-  @Xml.name(&quot;Uid&quot;)</span>
@@ -271,19 +260,11 @@
 <span class="remove"><span class="line-number">569</span>-  group?: string;</span>
 <span class="remove"><span class="line-number">570</span>-</span>
 <span class="remove"><span class="line-number">571</span>-  /** NFS only. The file mode of the file. */</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-bdd43786bf6adae0"><code>semantic-bdd43786bf6adae0</code></a></p>
-</div></details>
-</div></details><details class="finding compliance-finding" id="compliance-finding-compliance-feb2640a19ddd738">
-<summary><strong>Existing stable API members are deleted without versioned removal</strong></summary>
-<div class="finding-body">
-<p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>
-<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed.</p>
-<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></p>
+</article><article class="compliance-affected-intent" id="compliance-finding-compliance-feb2640a19ddd738">
+<h4><a href="#intent-semantic-eed96d1f60797ccb">Remove NFS file-type variants</a></h4>
+<p><strong>Actual:</strong> The change directly deletes @added(Versions.v2026_12_06) BlockDevice, CharacterDevice, Fifo, and Socket variants from NfsFileType in the existing stable version.</p>
 
-</div></details>
-<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:275-287</div><pre><span class="remove"><span class="line-number">275</span>-</span>
+<h5>TypeSpec code</h5><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp:275-287</div><pre><span class="remove"><span class="line-number">275</span>-</span>
 <span class="remove"><span class="line-number">276</span>-  /** BlockDevice */</span>
 <span class="remove"><span class="line-number">277</span>-  @added(Versions.v2026_12_06)</span>
 <span class="remove"><span class="line-number">278</span>-  BlockDevice: &quot;BlockDevice&quot;,</span>
@@ -295,8 +276,7 @@
 <span class="remove"><span class="line-number">284</span>-  /** Socket */</span>
 <span class="remove"><span class="line-number">285</span>-  @added(Versions.v2026_12_06)</span>
 <span class="remove"><span class="line-number">286</span>-  Socket: &quot;Socket&quot;,</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-eed96d1f60797ccb"><code>semantic-eed96d1f60797ccb</code></a></p>
-</div></details>
+</article></div>
 </div></details>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>

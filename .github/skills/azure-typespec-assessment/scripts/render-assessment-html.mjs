@@ -262,6 +262,40 @@ function mostRelevantCodeSnippets(snippets, actual, limit = 2) {
     .map((item) => item.snippet);
 }
 
+function normalizedComplianceGroupText(value) {
+  return String(value ?? "")
+    .trim()
+    .replaceAll(/\s+/g, " ")
+    .toLowerCase();
+}
+
+export function complianceFindingGroups(findings = []) {
+  const groups = [];
+  const groupsByKey = new Map();
+  for (const finding of findings) {
+    const guidanceIdentity = (finding.applicableGuidance ?? [])
+      .map(
+        (item) =>
+          `${String(item.canonicalDocumentUrl ?? "").trim()}\u0000${normalizedComplianceGroupText(item.guidanceSection)}`,
+      )
+      .sort()
+      .join("\u0001");
+    const expected = normalizedComplianceGroupText(finding.expected);
+    const key =
+      guidanceIdentity && expected
+        ? `${guidanceIdentity}\u0002${expected}`
+        : `finding:${finding.id}`;
+    let group = groupsByKey.get(key);
+    if (!group) {
+      group = { key, findings: [] };
+      groupsByKey.set(key, group);
+      groups.push(group);
+    }
+    group.findings.push(finding);
+  }
+  return groups;
+}
+
 function complianceFindingCard(finding, context = {}) {
   const document = context.document ?? {};
   const guidance = context.guidance ?? {};
@@ -317,6 +351,72 @@ ${relatedSemanticIntents.length ? `<p><strong>Related semantic intents:</strong>
 </div></details>`;
 }
 
+function complianceFindingGroupCard(entries, semanticItems) {
+  const first = entries[0];
+  const { finding, document = {}, guidance = {} } = first;
+  const expectedCode =
+    guidance.examples?.map((example) => ({
+      caption: "Documented TypeSpec example",
+      url: finding.canonicalDocumentUrl ?? document.canonicalUrl,
+      lines: String(example).split(/\r?\n/),
+    })) ?? [];
+  const guidanceSection = finding.section ?? guidance.section ?? "";
+  const guidanceUrl =
+    finding.canonicalDocumentUrl ??
+    finding.documentationUrl ??
+    document.canonicalUrl;
+  const guidanceTitle = document.title ?? "Official guidance";
+  const gaps = [
+    ...new Set(
+      entries
+        .map(({ finding: item }) => item.gap ?? item.summary)
+        .filter(Boolean),
+    ),
+  ];
+  const sharedGap = gaps.length === 1 ? gaps[0] : undefined;
+  const affectedIntents = entries
+    .map(({ finding: item }) => {
+      const findingSources = item.sourceLinks ?? item.sourceReferences ?? [];
+      const actualCode = mostRelevantCodeSnippets(
+        (item.codeSnippets ?? []).map((snippet) => {
+          const source = findingSources.find(
+            (candidate) => candidate.path === snippet.path,
+          );
+          return {
+            ...snippet,
+            startLine: snippet.startLine ?? source?.startLine,
+            endLine: snippet.endLine ?? source?.endLine,
+            link: snippet.link ?? source?.link,
+          };
+        }),
+        item.actual ?? "",
+      );
+      const perIntentGap =
+        !sharedGap && (item.gap ?? item.summary)
+          ? `<p><strong>Gap:</strong> ${escapeHtml(item.gap ?? item.summary)}</p>`
+          : "";
+      return `<article class="compliance-affected-intent" id="compliance-finding-${anchor(item.id)}">
+<h4>${intentTitleLinks([item.semanticIntentId], semanticItems)}</h4>
+<p><strong>Actual:</strong> ${escapeHtml(item.actual ?? "")}</p>
+${perIntentGap}
+${actualCode.length ? `<h5>TypeSpec code</h5>${complianceCode(actualCode)}` : ""}
+</article>`;
+    })
+    .join("");
+  return `<details class="finding compliance-finding compliance-finding-group">
+<summary><strong>${escapeHtml(finding.title)}</strong><span class="finding-summary">${entries.length} affected intents</span></summary>
+<div class="finding-body">
+${sharedGap ? `<p><strong>Gap:</strong> ${escapeHtml(sharedGap)}</p>` : ""}
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>${escapeHtml(finding.expected ?? "")}</p>
+${guidanceUrl ? `<p><strong>Guidance:</strong> <a href="${escapeHtml(guidanceUrl)}">${escapeHtml(guidanceTitle)}${guidanceSection ? ` — ${escapeHtml(guidanceSection)}` : ""}</a></p>` : ""}
+${complianceCode(expectedCode)}
+</div></details>
+<h3>Affected intents (${entries.length})</h3>
+<div class="compliance-affected-intents">${affectedIntents}</div>
+</div></details>`;
+}
+
 function fetchedComplianceDocument(document) {
   return `<li><a href="${escapeHtml(document.canonicalUrl)}">${escapeHtml(document.title)}</a></li>`;
 }
@@ -361,19 +461,29 @@ function intentTitleLinks(ids, semanticItems) {
 
 function renderCompliance(dimension, semanticItems) {
   const coverage = dimension.coverage ?? {};
-  const activeFindings = (dimension.findings ?? [])
-    .map((finding) => {
-      const intent = (dimension.intentAssessments ?? []).find(
-        (item) => item.semanticIntentId === finding.semanticIntentId,
+  const activeEntries = (dimension.findings ?? []).map((finding) => {
+    const intent = (dimension.intentAssessments ?? []).find(
+      (item) => item.semanticIntentId === finding.semanticIntentId,
+    );
+    const applicable = finding.applicableGuidance?.[0];
+    const document = intent?.documents?.find(
+      (item) => item.canonicalUrl === applicable?.canonicalDocumentUrl,
+    );
+    const guidance = document?.guidance?.find(
+      (item) => item.section === applicable?.guidanceSection,
+    );
+    return { finding, document, guidance };
+  });
+  const activeFindings = complianceFindingGroups(
+    activeEntries.map((entry) => entry.finding),
+  )
+    .map((group) => {
+      const entries = group.findings.map((finding) =>
+        activeEntries.find((entry) => entry.finding === finding),
       );
-      const applicable = finding.applicableGuidance?.[0];
-      const document = intent?.documents?.find(
-        (item) => item.canonicalUrl === applicable?.canonicalDocumentUrl,
-      );
-      const guidance = document?.guidance?.find(
-        (item) => item.section === applicable?.guidanceSection,
-      );
-      return complianceFindingCard(finding, { document, guidance });
+      return entries.length === 1
+        ? complianceFindingCard(entries[0].finding, entries[0])
+        : complianceFindingGroupCard(entries, semanticItems);
     })
     .join("");
   const legacyFindings = (dimension.legacyFindings ?? [])
@@ -1429,6 +1539,7 @@ function renderCurrent(assessment) {
 .finding{border-left:1px solid var(--line)}
 .rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}
 .notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
+.compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
 </style></head><body>
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>${escapeHtml(headerTitle(assessment))}</h1>
 <p class="hero-meta">TypeSpec source diff: ${comparisonHeader}</p>

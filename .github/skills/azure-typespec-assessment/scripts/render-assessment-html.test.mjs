@@ -1310,7 +1310,7 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
   assert.match(html, /\.finding\{border-left:1px solid var\(--line\)\}/);
 });
 
-test("groups repeated Azure guideline findings without changing intent-level counts", () => {
+test("counts repeated Azure guideline findings as one visible issue", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1325,7 +1325,12 @@ test("groups repeated Azure guideline findings without changing intent-level cou
   );
 
   assert.equal(complianceFindingGroups(findings).length, 1);
-  assert.match(complianceHtml, /<h2>Azure Guidelines \(4\)<\/h2>/);
+  assert.equal(findings.length, 4);
+  assert.match(
+    html,
+    /<span class="fail">×<\/span> 1<\/div><div class="summary-label">Azure Guidelines<\/div><div class="summary-detail">1 guideline issue<br>4\/4 intents assessed/,
+  );
+  assert.match(complianceHtml, /<h2>Azure Guidelines \(1\)<\/h2>/);
   assert.equal(
     (complianceHtml.match(/class="finding compliance-finding /g) ?? []).length,
     1,

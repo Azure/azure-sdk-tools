@@ -1221,8 +1221,9 @@ when they cite the same set of canonical guidance document sections and state
 the same expected behavior. This is a presentation-only projection:
 
 - `assessment.json` retains every intent-level finding and its stable ID;
-- Azure Guidelines counts remain the number of intent-level findings, not the
-  number of visual groups;
+- visible Azure Guidelines counts report the number of distinct visual
+  guideline issues, while affected-intent detail and JSON retain the
+  intent-level finding cardinality;
 - shared expected behavior and guidance are rendered once;
 - each affected Semantic intent retains its own actual behavior, changed-code
   evidence, finding anchor, and human-readable Semantic intent link; and
@@ -2131,9 +2132,10 @@ The report must show:
    Document Quality and Agent Friendliness dimension;
    findings with identical canonical guidance-section sets and expected
    behavior may share one visual guideline-issue card. The section and summary
-   counts still report the underlying intent-level finding count. The grouped
-   card renders shared guidance once and lists each affected Semantic intent
-   with its own actual behavior and changed-code evidence;
+   counts report distinct visual guideline issues. The grouped card renders
+   shared guidance once and lists each affected Semantic intent with its own
+   actual behavior and changed-code evidence. The underlying intent-level
+   finding count remains available through the affected-intent detail and JSON;
    per-intent assessments, ranked search documents, and retrieval details
    appear only in the appendix;
 7. source-first Semantic intents;
@@ -2232,7 +2234,8 @@ Presentation rules:
 
 Compliance rendering is source-first:
 
-- show status, assessed-intent coverage, and finding count;
+- show status, assessed-intent coverage, distinct guideline-issue count, and
+  affected-intent count;
 - group repeated visual findings only by identical canonical guidance-section
   identity and normalized expected behavior, never by title alone;
 - render one shared expected/guidance block and one actual-evidence entry per
@@ -2330,10 +2333,10 @@ Quality remains a separate dimension. The Semantic card includes distinct
 affected-operation count and
 add/modify/remove intent counts. The downstream card distinguishes affected
 SDK methods from underlying finding count. The Azure Guidelines card shows the
-finding count as its primary numeric value. Its icon and color communicate
-`passed`, `failed`, or `not-assessed`, while the detail shows finding and
-covered-intent counts. A zero finding count must not imply a pass when evidence
-retrieval or intent coverage is incomplete.
+distinct visual guideline-issue count as its primary numeric value. Its icon
+and color communicate `passed`, `failed`, or `not-assessed`, while the detail
+shows guideline-issue and covered-intent counts. A zero issue count must not
+imply a pass when evidence retrieval or intent coverage is incomplete.
 
 Each summary card is a full-card link to its report section:
 

@@ -79,11 +79,14 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: 'Lifecycle\.Read, Lifecycle\.Create'
           path: "employee.tsp"
-      - type: "file-matches"
+      - &file_matches_api_version
+        type: "file-matches"
+        name: "file-matches-api-version"
         config:
           pattern: "2025-05-04-preview"
           path: "main.tsp"
@@ -101,14 +104,8 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'Lifecycle\.Read, Lifecycle\.Create'
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2025-05-04-preview"
+      - *file_matches
+      - *file_matches_api_version
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

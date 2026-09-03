@@ -58,11 +58,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
            Description: "Manage release plans in Azure DevOps"
        );
 
-        public static readonly CommandGroup ProductOnboarding = new(
-           Verb: "product-onboarding",
-           Description: "Manage product onboarding status in Azure DevOps"
-       );
-
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
             Description: "Set up and work with TypeSpec projects",

@@ -1,14 +1,50 @@
 # Release History
 
-## 0.6.38 (Unreleased)
-
-### Features Added
+## 0.6.42 (2026-09-01)
 
 ### Breaking Changes
 
+- Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
 ### Bugs Fixed
 
+- `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.
+
 ### Other Changes
+
+- Skip SDK generation if an SDK generation pipeline is already in progress for the release plan.
+- Do not run SDK generation if another release plan is in progress for the same package.
+
+## 0.6.41 (2026-08-31)
+
+### Features Added
+
+- Updated the `eng evaluate` CLI command to remove the Copilot SDK judge and add `--until` (an ISO-8601 timestamp) to control the evaluation window end time.
+
+## 0.6.40 (2026-08-31)
+
+### Bugs Fixed
+
+- `azsdk_run_generate_sdk` now blocks SDK generation for a spec pull request until that pull request is merged, so SDK pull requests are no longer created — and surfaced to reviewers — while the release plan is still in the API Spec Review stage.
+- Ignore API version associated with unknown language emitter configuration in metadata output.
+- Ignore unsupported languages when updating the languages in release plan.
+
+## 0.6.39 (2026-08-31)
+
+### Features Added
+
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in release plan.
+
+### Breaking Changes
+
+- Removed the option to force create a release plan to avoid duplicate release plan.
+
+## 0.6.38 (2026-08-26)
+
+### Features Added
+
+- `package mark-released` output now includes the API Review Hub approval record ID and applied inheritance rule.
+- `package get-approval-status` output now includes IDs for API Review Hub approval records.
 
 ## 0.6.37 (2026-08-21)
 
@@ -52,11 +88,16 @@
 
 ### Features Added
 
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in the release plan.
+
+### Breaking Changes
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
+
+- Removed the option to force-create a release plan to avoid duplicate release plans.
 
 ## 0.6.32 (2026-07-28)
 

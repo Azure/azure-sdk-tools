@@ -79,15 +79,20 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "model Asset is ExtensionResource<AssetProperties>"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_interface
+        type: "file-matches"
+        name: "file-matches-interface"
         config:
           pattern: "interface Assets|interface AssetOps"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_property
+        type: "file-matches"
+        name: "file-matches-property"
         config:
           pattern: "provisioningState"
           path: "*.tsp"
@@ -106,18 +111,9 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "model Asset is ExtensionResource<AssetProperties>"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "interface Assets|interface AssetOps"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "provisioningState"
+      - *file_matches
+      - *file_matches_interface
+      - *file_matches_property
     constraints:
       max_turns: 6
       max_tokens: 100000

@@ -428,11 +428,17 @@ inspecting the string:
 |---------------------------|-------------|
 | A directory in the working tree | Must be authored with a trailing `/` — `CFG-PATH-005` otherwise |
 | A file in the working tree | Accepted as written; a trailing `/` is `CFG-PATH-005` |
-| Nothing in the working tree | `CFG-PATH-006`, an orphaned path (see [Component 10](#component-10-audit-rules)) |
+| Nothing in the working tree | Not an error here. `AUD-PATH-001` reports orphaned paths (see [Component 10](#component-10-audit-rules)) |
 | An expression containing `*` or `**` | Not checked; globs cannot be resolved by `stat` |
 
 Resolution is performed against the checkout `generate` is already running in, using the same
 `StringComparison.Ordinal` semantics as the rest of the path pipeline.
+
+A path that resolves to nothing is deliberately *not* a `generate` error. A fragment can legitimately
+name a directory that does not exist yet in the branch being rendered — a package about to land, or a
+path deleted in a commit that has not updated ownership. Blocking rendering on it would make an
+unrelated PR fail. `AUD-PATH-001` reports the same condition where it belongs: as a report-only audit
+finding a human triages.
 
 The alternative — deciding file-vs-directory from a list of recognized file extensions — was
 rejected. It requires an allowlist that must be kept current, and any implementation that reached
@@ -567,13 +573,18 @@ Ownership must be declared in exactly one place, except where overlap is deliber
 | Rule | Condition | Severity |
 |------|-----------|----------|
 | `CFG-DUP-001` | A normalized path expression declared in an owners config section is also produced by a fragment | Error |
-| `CFG-DUP-002` | The same normalized path expression is produced by two different fragments | Error |
+| `CFG-DUP-002` | The same normalized path expression is produced by two fragment path entries | Error |
 | `CFG-DUP-003` | The same normalized path expression is declared twice within one owners config section | Error |
 | `CFG-DUP-004` | A label set declared in an owners config section is also declared by a fragment | Error |
 
 `CFG-DUP-004` is what keeps label-owner union meaningful: union is the sanctioned way for **two or
 more service teams** to co-own a label set. A repo-level static declaration competing with a
 fragment declaration is an authoring mistake, not a merge.
+
+`CFG-DUP-002` is written against fragment path *entries*, not fragment *files*, because two different
+files cannot in fact collide: [path containment](#component-3-path-containment) confines every
+fragment to its own subtree, and the `allowed-owner-yaml-paths` globs do not nest. The reachable case
+is one fragment declaring the same path twice.
 
 **All four rules apply uniformly to every section. There are no exemptions.**
 
@@ -930,8 +941,8 @@ exactly the set that must not proceed on unverified owner data. Run on every PR,
 would halt all development in every migrated repository. Fail-closed is only a proportionate policy
 because the trigger is narrow; the two decisions have to be read together.
 
-Repository-wide validity drift is not check 2's job. The scheduled audit job finds it, removes the
-invalid owners from the `owners.yaml` files, and opens a PR for review
+Repository-wide validity drift is not check 2's job. The scheduled audit job finds it and removes the
+invalid owners from the `owners.yaml` files; the job then commits and opens a PR for review
 ([Component 8](#component-8-invalid-owner-handling)).
 
 #### Why check 1 ignores owner validity
@@ -986,7 +997,7 @@ neither downgrades a cache failure to a warning.
 | Operation | Unusable cache | Consequence of the alternative |
 |-----------|----------------|--------------------------------|
 | `generate --check` check 2 (gate 2) | **Fail the check.** | A gate that silently skips is a gate nobody can rely on |
-| `audit --fix` (editing YAML) | **Fail. Refuse to fix.** | Opens a pull request deleting owners from source files |
+| `audit --fix` (editing YAML) | **Fail. Refuse to fix.** | Deletes owners from source files, which the job then commits and opens as a PR |
 
 Check 1 is unaffected in all cases; it never consults the cache and stays a pure function of
 repository contents.
@@ -1063,10 +1074,11 @@ re-detected the same people and needed a field to avoid counting them forever. T
 counted again. The removal is itself the state transition.
 
 Between opening a removal pull request and merging it, re-runs re-detect the same owners. The count
-is stable rather than cumulative, so the threshold behaves correctly, but `audit --fix` must
-**update its existing open removal pull request instead of opening a second one.** The run
+is stable rather than cumulative, so the threshold behaves correctly, but the audit job must
+**update its existing open removal pull request instead of opening a second one.** The job
 identifies its own prior PR by a fixed head branch name (`codeowners/remove-invalid-owners`) and
-force-updates that branch when the set of removals changes.
+force-updates that branch when the set of removals changes. This is job behavior, not command
+behavior; `audit --fix` re-runs are idempotent against a given checkout.
 
 ###### Exceeding the threshold skips fixes; it does not abort the run
 
@@ -1107,10 +1119,13 @@ This is a separation of concerns: **`audit` decides what the state of the reposi
    (`azure-sdk-write-teams-blob`, `user-org-visibility-blob`) and reports failures as `AUD-OWN-001` /
    `AUD-OWN-003`.
 2. `audit --fix` removes those owners from the `owners.yaml` or `owners.config.yaml` file that
-   declared them, re-renders `.github/CODEOWNERS`, and opens a pull request containing both changes.
-   Removals are capped by `SafetyThreshold`
-   ([above](#the-safety-threshold-survives-on-the-one-path-that-mutates)).
-3. The remaining owners review that pull request. Merging it is what removes the owner from
+   declared them, editing the YAML in place and preserving surrounding comments. Removals are capped
+   by `SafetyThreshold` ([above](#the-safety-threshold-survives-on-the-one-path-that-mutates)).
+3. The job that invoked `audit --fix` commits the edited YAML, runs `generate` to re-render
+   `.github/CODEOWNERS`, and opens a pull request containing both changes. Committing and opening the
+   PR are the job's responsibility, not the command's: `audit` mutates only the working tree, which
+   keeps it runnable locally and keeps git and GitHub credentials out of the command.
+4. The remaining owners review that pull request. Merging it is what removes the owner from
    CODEOWNERS.
 
 The invalid owner therefore stays in the rendered file until the removal PR merges. That is
@@ -1224,7 +1239,7 @@ fail-fast behavior, and the `update-cache` remediation path documented in
 | `AUD-LBL-001` | Label is not present in cached repo label data | `repository-labels-blob` | Report only |
 | `AUD-LBL-002` | `Service Attention` used as a PR label or as a sole service label | YAML only | Report only |
 | `AUD-PATH-001` | Path expression matches nothing in the repo working tree | Repo checkout | Report only |
-| `AUD-ORD-001` | A literal path expression renders after a literal path expression that is a proper prefix of it (ownership inversion) | Rendered output | Report only |
+| `AUD-ORD-001` | A literal path expression renders *before* a literal path expression that is a proper prefix of it (ownership inversion) | Rendered output | Report only |
 
 `AUD-PATH-001` is newly implementable. Generation now runs inside a repo checkout, so the legacy
 linter's `PATH-001` / `PATH-003` gap closes.
@@ -1243,9 +1258,17 @@ occurs in `sort: false` sections when entries are authored in that order.
 
 The rule is decidable and cheap, which is what separates it from the rejected `AUD-SEC-001` below.
 It compares only **literal** path expressions — any expression containing a glob metacharacter is
-skipped entirely — and asks a single question: does an earlier-rendered expression `A` satisfy
-`B.StartsWith(A, Ordinal)` for some later-rendered `B`? That is string prefixing on concrete paths,
-not the glob-containment analysis this document rejects.
+skipped entirely — and asks a single question: does a **later**-rendered expression `A` satisfy
+`B.StartsWith(A, Ordinal)` for some **earlier**-rendered `B`? In words: a broader entry rendering
+after a narrower one it contains. That is string prefixing on concrete paths, not the
+glob-containment analysis this document rejects.
+
+Get the direction right when implementing this. Because CODEOWNERS is last-match-wins, the ancestor
+rendering *last* is the harm; the ancestor rendering *first* is the outcome we want.
+
+Comparison is scoped **within a single section**. Comparing across sections would flag every fragment
+entry against the repo-wide `/sdk/` catch-all in the `SDK` section — hundreds of findings that are
+all by design, and precisely the section-shadowing analysis rejected as `AUD-SEC-001`.
 
 It is **Report only**, and it has no `--fix`. There are two valid resolutions and the tool cannot
 choose between them: relabel the descendant so it sorts after its ancestor, or move the section to

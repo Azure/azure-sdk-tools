@@ -158,8 +158,13 @@ is present. Escape all source- and Agent-controlled text.
 
 REST breaking findings must use the shared contract-card hierarchy: contract
 identity and `REST contract` tag in the summary; a styled
-`REST contract member | Before | After` table; a highlighted
+`Contract area | Before | After` table; a highlighted
 `Why this is breaking` callout; a nested affected-operation list collapsed by
 default; and human-readable Semantic intent links in the footer. Do not render
 severity labels, severity-colored borders, or Changed TypeSpec links in these
 cards.
+Semantic operation cards use the same `Contract area | Before | After` table
+and removal/addition styling. They reuse confirmed REST finding rows associated
+with both the operation ID and current Semantic intent. If no fine-grained
+confirmed row is available, they render changed top-level operation aspects as
+fallback rows.

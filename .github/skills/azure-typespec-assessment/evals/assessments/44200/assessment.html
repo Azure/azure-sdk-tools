@@ -79,17 +79,17 @@
 <span class="context"> }</span>
 <span class="context"> </span>
 <span class="context"> using TypeSpec.Http;</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:17</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:17</code>.</p></details>
 <h4>Affected REST operations (23)</h4>
 <p><strong>Operation impact:</strong> 23 REST operations are affected; 3 representative operation(s) are shown below and 20 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>AssociationsInterface_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, 201, default</td><td>200, 201, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>request</code></td><td class="contract-before"><code class="contract-value before">body</code></td><td class="contract-after"><code class="contract-value after">body</code></td></tr><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, 201, default</code></td><td class="contract-after"><code class="contract-value after">200, 201, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
 <details class="operation"><summary><strong>AssociationsInterface_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <details class="operation"><summary><strong>AssociationsInterface_ListByTrafficController</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations</code> <span>2026-03-01</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <p id="related-findings-semantic-d5ac0f513678b267"><strong>Related findings:</strong> <a href="#compliance-finding-compliance-6741ad7c2b22f12d">compliance-6741ad7c2b22f12d</a></p>
 </div></details>
@@ -105,305 +105,19 @@
 <span class="context">   properties?: AssociationUpdateProperties;</span>
 <span class="context"> }</span>
 <span class="context"> </span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:119</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:119</code>.</p></details>
 <h4>Affected REST operations (1)</h4>
 <p><strong>Operation impact:</strong> 1 REST operations are affected; 1 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>AssociationsInterface_Update</strong> <code>PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>request</code></td><td class="contract-before"><code class="contract-value before">body</code></td><td class="contract-after"><code class="contract-value after">body</code></td></tr><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
 <p id="related-findings-semantic-7edb1932c040044d"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking</code></td><td>new-api-version</td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2025-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2026-03-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44200">#44200</a></p>
-<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-<section><h4>Preserve SDK compatibility for private frontend changes</h4>
-<div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</div><pre><span class="context">   Azure.ResourceManager.Models.SubResource[],</span>
-<span class="context">   &quot;csharp&quot;</span>
-<span class="context"> );</span>
-<span class="add">+@@alternateType(</span>
-<span class="add">+  TrafficControllerProperties.privateEndpointConnections,</span>
-<span class="add">+  Azure.ResourceManager.Models.SubResource[],</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@alternateType(</span>
-<span class="add">+  FrontendAssociation.id,</span>
-<span class="add">+  Azure.Core.armResourceIdentifier,</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@alternateType(</span>
-<span class="add">+  FrontendAssociationUpdate.id,</span>
-<span class="add">+  Azure.Core.armResourceIdentifier,</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="add">+</span>
-<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;property flatten for SDK backward compatibility&quot;</span>
-<span class="add">+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
-<span class="add">+  PrivateEndpointConnection.properties,</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;property flatten for SDK backward compatibility&quot;</span>
-<span class="add">+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
-<span class="add">+  PrivateLinkResource.properties,</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="add">+</span>
-<span class="add">+@@clientName(</span>
-<span class="add">+  PublicNetworkAccess,</span>
-<span class="add">+  &quot;TrafficControllerPublicNetworkAccess&quot;,</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@clientName(</span>
-<span class="add">+  PrivateLinkServiceConnectionStatus,</span>
-<span class="add">+  &quot;ServiceNetworkingPrivateLinkServiceConnectionStatus&quot;,</span>
-<span class="add">+  &quot;csharp&quot;</span>
-<span class="add">+);</span>
-<span class="context"> </span>
-<span class="context"> @@clientName(</span>
-<span class="context">   Versions.v2023_11_01,</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</div><pre><span class="context">   &quot;$DO_NOT_NORMALIZE$V2025_05_01&quot;,</span>
-<span class="context">   &quot;javascript&quot;</span>
-<span class="context"> );</span>
-<span class="add">+@@clientName(</span>
-<span class="add">+  Versions.v2025_10_01_preview,</span>
-<span class="add">+  &quot;$DO_NOT_NORMALIZE$V2025_10_01_preview&quot;,</span>
-<span class="add">+  &quot;javascript&quot;</span>
-<span class="add">+);</span>
-<span class="add">+@@clientName(</span>
-<span class="add">+  Versions.v2026_03_01,</span>
-<span class="add">+  &quot;$DO_NOT_NORMALIZE$V2026_03_01&quot;,</span>
-<span class="add">+  &quot;javascript&quot;</span>
-<span class="add">+);</span>
-<span class="context"> </span>
-<span class="context"> // we add this model in this namespace in order to replace some models with this model via alternateType decorator</span>
-<span class="context"> namespace Azure.ResourceManager.Models {</span>
-<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** The resource-specific properties for this resource. */</span>
-<span class="context">   #suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot;</span>
-<span class="remove">-  @Azure.ClientGenerator.Core.Legacy.flattenProperty</span>
-<span class="add">+  @Azure.ClientGenerator.Core.Legacy.flattenProperty(&quot;!javascript&quot;)</span>
-<span class="context">   properties?: AssociationUpdateProperties;</span>
-<span class="context"> }</span>
-<span class="context"> </span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</div><pre><span class="context">   &quot;autorest&quot;</span>
-<span class="context"> );</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
-<span class="add">+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
-<span class="add">+  Microsoft.ServiceNetworking.PrivateEndpointConnection.properties,</span>
-<span class="add">+  &quot;autorest&quot;</span>
-<span class="add">+);</span>
-<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
-<span class="add">+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
-<span class="add">+  Microsoft.ServiceNetworking.PrivateLinkResource.properties,</span>
-<span class="add">+  &quot;autorest&quot;</span>
-<span class="add">+);</span>
-<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Back compatibility&quot;</span>
-<span class="context"> @@Azure.ClientGenerator.Core.Legacy.flattenProperty(</span>
-<span class="context">   Azure.ResourceManager.Foundations.ResourceUpdateModel.properties,</span>
-<span class="context">   &quot;autorest&quot;</span>
-<span class="context"></span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp:206</code>, <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:119</code>, <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</code></p></section><section><h4>Add private frontend and private endpoint support</h4>
-<div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** 2025-03-01 preview version */</span>
-<span class="context">   v2025_03_01_preview: &quot;2025-03-01-preview&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /** 2025-10-01 preview version */</span>
-<span class="add">+  v2025_10_01_preview: &quot;2025-10-01-preview&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /** 2026-03-01 stable version */</span>
-<span class="add">+  v2026_03_01: &quot;2026-03-01&quot;,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> using TypeSpec.Http;</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context">   @visibility(Lifecycle.Read)</span>
-<span class="context">   fqdn?: string;</span>
-<span class="context"> </span>
-<span class="add">+  /** Whether public network access is allowed for the frontend. Enabled indicates a public frontend; Disabled indicates a private frontend. */</span>
-<span class="add">+  @added(Versions.v2025_10_01_preview)</span>
-<span class="add">+  publicNetworkAccess?: PublicNetworkAccess;</span>
-<span class="add">+</span>
-<span class="add">+  /** Reference to an Association resource that contains the subnet where the private frontend should be deployed. */</span>
-<span class="add">+  @added(Versions.v2025_10_01_preview)</span>
-<span class="add">+  association?: FrontendAssociation;</span>
-<span class="add">+</span>
-<span class="context">   /** Frontend Security Policy Configuration */</span>
-<span class="context">   @added(Versions.v2025_03_01_preview)</span>
-<span class="context">   securityPolicyConfigurations?: SecurityPolicyConfigurations;</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context">   provisioningState?: ProvisioningState;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="add">+/** Whether public network access is allowed for the frontend. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+union PublicNetworkAccess {</span>
-<span class="add">+  string,</span>
-<span class="add">+</span>
-<span class="add">+  /** Public network access is enabled (public frontend accessible via a public IP address). */</span>
-<span class="add">+  Enabled: &quot;Enabled&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /** Public network access is disabled (private frontend accessible only through a private endpoint). */</span>
-<span class="add">+  Disabled: &quot;Disabled&quot;,</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** Reference to an Association resource. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+model FrontendAssociation {</span>
-<span class="add">+  /** Resource ID of the Association. */</span>
-<span class="add">+  id: string;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** Reference to an Association resource. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+model FrontendAssociationUpdate {</span>
-<span class="add">+  /** Resource ID of the Association. */</span>
-<span class="add">+  id?: string;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="context"> //----------------------- Associations -----------------------</span>
-<span class="context"> /** Association Subresource of Traffic Controller */</span>
-<span class="context"> @parentResource(TrafficController)</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context">   @added(Versions.v2024_05_01_preview)</span>
-<span class="context">   securityPolicies?: ResourceId[];</span>
-<span class="context"> </span>
-<span class="add">+  /** Private Endpoint Connections List */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  @added(Versions.v2025_10_01_preview)</span>
-<span class="add">+  privateEndpointConnections?: ResourceId[];</span>
-<span class="add">+</span>
-<span class="context">   /** Security Policy Configuration */</span>
-<span class="context">   @added(Versions.v2024_05_01_preview)</span>
-<span class="context">   securityPolicyConfigurations?: SecurityPolicyConfigurations;</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context">   id: string;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="add">+//----------------------- PrivateEndpointConnection -----------------------</span>
-<span class="add">+/** Private Endpoint Connection resource of Traffic Controller. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+@parentResource(TrafficController)</span>
-<span class="add">+model PrivateEndpointConnection</span>
-<span class="add">+  is ProxyResource&lt;PrivateEndpointConnectionProperties&gt; {</span>
-<span class="add">+  /** Private Endpoint Connection */</span>
-<span class="add">+  @key(&quot;privateEndpointConnectionName&quot;)</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  @path</span>
-<span class="add">+  @segment(&quot;privateEndpointConnections&quot;)</span>
-<span class="add">+  @pattern(&quot;^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$&quot;)</span>
-<span class="add">+  name: string;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** Properties of a Private Endpoint Connection. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+model PrivateEndpointConnectionProperties {</span>
-<span class="add">+  /** The private endpoint resource. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  privateEndpoint?: PrivateEndpointReference;</span>
-<span class="add">+</span>
-<span class="add">+  /** The connection state of the private endpoint connection. */</span>
-<span class="add">+  privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;</span>
-<span class="add">+</span>
-<span class="add">+  /** Provisioning state of the private endpoint connection. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  provisioningState?: ProvisioningState;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** Reference to a private endpoint resource. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+model PrivateEndpointReference {</span>
-<span class="add">+  /** Resource ID of the private endpoint. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  id?: string;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** The state of a private link service connection. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+model PrivateLinkServiceConnectionState {</span>
-<span class="add">+  /** Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service. */</span>
-<span class="add">+  status?: PrivateLinkServiceConnectionStatus;</span>
-<span class="add">+</span>
-<span class="add">+  /** The reason for approval/rejection of the connection. */</span>
-<span class="add">+  description?: string;</span>
-<span class="add">+</span>
-<span class="add">+  /** A message indicating if changes on the service provider require any updates on the consumer. */</span>
-<span class="add">+  actionsRequired?: string;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** The private endpoint connection status. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+union PrivateLinkServiceConnectionStatus {</span>
-<span class="add">+  string,</span>
-<span class="add">+</span>
-<span class="add">+  /** Connection is pending approval. */</span>
-<span class="add">+  Pending: &quot;Pending&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /** Connection is approved. */</span>
-<span class="add">+  Approved: &quot;Approved&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /** Connection is rejected. */</span>
-<span class="add">+  Rejected: &quot;Rejected&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /** Connection is disconnected. */</span>
-<span class="add">+  Disconnected: &quot;Disconnected&quot;,</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+//----------------------- PrivateLinkResource -----------------------</span>
-<span class="add">+/** A private link resource. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+@parentResource(TrafficController)</span>
-<span class="add">+model PrivateLinkResource is ProxyResource&lt;PrivateLinkResourceProperties&gt; {</span>
-<span class="add">+  /** Private Link Resource */</span>
-<span class="add">+  @key(&quot;privateLinkResourceName&quot;)</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  @path</span>
-<span class="add">+  @segment(&quot;privateLinkResources&quot;)</span>
-<span class="add">+  @pattern(&quot;^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$&quot;)</span>
-<span class="add">+  name: string;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/** Properties of a private link resource. */</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+model PrivateLinkResourceProperties {</span>
-<span class="add">+  /** The private link resource group ID. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  groupId?: string;</span>
-<span class="add">+</span>
-<span class="add">+  /** The private link resource required member names. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  requiredMembers?: string[];</span>
-<span class="add">+</span>
-<span class="add">+  /** The private link resource private DNS zone names. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  requiredZoneNames?: string[];</span>
-<span class="add">+</span>
-<span class="add">+  /** The status of the last operation. */</span>
-<span class="add">+  @visibility(Lifecycle.Read)</span>
-<span class="add">+  provisioningState?: ProvisioningState;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="context"> //----------------------- Paths -----------------------</span>
-<span class="context"> @armResourceOperations</span>
-<span class="context"> interface AssociationsInterface {</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context">   listBySubscription is ArmListBySubscription&lt;TrafficController&gt;;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+@armResourceOperations</span>
-<span class="add">+interface PrivateEndpointConnectionsInterface {</span>
-<span class="add">+  get is ArmResourceRead&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add">+  update is ArmResourceCreateOrReplaceSync&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add">+  listByTrafficController is ArmResourceListByParent&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+@added(Versions.v2025_10_01_preview)</span>
-<span class="add">+@armResourceOperations</span>
-<span class="add">+interface PrivateLinkResourcesInterface {</span>
-<span class="add">+  get is ArmResourceRead&lt;PrivateLinkResource&gt;;</span>
-<span class="add">+  listByTrafficController is ArmResourceListByParent&lt;PrivateLinkResource&gt;;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span>
-<span class="context"></span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:17</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<details class="compliance-intent" id="compliance-intent-semantic-7edb1932c040044d"><summary><strong><a href="#intent-semantic-7edb1932c040044d">Preserve SDK compatibility for private frontend changes</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></li></ul>
-</div></details><details class="compliance-intent" id="compliance-intent-semantic-d5ac0f513678b267"><summary><strong><a href="#intent-semantic-d5ac0f513678b267">Add private frontend and private endpoint support</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/">Private links</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li></ul>
-</div></details>
+<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/">Private links</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</code> (committed)</li><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</code> (committed)</li><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

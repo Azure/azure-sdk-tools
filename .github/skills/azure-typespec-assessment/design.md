@@ -2199,7 +2199,7 @@ Presentation rules:
 2. The card is collapsed by default. Hash navigation opens the selected card
    and its folded ancestors.
 3. The expanded body starts with contract identity, followed by one compact
-   `Contract member | Before | After` table.
+   `Contract area | Before | After` table.
 4. Multiple findings for the same contract become rows in that table; do not
    repeat full cards or unchanged request/response content.
 5. Contract identities come from exact normalized AutoRest schema references
@@ -2262,6 +2262,23 @@ method/path, concise mapping reason, REST before/after delta or explicit
 unchanged statement, and downstream outcome. It is deterministic supporting
 evidence, not a separate Semantic or Compliance assessment, and it does not
 repeat TypeSpec code.
+
+Semantic operation cards and REST breaking cards use the same contract-delta
+row presentation:
+
+- the columns are `Contract area | Before | After`;
+- Before and After use the same removal/addition color treatment;
+- a Semantic operation card selects confirmed REST findings whose
+  `operationIds` contain the operation and whose `relatedSemanticIntents`
+  contain the current intent;
+- selected findings reuse the same deterministic contract-area and
+  before/after derivation used by REST breaking cards;
+- when no confirmed fine-grained REST finding exists, the operation card falls
+  back to its changed top-level aspects: `method`, `path`, `parameters`,
+  `request`, `responses`, `paging`, `lro`, or whole `operation`; and
+- REST breaking cards continue grouping rows by stable REST contract identity,
+  while Semantic operation cards group the applicable rows under each
+  representative operation.
 
 Each Semantic intent is collapsed by default and shows exactly one escaped
 TypeSpec code example. The example is nested in a second disclosure that is

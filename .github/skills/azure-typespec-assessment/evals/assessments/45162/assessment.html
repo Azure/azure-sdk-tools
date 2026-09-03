@@ -52,17 +52,17 @@
 <span class="add">+  v2026_07_31_preview: &quot;2026-07-31-preview&quot;,</span>
 <span class="context"> }</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:34</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:34</code>.</p></details>
 <h4>Affected REST operations (33)</h4>
 <p><strong>Operation impact:</strong> 33 REST operations are affected; 3 representative operation(s) are shown below and 30 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>CreateLedgerEntry</strong> <code>POST /app/transactions</code> <span>2026-07-31-preview</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>parameters</td><td>query:api-version (required), query:collectionId, query:tags</td><td>query:api-version (required), query:collectionId, query:tags, query:waitForCommit</td></tr><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, 503, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>parameters</code></td><td class="contract-before"><code class="contract-value before">query:api-version (required), query:collectionId, query:tags</code></td><td class="contract-after"><code class="contract-value after">query:api-version (required), query:collectionId, query:tags, query:waitForCommit</code></td></tr><tr><td class="contract-member"><code>request</code></td><td class="contract-before"><code class="contract-value before">body</code></td><td class="contract-after"><code class="contract-value after">body</code></td></tr><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, 503, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: parameters, request, responses.</p></div></details>
 <details class="operation"><summary><strong>CreateOrUpdateLedgerUser</strong> <code>PATCH /app/ledgerUsers/{userId}</code> <span>2026-07-31-preview</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>request</code></td><td class="contract-before"><code class="contract-value before">body</code></td><td class="contract-after"><code class="contract-value after">body</code></td></tr><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
 <details class="operation"><summary><strong>CreateOrUpdateUser</strong> <code>PATCH /app/users/{userId}</code> <span>2026-07-31-preview</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>request</code></td><td class="contract-before"><code class="contract-value before">body</code></td><td class="contract-after"><code class="contract-value after">body</code></td></tr><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: request, responses.</p></div></details>
 <p id="related-findings-semantic-0444245ca7d40975"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-88a58c4c72ca22da">shared-type-impact-88a58c4c72ca22da</a></p>
 </div></details>
@@ -112,173 +112,22 @@
 <span class="context"> @route(&quot;/app/transactions&quot;)</span>
 <span class="context"> @post</span>
 <span class="context"> op createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation&lt;</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123</code>.</p></details>
 <h4>Affected REST operations (2)</h4>
 <p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>CreateLedgerEntry</strong> <code>POST /app/transactions</code> <span>2026-07-31-preview</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>parameters</td><td>query:api-version (required), query:collectionId, query:tags</td><td>query:api-version (required), query:collectionId, query:tags, query:waitForCommit</td></tr><tr><td>request</td><td>body</td><td>body</td></tr><tr><td>responses</td><td>200, default</td><td>200, 503, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>parameters</code></td><td class="contract-before"><code class="contract-value before">query:api-version (required), query:collectionId, query:tags</code></td><td class="contract-after"><code class="contract-value after">query:api-version (required), query:collectionId, query:tags, query:waitForCommit</code></td></tr><tr><td class="contract-member"><code>request</code></td><td class="contract-before"><code class="contract-value before">body</code></td><td class="contract-after"><code class="contract-value after">body</code></td></tr><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, 503, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: parameters, request, responses.</p></div></details>
 <details class="operation"><summary><strong>GetLedgerEntry</strong> <code>GET /app/transactions/{transactionId}</code> <span>2026-07-31-preview</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>responses</code></td><td class="contract-before"><code class="contract-value before">200, default</code></td><td class="contract-after"><code class="contract-value after">200, default</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <p id="related-findings-semantic-dc076128a0053073"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/confidentialledger/data-plane/ConfidentialLedger</code></td><td>new-api-version</td><td><code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25@2026-02-23</code><br><small>current · previous-latest-stable</small></td><td><code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25@2026-07-31-preview</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45162">#45162</a></p>
-<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-<section><h4>Add the 2026-07-31 preview response models and versioning</h4>
-<div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</div><pre><span class="context">    * The 2026-02-23 API version.</span>
-<span class="context">    */</span>
-<span class="context">   v2026_02_23: &quot;2026-02-23&quot;,</span>
-<span class="add">+</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The 2026-07-31-preview API version.</span>
-<span class="add">+   */</span>
-<span class="add">+  @Azure.Core.previewVersion</span>
-<span class="add">+  v2026_07_31_preview: &quot;2026-07-31-preview&quot;,</span>
-<span class="context"> }</span>
-<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</div><pre><span class="context">  * Returned as a result of a write to the Confidential Ledger, the transaction id</span>
-<span class="context">  * in the response indicates when the write will become durable.</span>
-<span class="context">  */</span>
-<span class="remove">-model LedgerWriteResult {</span>
-<span class="add">+@removed(Versions.v2026_07_31_preview)</span>
-<span class="add">+@renamedFrom(Versions.v2026_07_31_preview, &quot;LedgerWriteResult&quot;)</span>
-<span class="add">+model LedgerWriteResultBeforeV20260731Preview {</span>
-<span class="context">   ...CCFTransactionIdHeader;</span>
-<span class="context"> </span>
-<span class="context">   /**</span></pre></div><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</div><pre><span class="context">   collectionId: string;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="add">+/**</span>
-<span class="add">+ * Returned as a result of writing to the Confidential Ledger.</span>
-<span class="add">+ */</span>
-<span class="add">+@added(Versions.v2026_07_31_preview)</span>
-<span class="add">+model LedgerWriteResultWithReceipt {</span>
-<span class="add">+  ...CCFTransactionIdHeader;</span>
-<span class="add">+</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The response body.</span>
-<span class="add">+   */</span>
-<span class="add">+  @bodyRoot</span>
-<span class="add">+  body: LedgerWriteResult;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/**</span>
-<span class="add">+ * The result of writing a ledger entry.</span>
-<span class="add">+ */</span>
-<span class="add">+@added(Versions.v2026_07_31_preview)</span>
-<span class="add">+model LedgerWriteResult {</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The collection identifier of the ledger entry.</span>
-<span class="add">+   */</span>
-<span class="add">+  collectionId: string;</span>
-<span class="add">+</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The receipt certifying the committed transaction.</span>
-<span class="add">+   */</span>
-<span class="add">+  receipt?: ReceiptContents;</span>
-<span class="add">+</span>
-<span class="add">+  /**</span>
-<span class="add">+   * State of the write transaction.</span>
-<span class="add">+   */</span>
-<span class="add">+  state: TransactionState;</span>
-<span class="add">+</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The list of application claims.</span>
-<span class="add">+   */</span>
-<span class="add">+  applicationClaims?: ApplicationClaim[];</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="add">+/**</span>
-<span class="add">+ * The transaction was rolled back before it could be committed.</span>
-<span class="add">+ */</span>
-<span class="add">+@added(Versions.v2026_07_31_preview)</span>
-<span class="add">+@error</span>
-<span class="add">+model TransactionRolledBackErrorResponse {</span>
-<span class="add">+  /**</span>
-<span class="add">+   * The HTTP status code.</span>
-<span class="add">+   */</span>
-<span class="add">+  @statusCode</span>
-<span class="add">+  statusCode: 503;</span>
-<span class="add">+</span>
-<span class="add">+  ...ConfidentialLedgerCommon.ConfidentialLedgerError;</span>
-<span class="add">+}</span>
-<span class="add">+</span>
-<span class="context"> /**</span>
-<span class="context">  * The result of querying for a ledger entry from an older transaction id. The</span>
-<span class="context">  * ledger entry is available in the response only if the returned state is Ready.</span>
-<span class="context"></span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:34</code>, <code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:427</code></p></section><section><h4>Add wait-for-commit behavior to ledger entry writes</h4>
-<div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</div><pre><span class="context">  * A collection id may optionally be specified.</span>
-<span class="context">  */</span>
-<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;Existing API&quot;</span>
-<span class="add">+@removed(Versions.v2026_07_31_preview)</span>
-<span class="add">+@renamedFrom(Versions.v2026_07_31_preview, &quot;createLedgerEntry&quot;)</span>
-<span class="context"> @summary(&quot;Writes a ledger entry.&quot;)</span>
-<span class="add">+@sharedRoute</span>
-<span class="add">+@route(&quot;/app/transactions&quot;)</span>
-<span class="add">+@post</span>
-<span class="add">+op createLedgerEntryAsync is ConfidentialLedgerCommon.LedgerOperation&lt;</span>
-<span class="add">+  {</span>
-<span class="add">+    /**</span>
-<span class="add">+     * The collection id.</span>
-<span class="add">+     */</span>
-<span class="add">+    @query(&quot;collectionId&quot;)</span>
-<span class="add">+    collectionId?: string;</span>
-<span class="add">+</span>
-<span class="add">+    /**</span>
-<span class="add">+     * Comma separated tags.</span>
-<span class="add">+     */</span>
-<span class="add">+    @query(&quot;tags&quot;)</span>
-<span class="add">+    tags?: string;</span>
-<span class="add">+</span>
-<span class="add">+    /**</span>
-<span class="add">+     * Ledger entry.</span>
-<span class="add">+     */</span>
-<span class="add">+    @bodyRoot</span>
-<span class="add">+    entry: LedgerEntry;</span>
-<span class="add">+  },</span>
-<span class="add">+  LedgerWriteResultBeforeV20260731Preview</span>
-<span class="add">+&gt;;</span>
-<span class="add">+</span>
-<span class="add">+/**</span>
-<span class="add">+ * A collection id may optionally be specified.</span>
-<span class="add">+ */</span>
-<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;The versioned ledger write route requires both the service default error and a 503 TransactionRolledBack response.&quot;</span>
-<span class="add">+@added(Versions.v2026_07_31_preview)</span>
-<span class="add">+@summary(&quot;Writes a ledger entry.&quot;)</span>
-<span class="add">+@sharedRoute</span>
-<span class="context"> @route(&quot;/app/transactions&quot;)</span>
-<span class="context"> @post</span>
-<span class="context"> op createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation&lt;</span></pre></div><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</div><pre><span class="context">      */</span>
-<span class="context">     @bodyRoot</span>
-<span class="context">     entry: LedgerEntry;</span>
-<span class="add">+</span>
-<span class="add">+    /**</span>
-<span class="add">+     * Whether to wait for the transaction to be globally committed before</span>
-<span class="add">+     * returning. When true, the response includes the transaction receipt.</span>
-<span class="add">+     */</span>
-<span class="add">+    @query(&quot;waitForCommit&quot;)</span>
-<span class="add">+    waitForCommit?: boolean = false;</span>
-<span class="context">   },</span>
-<span class="remove">-  LedgerWriteResult</span>
-<span class="add">+  LedgerWriteResultWithReceipt,</span>
-<span class="add">+  | ConfidentialLedgerCommon.ConfidentialLedgerError</span>
-<span class="add">+  | TransactionRolledBackErrorResponse</span>
-<span class="context"> &gt;;</span>
-<span class="context"> </span>
-<span class="context"> /**</span>
-<span class="context"></span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<details class="compliance-intent" id="compliance-intent-semantic-0444245ca7d40975"><summary><strong><a href="#intent-semantic-0444245ca7d40975">Add the 2026-07-31 preview response models and versioning</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
-</div></details><details class="compliance-intent" id="compliance-intent-semantic-dc076128a0053073"><summary><strong><a href="#intent-semantic-dc076128a0053073">Add wait-for-commit behavior to ledger entry writes</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/">Azure.Core operation interfaces</a></li></ul>
-</div></details>
+<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/">Add preview after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/">Azure.Core operation interfaces</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</code> (committed)</li><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp</code> (committed)</li><li><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

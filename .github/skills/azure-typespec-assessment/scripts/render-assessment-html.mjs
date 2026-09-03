@@ -422,35 +422,27 @@ ${complianceCode(expectedCode)}
 }
 
 function fetchedComplianceDocument(document) {
-  return `<li><a href="${escapeHtml(document.canonicalUrl)}">${escapeHtml(document.title)}</a></li>`;
+  const url = document.canonicalUrl ?? document.url;
+  return `<li><a href="${escapeHtml(url)}">${escapeHtml(document.title ?? url)}</a></li>`;
 }
 
-function complianceEvidenceAppendix(dimension, semanticItems) {
-  const semanticTitles = new Map(
-    semanticItems.map((item) => [item.id, item.title]),
-  );
-  const active = (dimension.intentAssessments ?? [])
-    .map((item) => {
-      const title =
-        semanticTitles.get(item.semanticIntentId) ?? item.semanticIntentId;
-      return `<details class="compliance-intent" id="compliance-intent-${anchor(item.semanticIntentId)}"><summary><strong><a href="#intent-${anchor(item.semanticIntentId)}">${escapeHtml(title)}</a></strong></summary>
-<div class="compliance-intent-body">
-<ul>${(item.documents ?? []).map(fetchedComplianceDocument).join("")}</ul>
-</div></details>`;
-    })
-    .join("");
-  const legacyDocuments = (dimension.legacyDocuments ?? [])
-    .map(
-      (document) =>
-        `<li><a href="${escapeHtml(document.url)}">${escapeHtml(document.title)}</a> · ${escapeHtml(document.section ?? "")}<blockquote>${escapeHtml(document.guidanceExcerpt ?? "")}</blockquote></li>`,
-    )
-    .join("");
-  const legacy = legacyDocuments
-    ? `<details class="panel"><summary><strong>Official documents</strong></summary><ul>${legacyDocuments}</ul></details>`
-    : "";
-  return (
-    `${active}${legacy}` || '<div class="panel">No guidance fetched.</div>'
-  );
+function complianceEvidenceAppendix(dimension) {
+  const documents = [
+    ...(dimension.intentAssessments ?? []).flatMap(
+      (item) => item.documents ?? [],
+    ),
+    ...(dimension.legacyDocuments ?? []),
+  ];
+  const seenUrls = new Set();
+  const uniqueDocuments = documents.filter((document) => {
+    const url = document.canonicalUrl ?? document.url;
+    if (!url || seenUrls.has(url)) return false;
+    seenUrls.add(url);
+    return true;
+  });
+  return uniqueDocuments.length
+    ? `<ul class="guidance-document-list">${uniqueDocuments.map(fetchedComplianceDocument).join("")}</ul>`
+    : '<div class="panel">No guidance fetched.</div>';
 }
 
 function intentTitleLinks(ids, semanticItems) {
@@ -693,6 +685,69 @@ function restContractDelta(finding) {
   };
 }
 
+function findingMatchesOperation(finding, operation, semanticIntentId) {
+  if (!(finding.operationIds ?? []).includes(operation.operationId)) {
+    return false;
+  }
+  if (
+    semanticIntentId &&
+    !(finding.relatedSemanticIntents ?? []).includes(semanticIntentId)
+  ) {
+    return false;
+  }
+  const operationFacts = (finding.evidence ?? []).filter(
+    (fact) => fact.operationId === operation.operationId,
+  );
+  return (
+    !operation.apiVersion ||
+    operationFacts.length === 0 ||
+    operationFacts.some((fact) => fact.apiVersion === operation.apiVersion)
+  );
+}
+
+export function operationContractRows(
+  operation,
+  restFindings = [],
+  semanticIntentId,
+) {
+  const detailedRows = restFindings
+    .filter((finding) =>
+      findingMatchesOperation(finding, operation, semanticIntentId),
+    )
+    .map(restContractDelta);
+  const rows = detailedRows.length
+    ? detailedRows
+    : (operation.changedAspects ?? []).map((field) => ({
+        area: field,
+        before: contractSummary(operation.before?.[field], field),
+        after: contractSummary(operation.after?.[field], field),
+      }));
+  return [
+    ...new Map(
+      rows
+        .sort(
+          (left, right) =>
+            left.area.localeCompare(right.area) ||
+            left.before.localeCompare(right.before) ||
+            left.after.localeCompare(right.after),
+        )
+        .map((row) => [
+          `${row.area}\u0000${row.before}\u0000${row.after}`,
+          row,
+        ]),
+    ).values(),
+  ];
+}
+
+function renderContractChangeRows(rows) {
+  return rows
+    .map(({ area, before, after }) => {
+      const afterValue = after === "removed" ? "removed" : after;
+      return `<tr><td class="contract-member"><code>${escapeHtml(area)}</code></td><td class="contract-before"><code class="contract-value before">${escapeHtml(before)}</code></td><td class="contract-after"><code class="contract-value after">${escapeHtml(afterValue)}</code></td></tr>`;
+    })
+    .join("");
+}
+
 export function restContractCards(findings = []) {
   const cards = new Map();
   const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -762,13 +817,9 @@ function renderRestContractCards(findings = [], semanticItems = []) {
       const findingAnchors = card.findings
         .map((finding) => `<span id="finding-${anchor(finding.id)}"></span>`)
         .join("");
-      const rows = card.findings
-        .map(({ contractDelta }) => {
-          const after =
-            contractDelta.after === "removed" ? "removed" : contractDelta.after;
-          return `<tr><td class="contract-member"><code>${escapeHtml(contractDelta.area)}</code></td><td class="contract-before"><code class="contract-value before">${escapeHtml(contractDelta.before)}</code></td><td class="contract-after"><code class="contract-value after">${escapeHtml(after)}</code></td></tr>`;
-        })
-        .join("");
+      const rows = renderContractChangeRows(
+        card.findings.map(({ contractDelta }) => contractDelta),
+      );
       const operations = card.operations
         .map(
           (operation) =>
@@ -786,7 +837,7 @@ function renderRestContractCards(findings = [], semanticItems = []) {
 <div class="finding-body">${findingAnchors}
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>${escapeHtml(card.identity)}</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody>${rows}</tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> ${escapeHtml(rationales || "The existing wire contract is no longer preserved.")}</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (${operationCount})</strong></summary>
 <div class="rest-operation-list">${operations || '<p class="empty">Operation mapping unavailable.</p>'}</div></details>
@@ -1093,17 +1144,17 @@ function representativeExample(item) {
   }
   return `<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 ${renderSourceHunks([source])}
-<p class="sources"><strong>Source:</strong> ${sourceLinks([source])}. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>`;
+<p class="sources"><strong>Source:</strong> ${sourceLinks([source])}.</p></details>`;
 }
 
-function operationCard(operation) {
-  const changes = operation.changedAspects.length
-    ? `<table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody>${operation.changedAspects
-        .map(
-          (field) =>
-            `<tr><td>${escapeHtml(field)}</td><td>${escapeHtml(contractSummary(operation.before?.[field], field))}</td><td>${escapeHtml(contractSummary(operation.after?.[field], field))}</td></tr>`,
-        )
-        .join("")}</tbody></table>`
+function operationCard(operation, restFindings, semanticIntentId) {
+  const rows = operationContractRows(
+    operation,
+    restFindings,
+    semanticIntentId,
+  );
+  const changes = rows.length
+    ? `<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${renderContractChangeRows(rows)}</tbody></table>`
     : `<p class="good"><strong>${escapeHtml(operation.outcome)}</strong></p>`;
   return `<details class="operation"><summary><strong>${escapeHtml(operation.operationId)}</strong> <code>${escapeHtml((operation.method ?? "").toUpperCase())} ${escapeHtml(operation.path)}</code> <span>${escapeHtml(operation.apiVersion)}</span></summary>
 <div class="operation-body">${changes}
@@ -1184,12 +1235,12 @@ function deterministicCoverageSummary(item) {
   return `<p><strong>Deterministic coverage:</strong> ${coverage.coveredHunkIds.length} of ${total} changed hunks classified. ${escapeHtml(inference)}</p>`;
 }
 
-function semanticCard(item, compliance) {
+function semanticCard(item, compliance, restFindings) {
   const all = item.operations ?? [];
   const shown = all.slice(0, 3);
   const operationContent = all.length
     ? `<p><strong>Operation impact:</strong> ${all.length} REST operations are affected; ${shown.length} representative operation(s) are shown below${all.length > shown.length ? ` and ${all.length - shown.length} are omitted from HTML` : ""}. The complete inventory is retained in assessment.json.</p>
-${shown.map((operation) => operationCard(operation)).join("\n")}`
+${shown.map((operation) => operationCard(operation, restFindings, item.id)).join("\n")}`
     : '<p class="empty">No directly affected REST operation.</p>';
   const findingReferences = semanticFindingReferences(item, compliance);
   return `<details class="intent" id="intent-${anchor(item.id)}"><summary><strong><span class="action">${escapeHtml(item.action)}</span> ${escapeHtml(item.title)}</strong>${semanticFindingBadge(findingReferences)}</summary><div class="intent-body">
@@ -1200,19 +1251,6 @@ ${representativeExample(item)}
 ${operationContent}
 <p id="related-findings-${anchor(item.id)}"><strong>Related findings:</strong> ${relatedFindingLinks(findingReferences)}</p>
 </div></details>`;
-}
-
-function completeTypeSpecEvidence(items = []) {
-  const content = items
-    .map(
-      (item) =>
-        `<section><h4>${escapeHtml(item.title)}</h4>
-${renderSourceHunks(item.sources)}
-<p class="sources"><strong>Sources:</strong> ${sourceLinks(item.sources)}</p></section>`,
-    )
-    .join("");
-  return `<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-${content || '<p class="empty">No TypeSpec source evidence.</p>'}</details>`;
 }
 
 function downstreamOperationGroups(dimension, semanticItems) {
@@ -1509,7 +1547,9 @@ function renderCurrent(assessment) {
         Number(right.hasFindings) - Number(left.hasFindings) ||
         left.index - right.index,
     )
-    .map(({ item }) => semanticCard(item, dimensions.compliance))
+    .map(({ item }) =>
+      semanticCard(item, dimensions.compliance, dimensions.rest.findings),
+    )
     .join("\n");
   const rest =
     [
@@ -1567,9 +1607,8 @@ function renderCurrent(assessment) {
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>
-${completeTypeSpecEvidence(dimensions.semantic.items)}
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-${complianceEvidenceAppendix(dimensions.compliance, dimensions.semantic.items)}
+${complianceEvidenceAppendix(dimensions.compliance)}
 <h3>Changed files</h3><ul>${assessment.changedFiles.map((file) => `<li><code>${escapeHtml(file.path)}</code> (${escapeHtml(file.origins.join(", "))})</li>`).join("")}</ul>
 <h3>Timing and model input</h3><pre>${escapeHtml(JSON.stringify({ timings: assessment.timings, inputAccounting: assessment.inputAccounting }, null, 2))}</pre>
 <p><strong>Provenance:</strong> ${Object.values(assessment.provenance).map(escapeHtml).join(", ")}</p></div></details></section>

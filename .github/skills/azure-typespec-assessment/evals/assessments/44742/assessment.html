@@ -27,7 +27,7 @@
 <div class="finding-body"><span id="finding-rest-814ae5ff671ca56d"></span>
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>Directory_ListFilesAndDirectoriesSegment</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>include</code></td><td class="contract-before"><code class="contract-value before">query:include · ListFilesIncludeType { All | Attributes | Etag | LinkCount | NfsAttributes | PermissionKey | Permissions | Timestamps }[]</code></td><td class="contract-after"><code class="contract-value after">query:include · ListFilesIncludeType { Attributes | Etag | PermissionKey | Timestamps }[]</code></td></tr></tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>include</code></td><td class="contract-before"><code class="contract-value before">query:include · ListFilesIncludeType { All | Attributes | Etag | LinkCount | NfsAttributes | PermissionKey | Permissions | Timestamps }[]</code></td><td class="contract-after"><code class="contract-value after">query:include · ListFilesIncludeType { Attributes | Etag | PermissionKey | Timestamps }[]</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Parameter include has a different wire type. Existing clients or response consumers can fail without migration.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (1)</strong></summary>
 <div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div></details>
@@ -37,7 +37,7 @@
 <div class="finding-body"><span id="finding-rest-fdb35eba9b4a437b"></span>
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>DirectoryItem</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.directoryItems[].linkCount</code></td><td class="contract-before"><code class="contract-value before">integer int64</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.directoryItems[].linkCount</code></td><td class="contract-before"><code class="contract-value before">integer int64</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.directoryItems[].linkCount. Existing clients or response consumers can fail without migration.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (1)</strong></summary>
 <div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div></details>
@@ -47,7 +47,7 @@
 <div class="finding-body"><span id="finding-rest-0cd75525200e9511"></span>
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>FileItem</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fileItems[].linkCount</code></td><td class="contract-before"><code class="contract-value before">integer int64</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fileItems[].linkCount</code></td><td class="contract-before"><code class="contract-value before">integer int64</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].linkCount. Existing clients or response consumers can fail without migration.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (1)</strong></summary>
 <div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div></details>
@@ -57,7 +57,7 @@
 <div class="finding-body"><span id="finding-rest-402a485ae3b32abc"></span><span id="finding-rest-535074d4c7f1658d"></span><span id="finding-rest-7caacb2c7618b491"></span><span id="finding-rest-80d136d55e4f5925"></span><span id="finding-rest-916e14457028acee"></span><span id="finding-rest-cfe1b4f6736a23a2"></span>
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>FileProperty</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.group</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.group</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.owner</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.fileMode</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.owner</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.fileMode</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.group</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.group</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.owner</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.fileMode</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.owner</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.fileMode</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].properties.group. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.directoryItems[].properties.group. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].properties.owner. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].properties.fileMode. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.directoryItems[].properties.owner. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.directoryItems[].properties.fileMode. Existing clients or response consumers can fail without migration.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (1)</strong></summary>
 <div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div></details>
@@ -67,7 +67,7 @@
 <div class="finding-body"><span id="finding-rest-1ce4c2e3d9fc4a70"></span><span id="finding-rest-482965ab982d78d0"></span><span id="finding-rest-4b444afe702899ca"></span><span id="finding-rest-4e240c81b037a8d8"></span><span id="finding-rest-ef7444f1bbc4fa0f"></span>
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>FilesAndDirectoriesListSegment</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fifoItems</code></td><td class="contract-before"><code class="contract-value before">FifoItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.charDeviceItems</code></td><td class="contract-before"><code class="contract-value before">CharDeviceItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.socketItems</code></td><td class="contract-before"><code class="contract-value before">SocketItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.symLinkItems</code></td><td class="contract-before"><code class="contract-value before">SymLinkItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.blockDeviceItems</code></td><td class="contract-before"><code class="contract-value before">BlockDeviceItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fifoItems</code></td><td class="contract-before"><code class="contract-value before">FifoItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.charDeviceItems</code></td><td class="contract-before"><code class="contract-value before">CharDeviceItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.socketItems</code></td><td class="contract-before"><code class="contract-value before">SocketItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.symLinkItems</code></td><td class="contract-before"><code class="contract-value before">SymLinkItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.blockDeviceItems</code></td><td class="contract-before"><code class="contract-value before">BlockDeviceItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fifoItems. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.charDeviceItems. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.socketItems. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.symLinkItems. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.blockDeviceItems. Existing clients or response consumers can fail without migration.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (1)</strong></summary>
 <div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div></div></details>
@@ -77,7 +77,7 @@
 <div class="finding-body"><span id="finding-rest-00534218fd96f5ec"></span><span id="finding-rest-602755e363934a01"></span><span id="finding-rest-7cb939c12a3a0829"></span><span id="finding-rest-b9b027f2659bd666"></span><span id="finding-rest-c6f13c7a797667ec"></span><span id="finding-rest-dfd9ab5766765c21"></span><span id="finding-rest-e1dddfbaea78586f"></span><span id="finding-rest-e44caa5e57a6060c"></span>
 <dl class="contract-metadata"><dt>REST contract:</dt><dd><code>NfsFileType</code></dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>REST contract member</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fileItems[].fileType</code></td><td class="contract-before"><code class="contract-value before">NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">header:x-ms-file-file-type · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">header:x-ms-file-file-type · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr></tbody></table>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>response 200.segment.fileItems[].fileType</code></td><td class="contract-before"><code class="contract-value before">NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">header:x-ms-file-file-type · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">header:x-ms-file-file-type · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr></tbody></table>
 <div class="breaking-rationale"><strong>Why this is breaking:</strong> The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_ListFilesAndDirectoriesSegment changed response 200.segment.fileItems[].fileType. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_GetProperties changed header x-ms-file-file-type. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Parameter x-ms-file-file-type has a different wire type. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation Directory_Create changed header x-ms-file-file-type. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation File_CreateHardLink changed header x-ms-file-file-type. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation File_GetProperties changed header x-ms-file-file-type. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation File_Create changed header x-ms-file-file-type. Existing clients or response consumers can fail without migration. The supplied AutoRest facts show a caller-visible existing wire-contract removal or type change: Operation File_CreateSymbolicLink changed header x-ms-file-file-type. Existing clients or response consumers can fail without migration.</div>
 <details class="affected-operations"><summary><strong>Affected REST operations (7)</strong></summary>
 <div class="rest-operation-list"><div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;comp=list</code></div><div class="rest-operation-line"><strong><code>Directory_GetProperties</code></strong><span>2026-12-06</span><code>GET ?restype=directory&amp;_overload=getProperties</code></div><div class="rest-operation-line"><strong><code>File_Create</code></strong><span>2026-12-06</span><code>PUT /</code></div><div class="rest-operation-line"><strong><code>Directory_Create</code></strong><span>2026-12-06</span><code>PUT ?restype=directory</code></div><div class="rest-operation-line"><strong><code>File_CreateHardLink</code></strong><span>2026-12-06</span><code>PUT ?restype=hardlink</code></div><div class="rest-operation-line"><strong><code>File_GetProperties</code></strong><span>2026-12-06</span><code>HEAD /</code></div><div class="rest-operation-line"><strong><code>File_CreateSymbolicLink</code></strong><span>2026-12-06</span><code>PUT ?restype=symboliclink</code></div></div></details>
@@ -401,7 +401,7 @@
 <span class="context"> </span>
 <span class="context"> /** A listed Azure Storage handle item. */</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:595</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:595</code>.</p></details>
 <h4>Affected REST operations (2)</h4>
 <p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>Directory_ListHandles</strong> <code>GET ?comp=listhandles</code> <span>2026-12-06</span></summary>
@@ -438,11 +438,11 @@
 <span class="context"> }</span>
 <span class="context"> </span>
 <span class="context"> /** The type of share information to include in the listing. */</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:378</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:378</code>.</p></details>
 <h4>Affected REST operations (2)</h4>
 <p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>Directory_ListFilesAndDirectoriesSegment</strong> <code>GET ?restype=directory&amp;comp=list</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>include</code></td><td class="contract-before"><code class="contract-value before">query:include · ListFilesIncludeType { All | Attributes | Etag | LinkCount | NfsAttributes | PermissionKey | Permissions | Timestamps }[]</code></td><td class="contract-after"><code class="contract-value after">query:include · ListFilesIncludeType { Attributes | Etag | PermissionKey | Timestamps }[]</code></td></tr><tr><td class="contract-member"><code>response 200.segment.blockDeviceItems</code></td><td class="contract-before"><code class="contract-value before">BlockDeviceItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.charDeviceItems</code></td><td class="contract-before"><code class="contract-value before">CharDeviceItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].linkCount</code></td><td class="contract-before"><code class="contract-value before">integer int64</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.fileMode</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.group</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.directoryItems[].properties.owner</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fifoItems</code></td><td class="contract-before"><code class="contract-value before">FifoItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].fileType</code></td><td class="contract-before"><code class="contract-value before">NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].linkCount</code></td><td class="contract-before"><code class="contract-value before">integer int64</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.fileMode</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.group</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.fileItems[].properties.owner</code></td><td class="contract-before"><code class="contract-value before">string</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.socketItems</code></td><td class="contract-before"><code class="contract-value before">SocketItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><code>response 200.segment.symLinkItems</code></td><td class="contract-before"><code class="contract-value before">SymLinkItem[]</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <details class="operation"><summary><strong>Service_ListSharesSegment</strong> <code>GET /?comp=list</code> <span>2026-12-06</span></summary>
 <div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
@@ -474,7 +474,7 @@
 <span class="context"> }</span>
 <span class="context"> </span>
 <span class="context"> /** A listed file item. */</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:560</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:560</code>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-bdd43786bf6adae0"><strong>Related findings:</strong> <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-e82f62dade6a8f8e">compliance-e82f62dade6a8f8e</a></p>
@@ -505,270 +505,25 @@
 <span class="context"> }</span>
 <span class="context"> </span>
 <span class="context"> /** The file property semantics. */</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code>.</p></details>
 <h4>Affected REST operations (6)</h4>
 <p><strong>Operation impact:</strong> 6 REST operations are affected; 3 representative operation(s) are shown below and 3 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>Directory_Create</strong> <code>PUT ?restype=directory</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>201, default</td><td>201, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <details class="operation"><summary><strong>Directory_GetProperties</strong> <code>GET ?restype=directory&amp;_overload=getProperties</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>200, default</td><td>200, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">200 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">200 · NfsFileType { Directory | Regular | SymLink }</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <details class="operation"><summary><strong>File_Create</strong> <code>PUT /</code> <span>2026-12-06</span></summary>
-<div class="operation-body"><table><thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td>responses</td><td>201, default</td><td>201, default</td></tr></tbody></table>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">201 · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">201 · NfsFileType { Directory | Regular | SymLink }</code></td></tr><tr><td class="contract-member"><code>x-ms-file-file-type</code></td><td class="contract-before"><code class="contract-value before">header:x-ms-file-file-type · NfsFileType { BlockDevice | CharacterDevice | Directory | Fifo | Regular | Socket | SymLink }</code></td><td class="contract-after"><code class="contract-value after">header:x-ms-file-file-type · NfsFileType { Directory | Regular | SymLink }</code></td></tr></tbody></table>
 <p><strong>Change outcome:</strong> REST contract changed: responses.</p></div></details>
 <p id="related-findings-semantic-eed96d1f60797ccb"><strong>Related findings:</strong> <a href="#finding-rest-602755e363934a01">rest-602755e363934a01</a>, <a href="#finding-rest-7cb939c12a3a0829">rest-7cb939c12a3a0829</a>, <a href="#finding-rest-b9b027f2659bd666">rest-b9b027f2659bd666</a>, <a href="#finding-rest-c6f13c7a797667ec">rest-c6f13c7a797667ec</a>, <a href="#finding-rest-dfd9ab5766765c21">rest-dfd9ab5766765c21</a>, <a href="#finding-rest-e1dddfbaea78586f">rest-e1dddfbaea78586f</a>, <a href="#finding-rest-e44caa5e57a6060c">rest-e44caa5e57a6060c</a>, <a href="#downstream-shared-type-impact-b3f1f16037920111">shared-type-impact-b3f1f16037920111</a>, <a href="#compliance-finding-compliance-feb2640a19ddd738">compliance-feb2640a19ddd738</a></p>
 </div></details></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/storage/data-plane/FileStorage</code></td><td>existing-api-version</td><td><code>e75a07cd7ea1b2207190a362305db02b639715ec@2026-12-06</code><br><small>base · affected-existing-version</small></td><td><code>656ca8b0741973760f8a60ee0fd293ba9c31e708@2026-12-06</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44742">#44742</a></p>
-<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
-<section><h4>Remove NFS file and handle response fields</h4>
-<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** The permission key. */</span>
-<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
-<span class="remove">-  linkCount?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The type of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;FileType&quot;)</span>
-<span class="remove">-  fileType?: NfsFileType;</span>
-<span class="remove">-}</span>
-<span class="remove">-</span>
-<span class="remove">-/** A listed symbolic link item. */</span>
-<span class="remove">-@added(Versions.v2026_12_06)</span>
-<span class="remove">-@Xml.name(&quot;SymLink&quot;)</span>
-<span class="remove">-model SymLinkItem {</span>
-<span class="remove">-  /** The symbolic link name. */</span>
-<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The file ID. */</span>
-<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** File properties. */</span>
-<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the symbolic link. */</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The path to the original file, the symbolic link is pointing to. */</span>
-<span class="remove">-  @Xml.name(&quot;LinkText&quot;) linkText?: string;</span>
-<span class="remove">-}</span>
-<span class="remove">-</span>
-<span class="remove">-/** A listed block device item. */</span>
-<span class="remove">-@added(Versions.v2026_12_06)</span>
-<span class="remove">-@Xml.name(&quot;BlockDevice&quot;)</span>
-<span class="remove">-model BlockDeviceItem {</span>
-<span class="remove">-  /** The block device name. */</span>
-<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The file ID. */</span>
-<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** File properties. */</span>
-<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the block device. */</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The major device number of the block device. */</span>
-<span class="remove">-  @Xml.name(&quot;DeviceMajor&quot;) deviceMajor?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The minor device number of the block device. */</span>
-<span class="remove">-  @Xml.name(&quot;DeviceMinor&quot;) deviceMinor?: int64;</span>
-<span class="remove">-}</span>
-<span class="remove">-</span>
-<span class="remove">-/** A listed character device item. */</span>
-<span class="remove">-@added(Versions.v2026_12_06)</span>
-<span class="remove">-@Xml.name(&quot;CharDevice&quot;)</span>
-<span class="remove">-model CharDeviceItem {</span>
-<span class="remove">-  /** The character device name. */</span>
-<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The file ID. */</span>
-<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** File properties. */</span>
-<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the character device. */</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The major device number of the character device. */</span>
-<span class="remove">-  @Xml.name(&quot;DeviceMajor&quot;) deviceMajor?: int64;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The minor device number of the character device. */</span>
-<span class="remove">-  @Xml.name(&quot;DeviceMinor&quot;) deviceMinor?: int64;</span>
-<span class="remove">-}</span>
-<span class="remove">-</span>
-<span class="remove">-/** A listed FIFO item. */</span>
-<span class="remove">-@added(Versions.v2026_12_06)</span>
-<span class="remove">-@Xml.name(&quot;Fifo&quot;)</span>
-<span class="remove">-model FifoItem {</span>
-<span class="remove">-  /** The FIFO name. */</span>
-<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The file ID. */</span>
-<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** File properties. */</span>
-<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the FIFO. */</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
-<span class="remove">-}</span>
-<span class="remove">-</span>
-<span class="remove">-/** A listed socket item. */</span>
-<span class="remove">-@added(Versions.v2026_12_06)</span>
-<span class="remove">-@Xml.name(&quot;Socket&quot;)</span>
-<span class="remove">-model SocketItem {</span>
-<span class="remove">-  /** The socket name. */</span>
-<span class="remove">-  @Xml.name(&quot;Name&quot;) name: StringEncoded;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The file ID. */</span>
-<span class="remove">-  @Xml.name(&quot;FileId&quot;) fileId?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** File properties. */</span>
-<span class="remove">-  @Xml.name(&quot;Properties&quot;) properties: FileProperty;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the socket. */</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;) linkCount?: int64;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** A listed Azure Storage handle item. */</span>
-<span class="context"></span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:595</code></p></section><section><h4>Remove NFS directory listing shapes and include values</h4>
-<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** PermissionKey */</span>
-<span class="context">   PermissionKey,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Permissions */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Permissions,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** LinkCount */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  LinkCount,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NfsAttributes */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  NfsAttributes,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** All */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  All,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** The type of share information to include in the listing. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context">   @Xml.unwrapped</span>
-<span class="context">   @Xml.name(&quot;File&quot;)</span>
-<span class="context">   fileItems: FileItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The symbolic link items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;SymLink&quot;)</span>
-<span class="remove">-  symLinkItems?: SymLinkItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The block device items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;BlockDevice&quot;)</span>
-<span class="remove">-  blockDeviceItems?: BlockDeviceItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The character device items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;CharDevice&quot;)</span>
-<span class="remove">-  charDeviceItems?: CharDeviceItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The FIFO items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;Fifo&quot;)</span>
-<span class="remove">-  fifoItems?: FifoItem[];</span>
-<span class="remove">-</span>
-<span class="remove">-  /** The socket items. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.unwrapped</span>
-<span class="remove">-  @Xml.name(&quot;Socket&quot;)</span>
-<span class="remove">-  socketItems?: SocketItem[];</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** A listed directory item. */</span></pre></div><div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** The permission key. */</span>
-<span class="context">   @Xml.name(&quot;PermissionKey&quot;) permissionKey?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The link count of the directory. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;LinkCount&quot;)</span>
-<span class="remove">-  linkCount?: int64;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** An encoded string value. */</span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:378</code></p></section><section><h4>Remove NFS ownership and mode properties</h4>
-<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** The ETag of the file. */</span>
-<span class="context">   @Xml.name(&quot;Etag&quot;) eTag?: Azure.Core.eTag;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The owner user identifier (UID) of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;Uid&quot;)</span>
-<span class="remove">-  owner?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The owner group identifier (GID) of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;Gid&quot;)</span>
-<span class="remove">-  group?: string;</span>
-<span class="remove">-</span>
-<span class="remove">-  /** NFS only. The file mode of the file. */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  @Xml.name(&quot;Mode&quot;)</span>
-<span class="remove">-  fileMode?: string;</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** A listed file item. */</span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:560</code></p></section><section><h4>Remove NFS file-type variants</h4>
-<div class="diff"><div class="diff-path">specification/storage/data-plane/FileStorage/models.tsp</div><pre><span class="context"> </span>
-<span class="context">   /** SymLink */</span>
-<span class="context">   SymLink: &quot;SymLink&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** BlockDevice */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  BlockDevice: &quot;BlockDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** CharacterDevice */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  CharacterDevice: &quot;CharacterDevice&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Socket */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Socket: &quot;Socket&quot;,</span>
-<span class="remove">-</span>
-<span class="remove">-  /** Fifo */</span>
-<span class="remove">-  @added(Versions.v2026_12_06)</span>
-<span class="remove">-  Fifo: &quot;Fifo&quot;,</span>
-<span class="context"> }</span>
-<span class="context"> </span>
-<span class="context"> /** The file property semantics. */</span></pre></div>
-<p class="sources"><strong>Sources:</strong> <code>specification/storage/data-plane/FileStorage/models.tsp:275</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<details class="compliance-intent" id="compliance-intent-semantic-106722e15dc2d25d"><summary><strong><a href="#intent-semantic-106722e15dc2d25d">Remove NFS file and handle response fields</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
-</div></details><details class="compliance-intent" id="compliance-intent-semantic-259f67bc56ae9c3d"><summary><strong><a href="#intent-semantic-259f67bc56ae9c3d">Remove NFS directory listing shapes and include values</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li></ul>
-</div></details><details class="compliance-intent" id="compliance-intent-semantic-bdd43786bf6adae0"><summary><strong><a href="#intent-semantic-bdd43786bf6adae0">Remove NFS ownership and mode properties</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
-</div></details><details class="compliance-intent" id="compliance-intent-semantic-eed96d1f60797ccb"><summary><strong><a href="#intent-semantic-eed96d1f60797ccb">Remove NFS file-type variants</a></strong></summary>
-<div class="compliance-intent-body">
-<ul><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li></ul>
-</div></details>
+<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/storage/data-plane/FileStorage/models.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

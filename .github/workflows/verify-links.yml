@@ -25,7 +25,7 @@ jobs:
         run: |
           . ./eng/common/scripts/Helpers/git-helpers.ps1
           $urls = Get-ChangedFiles -SourceCommittish HEAD -TargetCommittish HEAD^ -DiffPath '*.md'
-
+          
           if (-not $urls -or $urls.Count -eq 0) {
             Write-Host "No changed markdown files; nothing to verify."
             exit 0

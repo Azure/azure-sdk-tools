@@ -173,3 +173,11 @@ identical top-level summaries when a deeper changed path is available. If the
 normalized comparison produces no changed contract row, omit the table and
 render `HTTP signature and represented payload contract unchanged.` as both
 the operation statement and change outcome.
+
+All REST, Semantic operation, SDK method, and SDK type contract tables use the
+same two-line contract-area cell: a human-readable area kind above the concrete
+member name or path. SDK rows derive concise before/after values from retained
+TCGC facts and use related operation evidence for wire origin only when
+unambiguous. Do not render internal rule identifiers such as
+`model-property-removed` as members or use full finding sentences as contract
+values.

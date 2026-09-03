@@ -677,9 +677,43 @@ function restContractDelta(finding) {
     afterValue.identity ??
     finding.operationIds?.[0] ??
     "Unmapped REST contract change";
+  let areaKind;
+  let member = location;
+  if (
+    finding.rule.startsWith("parameter-") ||
+    finding.rule === "required-parameter-added"
+  ) {
+    const wireLocation = [beforeValue.display, afterValue.display]
+      .map((display) => display?.match(/^(query|path|header):/i)?.[1])
+      .find(Boolean);
+    const labels = {
+      query: "Query parameter",
+      path: "Path parameter",
+      header: "Request header",
+    };
+    areaKind = labels[wireLocation?.toLowerCase()];
+    for (const value of [beforeValue, afterValue]) {
+      if (value.display?.includes(" · ")) {
+        value.display = value.display.split(" · ").slice(1).join(" · ");
+      }
+    }
+  } else if (finding.rule.startsWith("response-header-")) {
+    const status = [beforeValue.display, afterValue.display]
+      .map((display) => display?.match(/^(\S+)\s+·/)?.[1])
+      .find(Boolean);
+    areaKind = "Response header";
+    member = status ? `${status} · ${location}` : location;
+    for (const value of [beforeValue, afterValue]) {
+      if (value.display?.includes(" · ")) {
+        value.display = value.display.split(" · ").slice(1).join(" · ");
+      }
+    }
+  }
   return {
     identity,
     area: location,
+    areaKind,
+    member,
     before: beforeValue.display ?? "unavailable",
     after: afterValue.display ?? "unavailable",
   };
@@ -1099,11 +1133,77 @@ export function operationContractRows(
 
 function renderContractChangeRows(rows) {
   return rows
-    .map(({ area, before, after }) => {
+    .map((row) => {
+      const { before, after } = row;
       const afterValue = after === "removed" ? "removed" : after;
-      return `<tr><td class="contract-member"><code>${escapeHtml(area)}</code></td><td class="contract-before"><code class="contract-value before">${escapeHtml(before)}</code></td><td class="contract-after"><code class="contract-value after">${escapeHtml(afterValue)}</code></td></tr>`;
+      return `<tr>${renderContractAreaCell(row)}<td class="contract-before"><code class="contract-value before">${escapeHtml(before)}</code></td><td class="contract-after"><code class="contract-value after">${escapeHtml(afterValue)}</code></td></tr>`;
     })
     .join("");
+}
+
+function contractAreaParts(row) {
+  if (row.areaKind) {
+    return {
+      areaKind: row.areaKind,
+      member: row.member ?? row.area ?? "contract",
+    };
+  }
+  const area = row.area ?? row.member ?? "contract";
+  let match = area.match(/^response\s+([^.\s]+)\.header:(.+)$/i);
+  if (match) {
+    return {
+      areaKind: "Response header",
+      member: `${match[1]} · ${match[2]}`,
+    };
+  }
+  match = area.match(/^response\s+([^.\s]+)\.body(?:\.(.+))?$/i);
+  if (match) {
+    return {
+      areaKind: match[2] ? "Response body property" : "Response body",
+      member: match[2] ? `${match[1]} · ${match[2]}` : match[1],
+    };
+  }
+  match = area.match(/^response\s+([^.\s]+)\.(.+)$/i);
+  if (match) {
+    return {
+      areaKind: "Response body property",
+      member: `${match[1]} · ${match[2]}`,
+    };
+  }
+  match = area.match(/^response\s+(\S+)$/i);
+  if (match) return { areaKind: "Response status", member: match[1] };
+  match = area.match(/^request body(?:\.(.+))?$/i);
+  if (match) {
+    return {
+      areaKind: match[1] ? "Request body property" : "Request body",
+      member: match[1] ?? "body",
+    };
+  }
+  match = area.match(/^(query|path|header):(.+)$/i);
+  if (match) {
+    const kinds = {
+      query: "Query parameter",
+      path: "Path parameter",
+      header: "Request header",
+    };
+    return {
+      areaKind: kinds[match[1].toLowerCase()],
+      member: match[2],
+    };
+  }
+  match = area.match(/^lro(?:\.(.+))?$/i);
+  if (match) return { areaKind: "LRO", member: match[1] ?? "behavior" };
+  match = area.match(/^paging(?:\.(.+))?$/i);
+  if (match) return { areaKind: "Paging", member: match[1] ?? "behavior" };
+  if (area === "method") return { areaKind: "Method", member: "HTTP method" };
+  if (area === "path") return { areaKind: "Path", member: "request path" };
+  if (area === "operation") return { areaKind: "Operation", member: "operation" };
+  return { areaKind: "Contract area", member: area };
+}
+
+function renderContractAreaCell(row) {
+  const { areaKind, member } = contractAreaParts(row);
+  return `<td class="contract-member"><span class="contract-area-kind">${escapeHtml(areaKind)}</span><code>${escapeHtml(member)}</code></td>`;
 }
 
 export function restContractCards(findings = []) {
@@ -1645,11 +1745,36 @@ function downstreamOperationGroups(dimension, semanticItems) {
     `<code class="contract-value ${kind}">${escapeHtml(cellValue)}</code>${detail ? `<span class="contract-detail">${escapeHtml(detail)}</span>` : ""}`;
   const parameterType = (parameter) =>
     `${parameter.type ?? "unknown"}${parameter.optional ? "?" : ""}`;
-  const methodContractRows = (group) =>
+  const methodParameterAreaKind = (parameterName, operations) => {
+    const locations = new Set();
+    for (const operation of operations) {
+      for (const fact of [operation.before, operation.after]) {
+        for (const parameter of fact?.parameters ?? []) {
+          if (parameter.name === parameterName && parameter.in) {
+            locations.add(parameter.in);
+          }
+        }
+        if (fact?.request?.name === parameterName) locations.add("body");
+      }
+    }
+    if (locations.size !== 1) return "Method parameter";
+    const location = [...locations][0];
+    const labels = {
+      query: "query",
+      path: "path",
+      header: "request header",
+      body: "request body",
+    };
+    return labels[location]
+      ? `Method parameter · ${labels[location]}`
+      : "Method parameter";
+  };
+  const methodContractRows = (group, operations) =>
     group.deltas.flatMap((delta) => {
       if (delta.field !== "parameters") {
         return [
           {
+            areaKind: labels[delta.field] ?? "SDK method",
             member: labels[delta.field] ?? delta.rule,
             before: value(delta.before),
             after: value(delta.after),
@@ -1658,12 +1783,14 @@ function downstreamOperationGroups(dimension, semanticItems) {
       }
       return [
         ...(delta.changes.removed ?? []).map((item) => ({
+          areaKind: methodParameterAreaKind(item.parameter.name, operations),
           member: item.parameter.name,
           before: parameterType(item.parameter),
           beforeDetail: "Existing method parameter",
           after: "not present",
         })),
         ...(delta.changes.added ?? []).map((item) => ({
+          areaKind: methodParameterAreaKind(item.parameter.name, operations),
           member: item.parameter.name,
           before: "not present",
           beforeDetail: "Existing generated method signature",
@@ -1673,6 +1800,7 @@ function downstreamOperationGroups(dimension, semanticItems) {
             : "Required method parameter",
         })),
         ...(delta.changes.modified ?? []).map((item) => ({
+          areaKind: methodParameterAreaKind(item.name, operations),
           member: item.name,
           before: parameterType(item.before),
           beforeDetail: `Changed: ${item.changedFields.join(", ")}`,
@@ -1680,6 +1808,7 @@ function downstreamOperationGroups(dimension, semanticItems) {
           afterDetail: `Changed: ${item.changedFields.join(", ")}`,
         })),
         ...(delta.changes.reordered ?? []).map((item) => ({
+          areaKind: methodParameterAreaKind(item.name, operations),
           member: item.name,
           before: `position ${item.beforeIndex + 1}`,
           after: `position ${item.afterIndex + 1}`,
@@ -1688,7 +1817,8 @@ function downstreamOperationGroups(dimension, semanticItems) {
     });
   const groups = (dimension.operationGroups ?? [])
     .map((group) => {
-      const rows = methodContractRows(group);
+      const relatedOperations = relatedImpactOperations(group, semanticItems);
+      const rows = methodContractRows(group, relatedOperations);
       const parameterDelta = group.deltas.find(
         (delta) => delta.field === "parameters",
       );
@@ -1713,10 +1843,10 @@ function downstreamOperationGroups(dimension, semanticItems) {
 <div class="finding-body">
 <dl class="contract-metadata"><dt>SDK method:</dt><dd><code>${escapeHtml(group.symbol)}</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">${escapeHtml((group.method ?? "").toUpperCase())}</span><code>${escapeHtml(group.path)}</code></span></dd><dt>Change:</dt><dd>${escapeHtml(changeSummary)}</dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>SDK method member</th><th>Before</th><th>After</th></tr></thead><tbody>${rows
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${rows
         .map(
           (row) =>
-            `<tr><td class="contract-member"><code>${escapeHtml(row.member)}</code></td><td class="contract-before">${contractCell(row.before, row.beforeDetail, "before")}</td><td class="contract-after">${contractCell(row.after, row.afterDetail, "after")}</td></tr>`,
+            `<tr>${renderContractAreaCell(row)}<td class="contract-before">${contractCell(row.before, row.beforeDetail, "before")}</td><td class="contract-after">${contractCell(row.after, row.afterDetail, "after")}</td></tr>`,
         )
         .join("")}</tbody></table>
 ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</strong> ${escapeHtml(rationale)}</div>` : ""}
@@ -1753,6 +1883,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
     if (enumShape(before) !== enumShape(after)) {
       rows.push({
         kind: "shape",
+        areaKind: "Enum shape",
         member: shortTypeName(card.type),
         before: enumShape(before),
         beforeDetail: before.isFixed
@@ -1775,6 +1906,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       if (current && current.name !== previous.name) {
         rows.push({
           kind: "member",
+          areaKind: "Enum member",
           member: `${shortTypeName(card.type)}.${previous.name}`,
           before: previous.name,
           beforeDetail: "Generated public member identity",
@@ -1784,6 +1916,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       } else if (!current) {
         rows.push({
           kind: "member",
+          areaKind: "Enum member",
           member: `${shortTypeName(card.type)}.${previous.name}`,
           before: previous.name,
           beforeDetail: `Wire value ${JSON.stringify(wireValue)}.`,
@@ -1793,9 +1926,153 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
     }
     return rows;
   };
+  const typeDisplay = (type) => {
+    if (!type) return "unknown";
+    if (typeof type === "string") return type;
+    if (type.kind === "array") return `${typeDisplay(type.valueType ?? type.items)}[]`;
+    if (type.kind === "dictionary") {
+      return `Record<string, ${typeDisplay(type.valueType)}>`;
+    }
+    if (type.kind === "nullable") return `${typeDisplay(type.type)}?`;
+    return (
+      type.name ??
+      (type.id ? shortTypeName(type.id) : undefined) ??
+      type.type ??
+      type.kind ??
+      "unknown"
+    );
+  };
+  const propertyDisplay = (property) =>
+    property
+      ? `${typeDisplay(property.type ?? property.schema)}${property.optional ? "?" : ""}`
+      : undefined;
+  const typeFacts = (finding) => ({
+    before: finding.evidence?.find(
+      (fact) =>
+        fact.factKind === "model" && fact.comparisonRole === "baseline",
+    ),
+    after: finding.evidence?.find(
+      (fact) => fact.factKind === "model" && fact.comparisonRole === "target",
+    ),
+  });
+  const propertyName = (finding) =>
+    finding.actual?.match(/\bproperty\s+([A-Za-z_$][\w$]*)\b/)?.[1] ??
+    finding.expected?.match(/\bproperty\s+([A-Za-z_$][\w$]*)\b/)?.[1];
+  const schemaReferencesType = (schema, type) => {
+    if (!schema || typeof schema !== "object") return false;
+    const shortName = shortTypeName(type);
+    const identities = [
+      schemaIdentity(schema),
+      schema.reference,
+      ...(schema.references ?? []),
+    ].filter(Boolean);
+    if (
+      identities.some(
+        (identity) =>
+          identity === type ||
+          identity === shortName ||
+          identity.endsWith(`/${shortName}`) ||
+          identity.endsWith(`#/${shortName}`) ||
+          identity.endsWith(`/definitions/${shortName}`),
+      )
+    ) {
+      return true;
+    }
+    return (
+      schemaReferencesType(schema.items, type) ||
+      schemaReferencesType(schema.valueType, type) ||
+      (schema.properties ?? []).some((property) =>
+        schemaReferencesType(property.schema ?? property.type, type),
+      )
+    );
+  };
+  const typePropertyAreaKind = (type, operations) => {
+    let request = false;
+    let response = false;
+    for (const operation of operations) {
+      for (const fact of [operation.before, operation.after]) {
+        request ||= schemaReferencesType(fact?.request?.schema, type);
+        response ||= (fact?.responses ?? []).some((item) =>
+          schemaReferencesType(item.schema, type),
+        );
+      }
+    }
+    if (request && response) return "Body property · request/response";
+    if (request) return "Request body property";
+    if (response) return "Response body property";
+    return "Model property";
+  };
+  const modelContractRows = (card, findings, operations) =>
+    findings.flatMap((finding) => {
+      const name = propertyName(finding);
+      const { before, after } = typeFacts(finding);
+      if (!name || (!before && !after)) return [];
+      const beforeProperty = before?.properties?.find(
+        (property) => property.name === name,
+      );
+      const afterProperty = after?.properties?.find(
+        (property) => property.name === name,
+      );
+      return [
+        {
+          areaKind: typePropertyAreaKind(card.type, operations),
+          member: name,
+          before: propertyDisplay(beforeProperty) ?? "not present",
+          after: propertyDisplay(afterProperty) ?? "removed",
+        },
+      ];
+    });
+  const publicSurfaceRows = (card, findings) =>
+    findings.flatMap((finding) => {
+      if (finding.rule !== "public-surface-changed") return [];
+      const before = finding.evidence?.find(
+        (fact) => fact.comparisonRole === "baseline",
+      );
+      const after = finding.evidence?.find(
+        (fact) => fact.comparisonRole === "target",
+      );
+      const display = (fact) =>
+        fact
+          ? [
+              fact.access,
+              fact.reachable === true ? "reachable" : undefined,
+              fact.reachable === false ? "not reachable" : undefined,
+              fact.usage !== undefined ? `usage ${fact.usage}` : undefined,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : "removed";
+      return [
+        {
+          areaKind: "SDK type availability",
+          member: shortTypeName(card.type),
+          before: display(before),
+          after: display(after),
+        },
+      ];
+    });
+  const clientLocationRows = (card, findings) =>
+    findings.flatMap((finding) => {
+      if (finding.rule !== "client-location-changed") return [];
+      const target =
+        finding.actual?.match(/\bunder\s+([A-Za-z0-9_.]+)\b/)?.[1] ??
+        finding.actual?.match(/\bto\s+([A-Za-z0-9_.]+)\b/)?.[1] ??
+        "changed client";
+      const language =
+        finding.actual?.match(/\bgenerated\s+([A-Za-z0-9+#.]+)\s+client/i)?.[1];
+      return [
+        {
+          areaKind: "Client location",
+          member: shortTypeName(card.type),
+          before: language ? `previous ${language} client` : "previous client",
+          after: target,
+        },
+      ];
+    });
   const genericContractRows = (card, findings) =>
     findings.map((finding) => ({
-      member: finding.rule,
+      areaKind: "SDK contract",
+      member: shortTypeName(card.type),
       before: finding.expected,
       after: finding.actual,
     }));
@@ -1816,18 +2093,39 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
         (finding) => !groupedFindingIds.has(finding.id),
       );
       const enumRows = enumContractRows(card);
-      const contractRows = enumRows.length
-        ? enumRows
+      const modelRows = modelContractRows(
+        card,
+        directFindings,
+        relatedOperations,
+      );
+      const structuredRows = [
+        ...enumRows,
+        ...modelRows,
+        ...publicSurfaceRows(card, directFindings),
+        ...clientLocationRows(card, directFindings),
+      ].filter((row) => row.before !== row.after);
+      const contractRows = structuredRows.length
+        ? [
+            ...new Map(
+              structuredRows.map((row) => [
+                `${row.areaKind}\u0000${row.member}\u0000${row.before}\u0000${row.after}`,
+                row,
+              ]),
+            ).values(),
+          ]
         : genericContractRows(card, directFindings);
       const shapeRow = enumRows.find((row) => row.kind === "shape");
       const memberChangeCount = enumRows.filter(
         (row) => row.kind === "member",
       ).length;
+      const propertyChangeCount = modelRows.length;
       const changeSummary = shapeRow
         ? `${shapeRow.before} changed to ${/^[aeiou]/i.test(shapeRow.after) ? "an" : "a"} ${shapeRow.after}${memberChangeCount ? `, with ${memberChangeCount} generated member ${memberChangeCount === 1 ? "renamed" : "changes"}` : ""}`
         : memberChangeCount
           ? `${memberChangeCount} generated member ${memberChangeCount === 1 ? "changed" : "changes"}`
-          : directFindings.map((finding) => finding.rule).join(", ");
+          : propertyChangeCount
+            ? `${propertyChangeCount} SDK type ${propertyChangeCount === 1 ? "property changed" : "properties changed"}`
+            : `${contractRows.length} SDK type contract ${contractRows.length === 1 ? "change" : "changes"}`;
       const rationale = [
         ...new Set(
           directFindings.map((finding) => finding.rationale).filter(Boolean),
@@ -1840,10 +2138,10 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
 <div class="finding-body">${legacyAnchors}
 <dl class="contract-metadata"><dt>SDK contract:</dt><dd><code>${escapeHtml(card.type)}</code></dd><dt>Change:</dt><dd>${escapeHtml(changeSummary)}</dd></dl>
 <h4>Breaking changes</h4>
-<table class="contract-change-table"><thead><tr><th>SDK contract member</th><th>Before</th><th>After</th></tr></thead><tbody>${contractRows
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${contractRows
         .map(
           (row) =>
-            `<tr><td class="contract-member"><code>${escapeHtml(row.member)}</code></td><td class="contract-before">${contractCell(row.before, row.beforeDetail, "before")}</td><td class="contract-after">${contractCell(row.after, row.afterDetail, "after")}</td></tr>`,
+            `<tr>${renderContractAreaCell(row)}<td class="contract-before">${contractCell(row.before, row.beforeDetail, "before")}</td><td class="contract-after">${contractCell(row.after, row.afterDetail, "after")}</td></tr>`,
         )
         .join("")}</tbody></table>
 ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</strong> ${escapeHtml(rationale)}</div>` : ""}
@@ -1939,7 +2237,7 @@ function renderCurrent(assessment) {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TypeSpec Assessment</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#dbeafe;color:#1e40af}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#dbeafe;color:#1e40af}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-area-kind{display:block;margin-bottom:3px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
 .tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
 .finding{border-left:1px solid var(--line)}
 .rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}

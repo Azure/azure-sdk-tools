@@ -995,8 +995,8 @@ Expanding the card shows:
 
 1. the stable cross-language SDK contract identity and a concise change
    summary;
-2. a structured `SDK contract member | Before | After` table for the changed
-   type shape, properties, or enum members;
+2. a structured `Contract area | Before | After` table for the changed type
+   shape, properties, or enum members;
 3. a highlighted `Why this is breaking` explanation;
 4. a default-collapsed `Affected REST operations (N)` disclosure whose rows
    show operation ID, HTTP method, and path;
@@ -2264,10 +2264,25 @@ evidence, not a separate Semantic or Compliance assessment, and it does not
 repeat TypeSpec code.
 
 Semantic operation cards and REST breaking cards use the same contract-delta
-row presentation:
+row presentation as SDK method and SDK type cards:
 
 - the columns are `Contract area | Before | After`;
+- the first cell uses a two-line hierarchy: a human-readable contract-area
+  kind such as `Query parameter`, `Response body property`, `Method parameter`,
+  `Response header`, or `Enum member`, followed by the concrete member name or
+  path in code font;
 - Before and After use the same removal/addition color treatment;
+- REST and Semantic operation rows derive the area kind from normalized wire
+  location and schema path;
+- SDK method parameter rows use related REST operation evidence to show their
+  query, path, request-header, or request-body origin when that mapping is
+  unambiguous, and otherwise use `Method parameter`;
+- SDK type property rows derive the concrete property name, type, optionality,
+  and request/response body role from baseline/target TCGC facts and related
+  operation schemas; ambiguous direction falls back to `Model property`;
+- internal rules such as `model-property-removed` or
+  `method-parameters-changed` never appear as contract-area members, and full
+  expected/actual finding sentences never replace concise member values;
 - a Semantic operation card selects confirmed REST findings whose
   `operationIds` contain the operation and whose `relatedSemanticIntents`
   contain the current intent;

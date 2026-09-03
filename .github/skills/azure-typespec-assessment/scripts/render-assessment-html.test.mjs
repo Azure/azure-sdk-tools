@@ -255,7 +255,11 @@ test("renders SDK contract changes with collapsed affected operations", () => {
     html,
     /fixed enum changed to an extensible enum, with 1 generated member renamed/,
   );
-  assert.match(html, /SDK contract member<\/th><th>Before<\/th><th>After/);
+  assert.match(html, /Contract area<\/th><th>Before<\/th><th>After/);
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Enum shape<\/span>/,
+  );
   assert.match(html, /CloudHsmClusterSkuName\.Standard B10/);
   assert.match(html, /StandardB10/);
   assert.match(
@@ -980,7 +984,11 @@ test("renderer shows expandable REST operations and aggregated downstream method
   );
   assert.match(html, /\.contract-tag\{background:#dbeafe;color:#1e40af\}/);
   assert.match(html, /2 SDK contract changes/);
-  assert.match(html, /SDK method member<\/th><th>Before<\/th><th>After/);
+  assert.match(html, /Contract area<\/th><th>Before<\/th><th>After/);
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Method parameter<\/span><code>afcManagedSync<\/code>/,
+  );
   assert.match(html, /Parameters:<\/strong> 1 added, 3 unchanged/);
   assert.match(html, /afcManagedSync/);
   assert.match(html, /boolean\?/);
@@ -1409,7 +1417,7 @@ test("uses the same contract-area rows in semantic operations and REST findings"
   );
   assert.match(
     semanticHtml,
-    /<td class="contract-member"><code>response 200\.segment\.fileItems\[\]\.fileType<\/code><\/td>/,
+    /<td class="contract-member"><span class="contract-area-kind">Response body property<\/span><code>200 · segment\.fileItems\[\]\.fileType<\/code><\/td>/,
   );
   assert.match(
     semanticHtml,
@@ -1418,6 +1426,48 @@ test("uses the same contract-area rows in semantic operations and REST findings"
   assert.match(
     semanticHtml,
     /<td class="contract-after"><code class="contract-value after">/,
+  );
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Response body property<\/span><code>socketItems<\/code><\/td><td class="contract-before"><code class="contract-value before">SocketItem\[\]\?<\/code>/,
+  );
+  assert.doesNotMatch(
+    html,
+    /<td class="contract-member">[\s\S]*?<code>model-property-removed<\/code>/,
+  );
+});
+
+test("labels SDK method parameters with their REST wire origin", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/44988/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const html = renderAssessmentHtml(assessment);
+
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Method parameter · query<\/span><code>afcManagedSync<\/code>/,
+  );
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Query parameter<\/span><code>afcManagedSync<\/code>/,
+  );
+});
+
+test("labels response header contract rows consistently", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/43308/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const html = renderAssessmentHtml(assessment);
+
+  assert.match(
+    html,
+    /<span class="contract-area-kind">Response header<\/span><code>202 · Location<\/code>/,
   );
 });
 

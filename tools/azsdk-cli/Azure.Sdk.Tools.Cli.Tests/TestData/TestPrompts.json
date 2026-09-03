@@ -34,12 +34,6 @@
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Run the codeowner package check for sdk/storage/Azure.Storage.Blobs", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Run the codeowner cache update pipeline to unblock releases", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Update the owners cache", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_generate", "prompt": "Regenerate the CODEOWNERS file from the owners.yaml files in this repo", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_generate", "prompt": "Check whether .github/CODEOWNERS is up to date with the owners config", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_generate", "prompt": "Render CODEOWNERS from owners.config.yaml and the owners.yaml fragments", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_audit", "prompt": "Audit the owners.yaml files for invalid owners and labels", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_audit", "prompt": "Find and remove code owners who no longer have write access to this repo", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_audit", "prompt": "Run the CODEOWNERS audit and fix the violations it reports", "category": "all" },
 
     { "toolName": "azsdk_sync_product_onboarding", "prompt": "Sync the product onboarding status for my service", "category": "all" },
     { "toolName": "azsdk_sync_product_onboarding", "prompt": "Create a product onboarding work item for this service", "category": "all" },

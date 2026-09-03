@@ -57,6 +57,7 @@ class EvalsResult:
         for row in result["rows"]:
             row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
+            row_result["latency_seconds"] = row.get("inputs.latency_seconds")
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
@@ -93,7 +94,15 @@ class EvalsResult:
                         row_result[metric_name] = value
             run_result.append(row_result)
 
-        summary_result: dict[str, Any] = {"total_evals": len(result["rows"])}
+        latencies = [
+            float(row["inputs.latency_seconds"])
+            for row in result["rows"]
+            if row.get("inputs.latency_seconds") is not None
+        ]
+        summary_result: dict[str, Any] = {
+            "total_evals": len(result["rows"]),
+            "average_latency_seconds": sum(latencies) / len(latencies) if latencies else None,
+        }
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):
@@ -123,6 +132,7 @@ class EvalsResult:
         metrics = self._metrics.keys()
         headers = [
             "Test Case",
+            "Response Time (s)",
         ]
         for metric in metrics:
             headers.append(metric)
@@ -140,7 +150,9 @@ class EvalsResult:
             logging.debug(json.dumps(result, ensure_ascii=False))
             testcase = result["testcase"]
 
-            terminal_row = [testcase]
+            latency = result.get("latency_seconds")
+            latency_display = f"{float(latency):.2f}" if latency is not None else "N/A"
+            terminal_row = [testcase, latency_display]
             values = []
             if baseline_results is not None and testcase in baseline_results:
                 base = baseline_results[testcase]

@@ -225,7 +225,13 @@ def test_validate_file_dedups_on_dedup_key():
 def test_output_items_to_rows_builtin_and_composite():
     output_items = [
         {
-            "datasource_item": {"testcase": "t1", "query": "q1", "ground_truth": "gt1", "response": "the answer"},
+            "datasource_item": {
+                "testcase": "t1",
+                "query": "q1",
+                "ground_truth": "gt1",
+                "response": "the answer",
+                "latency_seconds": 1.25,
+            },
             "results": [
                 {"name": "similarity", "score": 4.0, "passed": True},
                 {"name": "response_completeness", "score": 3.0, "passed": True},
@@ -237,6 +243,7 @@ def test_output_items_to_rows_builtin_and_composite():
     row = rows[0]
     assert row["inputs.testcase"] == "t1"
     assert row["inputs.response"] == "the answer"
+    assert row["inputs.latency_seconds"] == 1.25
     assert row["outputs.similarity.similarity"] == 4.0
     # composite = 4.0*0.6 + 3.0*0.4 = 3.6 >= 3 -> pass
     assert abs(row["outputs.bot_evals.bot_evals"] - 3.6) < 1e-9
@@ -252,6 +259,45 @@ def test_output_items_to_rows_groundedness_fail():
     ]
     rows = output_items_to_rows(output_items, ["groundedness"])["rows"]
     assert rows[0]["outputs.groundedness.groundedness_result"] == "fail"
+
+
+def test_record_run_result_includes_latency_and_summary():
+    from _evals_result import EvalsResult
+
+    result = EvalsResult(metrics={"groundedness": None}, suppressions=None).record_run_result(
+        {
+            "rows": [
+                {
+                    "inputs.testcase": "fast",
+                    "inputs.ground_truth": "gt",
+                    "inputs.expected_references": [],
+                    "inputs.expected_knowledges": [],
+                    "inputs.response": "answer",
+                    "inputs.latency_seconds": 1.0,
+                    "inputs.references": [],
+                    "inputs.knowledges": [],
+                    "outputs.groundedness.groundedness": 4.0,
+                    "outputs.groundedness.groundedness_result": "pass",
+                },
+                {
+                    "inputs.testcase": "slow",
+                    "inputs.ground_truth": "gt",
+                    "inputs.expected_references": [],
+                    "inputs.expected_knowledges": [],
+                    "inputs.response": "answer",
+                    "inputs.latency_seconds": 3.0,
+                    "inputs.references": [],
+                    "inputs.knowledges": [],
+                    "outputs.groundedness.groundedness": 4.0,
+                    "outputs.groundedness.groundedness_result": "pass",
+                },
+            ]
+        }
+    )
+
+    assert result[0]["latency_seconds"] == 1.0
+    assert result[1]["latency_seconds"] == 3.0
+    assert result[-1]["average_latency_seconds"] == 2.0
 
 
 def test_build_testing_criteria_all_builtins():

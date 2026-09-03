@@ -1471,7 +1471,7 @@ test("labels response header contract rows consistently", () => {
   );
 });
 
-test("omits SDK-compatible response-wrapper property migrations", () => {
+test("omits compatible response-wrapper and response-only required properties", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/45162/assessment.json", import.meta.url),
@@ -1480,13 +1480,17 @@ test("omits SDK-compatible response-wrapper property migrations", () => {
   );
   const html = renderAssessmentHtml(assessment);
 
-  assert.match(
-    html,
-    /<span class="contract-area-kind">Response body property<\/span><code>state<\/code><\/td><td class="contract-before"><code class="contract-value before">not present<\/code>/,
-  );
   assert.doesNotMatch(
     html,
     /<code>transactionId<\/code>/,
+  );
+  assert.doesNotMatch(
+    html,
+    /<span class="contract-area-kind">Response body property<\/span><code>state<\/code>/,
+  );
+  assert.match(
+    html,
+    /> 0<\/div><div class="summary-label">Downstream breaking changes/,
   );
 });
 

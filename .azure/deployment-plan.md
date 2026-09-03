@@ -257,3 +257,24 @@ Deployment completed at 2026-09-02T18:24:00+08:00. The production index has 12 r
 Validation completed at 2026-09-03T11:02:00+08:00: the list view contains 12 correctly paired PR/report links, the explanatory note is present, configuration is valid, and production is `Ready`.
 
 Deployment completed at 2026-09-03T11:04:00+08:00. The production landing-page hash matches the implementation and exposes 12 PR links plus 12 working report routes.
+
+---
+
+## 16. Commit and Redeploy - 2026-09-03 18:14
+
+- [x] Commit meaningful workspace changes
+- [x] Push branch `create-assessment-skill` to `origin`
+- [x] Refresh the 12-report deployment snapshot
+- [x] Validate the snapshot and existing Static Web App
+- [x] Deploy to production
+- [x] Verify the production index and all 12 report hashes
+
+Validation completed at 2026-09-03T18:19:00+08:00:
+
+- 12 source reports match their deployment copies by SHA-256.
+- The index contains matching sets of 12 PR links and 12 report links.
+- All 13 local routes returned HTTP 200.
+- The 514,296-byte bundle is within the Free-plan limits.
+- The existing production environment is `Ready`.
+
+Deployment completed at 2026-09-03T18:21:00+08:00. The production index exposes 12 PR links and 12 report links, and every deployed report SHA-256 matches its current assessment source.

@@ -1,0 +1,176 @@
+name: azsdk-mcp-release-plan-next-step
+description: |
+  Process-awareness coverage for #15328: given a release plan's current
+  lifecycle stage, does the agent answer an open "what's next?" question with
+  the state-appropriate guidance, rather than guessing or jumping straight to
+  an action tool?
+
+  Each stimulus points at a distinct mock release-plan fixture (workItem
+  35010-35013 in GetReleasePlanHandler) representing one stage: spec pending
+  review, spec approved with no SDK work started, SDK generated but not
+  released, and fully released. The agent must call azsdk_get_release_plan to
+  read the state before answering — it is never told the stage directly.
+
+  Bound to the mock MCP — no real DevOps writes.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: release-plan
+  feature: process-awareness
+
+environment: azsdk-mcp-mock
+
+defaults:
+  runs: 1
+  timeout: 10m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: next-step-spec-not-reviewed
+    environment: &releasePlanSkills
+      # All four release-related skills, so routing is a genuine choice, not
+      # forced by only one being loaded. Paths are relative to this eval file
+      # (3 levels up = repo root).
+      skills:
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../.github/skills/azsdk-common-sdk-release
+    prompt: |
+      What's the next step for release plan 35010? My setup has already been
+      verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+            - azsdk_create_release_plan
+            - azsdk_link_sdk_pull_request_to_release_plan
+            - azsdk_verify_setup
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            The API spec for this release plan has not been approved yet
+            (IsSpecApproved is false) and no SDK work has started. Does the
+            final assistant message correctly tell the user the next step is
+            to get the API spec reviewed/approved, WITHOUT telling them to
+            generate or release an SDK yet?
+
+  - name: next-step-spec-approved-no-sdk
+    environment: *releasePlanSkills
+    prompt: |
+      What should I do next for release plan 35011? My setup has already been
+      verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+            - azsdk_create_release_plan
+            - azsdk_link_sdk_pull_request_to_release_plan
+            - azsdk_verify_setup
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            The API spec for this release plan is approved (IsSpecApproved is
+            true) and no SDK has been generated yet (SDKInfo is empty). Does
+            the final assistant message correctly tell the user the next step
+            is to generate the SDK(s), WITHOUT claiming the spec still needs
+            review?
+
+  - name: next-step-sdk-pending-release
+    environment: *releasePlanSkills
+    prompt: |
+      What's left to do for release plan 35012? My setup has already been
+      verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_create_release_plan
+            - azsdk_verify_setup
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            The SDKs for this release plan have already been generated (each
+            SDKInfo entry has GenerationStatus "Completed" and a
+            SdkPullRequestUrl) but not released (ReleaseStatus "NotReleased").
+            Does the final assistant message correctly tell the user the
+            next step is to review/merge the open SDK pull requests and
+            release them, WITHOUT claiming SDK generation still needs to
+            happen?
+
+  - name: next-step-fully-released
+    environment: *releasePlanSkills
+    prompt: |
+      Is there anything left to do for release plan 35013? My setup has
+      already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+            - azsdk_create_release_plan
+            - azsdk_verify_setup
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Every SDKInfo entry on this release plan already has ReleaseStatus
+            "Released". Does the final assistant message correctly tell the
+            user the release is complete and there is no further action
+            needed, WITHOUT recommending SDK generation or release steps?

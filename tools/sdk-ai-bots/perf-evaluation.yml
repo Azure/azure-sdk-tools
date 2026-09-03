@@ -81,11 +81,15 @@ extends:
                           nohup python agents/chat_agent/init.py </dev/null > "$EVAL_CACHE/agent.log" 2>&1 &
                           sleep 20
                           lsof -ti:8088 || { echo "##[error]local agent failed to start"; cat "$EVAL_CACHE/agent.log" || true; exit 1; }
+                          echo "##[section]Local agent started successfully at http://localhost:8088"
+                        else
+                          echo "##[section]Using the deployed Foundry agent (remote mode)"
                         fi
 
                         nohup python server.py </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
                         sleep 20
                         lsof -ti:8089 || { echo "##[error]backend server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
+                        echo "##[section]Backend server started successfully at http://localhost:8089"
                     env:
                       AGENT_MODE: ${{ parameters.agentMode }}
                       LOCAL_AGENT_ENDPOINT: http://localhost:8088

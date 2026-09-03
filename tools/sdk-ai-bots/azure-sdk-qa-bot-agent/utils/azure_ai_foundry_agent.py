@@ -183,7 +183,7 @@ class HostedAgentClient:
                     return None, _build_content_safety_response()
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
-                    set_stateless_session_id(None)
+                    set_stateless_session_id(agent_ref["name"], None)
                     agent_session_id = None
                     continue
                 logger.warning(

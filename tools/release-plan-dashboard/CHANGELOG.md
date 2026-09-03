@@ -5,6 +5,7 @@
 ### Features Added
 
 - **Sticky filters** — Filter and month selections now persist across page reloads and navigation, so the dashboard restores your previous filter state automatically
+- **Review-ready SDK pull requests** — The review-required view now excludes draft SDK pull requests and release plans whose API specification pull request has not been merged
 
 ## 1.0.0-dev.1
 

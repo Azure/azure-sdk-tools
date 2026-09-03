@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from json import JSONDecodeError
 from typing import Any
 
 from openai import (
@@ -22,6 +23,7 @@ from openai import (
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
+from openai.types.responses import ResponseOutputMessage, ResponseOutputText
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 
 from utils.azure_ai_foundry import set_stateless_session_id
@@ -43,9 +45,57 @@ STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
 STREAM_EVENT_RESPONSE_FAILED = "response.failed"
 STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
+# -- Content safety --------------------------------------------------------
+CONTENT_SAFETY_MESSAGE = (
+    "I can't help with this request because it was flagged by "
+    "our content safety policy. Please rephrase your message and try again."
+)
 
 class EmptyAgentResponseError(Exception):
     """Raised when the agent completes with empty ``output_text`` (retryable)."""
+
+
+class ConversationBrokenError(Exception):
+    """Raised when a threaded conversation can no longer produce a response."""
+
+
+def _is_content_filter_error(ex: BadRequestError) -> bool:
+    """Return True when a ``BadRequestError`` was caused by a content-safety block."""
+    if getattr(ex, "code", None) == "content_filter":
+        return True
+    body = getattr(ex, "body", None)
+    if isinstance(body, dict):
+        error = body.get("error") or {}
+        if isinstance(error, dict):
+            return (
+                error.get("code") == "content_filter"
+                or error.get("type") == "content_safety_error"
+            )
+    return False
+
+
+def _build_content_safety_response() -> OpenAIResponse:
+    """Build a synthetic completed response carrying the content-safety message."""
+    text = ResponseOutputText.model_construct(
+        type="output_text",
+        text=CONTENT_SAFETY_MESSAGE,
+        annotations=[],
+    )
+    message = ResponseOutputMessage.model_construct(
+        id="content-filter",
+        type="message",
+        role="assistant",
+        status="completed",
+        content=[text],
+    )
+    return OpenAIResponse.model_construct(
+        id="content-filter",
+        status="completed",
+        output=[message],
+        error=None,
+        incomplete_details=None,
+        usage=None,
+    )
 
 
 class HostedAgentClient:
@@ -120,6 +170,17 @@ class HostedAgentClient:
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
+                # Content-safety blocks are deterministic; retrying will not
+                # help, so return a synthetic response with a safe message.
+                if isinstance(ex, BadRequestError) and _is_content_filter_error(ex):
+                    logger.error(
+                        "Agent request blocked by content safety policy: "
+                        "conversation=%s, error=%s",
+                        agent_conversation_id,
+                        ex,
+                        exc_info=True,
+                    )
+                    return None, _build_content_safety_response()
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
                     set_stateless_session_id(None)
@@ -157,13 +218,25 @@ class HostedAgentClient:
                     self._max_retries,
                     agent_conversation_id,
                 )
-            except (EmptyAgentResponseError, RuntimeError) as ex:
-                # ``RuntimeError`` = stream ended without a completed event;
-                # both are transient and retryable.
+            except EmptyAgentResponseError as ex:
+                last_error = ex
+                await self.close_stream(stream)
+                if agent_conversation_id:
+                    raise ConversationBrokenError(str(ex)) from ex
+                logger.warning(
+                    "Agent returned no usable response (attempt %d/%d): "
+                    "conversation=%s, error=%s",
+                    attempt,
+                    self._max_retries,
+                    agent_conversation_id,
+                    ex,
+                )
+            except RuntimeError as ex:
                 last_error = ex
                 await self.close_stream(stream)
                 logger.warning(
-                    "Agent returned no usable response (attempt %d/%d): "
+                    "Agent invocation failed with a retryable runtime error "
+                    "(attempt %d/%d): "
                     "conversation=%s, error=%s",
                     attempt,
                     self._max_retries,
@@ -176,7 +249,7 @@ class HostedAgentClient:
             await asyncio.sleep(self._retry_delay * attempt)
 
         raise RuntimeError(
-            f"Failed to obtain a non-empty agent response after "
+            f"Failed to obtain an agent response after "
             f"{self._max_retries} attempts (conversation={agent_conversation_id})"
         ) from last_error
 
@@ -212,29 +285,52 @@ class HostedAgentClient:
         stream,
         agent_conversation_id: str | None,
     ) -> OpenAIResponse:
-        """Consume a responses stream until the ``response.completed`` event."""
+        """Consume a responses stream until the ``response.completed`` event.
+
+        If Foundry returns malformed SSE after exposing a response ID, recover
+        the completed result from storage instead of rerunning the agent.
+        """
         response: OpenAIResponse | None = None
+        latest_response: OpenAIResponse | None = None
         last_event_type: str | None = None
-        async for event in stream:
-            logger.debug("Stream event: type=%s, content=%s", event.type, event)
-            last_event_type = event.type
-            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                response = event.response
-                break
-            if event.type in (
-                STREAM_EVENT_RESPONSE_FAILED,
-                STREAM_EVENT_RESPONSE_INCOMPLETE,
-            ):
-                failed = getattr(event, "response", None)
-                logger.error(
-                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
-                    "conversation=%s",
-                    event.type,
-                    getattr(failed, "error", None),
-                    getattr(failed, "incomplete_details", None),
-                    getattr(failed, "status", None),
-                    agent_conversation_id,
-                )
+        try:
+            async for event in stream:
+                logger.debug("Stream event: type=%s, content=%s", event.type, event)
+                last_event_type = event.type
+                event_response = getattr(event, "response", None)
+                if event_response is not None:
+                    latest_response = event_response
+                if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                    response = event.response
+                    break
+                if event.type in (
+                    STREAM_EVENT_RESPONSE_FAILED,
+                    STREAM_EVENT_RESPONSE_INCOMPLETE,
+                ):
+                    failed = getattr(event, "response", None)
+                    logger.error(
+                        "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
+                        "conversation=%s",
+                        event.type,
+                        getattr(failed, "error", None),
+                        getattr(failed, "incomplete_details", None),
+                        getattr(failed, "status", None),
+                        agent_conversation_id,
+                    )
+        except JSONDecodeError as ex:
+            if latest_response is None:
+                raise RuntimeError(
+                    "Agent stream contained malformed SSE before a response ID "
+                    "was observed"
+                ) from ex
+            logger.warning(
+                "Agent stream contained malformed SSE; retrieving stored response: "
+                "response=%s, conversation=%s, error=%s",
+                latest_response.id,
+                agent_conversation_id,
+                ex,
+            )
+            return await self._poll_response(latest_response)
 
         if response is None:
             raise RuntimeError(

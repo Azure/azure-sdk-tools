@@ -72,7 +72,6 @@
         plane: "",
         month: "",
         prLang: "",
-        prStatus: "",
         tag: "",
         language: "",
       },
@@ -780,7 +779,6 @@
     month: { key: "month", default: "" },
     sort: { key: "sort", default: "month" },
     prLang: { key: "prLang", default: "" },
-    prStatus: { key: "prStatus", default: "" },
     tag: { key: "tag", default: "" },
     language: { key: "language", default: "" },
   };
@@ -1799,17 +1797,22 @@
     }
     if (specPath)
       html += `<div class="detail-row"><strong>Spec Project Path:</strong> ${esc(specPath)}</div>`;
-    // Work item link — show as link for PMs, plain text for others
+    // Release plan link — show as link for PMs, plain text for others
     {
+      const planId = p.releasePlanId || p.id;
       const label = p.releasePlanId
         ? `#${esc(String(p.releasePlanId))}`
         : `WI ${esc(String(p.id))}`;
       if (currentUserIsPM) {
+        const dashboardUrl = `/?releasePlan=${encodeURIComponent(planId)}`;
         const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
-        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a> (<a href="${esc(wiUrl)}" target="_blank" rel="noopener">ADO work item ${esc(String(p.id))}</a>) <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
       } else {
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
+    }
+    if (p.apiSpec && p.apiSpec.apiVersion) {
+      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK Generated From API Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
     }
     if (
       p.typeSpecPath &&
@@ -2586,7 +2589,6 @@
         store().filters.month,
         store().filters.sort,
         store().filters.prLang,
-        store().filters.prStatus,
         store().filters.tag,
         store().filters.language,
         store().activeTab,
@@ -2724,9 +2726,12 @@
 
     const planeFilter = getGlobalPlaneFilter();
     const monthFilter = getMonthFilter();
-    let filtered = planeFilter
-      ? plans.filter((p) => classifyPlane(p) === planeFilter)
+    const filter = store().filters.search.toLowerCase();
+    let filtered = filter
+      ? plans.filter((p) => matchesFilter(p, filter))
       : plans;
+    if (planeFilter)
+      filtered = filtered.filter((p) => classifyPlane(p) === planeFilter);
     if (monthFilter)
       filtered = filtered.filter(
         (p) =>
@@ -3009,6 +3014,15 @@
     return "";
   }
 
+  function hasMergedSpecPr(plan) {
+    const specStatus = (plan.apiReadiness || "").toLowerCase();
+    return specStatus === "completed" || specStatus === "merged";
+  }
+
+  function isReviewRequiredSdkPrStatus(status) {
+    return (status || "").toLowerCase() === "open";
+  }
+
   // Extract candidate PRs without filtering by GitHub status (status fetched progressively).
   function extractCandidatePRs(plans) {
     const seen = new Set();
@@ -3017,6 +3031,7 @@
       if (!p.languages) continue;
       if (p.state === "Finished") continue;
       if (isPrivatePreviewPlan(p)) continue;
+      if (!hasMergedSpecPr(p)) continue;
       for (const [lang, l] of Object.entries(p.languages)) {
         if (isLangExcluded(l.exclusionStatus)) continue;
         if (!l.sdkPrUrl) continue;
@@ -3079,8 +3094,7 @@
   // (server-side enrichment), without making any GitHub requests.
   function buildPRListFromEmbeddedStatuses(candidates) {
     for (const c of candidates) {
-      const stLower = (c.prStatus || "").toLowerCase();
-      if (stLower === "open" || stLower === "draft") {
+      if (isReviewRequiredSdkPrStatus(c.prStatus)) {
         c._statusLoaded = true;
         getPrs().push(c);
       }
@@ -3155,8 +3169,7 @@
         if (!st) continue;
         c._statusLoaded = true;
         c.prStatus = st;
-        const stLower = st.toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(st)) {
           getPrs().push(c);
           needsRender = true;
         }
@@ -3173,8 +3186,7 @@
     // Final pass: add any candidates whose URL wasn't fetched (network error) if they look open
     for (const c of candidates) {
       if (!c._statusLoaded) {
-        const stLower = (c.prStatus || "").toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(c.prStatus)) {
           getPrs().push(c);
         }
       }
@@ -3187,17 +3199,12 @@
 
   function filterPRs(prs) {
     const langFilter = store().filters.prLang || "";
-    const statusFilter = store().filters.prStatus || "";
     const textFilter = store().filters.search.toLowerCase();
     const planeFilter = getGlobalPlaneFilter();
 
     return prs.filter((pr) => {
       if (planeFilter && pr.plane !== planeFilter) return false;
       if (langFilter && pr.language !== langFilter) return false;
-      if (statusFilter) {
-        const st = (pr.prStatus || "").toLowerCase();
-        if (st !== statusFilter) return false;
-      }
       if (textFilter) {
         const searchable =
           `${pr.language} ${pr.repo} ${pr.prNumber} ${pr.packageName} ${pr.planTitle} ${pr.releasePlanId} ${pr.prStatus}`.toLowerCase();

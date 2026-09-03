@@ -29,10 +29,10 @@ This includes but is not limited to:
 
 ## MCP Tools
 
-| Tool                                                   | Purpose                                                   |
-| ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (General Authoring only) |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
+| Tool                                                   | Purpose                                                                                                                                                                                                              |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate a grounded authoring plan for requests **not** covered by the eight cases in [reference-document-links.md](references/reference-document-links.md). Covered cases use agentic search (`web_fetch`) instead. |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                                                                                                                                                                                    |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
 
@@ -75,7 +75,9 @@ Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties 
 
 ### Step 5: Validate
 
-See [validation.md](references/validation.md). Run 5.1 (TypeSpec validation) and 5.2 (`tsp compile .`) always; 5.3 (example verification) for API version evolution only.
+See [validation.md](references/validation.md). Always run 5.1 general validation (5.1.1 TypeSpec validation and 5.1.2 `tsp compile .`); run 5.2 case-specific validation whenever its case matches.
+
+**Output the validation results as a checklist.** Report one line per check, each marked ✅ (pass) or ❌ (fail) with a short note. Fix every ❌ and re-run until all checks pass. For API Versioning (Case 3) the checklist **must** cover every §5.2 Case 3 check — including: the new version's `examples/` folder exists; no example folder remains for a version absent from the `Versions` enum; no decorator references a version absent from the enum; every carried-over feature is present with its decorators rebased onto the new version (not reverted); every excluded feature is fully removed.
 
 ### Step 6: Output Reference Links
 

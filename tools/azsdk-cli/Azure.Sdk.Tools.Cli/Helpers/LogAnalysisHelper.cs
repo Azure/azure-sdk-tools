@@ -1,10 +1,12 @@
-using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public interface ILogAnalysisHelper
 {
     Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywords, int? beforeLines, int? afterLines, CancellationToken ct);
+
+    Task<List<LogEntry>> AnalyzeLogContent(TextReader reader, List<string>? keywords, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default);
 }
 
 public class Keyword
@@ -110,7 +112,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath, ct: ct);
     }
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default)
+    public async Task<List<LogEntry>> AnalyzeLogContent(TextReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default)
     {
         var keywords = defaultErrorKeywords;
         if (keywordOverrides?.Count > 0)

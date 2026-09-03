@@ -20,11 +20,12 @@
         "19:e0c83381ddd141d08e5ebea53fd8366c@thread.tacv2",
         "19:2f1cb90ce78a46678b203709167db8c1@thread.tacv2",
         "19:975533cdd084485ca305739f16b30507@thread.tacv2",
-        "19:453ec446a66446589d764132f5cebb00@thread.tacv2"
+        "19:453ec446a66446589d764132f5cebb00@thread.tacv2",
+        "19:037246b9968445edb3a23612ea44524d@thread.tacv2"
       ]
     },
     "serverBaseUrl": {
-      "value": "https://azuresdkqabot-dev-serve-agent-bxdnc6b4crcuembs.westus2-01.azurewebsites.net"
+      "value": "https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net"
     },
     "serverAudience": {
       "value": "830f1656-8b36-4e8e-9781-87ccdd038644"

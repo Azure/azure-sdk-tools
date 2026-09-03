@@ -20,6 +20,7 @@ parameters:
     default: chat_agent
     values:
       - chat_agent
+      - chatbot_evolution_agent
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -66,6 +67,11 @@ extends:
                   inlineScript: |
                     set -euo pipefail
 
+                    if [ "${{ parameters.agentName }}" = "chatbot_evolution_agent" ] && [ "${{ parameters.environment }}" != "prod" ]; then
+                      echo "chatbot_evolution_agent is production-only."
+                      exit 1
+                    fi
+
                     # Suppress Azure CLI welcome banner on fresh CI agents.
                     export AZURE_CORE_WELCOME_MESSAGE=false
                     az version > /dev/null 2>&1 || true
@@ -84,8 +90,9 @@ extends:
                       --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
-                  AI_FOUNDRY_ACCOUNT_NAME: $(AI_FOUNDRY_ACCOUNT_NAME)
+                  AI_FOUNDRY_RAI_POLICY_ID: $(AI_FOUNDRY_RAI_POLICY_ID)
                   AI_FOUNDRY_PROJECT_NAME: $(AI_FOUNDRY_PROJECT_NAME)
                   ACR_NAME: $(ACR_NAME)
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
+                  CANDIDATE_APPCONFIG_ENDPOINT: $(CANDIDATE_APPCONFIG_ENDPOINT)
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

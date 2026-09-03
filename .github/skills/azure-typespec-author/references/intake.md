@@ -7,18 +7,18 @@
 1. Run [agentic search](agentic-search.md) using the Step 1 result and the user's request.
 2. Identify the case from the table below and gather more information if case matches. If no case matches, skip Step 2.2.
 
-| Case | Name                      | Description                                            | Service Type     |
-| ---- | ------------------------- | ------------------------------------------------------ | ---------------- |
-| 1    | Add Resource Type         | Define a new ARM resource with operations              | ARM              |
-| 2    | Add Resource Operations   | Add CRUD or custom actions on an existing resource     | ARM              |
-| 3    | API Version Evolution     | Add, bump, or promote an API version (preview/stable)  | ARM / Data-plane |
-| 4    | Add Data-Plane Operations | Add CRUD or custom operations on a data-plane resource | Data-plane       |
+| Case | Name                       | Description                                            | Service Type     |
+| ---- | -------------------------- | ------------------------------------------------------ | ---------------- |
+| 1    | Add ARM Resource Type      | Define a new ARM resource with operations              | ARM              |
+| 2    | Add ARM Resource Operation | Add CRUD or custom actions on an existing resource     | ARM              |
+| 3    | API Versioning             | Add, bump, or promote an API version (preview/stable)  | ARM / Data-plane |
+| 4    | Add Data-Plane Operations  | Add CRUD or custom operations on a data-plane resource | Data-plane       |
 
 ---
 
 ## 2.2 Case-Specific Intake
 
-### Case 1 — Add Resource Type (ARM)
+### Case 1 — Add ARM Resource Type
 
 Collect: target API version, resource name (PascalCase), hierarchy (top-level or nested + parent), properties (name, type, required/optional).
 
@@ -27,7 +27,7 @@ Defaults: top-level → `TrackedResource`, child → `ProxyResource`. Operations
 > Use `createOrReplace` (not `createOrUpdate`). Use `ArmCustomPatch` for PATCH.
 > Top-level tracked resources MUST have `listByResourceGroup` and `listBySubscription`.
 
-### Case 2 — Add Resource Operations (ARM)
+### Case 2 — Add ARM Resource Operation
 
 Collect: target resource, operation type (CRUD or custom), operation name (custom actions), request/response models (custom actions).
 
@@ -36,7 +36,7 @@ Defaults: never async → GET, LIST, HEAD. Default async → PUT, DELETE. Defaul
 > Use `createOrReplace` (not `createOrUpdate`). Use `ArmCustomPatch` for PATCH.
 > For async POST, use ARM combined headers: `LroHeaders = ArmCombinedLroHeaders<FinalResult = ExportResult>`.
 
-### Case 3 — API Version Evolution (ARM / Data-plane)
+### Case 3 — API Versioning
 
 Collect from user:
 

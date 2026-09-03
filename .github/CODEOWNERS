@@ -40,7 +40,6 @@
 /tools/github-event-processor/          @benbp @jsquire
 /tools/github-team-user-store/          @danieljurek
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
-/tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803 @jeremymeng
 /tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
@@ -69,12 +68,15 @@
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
 /tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
-/.github/skills/                        @azure/azsdk-cli
+/.github/skills/                        @azure/azsdk-cli @helen229 @praveenkuttappan @azure/azure-sdk-eng
 /.github/skills/azure-typespec-author/  @azure/azsdk-cli @catalinaperalta
 /eng/pipelines/azure-typespec-author-eval/                      @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark-no-skill.yml     @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/templates/steps/typespec-author-eval-*.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
+/eng/common/scripts/eval/               @helen229 @praveenkuttappan @azure/azure-sdk-eng
+/eng/skill-eval/                        @helen229 @praveenkuttappan @azure/azure-sdk-eng
+/evals/                                 @helen229 @praveenkuttappan @azure/azure-sdk-eng
 
 
 ###########
@@ -95,7 +97,7 @@
 # APIView parsers
 ###########
 /tools/apiview/                           @tjprescott @praveenkuttappan
-/tools/apiview/emitters/typespec-apiview/ @tjprescott
+/tools/apiview/emitters/typespec-apiview/ @timotheeguerin
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
@@ -103,7 +105,7 @@
 /src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
 /packages/python-packages/apiview-copilot/ @tjprescott
 /packages/python-packages/*stub*/         @l0lawrence
-/src/go/                                  @jhendrixMSFT @chlowell @RickWinter
+/src/go/                                  @jhendrixMSFT @RickWinter
 
 ###########
 # Pylint checkers
@@ -118,6 +120,7 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
 /tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index      @lirenhe @chunyu3 @JiaqiZhang-Dev
 
 # Add owners for notifications for specific pipelines
 /eng/common/pipelines/codeowners-linter.yml        @danieljurek

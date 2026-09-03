@@ -50,7 +50,7 @@ metadata:
 # graders. Picked up by the `scenarios-live` / `nightly` suite via folder.
 environment: azsdk-mcp-live
 
-config:
+defaults:
   runs: 1
   timeout: 30m
   model: gpt-5.4
@@ -101,6 +101,11 @@ stimuli:
     constraints:
       max_turns: 20
       max_tokens: 30000
+    rubric:
+      - The final assistant message states a numeric DevOps work-item ID for the created or confirmed release plan.
+      - The final assistant message states a GitHub pull request URL under github.com/Azure/azure-sdk-for-* that was linked to that release plan.
+    # Ordering (create -> get -> generate -> link) is enforced by the
+    # `turn:`-scoped graders below, so vally#453 no longer blocks it here.
     # TODO: assert args (serviceTreeId / productTreeId / typeSpecProjectPath / workItemId)
     #   — blocked on https://github.com/microsoft/vally/issues/454 (tool-calls grader generic args:).
     graders:

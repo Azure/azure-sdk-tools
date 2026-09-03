@@ -34,7 +34,15 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
-        "permissions, Azure SDK Tools Agent usage, and legacy Release Planner guidance."
+        "permissions, Azure SDK Tools Agent usage, and release plan creation, status, "
+        "readiness, lifecycle, and troubleshooting."
+    ),
+    TenantID.AZSDK_TOOLS_AGENT_QA_BOT: (
+        "Azure SDK Tools Agent (azsdk CLI/MCP): agent and MCP server setup and "
+        "reliability, tool capabilities, internal agent failures, and authoring azsdk "
+        "CLI tools and skills. Triage errors surfaced by the Agent, but use the "
+        "relevant specialist skill when the failing layer is a downstream TypeSpec, "
+        "language SDK, build, test, or pipeline."
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: (
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "
@@ -43,6 +51,10 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
         "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
         "migration from OpenAPI, validation, tspconfig."
+    ),
+    TenantID.TYPESPEC_EMITTER_QA_BOT: (
+        "TypeSpec emitter framework (EF v2) and Alloy framework guidance: "
+        "emitter architecture, implementation patterns, and sample references."
     ),
     TenantID.PYTHON_CHANNEL_QA_BOT: (
         "Azure Python SDK: code generation, tsp-client, validation, testing, "

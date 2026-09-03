@@ -25,6 +25,7 @@ from models.knowledge import KnowledgeSource, _trim_file_format
 
 class TenantID(str, Enum):
     TYPESPEC_CHANNEL_QA_BOT = "typespec_channel_qa_bot"
+    TYPESPEC_EMITTER_QA_BOT = "typespec_emitter_qa_bot"
     PYTHON_CHANNEL_QA_BOT = "python_channel_qa_bot"
     DOTNET_CHANNEL_QA_BOT = "dotnet_channel_qa_bot"
     GOLANG_CHANNEL_QA_BOT = "golang_channel_qa_bot"
@@ -34,6 +35,7 @@ class TenantID(str, Enum):
     AZURE_SDK_ONBOARDING = "azure_sdk_onboarding"
     AZURE_TYPESPEC_AUTHORING = "azure_typespec_authoring"
     API_SPEC_REVIEW_BOT = "api_spec_review_bot"
+    AZSDK_TOOLS_AGENT_QA_BOT = "azsdk_tools_agent_qa_bot"
     AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
 
 
@@ -52,6 +54,10 @@ SRC_STATIC_TYPESPEC_MIGRATION_DOCS = "static_typespec_migration_docs"
 SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING = "static_typespec_to_swagger_mapping"
 SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB = "typespec-azure-resource-manager-lib"
 SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS = "typespec_azure_providerhub_docs"
+
+# -- Emitter framework (EF v2) / Alloy --
+SRC_ALLOY_FRAMEWORK_DOCS = "alloy_framework_docs"
+SRC_ALLOY_FRAMEWORK_SAMPLES = "alloy_framework_samples"
 
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
@@ -78,12 +84,12 @@ SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
 # -- SDK tools --
 SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+SRC_AZSDK_CLI_DOCS = "azsdk_cli_docs"
 
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
 SRC_STATIC_ARM_DOCS = "static_arm_docs"
-
 
 # ---------------------------------------------------------------------------
 # Global knowledge source registry
@@ -157,6 +163,23 @@ _register(
         name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
         description="Documentation for Azure TypeSpec ProviderHub.",
         base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/",
+    ),
+    # -- Emitter framework (EF v2) / Alloy --
+    KnowledgeSource(
+        name=SRC_ALLOY_FRAMEWORK_DOCS,
+        description="Guides for the Alloy code generation framework that the TypeSpec emitter framework (EF v2) is built on: component model, reactivity, symbols and references, source file/directory rendering, formatting, and debugging emitter output. Search this source for questions about writing a new TypeSpec emitter with alloy or EF v2.",
+        link_fn=lambda title: "https://alloy-framework.github.io/alloy/"
+        + (
+            ""
+            if _trim_file_format(title.replace("#", "/")) == "index"
+            else _trim_file_format(title.replace("#", "/"))
+        ),
+    ),
+    KnowledgeSource(
+        name=SRC_ALLOY_FRAMEWORK_SAMPLES,
+        description="Full source code of the official Alloy framework sample projects, including an end-to-end client emitter, a basic project, a scaffold generator, and Go/Python emitter examples. Use these as reference implementations when someone asks how to start building an emitter with alloy or the emitter framework.",
+        base_url="https://github.com/alloy-framework/alloy/tree/main/samples/",
+        trim_format=True,
     ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
@@ -279,6 +302,11 @@ _register(
     KnowledgeSource(
         name=SRC_AZURE_SDK_TOOLS_DOCS,
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
+        base_url="https://github.com/Azure/azure-sdk-for-js/blob/main/",
+    ),
+    KnowledgeSource(
+        name=SRC_AZSDK_CLI_DOCS,
+        description="Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs, and custom-agent and skills authoring guidelines for the Azure SDK Tools Agent. Use for questions about what the agent/CLI can do, MCP tool behavior, design/architecture, and agent/skill development.",
         base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
 )
@@ -304,7 +332,8 @@ class TenantConfig:
     ``sources`` is an ordered list of :class:`KnowledgeSource` objects
     available to this tenant.  Each source carries its own description and
     default filter; tenants can override a source's filter via
-    ``source_filter``.
+    ``source_filter``. ``enable_wiki_cross_document_pages`` controls access to
+    synthesized entity and concept pages, which are not knowledge sources.
     """
 
     display_name: str = ""
@@ -316,6 +345,7 @@ class TenantConfig:
     source_filter: dict[str, str] = field(default_factory=dict)
     qa_guideline_file: str = ""
     enable_routing: bool = False
+    enable_wiki_cross_document_pages: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -516,13 +546,33 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
     ),
+    TenantID.TYPESPEC_EMITTER_QA_BOT: TenantConfig(
+        display_name="Alloy Framework (Test)",
+        skill_name="alloy-framework-test",
+        scope="TypeSpec emitter framework (EF v2) and Alloy framework implementation guidance for Azure SDK developers.",
+        topics=[
+            "Getting started with the Alloy framework for TypeSpec emitters",
+            "Emitter framework (EF v2) architecture and implementation patterns",
+            "Reference implementations from official Alloy sample emitters",
+        ],
+        sources=_sources(
+            SRC_TYPESPEC_DOCS,
+            SRC_ALLOY_FRAMEWORK_DOCS,
+            SRC_ALLOY_FRAMEWORK_SAMPLES,
+        ),
+        source_filter={
+            SRC_TYPESPEC_DOCS: "search.ismatch('/.*extending-typespec.*emitter-framework.*/', 'title', 'full', 'any')",
+        },
+        qa_guideline_file="tenants/typespec.md",
+    ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
         skill_name="sdk-onboarding",
-        scope="Azure API specification & SDK onboarding process, SDK lifecycle, Azure MCP, and retirement processes.",
+        scope="Azure API specification and SDK onboarding, release plan lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
             "Permission issues for specification repo or SDK repo access, workflow visibility",
+            "Release plan creation, status, readiness, lifecycle, and troubleshooting",
             "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
             "Service, API and SDK deprecation guidance",
             "API documentation publishing",
@@ -579,6 +629,29 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,
+    ),
+    TenantID.AZSDK_TOOLS_AGENT_QA_BOT: TenantConfig(
+        display_name="AzSDK Tools Agent",
+        skill_name="azsdk-tools-agent",
+        scope=(
+            "Azure SDK Tools Agent (azsdk CLI/MCP) usage and troubleshooting: agent/MCP "
+            "setup and reliability, tool capabilities, and authoring azsdk CLI tools and skills."
+        ),
+        topics=[
+            "azsdk CLI / MCP server setup, connection, and reliability (mcp.json, VS Code / Copilot CLI, cold-start/timeout)",
+            "Azure SDK Tools Agent capabilities and tool usage (generation, validation, review, release)",
+            "Triage errors reported by the agent and route downstream failures to the appropriate specialist",
+            "Authoring azsdk CLI tools and skills (custom agents, CLI command and skill guidelines)",
+        ],
+        exclusions=[
+            "Release plan creation, status, readiness, and lifecycle questions — route to azure_sdk_onboarding; issues using or debugging an azsdk release-plan tool remain in this tenant",
+        ],
+        sources=_sources(
+            SRC_AZSDK_CLI_DOCS,
+            SRC_AZURE_SDK_DOCS_ENG,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
+        ),
+        qa_guideline_file="tenants/azsdk_tools_agent.md",
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",

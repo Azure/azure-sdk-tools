@@ -5,14 +5,13 @@ description: |
   conversations are already covered by multi-turn-release-workflows.eval.yaml;
   this file adds the pipeline domain). Each stimulus sends its `turns`
   sequentially to the SAME agent session (Vally session-resume,
-  @microsoft/vally-cli 0.7.0 / microsoft/vally#495), so the second turn must
-  build on the diagnosis established in the first turn rather than re-deriving
-  it from scratch.
+  microsoft/vally#495), so the second turn must build on the diagnosis
+  established in the first turn rather than re-deriving it from scratch.
 
   Both `azsdk-common-pipeline-analysis` and `azsdk-common-pipeline-fixer` are
   mounted together from turn 0 so the turn-to-turn skill switch is a genuine
   routing choice, not an artifact of only one skill being available (see
-  anti-pattern A7 in skill-eval-authoring/references/anti-patterns.md).
+  anti-pattern A7 in .github/skills/eval-authoring/README.md).
 
     1. diagnose-then-fix     — diagnose a failed build, then apply the fix once
                                 the user confirms; verifies the skill switch
@@ -48,7 +47,7 @@ stimuli:
   - name: diagnose-then-fix-conversation
     environment: &pipelineMultiTurnEnv
       # Both skills mounted from turn 0 so the turn-1 switch to the fixer is a
-      # genuine routing choice. Paths are relative to this eval file (4 levels
+      # genuine routing choice. Paths are relative to this eval file (3 levels
       # up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-pipeline-analysis

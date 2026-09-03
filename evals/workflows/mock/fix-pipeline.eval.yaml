@@ -23,7 +23,7 @@ environment: azsdk-mcp-mock
 tags:
   area: pipeline
 
-config:
+defaults:
   runs: 1
   timeout: 5m
   model: gpt-5.4
@@ -66,6 +66,8 @@ stimuli:
     constraints:
       max_turns: 15
       max_tokens: 16000
+    rubric:
+      - The implementation adds both the 2026-10-06 and 2026-12-06 cases to TryGetServiceVersion and maps them to V2026_10_06 and V2026_12_06 respectively.
     graders:
       - type: completed
       - type: skill-invocation
@@ -79,7 +81,7 @@ stimuli:
             - name: azsdk_package_run_check
             - name: azsdk_package_run_tests
           disallowed:
-            - name: '^bash$'
+            - name: "^bash$"
               command: '(?i)(^|[\s;&|])dotnet\s+(test|build|msbuild|run)\b'
       # Both switch cases must be present in the real edited file. The test
       # iterates every enum value, so a one-case fix (only 2026-10-06) leaves
@@ -94,7 +96,7 @@ stimuli:
           pattern: '(?i)case\s+"2026-12-06"'
       - type: output-not-matches
         config:
-          pattern: '(?i)(retry the pipeline|not fixable by (a )?code|unfixable|infrastructure issue)'
+          pattern: "(?i)(retry the pipeline|not fixable by (a )?code|unfixable|infrastructure issue)"
       - type: prompt
         config:
           model: gpt-5.4

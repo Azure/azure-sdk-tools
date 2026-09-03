@@ -27,7 +27,7 @@
     "serverBaseUrl": {
       "type": "string",
       "metadata": {
-        "description": "Base URL of the agent server (e.g. https://azuresdkqabot-dev-serve-agent-xxx.azurewebsites.net)"
+        "description": "Base URL of the agent server (e.g. https://azuresdkqabot-dev-server-xxx.azurewebsites.net)"
       }
     },
     "serverAudience": {

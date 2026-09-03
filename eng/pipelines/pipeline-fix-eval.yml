@@ -1,0 +1,271 @@
+# Nightly evaluation of whether GitHub Copilot's fixes for failing Azure SDK pipelines were
+# adopted into the original pull request and took the pipeline from failure to success.
+#
+# For each repository the azsdk CLI evaluator returns dated PR-level evaluations. Each date is
+# uploaded as durable history, then all history is consolidated into two static assets:
+#
+#     $web/pipeline-evaluation/<repo>/<YYYY-MM-DD>.json
+#     $web/pipeline-evaluation/dashboard-data.js
+#     $web/pipeline-evaluation/index.html
+#
+# Rerunning a date range overwrites the same repository/date blobs. The website code remains one
+# unchanged HTML file, while the complete disposable browser snapshot is replaced independently.
+#
+# The same files are also published as a pipeline artifact so a run can be inspected
+# without reaching for storage.
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "0 8 * * *"
+    displayName: Nightly Copilot pipeline-fix evaluation (08:00 UTC)
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: owner
+    displayName: GitHub repository owner
+    type: string
+    default: Azure
+  - name: repos
+    displayName: Repositories to evaluate
+    type: object
+    default:
+      - azure-sdk-for-net
+      - azure-sdk-for-python
+      - azure-sdk-for-java
+      - azure-sdk-for-js
+      - azure-sdk-for-go
+  - name: sinceDays
+    displayName: Look back this many days for merged PRs
+    type: number
+    default: 1
+  # The per-repository timeout is derived from this at runtime (see 'Evaluate each
+  # repository'), because template expressions have no arithmetic functions.
+  - name: jobTimeoutMinutes
+    displayName: Overall job timeout in minutes, shared evenly by the repositories
+    type: number
+    default: 120
+  - name: publishToBlob
+    displayName: Publish results to Azure Blob Storage
+    type: boolean
+    default: true
+
+variables:
+  # Root of the tree uploaded to the container; its layout IS the blob key layout.
+  - name: EvalArtifactDir
+    value: $(Build.ArtifactStagingDirectory)/pipeline-fix-eval
+  - name: DashboardHistoryDir
+    value: $(Agent.TempDirectory)/pipeline-fix-eval-history
+  - name: MetricsStorageAccount
+    value: azuresdkartifacts
+  - name: MetricsContainer
+    value: '$web'
+  - name: MetricsPrefix
+    value: pipeline-evaluation
+
+jobs:
+  - job: Evaluate
+    displayName: 'Evaluate Copilot pipeline fixes'
+    timeoutInMinutes: ${{ parameters.jobTimeoutMinutes }}
+    pool:
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
+    steps:
+      - checkout: self
+        fetchDepth: 1
+
+      # Exists before evaluation so the artifact step has a path even on early failure.
+      - script: mkdir -p $(EvalArtifactDir) $(DashboardHistoryDir)
+        displayName: 'Create evaluation directories'
+
+      - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+
+      # Mint a short-lived GitHub App installation token just before evaluation instead of
+      # relying on a manually rotated PAT from a variable group.
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - ${{ parameters.owner }}
+
+      - task: AzureCLI@2
+        displayName: 'Evaluate each repository'
+        inputs:
+          # Service connection whose SP can read azure-sdk DevOps builds. The AzureCLI@2
+          # task exports AZURESUBSCRIPTION_* + SYSTEM_ACCESSTOKEN, which the tool's
+          # AzurePipelinesCredential uses to get an Azure DevOps-scoped AAD token.
+          azureSubscription: 'opensource-api-connection'
+          scriptType: pscore
+          scriptLocation: scriptPath
+          scriptPath: $(Build.SourcesDirectory)/eng/scripts/Evaluate-PipelineFixes.ps1
+          arguments: >
+            -Owner "${{ parameters.owner }}"
+            -SinceDays ${{ parameters.sinceDays }}
+            -JobTimeoutMinutes ${{ parameters.jobTimeoutMinutes }}
+            -EvalArtifactDir "$(EvalArtifactDir)"
+            -MetricsPrefix "$(MetricsPrefix)"
+            -AzSdkPath "$(AZSDK)"
+        env:
+          REPOSITORIES_JSON: ${{ convertToJson(parameters.repos) }}
+          GITHUB_TOKEN: $(GH_TOKEN)
+
+      - task: AzureCLI@2
+        displayName: 'Upload current evaluations'
+        condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        retryCountOnTaskFailure: 2
+        inputs:
+          # The service connection's identity needs 'Storage Blob Data Contributor' on the
+          # account; --auth-mode login uses it instead of an account key.
+          azureSubscription: 'Azure SDK Artifacts'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
+
+            $reports = @(Get-ChildItem -Path '$(EvalArtifactDir)/$(MetricsPrefix)' -Filter '*.json' -Recurse -File)
+            if ($reports.Count -eq 0) {
+                throw 'No current evaluation reports were produced; nothing to upload.'
+            }
+            Write-Host "Uploading $($reports.Count) current evaluation report(s)."
+
+            az storage blob upload-batch `
+                --account-name '$(MetricsStorageAccount)' `
+                --destination '$(MetricsContainer)' `
+                --destination-path '$(MetricsPrefix)' `
+                --source '$(EvalArtifactDir)/$(MetricsPrefix)' `
+                --pattern '*/*.json' `
+                --content-type 'application/json' `
+                --auth-mode login `
+                --overwrite true
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to upload current evaluations with exit code $LASTEXITCODE"
+            }
+
+      - task: AzureCLI@2
+        displayName: 'Download evaluation history'
+        condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        retryCountOnTaskFailure: 2
+        inputs:
+          azureSubscription: 'Azure SDK Artifacts'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
+
+            az storage blob download-batch `
+                --account-name '$(MetricsStorageAccount)' `
+                --source '$(MetricsContainer)' `
+                --destination '$(DashboardHistoryDir)' `
+                --pattern '$(MetricsPrefix)/*/*.json' `
+                --auth-mode login `
+                --overwrite true
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to download evaluation history with exit code $LASTEXITCODE"
+            }
+
+      - task: PowerShell@2
+        displayName: 'Build dashboard data from evaluation history'
+        condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        inputs:
+          pwsh: true
+          targetType: inline
+          script: |
+            $ErrorActionPreference = 'Stop'
+
+            $historyRoot = '$(DashboardHistoryDir)/$(MetricsPrefix)'
+            $reports = @{}
+            $dates = @{}
+            foreach ($file in @(Get-ChildItem $historyRoot -Directory | ForEach-Object { Get-ChildItem $_.FullName -Filter '*.json' -File } | Sort-Object FullName)) {
+              $report = Get-Content -Raw $file.FullName | ConvertFrom-Json
+              if ([string]::IsNullOrWhiteSpace($report.owner) -or [string]::IsNullOrWhiteSpace($report.repo) -or $null -eq $report.dates) {
+                throw "Invalid evaluation history: $($file.FullName)"
+              }
+              $key = "$($report.owner)/$($report.repo)"
+              if (-not $dates.ContainsKey($key)) {
+                $dates[$key] = @{}
+                $reports[$key] = [ordered]@{ owner = $report.owner; repo = $report.repo; dates = @() }
+              }
+              foreach ($date in @($report.dates)) {
+                if ([string]::IsNullOrWhiteSpace($date.date) -or $null -eq $date.evaluations) {
+                  throw "Invalid dated evaluation: $($file.FullName)"
+                }
+                $dates[$key][$date.date] = $date
+              }
+            }
+            if ($reports.Count -eq 0) { throw "No evaluation history found under '$historyRoot'." }
+
+            foreach ($key in @($reports.Keys)) {
+              $reports[$key].dates = @($dates[$key].Values | Sort-Object date -Descending)
+            }
+            $snapshot = [ordered]@{
+              schemaVersion = 1
+              generatedAt = [DateTime]::UtcNow.ToString('o')
+              reports = @($reports.Values | Sort-Object owner, repo)
+            }
+            $json = $snapshot | ConvertTo-Json -Depth 100 -Compress
+            $outputDirectory = '$(EvalArtifactDir)/$(MetricsPrefix)'
+            New-Item -ItemType Directory -Force $outputDirectory | Out-Null
+            Set-Content `
+              -Path "$outputDirectory/dashboard-data.js" `
+              -Value "window.pipelineAnalysisData = $json;" `
+              -Encoding utf8
+            Copy-Item `
+              '$(Build.SourcesDirectory)/eng/templates/pipeline-evaluation.template.html' `
+              "$outputDirectory/index.html" `
+              -Force
+            Write-Host "Dashboard data -> $outputDirectory/dashboard-data.js ($($reports.Count) repositories)"
+
+      - task: AzureCLI@2
+        displayName: 'Publish dashboard assets'
+        condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        retryCountOnTaskFailure: 2
+        inputs:
+          azureSubscription: 'Azure SDK Artifacts'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
+
+            $dashboardDataPath = '$(EvalArtifactDir)/$(MetricsPrefix)/dashboard-data.js'
+            $dashboardHtmlPath = '$(EvalArtifactDir)/$(MetricsPrefix)/index.html'
+            if (-not (Test-Path $dashboardDataPath -PathType Leaf) -or
+                -not (Test-Path $dashboardHtmlPath -PathType Leaf)) {
+                throw 'Dashboard assets were not produced; nothing to upload.'
+            }
+            Write-Host 'Uploading dashboard data and unchanged HTML.'
+
+            az storage blob upload `
+              --account-name '$(MetricsStorageAccount)' `
+              --container-name '$(MetricsContainer)' `
+              --name '$(MetricsPrefix)/dashboard-data.js' `
+              --file $dashboardDataPath `
+              --content-type 'text/javascript' `
+              --auth-mode login `
+              --overwrite true
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to upload dashboard data with exit code $LASTEXITCODE"
+            }
+
+            az storage blob upload `
+              --account-name '$(MetricsStorageAccount)' `
+              --container-name '$(MetricsContainer)' `
+              --name '$(MetricsPrefix)/index.html' `
+              --file $dashboardHtmlPath `
+              --content-type 'text/html' `
+              --auth-mode login `
+              --overwrite true
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to upload dashboard HTML with exit code $LASTEXITCODE"
+            }
+
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: 'pipeline-fix-evaluation'
+          ArtifactPath: '$(EvalArtifactDir)'

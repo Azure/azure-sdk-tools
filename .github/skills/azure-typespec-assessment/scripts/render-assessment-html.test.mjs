@@ -1514,6 +1514,49 @@ test("shows nested response header changes without identical response summaries"
   );
 });
 
+test("renders version-reference-only operation changes as unchanged", () => {
+  const assessment = JSON.parse(
+    readFileSync(
+      new URL("../evals/assessments/42853/assessment.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const intent = assessment.dimensions.semantic.items.find((item) =>
+    item.operations?.some(
+      (operation) => operation.operationId === "BackupEngines_List",
+    ),
+  );
+  const operation = intent.operations.find(
+    (item) => item.operationId === "BackupEngines_List",
+  );
+
+  assert.deepEqual(
+    operationContractRows(
+      operation,
+      assessment.dimensions.rest.findings,
+      intent.id,
+    ),
+    [],
+  );
+
+  const html = renderAssessmentHtml(assessment);
+  const markerIndex = html.indexOf(
+    "<strong>BackupEngines_List</strong>",
+  );
+  const cardStart = html.lastIndexOf(
+    '<details class="operation">',
+    markerIndex,
+  );
+  const cardEnd = html.indexOf("</details>", markerIndex);
+  const card = html.slice(cardStart, cardEnd);
+  const unchanged =
+    "HTTP signature and represented payload contract unchanged.";
+
+  assert.equal((card.match(new RegExp(unchanged, "g")) ?? []).length, 2);
+  assert.doesNotMatch(card, /contract-change-table/);
+  assert.doesNotMatch(card, /REST contract changed: responses/);
+});
+
 test("does not group Azure guideline findings by title alone", () => {
   const base = {
     id: "compliance-1",

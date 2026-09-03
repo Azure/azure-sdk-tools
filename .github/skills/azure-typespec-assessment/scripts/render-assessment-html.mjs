@@ -1063,13 +1063,7 @@ function structuralOperationRows(operation) {
       });
     }
   }
-  return rows.length
-    ? rows
-    : (operation.changedAspects ?? []).map((field) => ({
-        area: field,
-        before: contractSummary(operation.before?.[field], field),
-        after: contractSummary(operation.after?.[field], field),
-      }));
+  return rows.filter((row) => row.before !== row.after);
 }
 
 export function operationContractRows(
@@ -1088,6 +1082,7 @@ export function operationContractRows(
   return [
     ...new Map(
       rows
+        .filter((row) => row.before !== row.after)
         .sort(
           (left, right) =>
             left.area.localeCompare(right.area) ||
@@ -1511,6 +1506,8 @@ ${renderSourceHunks([source])}
 }
 
 function operationCard(operation, restFindings, semanticIntentId) {
+  const unchangedOutcome =
+    "HTTP signature and represented payload contract unchanged.";
   const rows = operationContractRows(
     operation,
     restFindings,
@@ -1518,10 +1515,11 @@ function operationCard(operation, restFindings, semanticIntentId) {
   );
   const changes = rows.length
     ? `<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${renderContractChangeRows(rows)}</tbody></table>`
-    : `<p class="good"><strong>${escapeHtml(operation.outcome)}</strong></p>`;
+    : `<p class="good"><strong>${unchangedOutcome}</strong></p>`;
+  const outcome = rows.length ? operation.outcome : unchangedOutcome;
   return `<details class="operation"><summary><strong>${escapeHtml(operation.operationId)}</strong> <code>${escapeHtml((operation.method ?? "").toUpperCase())} ${escapeHtml(operation.path)}</code> <span>${escapeHtml(operation.apiVersion)}</span></summary>
 <div class="operation-body">${changes}
-<p><strong>Change outcome:</strong> ${escapeHtml(operation.outcome)}</p></div></details>`;
+<p><strong>Change outcome:</strong> ${escapeHtml(outcome)}</p></div></details>`;
 }
 
 function semanticFindingReferences(item, compliance) {

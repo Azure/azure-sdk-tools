@@ -79,10 +79,6 @@
   <ItemGroup>
     <Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\Responses\ProductOnboarding\" />
-    <Folder Include="Tools\ProductOnboarding\" />
-  </ItemGroup>
 
   <PropertyGroup>
     <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>

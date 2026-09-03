@@ -25,11 +25,11 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intents <a href="#intent-semantic-3d8a84ab0984f292">Preserve Python operation-group casing for traffic-filter methods</a>, <a href="#intent-semantic-a3ce2a2ef2e5fba3">Preserve Python operation-group casing for PL-filter creation</a>.</p>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intents <a href="#intent-semantic-3d8a84ab0984f292">Preserve Python casing for traffic and IP filter operation groups</a>, <a href="#intent-semantic-a3ce2a2ef2e5fba3">Preserve Python casing for private-link filter operation group</a>.</p>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-3d8a84ab0984f292"><summary><strong><span class="action">modify</span> Preserve Python operation-group casing for traffic-filter methods</strong></summary><div class="intent-body">
-<p>The compatibility customizations exclude Python from the existing client-location rules for listAssociatedTrafficFilters and createAndAssociateIPFilter, then add Python-specific placements under PascalCase operation-group names.</p>
+<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-3d8a84ab0984f292"><summary><strong><span class="action">modify</span> Preserve Python casing for traffic and IP filter operation groups</strong></summary><div class="intent-body">
+<p>Modify client-location augment decorators so Python uses PascalCase operation-group locations for listing associated traffic filters and creating/associating IP filters, while the existing lower-camel locations remain in effect for other targeted languages. The wire API is unchanged.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 1 changed hunks classified. AI inference used for 1 request.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
@@ -62,8 +62,8 @@
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-3d8a84ab0984f292"><strong>Related findings:</strong> None</p>
 </div></details>
-<details class="intent" id="intent-semantic-a3ce2a2ef2e5fba3"><summary><strong><span class="action">modify</span> Preserve Python operation-group casing for PL-filter creation</strong></summary><div class="intent-body">
-<p>The compatibility customization excludes Python from the existing createAndAssociatePLFilter client-location rule and adds a Python-specific placement under the PascalCase CreateAndAssociatePLFilter operation-group name.</p>
+<details class="intent" id="intent-semantic-a3ce2a2ef2e5fba3"><summary><strong><span class="action">modify</span> Preserve Python casing for private-link filter operation group</strong></summary><div class="intent-body">
+<p>Modify the private-link filter create-and-associate client location so Python uses the PascalCase operation-group location while non-Python generators retain the existing lower-camel location. The wire API is unchanged.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 1 changed hunks classified. AI inference used for 1 request.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
@@ -89,14 +89,14 @@
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/elastic/Elastic.Management</code></td><td>existing-api-version</td><td><code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6@2025-06-01</code><br><small>base · affected-existing-version</small></td><td><code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2@2025-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44454">#44454</a></p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/">Content negotiation</a></li></ul>
+<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/elastic/Elastic.Management/back-compatible.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 159800,
-    &quot;semanticAnalysisMs&quot;: 60,
-    &quot;restAnalysisMs&quot;: 57,
-    &quot;downstreamAnalysisMs&quot;: 3003
+    &quot;totalMs&quot;: 61731,
+    &quot;semanticAnalysisMs&quot;: 53,
+    &quot;restAnalysisMs&quot;: 66,
+    &quot;downstreamAnalysisMs&quot;: 2909
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
@@ -129,7 +129,7 @@
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 64,
       &quot;documentsFetched&quot;: 8,
-      &quot;documentBytesFetched&quot;: 3238578,
+      &quot;documentBytesFetched&quot;: 3483062,
       &quot;guidanceExcerptsRetained&quot;: 0,
       &quot;guidanceExcerptBytesRetained&quot;: 0
     }

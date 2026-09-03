@@ -9,7 +9,7 @@
 .notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
 .compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
 </style></head><body>
-<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Preserve Java enum member names</h1>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>Preserve released Java enum constant names</h1>
 <p class="hero-meta">TypeSpec source diff: <code>b7170cade07f615426eb153b7035ecf8a1cab4e4</code> → <code>1395797d6112cb083837b3772083bafe0a91460c</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
@@ -25,11 +25,11 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intent <a href="#intent-semantic-5c37e529c22fc782">Preserve Java enum member names</a>.</p>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intent <a href="#intent-semantic-5c37e529c22fc782">Preserve released Java enum constant names</a>.</p>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-5c37e529c22fc782"><summary><strong><span class="action">modify</span> Preserve Java enum member names</strong></summary><div class="intent-body">
-<p>Adds Java-specific @@clientName augment decorators to six existing Consumption enum members so generated Java SDK symbols retain their released uppercase names without changing REST operations.</p>
+<section id="semantic-intents"><h2>Semantic intents (1)</h2><details class="intent" id="intent-semantic-5c37e529c22fc782"><summary><strong><span class="action">modify</span> Preserve released Java enum constant names</strong></summary><div class="intent-body">
+<p>Adds Java-specific @clientName augment decorators for six existing Consumption enum members so generated Java enum constants retain their released names. The customization does not change REST operations or wire enum values and introduces no downstream SDK break.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 1 changed hunks classified. AI inference used for 1 request.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div><pre><span class="context">   ModernChargeSummary.properties,</span>
@@ -53,14 +53,14 @@
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption</code></td><td>existing-api-version</td><td><code>b7170cade07f615426eb153b7035ecf8a1cab4e4@2026-06-01</code><br><small>base · affected-existing-version</small></td><td><code>1395797d6112cb083837b3772083bafe0a91460c@2026-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45536">#45536</a></p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/">Change provider namespace</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/">Azure Portal default experiences</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul>
+<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 69347,
-    &quot;semanticAnalysisMs&quot;: 38,
-    &quot;restAnalysisMs&quot;: 27,
-    &quot;downstreamAnalysisMs&quot;: 2444
+    &quot;totalMs&quot;: 81163,
+    &quot;semanticAnalysisMs&quot;: 57,
+    &quot;restAnalysisMs&quot;: 41,
+    &quot;downstreamAnalysisMs&quot;: 2301
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
@@ -93,7 +93,7 @@
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 32,
       &quot;documentsFetched&quot;: 4,
-      &quot;documentBytesFetched&quot;: 1179010,
+      &quot;documentBytesFetched&quot;: 1666971,
       &quot;guidanceExcerptsRetained&quot;: 0,
       &quot;guidanceExcerptBytesRetained&quot;: 0
     }

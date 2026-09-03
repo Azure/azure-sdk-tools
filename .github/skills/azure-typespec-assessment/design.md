@@ -2535,7 +2535,7 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 - Final JSON rejects unsupported or incomplete results.
 - HTML presents ranked documentation and intent-level Compliance results
   without conflating them with scoped REST/downstream code safety.
-- Focused tests, 11 retained report replays, strict skill lint, and real PR
+- Focused tests, 12 retained report replays, strict skill lint, and real PR
   43308, 44882, and 44988 smoke tests pass.
 - PR 44988 produces 11 coherent Semantic intents, no REST breaking finding for
   the new-version transition, and two grouped Service Gateway downstream SDK

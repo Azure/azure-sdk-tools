@@ -79,8 +79,8 @@ function assertMajorReportPoints(html, assessment, description) {
 
 export function loadCases(root = evidenceRoot) {
   const cases = JSON.parse(readFileSync(join(root, "cases.json"), "utf8"));
-  if (!Array.isArray(cases) || cases.length !== 11) {
-    throw new Error(`cases.json must define exactly 11 cases`);
+  if (!Array.isArray(cases) || cases.length !== 12) {
+    throw new Error(`cases.json must define exactly 12 cases`);
   }
   const prs = new Set(cases.map(({ pr }) => pr));
   if (prs.size !== cases.length) {

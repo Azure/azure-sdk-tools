@@ -17,7 +17,7 @@
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> 1</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 guideline issue<br>2/2 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">23 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">22 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
@@ -25,46 +25,47 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding" id="compliance-finding-compliance-6741ad7c2b22f12d">
-<summary><strong>Private endpoint resources bypass standard ARM templates</strong></summary>
+<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding" id="compliance-finding-compliance-04dbae416f0a066c">
+<summary><strong>Use the standard ARM private endpoint and private link templates</strong></summary>
 <div class="finding-body">
-<p><strong>Gap:</strong> The emitted operations use standard ARM lifecycle templates, but the resource and operation-group composition does not use the dedicated private endpoint and private link templates documented for this scenario.</p>
+<p><strong>Gap:</strong> The official ARM guidance provides specialized resource and operation templates for these contract areas. The manual definitions bypass those standard templates, so equivalence to the required ARM private networking shape and behavior is not established.</p>
 <details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
-<p>Use the standard PrivateEndpointConnectionResource, PrivateEndpoints, PrivateLink, and PrivateLinks patterns for ARM private endpoint and private link surfaces.</p>
+<p>Model private endpoint connections with PrivateEndpointConnectionResource and PrivateEndpoints&lt;T&gt;, and model private link resources with PrivateLink and PrivateLinks&lt;T&gt;, as shown in the fetched Azure TypeSpec guidance.</p>
 <p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></p>
-<div class="diff"><div class="diff-path"><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Documented TypeSpec example</a></div><pre><span class="">model PrivateEndpointConnection is PrivateEndpointConnectionResource;</span></pre></div><div class="diff"><div class="diff-path"><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Documented TypeSpec example</a></div><pre><span class="">alias PrivateEndpointOperations = PrivateEndpoints&lt;PrivateEndpointConnection&gt;;</span></pre></div>
+<div class="diff"><div class="diff-path"><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Documented TypeSpec example</a></div><pre><span class="">model PrivateEndpointConnection is PrivateEndpointConnectionResource;</span>
+<span class="">alias PrivateEndpointOperations = PrivateEndpoints&lt;PrivateEndpointConnection&gt;;</span></pre></div>
 </div></details>
 <details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
-<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:17-36</div><pre><span class="add"><span class="line-number">17</span>+//----------------------- PrivateEndpointConnection -----------------------</span>
-<span class="add"><span class="line-number">18</span>+/** Private Endpoint Connection resource of Traffic Controller. */</span>
-<span class="add"><span class="line-number">19</span>+@added(Versions.v2025_10_01_preview)</span>
-<span class="add"><span class="line-number">20</span>+@parentResource(TrafficController)</span>
-<span class="add"><span class="line-number">21</span>+model PrivateEndpointConnection</span>
-<span class="add"><span class="line-number">22</span>+  is ProxyResource&lt;PrivateEndpointConnectionProperties&gt; {</span>
-<span class="add"><span class="line-number">23</span>+  /** Private Endpoint Connection */</span>
-<span class="add"><span class="line-number">24</span>+  @key(&quot;privateEndpointConnectionName&quot;)</span>
-<span class="add"><span class="line-number">25</span>+  @visibility(Lifecycle.Read)</span>
-<span class="add"><span class="line-number">26</span>+  @path</span>
-<span class="add"><span class="line-number">27</span>+  @segment(&quot;privateEndpointConnections&quot;)</span>
-<span class="add"><span class="line-number">28</span>+  @pattern(&quot;^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$&quot;)</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:17-36</div><pre><span class="add"><span class="line-number">17</span>+@added(Versions.v2025_10_01_preview)</span>
-<span class="add"><span class="line-number">18</span>+@armResourceOperations</span>
-<span class="add"><span class="line-number">19</span>+interface PrivateEndpointConnectionsInterface {</span>
-<span class="add"><span class="line-number">20</span>+  get is ArmResourceRead&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add"><span class="line-number">21</span>+  update is ArmResourceCreateOrReplaceSync&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add"><span class="line-number">22</span>+  delete is ArmResourceDeleteWithoutOkAsync&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add"><span class="line-number">23</span>+  listByTrafficController is ArmResourceListByParent&lt;PrivateEndpointConnection&gt;;</span>
-<span class="add"><span class="line-number">24</span>+}</span>
-<span class="add"><span class="line-number">25</span>+</span>
-<span class="add"><span class="line-number">26</span>+@added(Versions.v2025_10_01_preview)</span>
-<span class="add"><span class="line-number">27</span>+@armResourceOperations</span>
-<span class="add"><span class="line-number">28</span>+interface PrivateLinkResourcesInterface {</span></pre></div>
-<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-d5ac0f513678b267"><code>semantic-d5ac0f513678b267</code></a></p>
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:358-370</div><pre><span class="add"><span class="line-number">358</span>+@added(Versions.v2025_10_01_preview)</span>
+<span class="add"><span class="line-number">359</span>+@armResourceOperations</span>
+<span class="add"><span class="line-number">360</span>+interface PrivateEndpointConnectionsInterface {</span>
+<span class="add"><span class="line-number">361</span>+  get is ArmResourceRead&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add"><span class="line-number">362</span>+  update is ArmResourceCreateOrReplaceSync&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add"><span class="line-number">363</span>+  delete is ArmResourceDeleteWithoutOkAsync&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add"><span class="line-number">364</span>+  listByTrafficController is ArmResourceListByParent&lt;PrivateEndpointConnection&gt;;</span>
+<span class="add"><span class="line-number">365</span>+}</span>
+<span class="add"><span class="line-number">366</span>+</span>
+<span class="add"><span class="line-number">367</span>+@added(Versions.v2025_10_01_preview)</span>
+<span class="add"><span class="line-number">368</span>+@armResourceOperations</span>
+<span class="add"><span class="line-number">369</span>+interface PrivateLinkResourcesInterface {</span></pre></div><div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:358-370</div><pre><span class="add"><span class="line-number">358</span>+//----------------------- PrivateEndpointConnection -----------------------</span>
+<span class="add"><span class="line-number">359</span>+/** Private Endpoint Connection resource of Traffic Controller. */</span>
+<span class="add"><span class="line-number">360</span>+@added(Versions.v2025_10_01_preview)</span>
+<span class="add"><span class="line-number">361</span>+@parentResource(TrafficController)</span>
+<span class="add"><span class="line-number">362</span>+model PrivateEndpointConnection</span>
+<span class="add"><span class="line-number">363</span>+  is ProxyResource&lt;PrivateEndpointConnectionProperties&gt; {</span>
+<span class="add"><span class="line-number">364</span>+  /** Private Endpoint Connection */</span>
+<span class="add"><span class="line-number">365</span>+  @key(&quot;privateEndpointConnectionName&quot;)</span>
+<span class="add"><span class="line-number">366</span>+  @visibility(Lifecycle.Read)</span>
+<span class="add"><span class="line-number">367</span>+  @path</span>
+<span class="add"><span class="line-number">368</span>+  @segment(&quot;privateEndpointConnections&quot;)</span>
+<span class="add"><span class="line-number">369</span>+  @pattern(&quot;^[A-Za-z0-9]([A-Za-z0-9-_.]{0,62}[A-Za-z0-9])?$&quot;)</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-7e9d7f9f03045e25"><code>semantic-7e9d7f9f03045e25</code></a></p>
 </div></details>
 </div></details>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-d5ac0f513678b267"><summary><strong><span class="action">modify</span> Add private frontend and private endpoint support</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-6741ad7c2b22f12d">Azure Guidelines</a></span></summary><div class="intent-body">
-<p>Adds private frontends, private endpoint connections, private link resources, public network access controls, and their ARM lifecycle operations in new API versions.</p>
+<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-7e9d7f9f03045e25"><summary><strong><span class="action">modify</span> Add private frontend, private endpoint, and private link support</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-04dbae416f0a066c">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Introduces preview-versioned private frontend properties, private endpoint connection and private link child resources, their ARM operations, and promotes the surface through the new stable API version.</p>
 <p><strong>Deterministic coverage:</strong> 6 of 6 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context"> </span>
@@ -80,21 +81,21 @@
 <span class="context"> </span>
 <span class="context"> using TypeSpec.Http;</span></pre></div>
 <p class="sources"><strong>Source:</strong> <code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp:17</code>.</p></details>
-<h4>Affected REST operations (23)</h4>
-<p><strong>Operation impact:</strong> 23 REST operations are affected; 3 representative operation(s) are shown below and 20 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<h4>Affected REST operations (22)</h4>
+<p><strong>Operation impact:</strong> 22 REST operations are affected; 3 representative operation(s) are shown below and 19 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>AssociationsInterface_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
 <div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
 <p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
 <details class="operation"><summary><strong>AssociationsInterface_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
 <div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
 <p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
-<details class="operation"><summary><strong>AssociationsInterface_ListByTrafficController</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations</code> <span>2026-03-01</span></summary>
+<details class="operation"><summary><strong>AssociationsInterface_Update</strong> <code>PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
 <div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
 <p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
-<p id="related-findings-semantic-d5ac0f513678b267"><strong>Related findings:</strong> <a href="#compliance-finding-compliance-6741ad7c2b22f12d">compliance-6741ad7c2b22f12d</a></p>
+<p id="related-findings-semantic-7e9d7f9f03045e25"><strong>Related findings:</strong> <a href="#compliance-finding-compliance-04dbae416f0a066c">compliance-04dbae416f0a066c</a></p>
 </div></details>
-<details class="intent" id="intent-semantic-7edb1932c040044d"><summary><strong><span class="action">modify</span> Preserve SDK compatibility for private frontend changes</strong></summary><div class="intent-body">
-<p>Adds language-specific names, alternate types, and legacy flattening controls so the private frontend additions preserve established generated SDK shapes.</p>
+<details class="intent" id="intent-semantic-2a33bc7d80e036be"><summary><strong><span class="action">modify</span> Preserve SDK compatibility for new private networking surface</strong></summary><div class="intent-body">
+<p>Adds emitter- and language-specific naming, alternate-type, and flattening customizations while limiting JavaScript flattening changes for the Association update model.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 4 changed hunks classified. AI inference used for 4 requests.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</div><pre><span class="context"> </span>
@@ -111,26 +112,26 @@
 <details class="operation"><summary><strong>AssociationsInterface_Update</strong> <code>PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}</code> <span>2026-03-01</span></summary>
 <div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
 <p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
-<p id="related-findings-semantic-7edb1932c040044d"><strong>Related findings:</strong> None</p>
+<p id="related-findings-semantic-2a33bc7d80e036be"><strong>Related findings:</strong> None</p>
 </div></details></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking</code></td><td>new-api-version</td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2025-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>b1582b12f39f1d122fce3c7bbb24b812b0c5c487@2026-03-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44200">#44200</a></p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/">Private links</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li></ul>
+<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/">Add preview after preview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Add stable after preview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/">Private links</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</code> (committed)</li><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</code> (committed)</li><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 42116,
-    &quot;semanticAnalysisMs&quot;: 178,
-    &quot;restAnalysisMs&quot;: 60,
-    &quot;downstreamAnalysisMs&quot;: 1380
+    &quot;totalMs&quot;: 66543,
+    &quot;semanticAnalysisMs&quot;: 115,
+    &quot;restAnalysisMs&quot;: 30,
+    &quot;downstreamAnalysisMs&quot;: 1110
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 115329,
-    &quot;estimatedTokens&quot;: 28833,
+    &quot;bytes&quot;: 115264,
+    &quot;estimatedTokens&quot;: 28816,
     &quot;retained&quot;: {
       &quot;sourceChanges&quot;: 3,
       &quot;facts&quot;: 4,
@@ -157,9 +158,9 @@
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 64,
       &quot;documentsFetched&quot;: 8,
-      &quot;documentBytesFetched&quot;: 3016033,
-      &quot;guidanceExcerptsRetained&quot;: 6,
-      &quot;guidanceExcerptBytesRetained&quot;: 729
+      &quot;documentBytesFetched&quot;: 3022215,
+      &quot;guidanceExcerptsRetained&quot;: 4,
+      &quot;guidanceExcerptBytesRetained&quot;: 584
     }
   }
 }</pre>

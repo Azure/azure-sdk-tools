@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T07:24:22.536Z",
+  "generatedAt": "2026-09-03T08:07:25.822Z",
   "title": "TypeSpec assessment: specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43308\\head",
@@ -148,8 +148,8 @@
               "hunk-fe6a3ee26eca43f6"
             ]
           },
-          "title": "Use ARM resource identifier scalars for resource ID properties",
-          "summary": "Replace plain string types with Azure.Core.armResourceIdentifier for resourceId, targetResourceId, roleAssignmentId, and workspaceId response properties while preserving their visibility and optionality.",
+          "title": "Use ARM resource identifier scalars for resource references",
+          "summary": "Retype resource ID properties from string to Azure.Core.armResourceIdentifier while preserving the emitted 2026-05-01-preview REST and language-neutral SDK contracts.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -1280,8 +1280,8 @@
               "hunk-b7cfd28859536ed6"
             ]
           },
-          "title": "Add C# client-name customizations",
-          "summary": "Add @@clientName customizations for C# model and property symbols, including private-access, configuration filter, permission, recommendation, validation, and workspace-evaluation types.",
+          "title": "Apply C# client naming customizations",
+          "summary": "Add C#-specific @@clientName customizations for scenario configuration, permission, recommendation, workspace evaluation, discovered resource, and private access SDK symbols without changing the language-neutral contract.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -1327,14 +1327,14 @@
               "requestId": "inference-request-4a79fb9010d9c375",
               "hunkId": "hunk-6427bb1a68cb07d6",
               "decision": "no-impact",
-              "rationale": "The remaining source changes are represented by the compared REST and SDK contracts, and the C# names preserve established generated symbols.",
+              "rationale": "The added @@clientName decorators are explicitly scoped to csharp. They do not change the REST wire contract or the language-neutral generated SDK contract assessed by this dimension.",
               "candidateIds": []
             },
             {
               "requestId": "inference-request-3035ee8c2aac2f93",
               "hunkId": "hunk-b7cfd28859536ed6",
               "decision": "no-impact",
-              "rationale": "The remaining source changes are represented by the compared REST and SDK contracts, and the C# names preserve established generated symbols.",
+              "rationale": "The added @@clientName decorators are explicitly scoped to csharp. They do not change the REST wire contract or the language-neutral generated SDK contract assessed by this dimension.",
               "candidateIds": []
             }
           ],
@@ -3637,8 +3637,8 @@
               "hunk-cbbce09d5e224510"
             ]
           },
-          "title": "Model Location-based ARM LRO polling with native TypeSpec constructs",
-          "summary": "Replace raw OpenAPI LRO extensions with Azure.Core.useFinalStateVia(\"location\"), model the ScenarioRuns.get 202 polling response, and connect the existing 2026-05-01-preview actions to a final ScenarioRun result.",
+          "title": "Model scenario actions as Location-polled long-running operations",
+          "summary": "Replace OpenAPI-only LRO extensions with Azure.Core.useFinalStateVia(\"location\"), add an explicit in-progress response wrapper, and propagate the corrected LRO model through the existing 2026-05-01-preview operations. AutoRest shows no incompatible wire change, while TCGC changes execute and cancel from basic methods to LROs returning ScenarioRun.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [
@@ -6107,7 +6107,7 @@
             "downstream-root-cause-e44fb6393b44ae55"
           ],
           "severity": "high",
-          "rationale": "The supplied TCGC facts show ScenarioConfigurations.execute changing from a basic method with no response type to an LRO returning ScenarioRun. Existing generated SDK calls therefore change invocation and result handling.",
+          "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -10115,7 +10115,7 @@
             "downstream-root-cause-e44fb6393b44ae55"
           ],
           "severity": "high",
-          "rationale": "ScenarioConfigurations.execute previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract.",
+          "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -14123,7 +14123,7 @@
             "downstream-root-cause-e44fb6393b44ae55"
           ],
           "severity": "high",
-          "rationale": "ScenarioRuns.cancel previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract.",
+          "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -18131,7 +18131,7 @@
             "downstream-root-cause-e44fb6393b44ae55"
           ],
           "severity": "medium",
-          "rationale": "ScenarioRuns.cancel gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.",
+          "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -22139,7 +22139,7 @@
             "downstream-root-cause-e44fb6393b44ae55"
           ],
           "severity": "high",
-          "rationale": "The supplied TCGC facts show ScenarioRuns.cancel changing from a basic method with no response type to an LRO returning ScenarioRun, requiring existing SDK consumers to use a poller/result workflow.",
+          "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -26147,7 +26147,7 @@
             "downstream-root-cause-e44fb6393b44ae55"
           ],
           "severity": "medium",
-          "rationale": "ScenarioConfigurations.execute gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.",
+          "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -30777,7 +30777,7 @@
                 "downstream-root-cause-e44fb6393b44ae55"
               ],
               "severity": "high",
-              "rationale": "The supplied TCGC facts show ScenarioConfigurations.execute changing from a basic method with no response type to an LRO returning ScenarioRun. Existing generated SDK calls therefore change invocation and result handling.",
+              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -34785,7 +34785,7 @@
                 "downstream-root-cause-e44fb6393b44ae55"
               ],
               "severity": "high",
-              "rationale": "ScenarioConfigurations.execute previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract.",
+              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -38793,7 +38793,7 @@
                 "downstream-root-cause-e44fb6393b44ae55"
               ],
               "severity": "medium",
-              "rationale": "ScenarioConfigurations.execute gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.",
+              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -42724,7 +42724,7 @@
               "severity": "high",
               "actual": "Microsoft.Chaos.ScenarioConfigurations.execute changed method kind from basic to lro.",
               "expected": "Microsoft.Chaos.ScenarioConfigurations.execute preserves its existing language-neutral generated SDK contract.",
-              "rationale": "The supplied TCGC facts show ScenarioConfigurations.execute changing from a basic method with no response type to an LRO returning ScenarioRun. Existing generated SDK calls therefore change invocation and result handling.",
+              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
               "before": "basic",
               "after": "lro"
             },
@@ -42735,7 +42735,7 @@
               "severity": "high",
               "actual": "Microsoft.Chaos.ScenarioConfigurations.execute has a different response type.",
               "expected": "Microsoft.Chaos.ScenarioConfigurations.execute preserves its existing language-neutral generated SDK contract.",
-              "rationale": "ScenarioConfigurations.execute previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract.",
+              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
               "before": "void",
               "after": "Microsoft.Chaos.ScenarioRun"
             },
@@ -42746,7 +42746,7 @@
               "severity": "medium",
               "actual": "Microsoft.Chaos.ScenarioConfigurations.execute changed long-running behavior.",
               "expected": "Microsoft.Chaos.ScenarioConfigurations.execute preserves its existing language-neutral generated SDK contract.",
-              "rationale": "ScenarioConfigurations.execute gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.",
+              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
               "before": "none",
               "after": {
                 "finalStateVia": "location",
@@ -43473,7 +43473,7 @@
                 "downstream-root-cause-e44fb6393b44ae55"
               ],
               "severity": "high",
-              "rationale": "ScenarioRuns.cancel previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract.",
+              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -47481,7 +47481,7 @@
                 "downstream-root-cause-e44fb6393b44ae55"
               ],
               "severity": "medium",
-              "rationale": "ScenarioRuns.cancel gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.",
+              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -51489,7 +51489,7 @@
                 "downstream-root-cause-e44fb6393b44ae55"
               ],
               "severity": "high",
-              "rationale": "The supplied TCGC facts show ScenarioRuns.cancel changing from a basic method with no response type to an LRO returning ScenarioRun, requiring existing SDK consumers to use a poller/result workflow.",
+              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -55420,7 +55420,7 @@
               "severity": "high",
               "actual": "Microsoft.Chaos.ScenarioRuns.cancel has a different response type.",
               "expected": "Microsoft.Chaos.ScenarioRuns.cancel preserves its existing language-neutral generated SDK contract.",
-              "rationale": "ScenarioRuns.cancel previously had no response type and now returns ScenarioRun through LRO completion, changing the generated public return contract.",
+              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
               "before": "void",
               "after": "Microsoft.Chaos.ScenarioRun"
             },
@@ -55431,7 +55431,7 @@
               "severity": "medium",
               "actual": "Microsoft.Chaos.ScenarioRuns.cancel changed long-running behavior.",
               "expected": "Microsoft.Chaos.ScenarioRuns.cancel preserves its existing language-neutral generated SDK contract.",
-              "rationale": "ScenarioRuns.cancel gains Location-based polling metadata, a ScenarioRun logical result, and final-operation link steps where the prior basic method had none, changing generated poller behavior.",
+              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
               "before": "none",
               "after": {
                 "finalStateVia": "location",
@@ -55448,7 +55448,7 @@
               "severity": "high",
               "actual": "Microsoft.Chaos.ScenarioRuns.cancel changed method kind from basic to lro.",
               "expected": "Microsoft.Chaos.ScenarioRuns.cancel preserves its existing language-neutral generated SDK contract.",
-              "rationale": "The supplied TCGC facts show ScenarioRuns.cancel changing from a basic method with no response type to an LRO returning ScenarioRun, requiring existing SDK consumers to use a poller/result workflow.",
+              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
               "before": "basic",
               "after": "lro"
             }
@@ -55541,20 +55541,6 @@
         {
           "semanticIntentId": "semantic-6b421b1ce7dd8d19",
           "reviewUnitId": "semantic-6b421b1ce7dd8d19",
-          "applicableGuidance": [
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Changing a pattern across API versions"
-            },
-            {
-              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/models/",
-              "guidanceSection": "Record models"
-            },
-            {
-              "canonicalDocumentUrl": "https://typespec.io/docs/language-basics/scalars/",
-              "guidanceSection": "Declaring scalars"
-            }
-          ],
           "sourceChangeIds": [
             "source-445ac39004e671ef",
             "source-e69ddc949601a3eb"
@@ -55582,16 +55568,31 @@
             "declaration-f1e636e2050f7207",
             "declaration-ff86b930100df79b"
           ],
-          "decision": "applicable-pass",
-          "expected": "Model properties may use any type reference, scalar types represent simple values, and a pattern that reflects service behavior across existing versions may be updated directly.",
-          "actual": "The changed response properties replace string with Azure.Core.armResourceIdentifier while preserving property names, read visibility, and optionality.",
-          "rationale": "The identifier scalar is a valid model-property type reference and the source change keeps the existing wire-facing property structure while more precisely representing ARM resource IDs.",
-          "gap": "The identifier scalar is a valid model-property type reference and the source change keeps the existing wire-facing property structure while more precisely representing ARM resource IDs.",
+          "applicableGuidance": [],
+          "decision": "no-applicable-guidance",
+          "actual": "The changed TypeSpec uses Azure.Core.armResourceIdentifier for existing resource ID properties.",
+          "rationale": "The four highest-ranked retrievable official documents were reviewed, but none provides governing guidance for this specific change beyond general TypeSpec syntax.",
+          "gap": "The four highest-ranked retrievable official documents were reviewed, but none provides governing guidance for this specific change beyond general TypeSpec syntax.",
           "sourceLinks": [
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 218,
+              "endLine": 251
+            },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
               "startLine": 222,
               "endLine": 226
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 228,
+              "endLine": 232
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 270,
+              "endLine": 297
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
@@ -55600,8 +55601,23 @@
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 280,
+              "endLine": 284
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 413,
+              "endLine": 464
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
               "startLine": 417,
               "endLine": 421
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 423,
+              "endLine": 427
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
@@ -55609,9 +55625,24 @@
               "endLine": 457
             },
             {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "startLine": 459,
+              "endLine": 463
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+              "startLine": 29,
+              "endLine": 101
+            },
+            {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
               "startLine": 59,
               "endLine": 63
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+              "startLine": 65,
+              "endLine": 69
             }
           ],
           "codeSnippets": [
@@ -55658,21 +55689,6 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "Directly covers modifying ARM model properties in an existing versioned API."
-            },
-            {
-              "rank": 2,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -55680,13 +55696,13 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 6
               },
-              "selectionRationale": "Covers reusable ARM type definitions used to model consistent resource data."
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
+              "rank": 1
             },
             {
-              "rank": 3,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -55694,13 +55710,27 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Directly covers model-property type references."
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 2
             },
             {
-              "rank": 4,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 3
+            },
+            {
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -55708,167 +55738,125 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Covers scalar types used by the changed identifier properties."
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 4
             },
             {
-              "rank": 5,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to the ARM plane but not directly to the changed property types."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 5
             },
             {
-              "rank": 6,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM but not to these models."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 6
             },
             {
-              "rank": 7,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM but not to identifier scalar selection."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 7
             },
             {
-              "rank": 8,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM but not to these declarations."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 8
             },
             {
-              "rank": 9,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM but not to these declarations."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 9
             },
             {
-              "rank": 10,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM but not to these declarations."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 10
             },
             {
-              "rank": 11,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM operations, while this intent changes models only."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 11
             },
             {
-              "rank": 12,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "Applies to ARM interfaces, not the changed model scalar types."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 12
             },
             {
-              "rank": 13,
-              "catalogOrder": 17,
-              "title": "ARM long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to ARM but not to this model-only intent."
-            },
-            {
-              "rank": 14,
-              "catalogOrder": 20,
-              "title": "Azure.ResourceManager data types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to ARM data types but does not name the changed scalar in the catalog."
-            },
-            {
-              "rank": 15,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to ARM but not to model property types."
-            },
-            {
-              "rank": 16,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -55879,10 +55867,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct match to the changed ARM model properties."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 13
             },
             {
-              "rank": 17,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -55893,10 +55881,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct match to the changed ARM model properties."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 14
             },
             {
-              "rank": 18,
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -55907,10 +55895,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "The intent does not add an API version."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 15
             },
             {
-              "rank": 19,
               "catalogOrder": 12,
               "title": "Add preview after preview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
@@ -55921,10 +55909,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No preview version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 16
             },
             {
-              "rank": 20,
               "catalogOrder": 13,
               "title": "Add stable after preview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
@@ -55935,10 +55923,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No stable version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 17
             },
             {
-              "rank": 21,
               "catalogOrder": 14,
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
@@ -55949,10 +55937,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No preview version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 18
             },
             {
-              "rank": 22,
               "catalogOrder": 15,
               "title": "Add stable after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
@@ -55963,10 +55951,38 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No stable version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 19
             },
             {
-              "rank": 23,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 20
+            },
+            {
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 21
+            },
+            {
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -55977,10 +55993,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No LRO construct changes belong to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 22
             },
             {
-              "rank": 24,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -55991,13 +56007,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No paging construct changes belong to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 23
             },
             {
-              "rank": 25,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
@@ -56005,10 +56021,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No enum declaration is changed."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 24
             },
             {
-              "rank": 26,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -56019,10 +56035,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No decorator usage is material to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 25
             },
             {
-              "rank": 27,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -56033,10 +56049,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No built-in decorator changes belong to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 26
             },
             {
-              "rank": 28,
               "catalogOrder": 28,
               "title": "OpenAPI decorators",
               "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
@@ -56047,10 +56063,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No OpenAPI decorator changes belong to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 27
             },
             {
-              "rank": 29,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 28
+            },
+            {
               "catalogOrder": 30,
               "title": "Azure Portal default experiences",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
@@ -56061,10 +56091,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No portal-experience change belongs to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 29
             },
             {
-              "rank": 30,
               "catalogOrder": 31,
               "title": "Content negotiation",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
@@ -56075,10 +56105,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No content-negotiation change belongs to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 30
             },
             {
-              "rank": 31,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -56089,10 +56119,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No warning directive change belongs to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 31
             },
             {
-              "rank": 32,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
@@ -56103,48 +56133,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No OpenAPI suppression change belongs to this intent."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 32
             }
           ],
           "documents": [
             {
               "rank": 1,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "Directly covers modifying ARM model properties in an existing versioned API.",
-              "guidance": [
-                {
-                  "section": "Changing a pattern across API versions",
-                  "excerpt": "If the pattern change reflects how your service actually behaves across all versions, update the pattern directly. The specification should accurately reflect the current state of your service.",
-                  "queryTerms": [
-                    "modify",
-                    "properties",
-                    "existing version"
-                  ],
-                  "examples": [],
-                  "applicableDeclarationIds": [
-                    "declaration-4cc91b5c06fd7a4d",
-                    "declaration-2e1900676b35bd4f",
-                    "declaration-60ebf3b787a982bd",
-                    "declaration-456c2aa54f019a46",
-                    "declaration-f1e636e2050f7207"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:19.2698707Z",
-              "contentHash": "sha256:f563a142f24d6fbe3bd840616049b20e75b1db60c4d8ccf340a3147375f6e50e"
-            },
-            {
-              "rank": 2,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -56152,17 +56147,17 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 6
               },
-              "selectionRationale": "Covers reusable ARM type definitions used to model consistent resource data.",
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:18.8153126Z",
-              "contentHash": "sha256:1c5caa7ba3861e1af59790ee5c55e5b9c65de01afd9057973d4e91dd98eaf81d"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:18a5c6374d552b964058717b07178681036191e9489da3fa4089d9f9509ed229"
             },
             {
-              "rank": 3,
+              "rank": 2,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -56170,32 +56165,32 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Directly covers model-property type references.",
-              "guidance": [
-                {
-                  "section": "Record models",
-                  "excerpt": "A Record model is a structure that consists of named fields, referred to as properties. The type can be any type reference.",
-                  "queryTerms": [
-                    "model",
-                    "property",
-                    "type reference"
-                  ],
-                  "examples": [],
-                  "applicableDeclarationIds": [
-                    "declaration-4cc91b5c06fd7a4d",
-                    "declaration-2e1900676b35bd4f",
-                    "declaration-60ebf3b787a982bd",
-                    "declaration-456c2aa54f019a46",
-                    "declaration-f1e636e2050f7207"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:19.4512981Z",
-              "contentHash": "sha256:681781691afef9f80560431f5154c19b72d6b4cb97bb45634c8dcd3e9e0557a8"
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
             },
             {
               "rank": 4,
@@ -56206,34 +56201,14 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Covers scalar types used by the changed identifier properties.",
-              "guidance": [
-                {
-                  "section": "Declaring scalars",
-                  "excerpt": "Scalars are simple types that do not have any fields. You can create a new scalar that extends an existing one by using the extends keyword.",
-                  "queryTerms": [
-                    "scalar",
-                    "string",
-                    "armResourceIdentifier"
-                  ],
-                  "examples": [
-                    "scalar Password extends string;"
-                  ],
-                  "applicableDeclarationIds": [
-                    "declaration-4cc91b5c06fd7a4d",
-                    "declaration-2e1900676b35bd4f",
-                    "declaration-60ebf3b787a982bd",
-                    "declaration-456c2aa54f019a46",
-                    "declaration-f1e636e2050f7207"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:19.6481073Z",
-              "contentHash": "sha256:6449d1308d358d4e29b1d1712a73f687cbfb6efd6b2098009b878cdca495ef1c"
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:4f91cccb83edbc883f3e1acdb2a1a06ab4e899858e8910c3cdf5cea9fa720cbf"
             }
           ],
           "blockers": []
@@ -56241,7 +56216,6 @@
         {
           "semanticIntentId": "semantic-88b01455dd806f7b",
           "reviewUnitId": "semantic-88b01455dd806f7b",
-          "applicableGuidance": [],
           "sourceChangeIds": [
             "source-b87f3a5e3fa341ca"
           ],
@@ -56250,10 +56224,11 @@
             "hunk-b7cfd28859536ed6"
           ],
           "declarationIds": [],
+          "applicableGuidance": [],
           "decision": "no-applicable-guidance",
-          "actual": "The change adds C#-specific @@clientName augment decorators for models and properties.",
-          "rationale": "The completed bounded search found no fetched guidance that governs C#-specific @@clientName augment decorators, so no documentation-grounded pass or failure applies.",
-          "gap": "The completed bounded search found no fetched guidance that governs C#-specific @@clientName augment decorators, so no documentation-grounded pass or failure applies.",
+          "actual": "The changed TypeSpec adds C#-specific @@clientName augment decorators.",
+          "rationale": "The four highest-ranked retrievable official documents were reviewed, but none provides governing guidance for this specific change beyond general TypeSpec syntax.",
+          "gap": "The four highest-ranked retrievable official documents were reviewed, but none provides governing guidance for this specific change beyond general TypeSpec syntax.",
           "sourceLinks": [],
           "codeSnippets": [
             {
@@ -56287,7 +56262,6 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
               "catalogOrder": 29,
               "title": "Change provider namespace",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
@@ -56295,13 +56269,13 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 6
               },
-              "selectionRationale": "Shows an ARM naming decorator pattern, though for provider rather than SDK names."
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
+              "rank": 1
             },
             {
-              "rank": 2,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -56309,13 +56283,13 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Directly documents augment-decorator syntax used by @@clientName."
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 2
             },
             {
-              "rank": 3,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -56323,13 +56297,13 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Provides decorator target and syntax reference."
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 3
             },
             {
-              "rank": 4,
               "catalogOrder": 28,
               "title": "OpenAPI decorators",
               "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
@@ -56337,167 +56311,125 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Provides a cataloged decorator reference for comparison."
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 4
             },
             {
-              "rank": 5,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only; no SDK client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 5
             },
             {
-              "rank": 6,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 6
             },
             {
-              "rank": 7,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 7
             },
             {
-              "rank": 8,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 8
             },
             {
-              "rank": 9,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 9
             },
             {
-              "rank": 10,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 10
             },
             {
-              "rank": 11,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only; no SDK client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 11
             },
             {
-              "rank": 12,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context only; no SDK client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 12
             },
             {
-              "rank": 13,
-              "catalogOrder": 17,
-              "title": "ARM long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "ARM-plane context only."
-            },
-            {
-              "rank": 14,
-              "catalogOrder": 20,
-              "title": "Azure.ResourceManager data types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "ARM-plane context only."
-            },
-            {
-              "rank": 15,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "ARM-plane customization context, but not SDK naming."
-            },
-            {
-              "rank": 16,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -56508,10 +56440,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 13
             },
             {
-              "rank": 17,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -56522,10 +56454,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 14
             },
             {
-              "rank": 18,
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -56536,10 +56468,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No version change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 15
             },
             {
-              "rank": 19,
               "catalogOrder": 12,
               "title": "Add preview after preview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
@@ -56550,10 +56482,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No version change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 16
             },
             {
-              "rank": 20,
               "catalogOrder": 13,
               "title": "Add stable after preview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
@@ -56564,10 +56496,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No version change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 17
             },
             {
-              "rank": 21,
               "catalogOrder": 14,
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
@@ -56578,10 +56510,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No version change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 18
             },
             {
-              "rank": 22,
               "catalogOrder": 15,
               "title": "Add stable after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
@@ -56592,10 +56524,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No version change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 19
             },
             {
-              "rank": 23,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
@@ -56606,10 +56538,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No versioned customization guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 20
             },
             {
-              "rank": 24,
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 21
+            },
+            {
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -56620,10 +56566,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No LRO change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 22
             },
             {
-              "rank": 25,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -56634,10 +56580,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No paging change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 23
             },
             {
-              "rank": 26,
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 24
+            },
+            {
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -56648,10 +56608,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 25
             },
             {
-              "rank": 27,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -56662,10 +56622,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 26
             },
             {
-              "rank": 28,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -56676,10 +56636,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 27
             },
             {
-              "rank": 29,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -56690,10 +56650,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No client-name guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 28
             },
             {
-              "rank": 30,
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 29
+            },
+            {
               "catalogOrder": 31,
               "title": "Content negotiation",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
@@ -56704,10 +56678,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No content-negotiation change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 30
             },
             {
-              "rank": 31,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -56718,10 +56692,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No directive change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 31
             },
             {
-              "rank": 32,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
@@ -56732,7 +56706,8 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No OpenAPI decorator change."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 32
             }
           ],
           "documents": [
@@ -56745,14 +56720,14 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "changeContext": 1,
+                "total": 6
               },
-              "selectionRationale": "Shows an ARM naming decorator pattern, though for provider rather than SDK names.",
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:20.8715486Z",
-              "contentHash": "sha256:51b58086f05b91f557e7ac4fa1f96321c54ccd6629f0e72e1d012df925b036ab"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:54fea88b3094193b885c2fc2f6598013d1a047fdc29c020dc93a44dafd1d1168"
             },
             {
               "rank": 2,
@@ -56763,14 +56738,14 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Directly documents augment-decorator syntax used by @@clientName.",
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:19.8529129Z",
-              "contentHash": "sha256:9b82a56ecf5d3502dc8a638878d4ed20c9c98236acf74158c6046e82da75e0a4"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             },
             {
               "rank": 3,
@@ -56781,14 +56756,14 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Provides decorator target and syntax reference.",
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:20.1745517Z",
-              "contentHash": "sha256:1aae143add1ad30890aca2d278655bfe3ba74e6e4cc35928256795e9951333ed"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
             },
             {
               "rank": 4,
@@ -56799,14 +56774,14 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "Provides a cataloged decorator reference for comparison.",
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:20.5387107Z",
-              "contentHash": "sha256:75652ad8ac5ca3be3f19b574be2a8c102aed9217a7aa6b3b7c3a7c962fb4626d"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e"
             }
           ],
           "blockers": []
@@ -56814,20 +56789,6 @@
         {
           "semanticIntentId": "semantic-c7e95ecf235ee418",
           "reviewUnitId": "semantic-c7e95ecf235ee418",
-          "applicableGuidance": [
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-              "guidanceSection": "ARM LRO headers and final results"
-            },
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "guidanceSection": "Azure Core no-openapi rule"
-            },
-            {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-              "guidanceSection": "Custom resource actions"
-            }
-          ],
           "sourceChangeIds": [
             "source-07d51f7284c81844",
             "source-5872d934af0ffb74",
@@ -56872,11 +56833,21 @@
             "declaration-d7d34ee7cb83cb00",
             "declaration-f449301f3ea800f9"
           ],
+          "applicableGuidance": [
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "guidanceSection": "Customize LRO headers"
+            },
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "guidanceSection": "Azure Core no-openapi rule"
+            }
+          ],
           "decision": "applicable-pass",
-          "expected": "ARM asynchronous actions should use TypeSpec-native LRO modeling, expose the selected polling header, and retain a final result matching what the operation returns; raw OpenAPI decorators should not substitute for semantic TypeSpec constructs.",
-          "actual": "The helper replaces x-ms-long-running-operation extensions with Azure.Core.useFinalStateVia(\"location\"), the polling GET explicitly models 202 Location and Retry-After with a ScenarioRun body, and TCGC resolves ScenarioRun as the logical and final result.",
-          "rationale": "The changed TypeSpec follows native cross-emitter LRO modeling, uses Location polling consistently, and preserves the intended ScenarioRun final result without an OpenAPI-only suppression.",
-          "gap": "The changed TypeSpec follows native cross-emitter LRO modeling, uses Location polling consistently, and preserves the intended ScenarioRun final result without an OpenAPI-only suppression.",
+          "expected": "ARM LROs may use Location polling when the final result matches the operation response, and Azure TypeSpec should model behavior without OpenAPI-only decorators so all emitters understand it.",
+          "actual": "The change removes @extension-based x-ms-long-running-operation metadata, uses Azure.Core.useFinalStateVia(\"location\"), and models the accepted polling response and final ScenarioRun result in TypeSpec.",
+          "rationale": "The corrected TypeSpec follows the documented Location-polling pattern and removes OpenAPI-only behavioral decorators. The compiled REST contract remains compatible.",
+          "gap": "The corrected TypeSpec follows the documented Location-polling pattern and removes OpenAPI-only behavioral decorators. The compiled REST contract remains compatible.",
           "sourceLinks": [
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
@@ -56899,9 +56870,19 @@
               "endLine": 40
             },
             {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+              "startLine": 43,
+              "endLine": 55
+            },
+            {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "startLine": 46,
               "endLine": 81
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "startLine": 16,
+              "endLine": 53
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
@@ -56910,13 +56891,63 @@
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "startLine": 34,
+              "endLine": 36
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "startLine": 36,
+              "endLine": 42
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "startLine": 38,
+              "endLine": 40
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "startLine": 42,
+              "endLine": 42
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "startLine": 44,
               "endLine": 52
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "startLine": 22,
+              "endLine": 84
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
               "startLine": 48,
               "endLine": 55
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "startLine": 57,
+              "endLine": 65
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "startLine": 67,
+              "endLine": 74
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "startLine": 76,
+              "endLine": 83
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "startLine": 17,
+              "endLine": 79
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "startLine": 71,
+              "endLine": 78
             }
           ],
           "codeSnippets": [
@@ -56987,6 +57018,13 @@
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "hunkId": "hunk-01f45d5aed4d7b62",
+              "lines": [
+                "-import \"@typespec/openapi\";"
+              ]
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "hunkId": "hunk-579b9c3ab2d0f182",
               "lines": [
                 "-using TypeSpec.OpenAPI;",
@@ -57019,11 +57057,39 @@
                 "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
                 "-  @pollingOperation(ScenarioRuns.get)"
               ]
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "hunkId": "hunk-2e4a7da67fc3730f",
+              "lines": [
+                "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+                "-  @pollingOperation(ScenarioRuns.get)"
+              ]
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "hunkId": "hunk-349961572456cb8d",
+              "lines": [
+                "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\""
+              ]
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "hunkId": "hunk-8bba970ccf3af6ef",
+              "lines": [
+                "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\""
+              ]
+            },
+            {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "hunkId": "hunk-0ca3bf7536e0d80a",
+              "lines": [
+                "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Async LRO POST returning 202 + Location, not a synchronous POST\""
+              ]
             }
           ],
           "catalogRanking": [
             {
-              "rank": 1,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -57034,13 +57100,27 @@
                 "changeContext": 1,
                 "total": 10
               },
-              "selectionRationale": "Directly covers ARM Location polling, Retry-After, final results, and modified LRO templates."
+              "selectionRationale": "names an exact changed TypeSpec construct; matches the change pattern/category; applies to the ARM service plane; matches the modification context",
+              "rank": 1
             },
             {
-              "rank": 2,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "names an exact changed TypeSpec construct; matches the change pattern/category; applies to the ARM service plane; matches the modification context",
+              "rank": 2
+            },
+            {
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
@@ -57048,10 +57128,10 @@
                 "changeContext": 1,
                 "total": 8
               },
-              "selectionRationale": "Directly covers the removed OpenAPI extensions and no-openapi suppression."
+              "selectionRationale": "names an exact changed TypeSpec construct; matches the change pattern/category; matches the modification context",
+              "rank": 3
             },
             {
-              "rank": 3,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -57062,24 +57142,10 @@
                 "changeContext": 1,
                 "total": 6
               },
-              "selectionRationale": "Covers modified asynchronous ARM actions and standard response patterns."
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
+              "rank": 4
             },
             {
-              "rank": 4,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "Provides exact ARM interface response and LRO-header signatures."
-            },
-            {
-              "rank": 5,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
@@ -57090,10 +57156,10 @@
                 "changeContext": 1,
                 "total": 6
               },
-              "selectionRationale": "Covers modifying operations and decorators in versioned ARM APIs."
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
+              "rank": 5
             },
             {
-              "rank": 6,
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -57104,178 +57170,108 @@
                 "changeContext": 1,
                 "total": 4
               },
-              "selectionRationale": "Covers native Azure.Core LRO patterns but not the ARM-specific operation."
+              "selectionRationale": "matches the change pattern/category; matches the modification context",
+              "rank": 6
             },
             {
-              "rank": 7,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
-              },
-              "selectionRationale": "Covers modified decorator use."
-            },
-            {
-              "rank": 8,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
-              },
-              "selectionRationale": "Covers the removed OpenAPI extension pattern."
-            },
-            {
-              "rank": 9,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but not direct LRO guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 7
             },
             {
-              "rank": 10,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but not direct LRO guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 8
             },
             {
-              "rank": 11,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but not direct LRO guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 9
             },
             {
-              "rank": 12,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but unrelated resource pattern."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 10
             },
             {
-              "rank": 13,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but unrelated resource pattern."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 11
             },
             {
-              "rank": 14,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but unrelated resource pattern."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 12
             },
             {
-              "rank": 15,
-              "catalogOrder": 20,
-              "title": "Azure.ResourceManager data types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 2,
+                "servicePlane": 0,
                 "changeContext": 0,
-                "total": 2
+                "total": 0
               },
-              "selectionRationale": "ARM-plane context but not the changed LRO interfaces."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 13
             },
             {
-              "rank": 16,
-              "catalogOrder": 22,
-              "title": "ARM common types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "ARM-plane context but not the changed LRO interfaces."
-            },
-            {
-              "rank": 17,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "ARM-plane context but no LRO guidance."
-            },
-            {
-              "rank": 18,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "ARM-plane context but no LRO guidance."
-            },
-            {
-              "rank": 19,
               "catalogOrder": 9,
               "title": "Azure.Core operation interfaces",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
@@ -57286,10 +57282,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Data-plane operation guidance does not directly apply."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 14
             },
             {
-              "rank": 20,
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -57300,10 +57296,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Data-plane interface guidance does not directly apply."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 15
             },
             {
-              "rank": 21,
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -57314,10 +57310,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No API version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 16
             },
             {
-              "rank": 22,
               "catalogOrder": 12,
               "title": "Add preview after preview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
@@ -57328,10 +57324,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No API version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 17
             },
             {
-              "rank": 23,
               "catalogOrder": 13,
               "title": "Add stable after preview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
@@ -57342,10 +57338,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No API version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 18
             },
             {
-              "rank": 24,
               "catalogOrder": 14,
               "title": "Add preview after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
@@ -57356,10 +57352,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No API version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 19
             },
             {
-              "rank": 25,
               "catalogOrder": 15,
               "title": "Add stable after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
@@ -57370,10 +57366,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No API version is added."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 20
             },
             {
-              "rank": 26,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -57384,10 +57380,38 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No paging behavior is changed."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 21
             },
             {
-              "rank": 27,
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 22
+            },
+            {
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 23
+            },
+            {
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -57398,10 +57422,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Generic model guidance is less direct than the LRO documents."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 24
             },
             {
-              "rank": 28,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -57412,10 +57436,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No enum behavior is changed."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 25
             },
             {
-              "rank": 29,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -57426,10 +57450,24 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Scalar guidance is not material to LRO modeling."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 26
             },
             {
-              "rank": 30,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 27
+            },
+            {
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -57440,10 +57478,52 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Generic built-in decorators are less direct than the selected guidance."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 28
             },
             {
-              "rank": 31,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 29
+            },
+            {
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 30
+            },
+            {
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 31
+            },
+            {
               "catalogOrder": 31,
               "title": "Content negotiation",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
@@ -57454,21 +57534,8 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No content-negotiation change belongs to this intent."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 32,
-              "title": "Directives",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Generic directive syntax is less direct than the no-openapi rule."
+              "selectionRationale": "No direct changed-symbol, pattern, service-plane, or change-context match.",
+              "rank": 32
             }
           ],
           "documents": [
@@ -57484,30 +57551,51 @@
                 "changeContext": 1,
                 "total": 10
               },
-              "selectionRationale": "Directly covers ARM Location polling, Retry-After, final results, and modified LRO templates.",
+              "selectionRationale": "names an exact changed TypeSpec construct; matches the change pattern/category; applies to the ARM service plane; matches the modification context",
               "guidance": [
                 {
-                  "section": "ARM LRO headers and final results",
-                  "excerpt": "ARM long-running operation templates allow you to customize the LRO headers returned in the initial response while retaining the correct finalResult value. Each header model accepts a FinalResult parameter that should match what the operation actually returns.",
+                  "section": "Customize LRO headers",
+                  "excerpt": "ARM asynchronous operation templates support Location polling headers, and the LRO FinalResult must match what the operation actually returns.",
                   "queryTerms": [
+                    "@Azure.Core.useFinalStateVia",
+                    "@extension",
+                    "AcceptedResponse",
+                    "ArmResponse",
                     "Location",
-                    "Retry-After",
-                    "FinalResult",
-                    "ArmResourceActionAsync"
+                    "LRO",
+                    "ScenarioRunInProgressResponse"
                   ],
                   "examples": [
-                    "LroHeaders = ArmLroLocationHeader<FinalResult = MyResource> &\n  Azure.Core.Foundations.RetryAfterHeader"
+                    "ArmLroLocationHeader<FinalResult = MyResource>",
+                    "Azure.Core.Foundations.RetryAfterHeader"
                   ],
                   "applicableDeclarationIds": [
-                    "declaration-d7d34ee7cb83cb00",
+                    "declaration-2caa7e8c582fa254",
+                    "declaration-342190062fe21bef",
+                    "declaration-42d22d744dbadac0",
+                    "declaration-462b286c48e80b14",
+                    "declaration-4e6785e3fd6c14b6",
+                    "declaration-51f8321feaf63705",
+                    "declaration-6772621d58825c99",
+                    "declaration-6d2e0ea2549ab9de",
+                    "declaration-6ed9fe17dabb3ec4",
+                    "declaration-76f31b8a81dcb8e5",
+                    "declaration-81da35f0f9a5fa26",
                     "declaration-99e7eb4caeecae4f",
-                    "declaration-76f31b8a81dcb8e5"
+                    "declaration-a6040788c889759b",
+                    "declaration-b724ffb86d553126",
+                    "declaration-b83be927db86cf01",
+                    "declaration-bb6863688e9f4caf",
+                    "declaration-c860d1800e203a3b",
+                    "declaration-d4a1b51bd36bdcc3",
+                    "declaration-d7d34ee7cb83cb00",
+                    "declaration-f449301f3ea800f9"
                   ]
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:21.3184302Z",
-              "contentHash": "sha256:5911b3b1b176269e59b451531b611afff176b3ad91d7f1df23524ab9a69ec636"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:63f635b183c6378a61fb317770a5fbfefff5f5bbf88998e64b6ccc6f7043cff7"
             },
             {
               "rank": 2,
@@ -57517,32 +57605,114 @@
               "score": {
                 "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 1,
-                "total": 8
+                "total": 10
               },
-              "selectionRationale": "Directly covers the removed OpenAPI extensions and no-openapi suppression.",
+              "selectionRationale": "names an exact changed TypeSpec construct; matches the change pattern/category; applies to the ARM service plane; matches the modification context",
               "guidance": [
                 {
                   "section": "Azure Core no-openapi rule",
-                  "excerpt": "Azure specs should not use decorators from @typespec/openapi. Those decorators are only read by OpenAPI emitters, so other emitters such as client SDK emitters can see a broken representation of the specification.",
+                  "excerpt": "Azure specifications should not use OpenAPI-library decorators to model behavior because other emitters, including SDK emitters, cannot understand those OpenAPI-only changes.",
                   "queryTerms": [
+                    "@Azure.Core.useFinalStateVia",
                     "@extension",
-                    "no-openapi",
-                    "SDK emitters"
+                    "AcceptedResponse",
+                    "ArmResponse",
+                    "Location",
+                    "LRO",
+                    "ScenarioRunInProgressResponse"
                   ],
-                  "examples": [],
+                  "examples": [
+                    "@azure-tools/typespec-azure-core/no-openapi"
+                  ],
                   "applicableDeclarationIds": [
-                    "declaration-d7d34ee7cb83cb00"
+                    "declaration-2caa7e8c582fa254",
+                    "declaration-342190062fe21bef",
+                    "declaration-42d22d744dbadac0",
+                    "declaration-462b286c48e80b14",
+                    "declaration-4e6785e3fd6c14b6",
+                    "declaration-51f8321feaf63705",
+                    "declaration-6772621d58825c99",
+                    "declaration-6d2e0ea2549ab9de",
+                    "declaration-6ed9fe17dabb3ec4",
+                    "declaration-76f31b8a81dcb8e5",
+                    "declaration-81da35f0f9a5fa26",
+                    "declaration-99e7eb4caeecae4f",
+                    "declaration-a6040788c889759b",
+                    "declaration-b724ffb86d553126",
+                    "declaration-b83be927db86cf01",
+                    "declaration-bb6863688e9f4caf",
+                    "declaration-c860d1800e203a3b",
+                    "declaration-d4a1b51bd36bdcc3",
+                    "declaration-d7d34ee7cb83cb00",
+                    "declaration-f449301f3ea800f9"
                   ]
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:22.4054624Z",
-              "contentHash": "sha256:681e7182fe663842c3cd8f9ec2fda5951d2f28e190c6f73f6df9cb5b36f50930"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:392a327c16e737324670b263a359bce7bd74156d517c4cea16e3d9504a7588df"
             },
             {
               "rank": 3,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 8
+              },
+              "selectionRationale": "names an exact changed TypeSpec construct; matches the change pattern/category; matches the modification context",
+              "guidance": [
+                {
+                  "section": "Suppress directive",
+                  "excerpt": "The #suppress directive suppresses a specific warning diagnostic and requires both the diagnostic code and a justification.",
+                  "queryTerms": [
+                    "@Azure.Core.useFinalStateVia",
+                    "@extension",
+                    "AcceptedResponse",
+                    "ArmResponse",
+                    "Location",
+                    "LRO",
+                    "ScenarioRunInProgressResponse"
+                  ],
+                  "examples": [
+                    "#suppress \"deprecated\" \"We are not ready to migrate yet\""
+                  ],
+                  "applicableDeclarationIds": [
+                    "declaration-2caa7e8c582fa254",
+                    "declaration-342190062fe21bef",
+                    "declaration-42d22d744dbadac0",
+                    "declaration-462b286c48e80b14",
+                    "declaration-4e6785e3fd6c14b6",
+                    "declaration-51f8321feaf63705",
+                    "declaration-6772621d58825c99",
+                    "declaration-6d2e0ea2549ab9de",
+                    "declaration-6ed9fe17dabb3ec4",
+                    "declaration-76f31b8a81dcb8e5",
+                    "declaration-81da35f0f9a5fa26",
+                    "declaration-99e7eb4caeecae4f",
+                    "declaration-a6040788c889759b",
+                    "declaration-b724ffb86d553126",
+                    "declaration-b83be927db86cf01",
+                    "declaration-bb6863688e9f4caf",
+                    "declaration-c860d1800e203a3b",
+                    "declaration-d4a1b51bd36bdcc3",
+                    "declaration-d7d34ee7cb83cb00",
+                    "declaration-f449301f3ea800f9"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:dd2de927d98582c444dfd946513a2267499852001c0b9e5b20f73e78e2a88791"
+            },
+            {
+              "rank": 4,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -57553,47 +57723,51 @@
                 "changeContext": 1,
                 "total": 6
               },
-              "selectionRationale": "Covers modified asynchronous ARM actions and standard response patterns.",
+              "selectionRationale": "matches the change pattern/category; applies to the ARM service plane; matches the modification context",
               "guidance": [
                 {
-                  "section": "Custom resource actions",
-                  "excerpt": "TypeSpec defines synchronous and asynchronous templates for actions that consume and produce information. Asynchronous operations return an initial response before the operation fully completes and support long-running operation polling.",
+                  "section": "Custom actions and standard ARM responses",
+                  "excerpt": "Asynchronous resource actions should use an ARM asynchronous action template, and custom ARM operations should use standard ARM response types such as ArmResponse<T> and ArmAcceptedResponse.",
                   "queryTerms": [
-                    "resource action",
-                    "asynchronous",
-                    "polling"
+                    "@Azure.Core.useFinalStateVia",
+                    "@extension",
+                    "AcceptedResponse",
+                    "ArmResponse",
+                    "Location",
+                    "LRO",
+                    "ScenarioRunInProgressResponse"
                   ],
                   "examples": [
-                    "updateCredentials is ArmResourceActionAsync<ResourceType, Request, Response>;"
+                    "ArmResourceActionAsync",
+                    "ArmAcceptedResponse"
                   ],
                   "applicableDeclarationIds": [
-                    "declaration-d7d34ee7cb83cb00",
+                    "declaration-2caa7e8c582fa254",
+                    "declaration-342190062fe21bef",
+                    "declaration-42d22d744dbadac0",
+                    "declaration-462b286c48e80b14",
+                    "declaration-4e6785e3fd6c14b6",
+                    "declaration-51f8321feaf63705",
+                    "declaration-6772621d58825c99",
+                    "declaration-6d2e0ea2549ab9de",
+                    "declaration-6ed9fe17dabb3ec4",
+                    "declaration-76f31b8a81dcb8e5",
+                    "declaration-81da35f0f9a5fa26",
                     "declaration-99e7eb4caeecae4f",
-                    "declaration-76f31b8a81dcb8e5"
+                    "declaration-a6040788c889759b",
+                    "declaration-b724ffb86d553126",
+                    "declaration-b83be927db86cf01",
+                    "declaration-bb6863688e9f4caf",
+                    "declaration-c860d1800e203a3b",
+                    "declaration-d4a1b51bd36bdcc3",
+                    "declaration-d7d34ee7cb83cb00",
+                    "declaration-f449301f3ea800f9"
                   ]
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-01T11:19:21.9632035Z",
-              "contentHash": "sha256:135fa1d040e2c4abe3428a5cd52df63025b691e26697cff2ef3bf10f9963c2ac"
-            },
-            {
-              "rank": 4,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
-              },
-              "selectionRationale": "Provides exact ARM interface response and LRO-header signatures.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-01T11:19:21.7893348Z",
-              "contentHash": "sha256:5b0f96da330933e64a7ac41fa8ccf5603fad91703648dd0e023bd1bc9642d684"
+              "retrievedAt": "2026-09-03T08:07:01.316987Z",
+              "contentHash": "sha256:e0a4343c26fe361fb7f857636c7d11a80d51ac68a525369f6caafba9e461c790"
             }
           ],
           "blockers": []
@@ -57700,15 +57874,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 27427,
+            "durationMs": 22227,
             "configPath": "worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
             "logPath": "logs\\project-a3a154cb066a-baseline-autorest.log",
@@ -57732,16 +57906,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 39281,
+            "durationMs": 35469,
             "configPath": "worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
             "logPath": "logs\\project-a3a154cb066a-baseline-tcgc.log",
@@ -57769,15 +57943,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 30375,
+            "durationMs": 16070,
             "configPath": "worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
             "logPath": "logs\\project-a3a154cb066a-target-autorest.log",
@@ -57801,16 +57975,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\full-e2e\\43308\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43308\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 18699,
+            "durationMs": 14840,
             "configPath": "worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
             "logPath": "logs\\project-a3a154cb066a-target-tcgc.log",
@@ -57916,16 +58090,20 @@
     "compliance": {
       "catalogEntriesScored": 96,
       "documentsFetched": 12,
-      "documentBytesFetched": 5130665,
-      "guidanceExcerptsRetained": 6,
-      "guidanceExcerptBytesRetained": 1234
+      "documentBytesFetched": 4204758,
+      "guidanceExcerptsRetained": 4,
+      "guidanceExcerptBytesRetained": 629
     }
   },
   "timings": {
-    "totalMs": 211635,
-    "semanticAnalysisMs": 206,
-    "restAnalysisMs": 92,
-    "downstreamAnalysisMs": 4748
+    "totalMs": 125971,
+    "semanticAnalysisMs": 196,
+    "restAnalysisMs": 121,
+    "downstreamAnalysisMs": 4442
   },
-  "pr": 43308
+  "pr": 43308,
+  "pullRequest": {
+    "number": 43308,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/43308"
+  }
 }

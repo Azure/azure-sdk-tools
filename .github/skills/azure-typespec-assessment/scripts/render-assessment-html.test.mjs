@@ -1266,7 +1266,7 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     html,
     /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
   );
-  assert.match(html, /Remove NFS file and handle response fields/);
+  assert.match(html, /Remove specialized NFS item models and file fields/);
   const restHtml = html.slice(
     html.indexOf('<section id="rest-breaking">'),
     html.indexOf('<section id="downstream-breaking">'),
@@ -1355,7 +1355,7 @@ test("counts repeated Azure guideline findings as one visible issue", () => {
   assert.equal(
     (
       complianceHtml.match(
-        /Existing stable API members are deleted without versioned removal/g,
+        /Use `@removed` with the version where an existing model/g,
       ) ?? []
     ).length,
     1,
@@ -1596,11 +1596,11 @@ test("renders version-reference-only operation changes as unchanged", () => {
   );
   const intent = assessment.dimensions.semantic.items.find((item) =>
     item.operations?.some(
-      (operation) => operation.operationId === "BackupEngines_List",
+      (operation) => operation.operationId === "DeletedVaults_Get",
     ),
   );
   const operation = intent.operations.find(
-    (item) => item.operationId === "BackupEngines_List",
+    (item) => item.operationId === "DeletedVaults_Get",
   );
 
   assert.deepEqual(
@@ -1614,7 +1614,7 @@ test("renders version-reference-only operation changes as unchanged", () => {
 
   const html = renderAssessmentHtml(assessment);
   const markerIndex = html.indexOf(
-    "<strong>BackupEngines_List</strong>",
+    "<strong>DeletedVaults_Get</strong>",
   );
   const cardStart = html.lastIndexOf(
     '<details class="operation">',

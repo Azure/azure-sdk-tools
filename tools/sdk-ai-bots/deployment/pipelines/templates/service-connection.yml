@@ -1,0 +1,16 @@
+# Azure DevOps validates service connections before jobs run, so endpoint names
+# must resolve at template expansion time rather than from environment loading.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+
+variables:
+    - name: AZURE_SERVICE_CONNECTION
+      ${{ if eq(parameters.environment, 'dev') }}:
+          value: azure-sdk-tests-playground
+      ${{ elseif eq(parameters.environment, 'preview') }}:
+          value: azuresdkqabot-preview
+      ${{ else }}:
+          value: 'Azure SDK Engineering System'

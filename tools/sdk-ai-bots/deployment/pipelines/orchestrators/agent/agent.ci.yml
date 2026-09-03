@@ -17,6 +17,9 @@ pr:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+      parameters:
+          environment: dev
     - name: workingDirectory
       value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
 

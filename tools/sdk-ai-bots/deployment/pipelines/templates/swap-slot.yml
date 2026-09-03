@@ -1,6 +1,6 @@
 # Pipeline template — App Service slot swap (rollout step).
 #
-# Required pipeline variables: SERVICE_CONNECTION, AZURE_RESOURCE_GROUP.
+# Required pipeline variables: AZURE_SERVICE_CONNECTION, AZURE_RESOURCE_GROUP.
 
 parameters:
     - name: appName
@@ -15,7 +15,7 @@ steps:
     - task: AzureCLI@2
       displayName: 'Swap ${{ parameters.appName }}: ${{ parameters.sourceSlot }} → ${{ parameters.targetSlot }}'
       inputs:
-          azureSubscription: $(SERVICE_CONNECTION)
+          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |

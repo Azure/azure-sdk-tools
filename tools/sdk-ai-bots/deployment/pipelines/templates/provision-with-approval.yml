@@ -31,7 +31,6 @@ stages:
           dependencyLayers: ${{ parameters.dependencyLayers }}
           workingDirectory: ${{ parameters.workingDirectory }}
           ${{ if eq(parameters.environment, 'dev') }}:
-              serviceConnection: azure-sdk-tests-playground
               authenticateBeforeEnvironmentLoad: true
 
     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
@@ -53,5 +52,4 @@ stages:
           dependencyLayers: ${{ parameters.dependencyLayers }}
           workingDirectory: ${{ parameters.workingDirectory }}
           ${{ if eq(parameters.environment, 'dev') }}:
-              serviceConnection: azure-sdk-tests-playground
               authenticateBeforeEnvironmentLoad: true

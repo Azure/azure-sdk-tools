@@ -54,12 +54,13 @@ npm install
 
 ## 2. Azure DevOps — service connections
 
-Create one **federated identity** service connection per environment.
-Use Workload Identity Federation (do not create client-secret connections).
+Use the following **federated identity** service connections. Their names must
+match both `environment-suite.yaml` and `pipelines/templates/service-connection.yml`
+because Azure DevOps authorizes endpoints before pipeline steps run.
 
-- [ ] `azuresdkqabot-dev` → dev subscription, scoped to `rg-azuresdkqabot-dev`
+- [ ] `azure-sdk-tests-playground` → dev subscription
 - [ ] `azuresdkqabot-preview` → preview subscription, scoped to `rg-azuresdkqabot-preview`
-- [ ] `azuresdkqabot-prod` → prod subscription, scoped to `rg-azuresdkqabot-prod`
+- [ ] `Azure SDK Engineering System` → prod subscription
 
 For each connection:
 

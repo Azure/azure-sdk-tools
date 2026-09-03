@@ -12,6 +12,9 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+      parameters:
+          environment: ${{ parameters.environment }}
 
 extends:
     template: /eng/pipelines/templates/stages/1es-redirect.yml

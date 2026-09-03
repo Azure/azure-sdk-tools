@@ -20,6 +20,9 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml@self
+      parameters:
+          environment: ${{ parameters.environment }}
     - name: workingDirectory
       value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
 
@@ -75,7 +78,7 @@ extends:
                         - task: AzureCLI@2
                           displayName: 'Validate Search index doc count'
                           inputs:
-                              azureSubscription: $(SERVICE_CONNECTION)
+                              azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
                               scriptType: bash
                               scriptLocation: inlineScript
                               inlineScript: |

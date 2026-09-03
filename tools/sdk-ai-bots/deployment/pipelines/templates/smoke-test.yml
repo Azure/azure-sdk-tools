@@ -1,6 +1,6 @@
 # Pipeline template — HTTP smoke probe.
 #
-# Required pipeline variables: SERVICE_CONNECTION, AZURE_RESOURCE_GROUP.
+# Required pipeline variables: AZURE_SERVICE_CONNECTION, AZURE_RESOURCE_GROUP.
 
 parameters:
     - name: appName
@@ -25,7 +25,7 @@ steps:
     - task: AzureCLI@2
       displayName: 'Smoke test ${{ parameters.appName }}/${{ parameters.slot }}${{ parameters.healthPath }}'
       inputs:
-          azureSubscription: $(SERVICE_CONNECTION)
+          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |

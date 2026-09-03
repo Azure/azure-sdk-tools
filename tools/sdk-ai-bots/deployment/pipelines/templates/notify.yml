@@ -1,6 +1,7 @@
 # Pipeline template — notify Teams / email on success or failure.
 #
-# Required pipeline variables: SERVICE_CONNECTION (for Key Vault webhook fetch).
+# Required pipeline variable: AZURE_SERVICE_CONNECTION (for Key Vault webhook
+# fetch).
 
 parameters:
     - name: component
@@ -21,7 +22,7 @@ steps:
       displayName: 'Notify Teams (${{ parameters.status }})'
       condition: ${{ parameters.condition }}
       inputs:
-          azureSubscription: $(SERVICE_CONNECTION)
+          azureSubscription: ${{ variables.AZURE_SERVICE_CONNECTION }}
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |

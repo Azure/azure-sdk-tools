@@ -20,7 +20,9 @@ declared:
 - per-component image names, slot names, and health paths
 
 Every pipeline reads this file via `pipelines/templates/load-environment-suite.yml`.
-No pipeline hard-codes any of the above.
+Azure DevOps requires service connections during template expansion, so
+`pipelines/templates/service-connection.yml` mirrors each `subscription` alias.
+Keep the two files synchronized.
 
 ## Schema
 
@@ -117,6 +119,8 @@ are unaffected — they read the suite directly via
 3. Add any existing-resource pins under the environment's `bicepOverrides`.
 4. Register an Azure service connection with the same alias as
    `subscription:`.
-5. Restrict that connection to the intended pipelines and configure any
+5. Add the alias to `pipelines/templates/service-connection.yml` so Azure
+    DevOps can authorize it while compiling the pipeline.
+6. Restrict that connection to the intended pipelines and configure any
     required approvals or branch-control checks on the connection.
-6. Re-run `validate-env-suite.ps1`.
+7. Re-run `validate-env-suite.ps1`.

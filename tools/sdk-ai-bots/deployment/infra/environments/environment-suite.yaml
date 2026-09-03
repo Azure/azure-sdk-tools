@@ -33,10 +33,10 @@
 
 environments:
     dev:
-        # Symbolic subscription reference. The pipeline maps this to a real
-        # service-connection name via /eng/pipelines/templates/variables/globals.yml
-        # (entry: subscriptionMap.dev → SERVICE_CONNECTION + AZURE_SUBSCRIPTION_ID).
-        subscription: 'Azure SDK Engineering System'
+        # Azure DevOps service-connection alias. Keep this synchronized with
+        # pipelines/templates/service-connection.yml, which must resolve the
+        # endpoint at template-expansion time.
+        subscription: 'azure-sdk-tests-playground'
         subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'

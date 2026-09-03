@@ -46,11 +46,17 @@ steps:
                   --no-prompt
               fi
               azd env select "$AZURE_ENV_NAME" --no-prompt
+              # Deployment stages run on fresh agents. Rehydrate the shared
+              # layer outputs required for ACR remote builds before azd reads
+              # the service's docker.registry setting.
+              azd env refresh "$AZURE_ENV_NAME" \
+                --layer shared-resources \
+                --no-prompt
               if [ "${{ parameters.service }}" = "frontend" ] && [ "${AZD_SKIP_TEAMS_PROVISION:-0}" != "1" ]; then
                 azd env refresh "$AZURE_ENV_NAME" --layer frontend --no-prompt
               fi
               if [ "${{ parameters.service }}" = "function-app" ]; then
-                for LAYER in shared-resources frontend agent-server function-app logic-app; do
+                for LAYER in frontend agent-server function-app logic-app; do
                   azd env refresh "$AZURE_ENV_NAME" --layer "$LAYER" --no-prompt
                 done
               fi

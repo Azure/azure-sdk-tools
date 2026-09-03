@@ -46,6 +46,7 @@ services:
             path: Dockerfile
             context: .
             image: azure-sdk-qa-bot-agent-server
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
             remoteBuild: true
     frontend:
         project: azure-sdk-qa-bot
@@ -68,6 +69,7 @@ services:
         docker:
             path: Dockerfile
             context: .
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
             remoteBuild: true
         hooks:
             postdeploy:

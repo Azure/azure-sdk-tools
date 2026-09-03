@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
+namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
 {
     /// <summary>
     /// Represents a response containing product onboarding work item details and the result of an onboarding operation.

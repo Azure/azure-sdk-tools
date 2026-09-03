@@ -4,8 +4,8 @@ description: 'Author and validate multi-tool, multi-turn, mock, and live Vally s
 license: MIT
 metadata:
   author: Microsoft
-  version: "1.0.0"
-compatibility: "copilot-chat, @microsoft/vally-cli 0.7.0"
+  version: "1.1.0"
+compatibility: "copilot-chat, @microsoft/vally-cli 0.14.0"
 ---
 
 # Workflow Eval Authoring
@@ -25,14 +25,14 @@ DO NOT USE FOR: per-skill routing/capability evals (use eval-authoring-skill), i
 3. Model one user goal per stimulus. Use `turns` only when conversation state matters; otherwise keep a single prompt. Mount every candidate skill explicitly, provide minimal file/git fixtures, and bound turns, tokens, workers, and timeout.
 4. Combine process and outcome graders per the guide's four-layer pattern and grader catalog: required/disallowed skills and tools, ordering where essential, files/commands, response quality. Avoid overfitting to incidental call sequences and the guide's anti-patterns (e.g. boundary anti-triggers with no competing skill mounted).
 5. Scope graders to `turn` only when that turn owns the assertion unambiguously; otherwise grade the full conversation.
-6. Validate locally per the guide's "Running evals locally" section, building the matching MCP and priming git fixtures when required. Do not finish or open a PR until it passes; inspect every turn and tool call on failure.
+6. Materialize generated fixture sources, run strict eval-spec lint, then validate locally per the guide's "Running evals locally" section. Build the matching MCP and prime git fixtures when required. Do not finish or open a PR until both lint and the focused eval pass; inspect every turn and tool call on failure.
 
 ## Rules
 
 - Keep mock workflows hermetic and repeatable; use fake IDs and canned responses.
 - Never run a live write scenario without the documented test area and safety environment.
-- Preserve relative path invariants for `environment.skills`, `files`, and `git.source`.
-- Use weights summing to `1.0` and a meaningful threshold when combining grader types.
+- Preserve relative path invariants for `environment.skills`, `files`, and `git.source`; every `environment.files` entry needs both `src` and `dest`.
+- Weight by grader type, include every used type (use `0` only intentionally), and normalize positive weights to `1.0`.
 
 ## References
 

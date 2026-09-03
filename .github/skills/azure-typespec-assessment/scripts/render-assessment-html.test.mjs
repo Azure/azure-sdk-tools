@@ -586,8 +586,10 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.doesNotMatch(complianceHtml, /class="compliance-intent"/);
   const appendixHtml = html.slice(html.indexOf('<section id="appendix">'));
   assert.match(appendixHtml, /Guidance fetched/);
-  assert.match(appendixHtml, /<ul class="guidance-document-list">/);
-  assert.doesNotMatch(appendixHtml, /class="compliance-intent"/);
+  assert.match(
+    appendixHtml,
+    /<details class="compliance-intent" id="compliance-intent-semantic-1">/,
+  );
   assert.match(
     appendixHtml,
     new RegExp(
@@ -640,6 +642,11 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   );
   assert.match(findingHtml, /model Child extends LegacyResource/);
   assert.match(findingHtml, /interface ChildOperations/);
+  assert.match(
+    html,
+    /<details class="compliance-intent" id="compliance-intent-semantic-1">/,
+  );
+  assert.match(html, /<a href="#intent-semantic-1">/);
 });
 
 test("escapeHtml escapes Agent and source text", () => {
@@ -1004,8 +1011,7 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.doesNotMatch(html, /&quot;name&quot;:&quot;afcManagedSync&quot;/);
   assert.match(html, /get is Lro/);
   assert.match(html, /Representative TypeSpec example/);
-  assert.doesNotMatch(html, /Complete TypeSpec source evidence/);
-  assert.doesNotMatch(html, /complete-typespec-evidence/);
+  assert.match(html, /Complete TypeSpec source evidence/);
   assert.match(
     html,
     /<details class="intent" id="intent-semantic-1"><summary>/,
@@ -1158,7 +1164,7 @@ test("representative source uses hunk position before hunk ID", () => {
   assert.equal(selected.hunks[0].id, "hunk-z");
 });
 
-test("renderer shows one representative intent example without duplicating source evidence", () => {
+test("renderer shows one intent example and keeps complete appendix evidence", () => {
   const sources = [
     {
       id: "source-1",
@@ -1228,8 +1234,10 @@ test("renderer shows one representative intent example without duplicating sourc
     html,
     /Deterministic coverage:<\/strong> 1 of 2 changed hunks classified\. AI inference used for 1 request\./,
   );
-  assert.equal((html.match(/class="diff"/g) ?? []).length, 1);
-  assert.doesNotMatch(html, /complete-typespec-evidence/);
+  const appendixHtml = html.slice(
+    html.indexOf('id="complete-typespec-evidence"'),
+  );
+  assert.equal((appendixHtml.match(/class="diff"/g) ?? []).length, 2);
 });
 
 test("refreshed baseline preserves semantic and REST-derived downstream links", () => {

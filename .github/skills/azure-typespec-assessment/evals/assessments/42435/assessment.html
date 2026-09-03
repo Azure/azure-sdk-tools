@@ -47,7 +47,7 @@
 <span class="context">     ManagedNetworkSettingsPropertiesBasicResource,</span>
 <span class="context">     Request = ManagedNetworkSettingsBasicResource,</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-1e7d20fcf8db2c04"><strong>Related findings:</strong> <a href="#downstream-downstream-group-2a67076bb3eb0443">downstream-group-2a67076bb3eb0443</a></p>
@@ -55,8 +55,22 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/cognitiveservices/CognitiveServices.Management</code></td><td>existing-api-version</td><td><code>2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904@2026-03-01</code><br><small>base · affected-existing-version</small></td><td><code>96eae0e7d5c7ede040ee0cc646d397e5d8375912@2026-03-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/42435">#42435</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Mark the batch outbound-rules action as paged</h4>
+<div class="diff"><div class="diff-path">specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</div><pre><span class="context">    */</span>
+<span class="context">   @tag(&quot;ManagedNetwork&quot;)</span>
+<span class="context">   @action(&quot;batchOutboundRules&quot;)</span>
+<span class="add">+  @list</span>
+<span class="context">   post is ArmResourceActionAsync&lt;</span>
+<span class="context">     ManagedNetworkSettingsPropertiesBasicResource,</span>
+<span class="context">     Request = ManagedNetworkSettingsBasicResource,</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp:28</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/">Azure.Core operation interfaces</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/">Azure.Core interface reference</a></li><li><a href="https://typespec.io/docs/standard-library/pagination/">TypeSpec pagination</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-1e7d20fcf8db2c04"><summary><strong><a href="#intent-semantic-1e7d20fcf8db2c04">Mark the batch outbound-rules action as paged</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/">Azure.Core operation interfaces</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/">Azure.Core interface reference</a></li><li><a href="https://typespec.io/docs/standard-library/pagination/">TypeSpec pagination</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

@@ -67,7 +67,7 @@
 <span class="add">+  &quot;go&quot;</span>
 <span class="add">+);</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/newrelic/NewRelicObservability.Management/client.tsp:327</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/newrelic/NewRelicObservability.Management/client.tsp:327</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (35)</h4>
 <p><strong>Operation impact:</strong> 35 REST operations are affected; 3 representative operation(s) are shown below and 32 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>Accounts_List</strong> <code>GET /subscriptions/{subscriptionId}/providers/NewRelic.Observability/accounts</code> <span>2026-06-01</span></summary>
@@ -84,8 +84,68 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/newrelic/NewRelicObservability.Management</code></td><td>new-api-version</td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2025-05-01-preview</code><br><small>current · previous-latest-preview</small></td><td><code>22bc88578fb1f253688e8a5bf127ef3a4502745a@2026-06-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44882">#44882</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Publish the stable New Relic API and preserve Go delete ordering</h4>
+<div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/client.tsp</div><pre><span class="context"> using Azure.ClientGenerator.Core;</span>
+<span class="context"> using Azure.ClientGenerator.Core.Legacy;</span>
+<span class="context"> using Azure.Core;</span>
+<span class="add">+using Azure.ResourceManager;</span>
+<span class="context"> using Azure.ResourceManager.Foundations;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="context"> using NewRelic.Observability;</span>
+<span class="context"> </span>
+<span class="context"> @@clientName(</span></pre></div><div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/client.tsp</div><pre><span class="context"> @@usage(AccountProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<span class="context"> @@usage(OrganizationProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<span class="context"> @@usage(PlanDataProperties, Usage.input | Usage.output, &quot;csharp&quot;);</span>
+<span class="add">+</span>
+<span class="add">+// ===== Go delete parameter reorder =====</span>
+<span class="add">+// Reorder the delete method parameters for the Go SDK to keep backward compatibility.</span>
+<span class="add">+/**</span>
+<span class="add">+ * Deletes an existing New Relic monitor resource from your Azure subscription, removing the integration and stopping the observability of your Azure resources through New Relic</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-operation&quot; &quot;Override to reorder parameters for the Go SDK&quot;</span>
+<span class="add">+op newRelicMonitorResourceDelete(</span>
+<span class="add">+  ...ApiVersionParameter,</span>
+<span class="add">+  ...SubscriptionIdParameter,</span>
+<span class="add">+  ...ResourceGroupParameter,</span>
+<span class="add">+  ...Azure.ResourceManager.Legacy.Provider,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * User Email.</span>
+<span class="add">+   */</span>
+<span class="add">+  @query(&quot;userEmail&quot;)</span>
+<span class="add">+  userEmail: string,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Name of the Monitors resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @path</span>
+<span class="add">+  monitorName: string,</span>
+<span class="add">+): void;</span>
+<span class="add">+</span>
+<span class="add">+@@override(</span>
+<span class="add">+  NewRelicMonitorResources.delete,</span>
+<span class="add">+  newRelicMonitorResourceDelete,</span>
+<span class="add">+  &quot;go&quot;</span>
+<span class="add">+);</span>
+<span class="context"></span></pre></div><div class="diff"><div class="diff-path">specification/newrelic/NewRelicObservability.Management/main.tsp</div><pre><span class="context">    * The 2025-05-01-preview API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2025_05_01_preview: &quot;2025-05-01-preview&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2026-06-01 API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  v2026_06_01: &quot;2026-06-01&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> interface Operations extends Azure.ResourceManager.Operations {}</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/newrelic/NewRelicObservability.Management/client.tsp:327</code>, <code>specification/newrelic/NewRelicObservability.Management/main.tsp:35</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/">Azure.ResourceManager interface reference</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Add stable after preview</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-689d93649516029d"><summary><strong><a href="#intent-semantic-689d93649516029d">Publish the stable New Relic API and preserve Go delete ordering</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/">Azure.ResourceManager interface reference</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/">Add stable after preview</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (committed)</li><li><code>specification/newrelic/NewRelicObservability.Management/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

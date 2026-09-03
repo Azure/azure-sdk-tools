@@ -47,7 +47,7 @@
 <span class="context"> }</span>
 <span class="context"> </span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/deviceregistry/DeviceRegistry.Management/main.tsp:42</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/deviceregistry/DeviceRegistry.Management/main.tsp:42</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (109)</h4>
 <p><strong>Operation impact:</strong> 109 REST operations are affected; 3 representative operation(s) are shown below and 106 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>AssetEndpointProfiles_CreateOrReplace</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/assetEndpointProfiles/{assetEndpointProfileName}</code> <span>2026-11-02-preview</span></summary>
@@ -64,8 +64,29 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><ul><li>All 237 REST candidates have bounded before/after fact records that are identical except for generated fact IDs, so the supplied evidence cannot establish caller-visible incompatibility.</li></ul>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/deviceregistry/DeviceRegistry.Management</code></td><td>existing-api-version</td><td><code>2991970c5377110244bcf9614be03e5aaf32362f@2026-11-02-preview</code><br><small>base · affected-existing-version</small></td><td><code>b209254310b3e569b16210d3c59fc8b8ac3b84b4@2026-11-02-preview</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45348">#45348</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Downgrade ARM common-types references from v6 to v5</h4>
+<div class="diff"><div class="diff-path">specification/deviceregistry/DeviceRegistry.Management/main.tsp</div><pre><span class="context">   v2026_04_01: &quot;2026-04-01&quot;,</span>
+<span class="context"> </span>
+<span class="context">   @doc(&quot;Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.&quot;)</span>
+<span class="remove">-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)</span>
+<span class="add">+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)</span>
+<span class="context">   v2026_11_01_preview: &quot;2026-11-01-preview&quot;,</span>
+<span class="context"> </span>
+<span class="context">   @doc(&quot;Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.&quot;)</span>
+<span class="context">   @Azure.Core.previewVersion</span>
+<span class="remove">-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)</span>
+<span class="add">+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)</span>
+<span class="context">   v2026_11_02_preview: &quot;2026-11-02-preview&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/deviceregistry/DeviceRegistry.Management/main.tsp:42</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-9aa453e5a18d9499"><summary><strong><a href="#intent-semantic-9aa453e5a18d9499">Downgrade ARM common-types references from v6 to v5</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/deviceregistry/DeviceRegistry.Management/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

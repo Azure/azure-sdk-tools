@@ -44,7 +44,7 @@
 <span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
 <span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (0)</h4>
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-5c37e529c22fc782"><strong>Related findings:</strong> None</p>
@@ -52,8 +52,26 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption</code></td><td>existing-api-version</td><td><code>b7170cade07f615426eb153b7035ecf8a1cab4e4@2026-06-01</code><br><small>base · affected-existing-version</small></td><td><code>1395797d6112cb083837b3772083bafe0a91460c@2026-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/45536">#45536</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Preserve Java enum member names</h4>
+<div class="diff"><div class="diff-path">specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</div><pre><span class="context">   ModernChargeSummary.properties,</span>
+<span class="context">   &quot;csharp&quot;</span>
+<span class="context"> );</span>
+<span class="add">+</span>
+<span class="add">+// Preserve Java enum value names from the released SDK.</span>
+<span class="add">+@@clientName(Metrictype.ActualCostMetricType, &quot;ACTUALCOST&quot;, &quot;java&quot;);</span>
+<span class="add">+@@clientName(Metrictype.AmortizedCostMetricType, &quot;AMORTIZEDCOST&quot;, &quot;java&quot;);</span>
+<span class="add">+@@clientName(Metrictype.UsageMetricType, &quot;USAGE&quot;, &quot;java&quot;);</span>
+<span class="add">+@@clientName(Datagrain.DailyGrain, &quot;DAILY&quot;, &quot;java&quot;);</span>
+<span class="add">+@@clientName(Datagrain.MonthlyGrain, &quot;MONTHLY&quot;, &quot;java&quot;);</span>
+<span class="add">+@@clientName(LookBackPeriod.Last07Days, &quot;LAST7DAYS&quot;, &quot;java&quot;);</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/">Change provider namespace</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/">Azure Portal default experiences</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-5c37e529c22fc782"><summary><strong><a href="#intent-semantic-5c37e529c22fc782">Preserve Java enum member names</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/">Change provider namespace</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/">Azure Portal default experiences</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

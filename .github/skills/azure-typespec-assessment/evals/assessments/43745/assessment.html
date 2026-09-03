@@ -60,7 +60,7 @@
 <span class="context"> </span>
 <span class="context"> /**</span>
 <span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp:283</code>.</p></details>
+<p class="sources"><strong>Source:</strong> <code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp:283</code>. Complete TypeSpec evidence is retained in <a href="#complete-typespec-evidence">Appendix</a>.</p></details>
 <h4>Affected REST operations (3)</h4>
 <p><strong>Operation impact:</strong> 3 REST operations are affected; 3 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
 <details class="operation"><summary><strong>CloudHsmClusters_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}</code> <span>2025-03-31</span></summary>
@@ -77,8 +77,33 @@
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules</code></td><td>existing-api-version</td><td><code>a6887d2260f26285d4b1f5fba97da370be9200b4@2025-03-31</code><br><small>base · affected-existing-version</small></td><td><code>71ce7d0c524c4bea7bc737836684acd53f343147@2025-03-31</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/43745">#43745</a></p>
+<details id="complete-typespec-evidence"><summary><strong>Complete TypeSpec source evidence</strong></summary>
+<section><h4>Make Cloud HSM SKU names extensible</h4>
+<div class="diff"><div class="diff-path">specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</div><pre><span class="context"> /**</span>
+<span class="context">  * Sku name of the Cloud HSM Cluster</span>
+<span class="context">  */</span>
+<span class="remove">-#suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
+<span class="remove">-enum CloudHsmClusterSkuName {</span>
+<span class="remove">-  Standard_B1,</span>
+<span class="remove">-  `Standard B10`,</span>
+<span class="add">+union CloudHsmClusterSkuName {</span>
+<span class="add">+  string,</span>
+<span class="add">+</span>
+<span class="add">+  /** Standard_B1 SKU */</span>
+<span class="add">+  Standard_B1: &quot;Standard_B1&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /** Standard B10 SKU */</span>
+<span class="add">+  StandardB10: &quot;Standard B10&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> /**</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Sources:</strong> <code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp:283</code></p></section></details>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/scalars/">Scalars</a></li></ul>
+<details class="compliance-intent" id="compliance-intent-semantic-6c953bac4d5ca5b2"><summary><strong><a href="#intent-semantic-6c953bac4d5ca5b2">Make Cloud HSM SKU names extensible</a></strong></summary>
+<div class="compliance-intent-body">
+<ul><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/scalars/">Scalars</a></li></ul>
+</div></details>
 <h3>Changed files</h3><ul><li><code>specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {

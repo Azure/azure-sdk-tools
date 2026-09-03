@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: gpt-5.6-sol # Model for agent execution
+  model: gpt-5.4 # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -92,7 +92,7 @@ stimuli:
         type: "prompt"
         config:
           threshold: 0.88
-          model: "gpt-5.6-sol"
+          model: "gpt-5.4"
           scoring: "scale_1_10"
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
     constraints:

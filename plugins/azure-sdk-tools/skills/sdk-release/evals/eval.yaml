@@ -3,7 +3,7 @@ description: Evaluations for the SDK release skill
 skill: sdk-release
 version: "1.0"
 config:
-  model: gpt-4o
+  model: gpt-5.4
   executor: mock
   trials_per_task: 1
   timeout_seconds: 300

@@ -2286,14 +2286,11 @@ row presentation as SDK method and SDK type cards:
 - a generated SDK property corresponding to a normalized response header is
   labeled `Response header property`; request/response body reachability of the
   containing type must not override member-level header evidence;
-- moving an existing response/header member from an implicit result model to
-  an explicit response wrapper is SDK-compatible when the target wrapper
-  preserves an equivalent public member, contains the target body model, and
-  replaces the baseline result model for the same public operation; this is
-  not a `model-property-removed` change;
-- the wrapper exception is structural and operation-scoped. A member copied to
-  an unrelated model, moved without preserving its type/optionality/access, or
-  removed from the operation response remains a downstream breaking candidate;
+- deterministic TCGC comparison may still emit a property-removal candidate
+  when an implicit result shape is rewritten as an explicit response model;
+  downstream Agent judgment applies the documented response-model
+  compatibility case and rejects the candidate when the generated SDK member
+  and operation behavior are preserved;
 - when member-level body or header evidence is absent or ambiguous, the
   contract area falls back to `Model property`;
 - internal rules such as `model-property-removed` or

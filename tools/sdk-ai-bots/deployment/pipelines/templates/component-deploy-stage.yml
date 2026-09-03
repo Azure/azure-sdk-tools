@@ -33,6 +33,9 @@ stages:
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
                   parameters:
                       service: ${{ parameters.component }}
+                      # Foundry publication includes ACR upload/build and can exceed azd's 20-minute default.
+                      ${{ if eq(parameters.component, 'agent') }}:
+                          timeoutSeconds: 2400
 
                 - ${{ if or(eq(parameters.component, 'agent-server'), eq(parameters.component, 'frontend')) }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml

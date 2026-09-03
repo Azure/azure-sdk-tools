@@ -7,6 +7,9 @@
 parameters:
     - name: service
       type: string # frontend | function-app | agent | agent-server
+    - name: timeoutSeconds
+      type: number
+      default: 1200
     - name: workingDirectory
       type: string
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
@@ -70,6 +73,7 @@ steps:
                 set +e
                 azd deploy "${{ parameters.service }}" \
                   --environment "$AZURE_ENV_NAME" \
+                  --timeout ${{ parameters.timeoutSeconds }} \
                   --no-prompt 2>&1 | tee "$DEPLOY_LOG"
                 DEPLOY_EXIT_CODE=${PIPESTATUS[0]}
                 set -e

@@ -3,15 +3,13 @@ name: tools - sdk-ai-bots-knowledge-sync - ci
 
 trigger:
     branches:
-        include:
-            - main
+        include: [main]
     paths:
         include:
             - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/**
 pr:
     branches:
-        include:
-            - main
+        include: [main]
     paths:
         include:
             - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/**

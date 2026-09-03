@@ -1,8 +1,8 @@
-# Reusable stage template for deploy-all-* orchestrators.
+# Reusable stage template for the full-stack orchestrator.
 #
 # Encapsulates the shared dependency chain
 #   AgentServer → [optional stabilization watch] → FunctionApp → Agent → Frontend
-# so the three deploy-all-<env>.yml orchestrators only supply parameters.
+# so the overall orchestrator only supplies environment parameters.
 #
 # Azure authorization and deployment checks belong to each component's service
 # connection; component CD pipelines use normal jobs.
@@ -11,35 +11,24 @@ parameters:
     - name: environment
       type: string
       values: [dev, preview, prod]
-    - name: imageTagAgentServer
-      type: string
-    - name: imageTagFunctionApp
-      type: string
-    - name: imageTagAgent
-      type: string
-    - name: imageTagFrontend
-      type: string
     - name: stabilizationSeconds
       type: number
       default: 0
-    # Distinguishes stage identifiers per env when multiple deploy pipelines
-    # coexist in the same run (unused today, but prod historically used
-    # `-Prod` suffixes on stage names — kept for backwards-compat readability).
-    - name: stageSuffix
+    - name: dependsOn
       type: string
       default: ''
 
 stages:
-    - stage: DeployAgentServer${{ parameters.stageSuffix }}
-      jobs:
-          - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent-server/agent-server.cd.yml@self
-            parameters:
-                environment: ${{ parameters.environment }}
-                imageTag: '${{ parameters.imageTagAgentServer }}'
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployAgentServer
+          component: agent-server
+          environment: ${{ parameters.environment }}
+          dependsOn: ${{ parameters.dependsOn }}
 
     - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
-          - stage: WatchAgentServer${{ parameters.stageSuffix }}
-            dependsOn: DeployAgentServer${{ parameters.stageSuffix }}
+          - stage: WatchAgentServer
+            dependsOn: DeployAgentServer
             jobs:
                 - job: Watch
                   pool:
@@ -52,30 +41,26 @@ stages:
                             sleep ${{ parameters.stabilizationSeconds }}
                         displayName: 'Stabilize ${{ parameters.stabilizationSeconds }}s'
 
-    - stage: DeployFunctionApp${{ parameters.stageSuffix }}
-      dependsOn:
-          - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
-                - WatchAgentServer${{ parameters.stageSuffix }}
-          - ${{ if not(gt(parameters.stabilizationSeconds, 0)) }}:
-                - DeployAgentServer${{ parameters.stageSuffix }}
-      jobs:
-          - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
-            parameters:
-                environment: ${{ parameters.environment }}
-                imageTag: '${{ parameters.imageTagFunctionApp }}'
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployFunctionApp
+          component: function-app
+          environment: ${{ parameters.environment }}
+          ${{ if gt(parameters.stabilizationSeconds, 0) }}:
+              dependsOn: WatchAgentServer
+          ${{ else }}:
+              dependsOn: DeployAgentServer
 
-    - stage: DeployAgent${{ parameters.stageSuffix }}
-      dependsOn: DeployFunctionApp${{ parameters.stageSuffix }}
-      jobs:
-          - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
-            parameters:
-                environment: ${{ parameters.environment }}
-                imageTag: '${{ parameters.imageTagAgent }}'
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployAgent
+          component: agent
+          environment: ${{ parameters.environment }}
+          dependsOn: DeployFunctionApp
 
-    - stage: DeployFrontend${{ parameters.stageSuffix }}
-      dependsOn: DeployAgent${{ parameters.stageSuffix }}
-      jobs:
-          - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
-            parameters:
-                environment: ${{ parameters.environment }}
-                imageTag: '${{ parameters.imageTagFrontend }}'
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployFrontend
+          component: frontend
+          environment: ${{ parameters.environment }}
+          dependsOn: DeployAgent

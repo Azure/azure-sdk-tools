@@ -21,9 +21,9 @@ deployment/
 ├─ hooks/                        ← azd lifecycle hooks (ts)
 ├─ pipelines/
 │  ├─ templates/                 ← reusable provision/CI/CD/rollout steps
-│  └─ orchestrators/             ← end-to-end rollout per env
-├─ component-pipelines/          ← standardized per-component provision/CI/CD
-│  ├─ frontend/, agent-server/, function-app/, agent/, knowledge-sync/
+│  └─ orchestrators/
+│     ├─ qa-bot-all.yml          ← full-stack provision and deployment
+│     └─ <component>/            ← component CI + provision/deploy pipelines
 ├─ scripts/                      ← validate / drift / smoke / rollback helpers
 └─ docs/                         ← runbooks + environment-contract + readiness checklist
 ```
@@ -56,10 +56,10 @@ azd provision --environment dev --no-prompt
 # Or update one layer independently
 azd provision agent-server --environment dev --no-prompt
 
-# 4. Deploy the application services (image must already be in ACR)
-AZD_SKIP_IMAGE_BUILD=1 azd deploy frontend     --environment dev --no-prompt
-AZD_SKIP_IMAGE_BUILD=1 azd deploy function-app --environment dev --no-prompt
-AZD_SKIP_IMAGE_BUILD=1 azd deploy agent        --environment dev --no-prompt
+# 4. Remotely build and deploy the application services
+azd deploy frontend     --environment dev --no-prompt
+azd deploy function-app --environment dev --no-prompt
+azd deploy agent        --environment dev --no-prompt
 
 # Native remote build publishes the hosted agent image during deploy:
 azd deploy agent --environment dev --no-prompt
@@ -69,7 +69,8 @@ azd deploy agent --environment dev --no-prompt
 > The agent uses native ACR remote builds, and its postdeploy hook reconciles
 > runtime RBAC, environment variables, and Entra authorization.
 
-For preview / prod, use the Azure DevOps pipelines under
-`component-pipelines/<component>/<component>.cd.yml`. Configure approvals,
-branch controls, and pipeline permissions on the corresponding service
-connection.
+For preview / prod, use the component pipelines under
+`pipelines/orchestrators/<component>/<component>.yml`. Each pipeline refreshes
+the selected layer's dependencies, previews and applies only that component's
+infrastructure layer, then deploys the component. Configure approvals, branch
+controls, and pipeline permissions on the corresponding service connection.

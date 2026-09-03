@@ -7,8 +7,6 @@
  *   1. Runs `npm install` + `npm run build` locally (plain tsc — no Docker), and
  *   2. Builds/pushes the image via `az acr build` (cloud-side — no Docker),
  *      which ships the freshly-built `lib/`.
- * Skipped in CI pipelines, which build the image in a dedicated stage and set
- * AZD_SKIP_IMAGE_BUILD=1.
  */
 
 import { execSync } from "child_process";
@@ -19,10 +17,6 @@ import { syncTeamsEnv } from "./lib/sync-teams-env";
 
 const REGISTRY_NAME = process.env.CONTAINER_REGISTRY_NAME ?? "";
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "dev";
-// When FRONTEND_IMAGE_TAG is pinned it is used verbatim; otherwise the tag is
-// resolved dynamically as the next auto-incrementing version (dev-1.0.0,
-// dev-2.0.0, ...) against ACR (see getNextVersionTag).
-const EXPLICIT_TAG = process.env.FRONTEND_IMAGE_TAG;
 const IMAGE_NAME = "azure-sdk-qa-bot";
 // App Service that runs the frontend container; needed to repoint the site at
 // the freshly built immutable tag (the site is provisioned pinned to ':dev').
@@ -47,19 +41,13 @@ function log(msg: string): void {
     log("Generated the azd-owned Teams environment file.");
   }
 
-  if (process.env.AZD_SKIP_IMAGE_BUILD === "1") {
-    log("AZD_SKIP_IMAGE_BUILD=1 — skipping image build/push.");
-    return;
-  }
   if (!REGISTRY_NAME) {
     throw new Error("CONTAINER_REGISTRY_NAME not set (should come from `azd env` outputs).");
   }
 
-  // Resolve the image tag. When FRONTEND_IMAGE_TAG is pinned it is used
-  // verbatim; otherwise auto-increment the major version against ACR so a fresh
-  // build gets 'dev-1.0.0' and subsequent builds get 'dev-2.0.0', ...
-  const tag = EXPLICIT_TAG ?? getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
-  if (!EXPLICIT_TAG) log(`Resolved next version tag '${tag}'`);
+  // Auto-increment the major version against ACR for each remote build.
+  const tag = getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
+  log(`Resolved next version tag '${tag}'`);
 
   // The frontend project root (with the Dockerfile) is two levels up from
   // deployment/hooks/: ../../azure-sdk-qa-bot. process.cwd() is the deployment/

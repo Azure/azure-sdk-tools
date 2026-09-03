@@ -1,0 +1,36 @@
+# Manual approval gate between an infrastructure preview and its apply stage.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: stageName
+      type: string
+    - name: dependsOn
+      type: string
+    - name: scope
+      type: string
+      default: complete environment
+    - name: approvers
+      type: string
+      default: ''
+
+stages:
+    - stage: ${{ parameters.stageName }}
+      displayName: 'Approve provisioning (${{ parameters.environment }})'
+      dependsOn: ${{ parameters.dependsOn }}
+      condition: succeeded()
+      jobs:
+          - job: WaitForApproval
+            displayName: 'Review preview and approve apply'
+            pool: server
+            timeoutInMinutes: 4320
+            steps:
+                - task: ManualValidation@1
+                  timeoutInMinutes: 1440
+                  inputs:
+                      notifyUsers: ''
+                      approvers: ${{ parameters.approvers }}
+                      allowApproversToApproveTheirOwnRuns: true
+                      instructions: 'Review the ${{ parameters.scope }} preview for ${{ parameters.environment }}, then approve to apply it.'
+                      onTimeout: reject

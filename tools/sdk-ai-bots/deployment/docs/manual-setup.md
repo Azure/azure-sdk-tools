@@ -75,12 +75,15 @@ For each connection:
 ## 3. Azure DevOps — service connection checks
 
 The pipelines use normal jobs and do not require Azure DevOps Environments.
-Configure deployment controls directly on each service connection:
+Every provisioning pipeline includes a manual approval between preview and
+apply. Configure additional deployment controls directly on each service
+connection:
 
-- [ ] Dev — restrict pipeline permissions to the dev pipelines; no approval.
-- [ ] Preview — add a required-approval check with at least one reviewer.
+- [ ] Dev — restrict pipeline permissions to the dev pipelines.
+- [ ] Preview — optionally add a service-connection approval check with at
+  least one reviewer in addition to the pipeline's manual gate.
 - [ ] Prod — add at least two required reviewers and a branch-control check
-  that permits only `main`.
+  that permits only `main`, in addition to the pipeline's manual gate.
 
 ---
 
@@ -145,7 +148,7 @@ permissions for this deployment. No client secret is created.
 
 ---
 
-## 6. Register the 22 pipelines
+## 6. Register the 12 pipelines
 
 In Azure DevOps → Pipelines → "New pipeline" → "Existing Azure Pipelines
 YAML file", create the following. **Name them exactly** per the repo
@@ -153,44 +156,31 @@ convention (`tools - <tool-name> - <action>`).
 
 ### Component CI (4)
 
-- [ ] `tools - sdk-ai-bots-frontend - ci` → [frontend.ci.yml](../component-pipelines/frontend/frontend.ci.yml)
-- [ ] `tools - sdk-ai-bots-function-app - ci` → [function-app.ci.yml](../component-pipelines/function-app/function-app.ci.yml)
-- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](../component-pipelines/agent/agent.ci.yml) (also builds the agent-server image)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - ci` → [knowledge-sync.ci.yml](../component-pipelines/knowledge-sync/knowledge-sync.ci.yml)
+- [ ] `tools - sdk-ai-bots-frontend - ci` → [frontend.ci.yml](../pipelines/orchestrators/frontend/frontend.ci.yml)
+- [ ] `tools - sdk-ai-bots-function-app - ci` → [function-app.ci.yml](../pipelines/orchestrators/function-app/function-app.ci.yml)
+- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](../pipelines/orchestrators/agent/agent.ci.yml) (also builds the agent-server image)
+- [ ] `tools - sdk-ai-bots-knowledge-sync - ci` → [knowledge-sync.ci.yml](../pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml)
 
-### Component CD (5)
+### Component provision and deploy (5)
 
-- [ ] `tools - sdk-ai-bots-frontend - cd` → [frontend.cd.yml](../component-pipelines/frontend/frontend.cd.yml)
-- [ ] `tools - sdk-ai-bots-agent-server - cd` → [agent-server.cd.yml](../component-pipelines/agent-server/agent-server.cd.yml)
-- [ ] `tools - sdk-ai-bots-function-app - cd` → [function-app.cd.yml](../component-pipelines/function-app/function-app.cd.yml)
-- [ ] `tools - sdk-ai-bots-agent - cd` → [agent.cd.yml](../component-pipelines/agent/agent.cd.yml)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - cd` → [knowledge-sync.cd.yml](../component-pipelines/knowledge-sync/knowledge-sync.cd.yml) (scheduled)
+- [ ] `tools - sdk-ai-bots-frontend - provision-and-deploy` → [frontend.yml](../pipelines/orchestrators/frontend/frontend.yml)
+- [ ] `tools - sdk-ai-bots-agent-server - provision-and-deploy` → [agent-server.yml](../pipelines/orchestrators/agent-server/agent-server.yml)
+- [ ] `tools - sdk-ai-bots-function-app - provision-and-deploy` → [function-app.yml](../pipelines/orchestrators/function-app/function-app.yml)
+- [ ] `tools - sdk-ai-bots-agent - provision-and-deploy` → [agent.yml](../pipelines/orchestrators/agent/agent.yml)
+- [ ] `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` → [knowledge-sync.yml](../pipelines/orchestrators/knowledge-sync/knowledge-sync.yml) (scheduled)
 
-### Layer provision (7)
+### Provision-only layer diagnostics (2)
 
-- [ ] `tools - sdk-ai-bots-resource-group - provision` → [resource-group.provision.yml](../component-pipelines/resource-group/resource-group.provision.yml)
-- [ ] `tools - sdk-ai-bots-shared-resources - provision` → [shared-resources.provision.yml](../component-pipelines/shared-resources/shared-resources.provision.yml)
-- [ ] `tools - sdk-ai-bots-agent - provision` → [agent.provision.yml](../component-pipelines/agent/agent.provision.yml)
-- [ ] `tools - sdk-ai-bots-frontend - provision` → [frontend.provision.yml](../component-pipelines/frontend/frontend.provision.yml)
-- [ ] `tools - sdk-ai-bots-agent-server - provision` → [agent-server.provision.yml](../component-pipelines/agent-server/agent-server.provision.yml)
-- [ ] `tools - sdk-ai-bots-function-app - provision` → [function-app.provision.yml](../component-pipelines/function-app/function-app.provision.yml)
-- [ ] `tools - sdk-ai-bots-logic-app - provision` → [logic-app.provision.yml](../component-pipelines/logic-app/logic-app.provision.yml)
+- [ ] `tools - sdk-ai-bots-shared-resources - provision` → [shared-resources.yml](../pipelines/orchestrators/shared-resources/shared-resources.yml) (resource group + shared resources)
+- [ ] `tools - sdk-ai-bots-logic-app - provision` → [logic-app.yml](../pipelines/orchestrators/logic-app/logic-app.yml)
 
-### Provision orchestrators (3)
+### Full-stack provision and deploy (1)
 
-- [ ] `tools - sdk-ai-bots - provision-all-dev` → [provision-all-dev.yml](../pipelines/orchestrators/provision-all-dev.yml)
-- [ ] `tools - sdk-ai-bots - provision-all-preview` → [provision-all-preview.yml](../pipelines/orchestrators/provision-all-preview.yml)
-- [ ] `tools - sdk-ai-bots - provision-all-prod` → [provision-all-prod.yml](../pipelines/orchestrators/provision-all-prod.yml)
-
-### Deploy orchestrators (3, optional)
-
-- [ ] `tools - sdk-ai-bots - deploy-all-dev` → [deploy-all-dev.yml](../pipelines/orchestrators/deploy-all-dev.yml)
-- [ ] `tools - sdk-ai-bots - deploy-all-preview` → [deploy-all-preview.yml](../pipelines/orchestrators/deploy-all-preview.yml)
-- [ ] `tools - sdk-ai-bots - deploy-all-prod` → [deploy-all-prod.yml](../pipelines/orchestrators/deploy-all-prod.yml)
+- [ ] `tools - sdk-ai-bots - provision-and-deploy-all` → [qa-bot-all.yml](../pipelines/orchestrators/qa-bot-all.yml)
 
 ### Cross-repo authorization
 
-For [knowledge-sync.cd.yml](../component-pipelines/knowledge-sync/knowledge-sync.cd.yml),
+For [knowledge-sync.yml](../pipelines/orchestrators/knowledge-sync/knowledge-sync.yml),
 authorize the pipeline to use the three resource repositories on first run:
 
 - [ ] `1ESPipelineTemplates/1ESPipelineTemplates`
@@ -373,7 +363,7 @@ on first setup:
 
 ## 13. Teams App — first-time publish
 
-The Teams app manifest is built by [frontend.ci.yml](../component-pipelines/frontend/frontend.ci.yml)
+The Teams app manifest is built by [frontend.ci.yml](../pipelines/orchestrators/frontend/frontend.ci.yml)
 as `appPackage.<env>.zip`. The first time it's installed in your tenant
 you must publish it manually:
 
@@ -404,7 +394,7 @@ Before the first prod rollout, sign off
 - [ ] On-call rotation includes this system
 - [ ] Application Insights availability tests configured
 - [ ] Alerts wired to action group
-- [ ] `Deployment:<component>:LastKnownGoodTag` keys exist in prod App Config
+- [ ] Source commit and deployed platform revision recording is configured
 
 ---
 
@@ -467,7 +457,7 @@ them** — exactly like the Logic App workflow reverting to its empty shell.
 | **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT; `Disabled` until Teams OAuth is connected, then `Enabled` | [hooks/lib/patch-workflow.ts](../hooks/lib/patch-workflow.ts) (fired by [hooks/function-postdeploy.ts](../hooks/function-postdeploy.ts); also [scripts/deploy-logic-app.ts](../scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy function-app`, or `npm run deploy:logic-app` |
 | **Frontend App Service** container image | Site pinned to mutable `:dev` tag | Repoints site to immutable `dev-N.0.0` via `az webapp config container set` | [hooks/frontend-predeploy.ts](../hooks/frontend-predeploy.ts) | azd doesn't re-provision on deploy, and the immutable tag is auto-incremented against ACR at **deploy** time (unknown at provision); the resolved tag is **not** persisted to a Bicep param | `azd deploy frontend` |
 | **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](../hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
-| **Agent-server production site** container image | Site `linuxFxVersion` from `AGENT_SERVER_IMAGE_REPOSITORY` (defaults to `:dev`) | azd remotely builds `azure-sdk-qa-bot-agent-server`, records `SERVICE_AGENT_SERVER_IMAGE_NAME`, and deploys it directly to the site resolved by `resourceName: ${AGENT_SERVER_SITE_NAME}` | Native azd App Service container deployment | `AGENT_SERVER_IMAGE_TAG` pins pipeline builds; local deploys use azd's generated immutable tag | `azd deploy agent-server` |
+| **Agent-server production site** container image | Site `linuxFxVersion` from `AGENT_SERVER_IMAGE_REPOSITORY` (defaults to `:dev`) | azd remotely builds `azure-sdk-qa-bot-agent-server`, records `SERVICE_AGENT_SERVER_IMAGE_NAME`, and deploys it directly to the site resolved by `resourceName: ${AGENT_SERVER_SITE_NAME}` | Native azd App Service container deployment | Every deployment creates a new remote build from the selected source revision | `azd deploy agent-server` |
 
 ### 17.2 State that survives a re-provision — no action needed
 

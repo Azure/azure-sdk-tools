@@ -1,4 +1,4 @@
-name: tools - sdk-ai-bots-agent - provision
+name: tools - sdk-ai-bots-function-app - provision-and-deploy
 
 trigger: none
 pr: none
@@ -8,10 +8,6 @@ parameters:
       type: string
       default: dev
       values: [dev, preview, prod]
-    - name: operation
-      type: string
-      default: preview
-      values: [preview, apply]
 
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
@@ -22,9 +18,8 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
               parameters:
-                  layer: agent
-                  dependencyLayers: resource-group,shared-resources
+                  component: function-app
+                  dependencyLayers: resource-group,shared-resources,frontend
                   environment: ${{ parameters.environment }}
-                  operation: ${{ parameters.operation }}

@@ -1,12 +1,11 @@
-# Pipeline template — `azd deploy <service>` (consumes pre-built image).
+# Pipeline template — `azd deploy <service>`.
+# Every service uses azd's native remote-build lifecycle.
 #
 # Required pipeline variables: SERVICE_CONNECTION, AZURE_ENV_NAME, ACR_NAME.
 
 parameters:
     - name: service
       type: string # frontend | function-app | agent | agent-server
-    - name: imageTag
-      type: string # tag produced by container-build.yml in CI
     - name: workingDirectory
       type: string
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
@@ -23,7 +22,7 @@ steps:
       workingDirectory: '${{ parameters.workingDirectory }}'
 
     - task: AzureCLI@2
-      displayName: 'azd deploy ${{ parameters.service }} (tag ${{ parameters.imageTag }})'
+      displayName: 'azd deploy ${{ parameters.service }}'
       env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
       inputs:
           azureSubscription: $(SERVICE_CONNECTION)
@@ -33,20 +32,12 @@ steps:
           inlineScript: |
               set -euo pipefail
               export npm_config_userconfig="$(resolvedNpmrcPath)"
-              # Hard-enforce build-once: CD must never rebuild the image.
-              export AZD_SKIP_IMAGE_BUILD=1
               # Teams Toolkit uses an interactive Microsoft 365 identity and
               # Microsoft Graph. Keep that separate from the Azure service
               # connection so component CD requires Azure RBAC only.
               export AZD_SKIP_TEAMS_PROVISION="${AZD_SKIP_TEAMS_PROVISION:-1}"
               export AZURE_ENV_NAME
               export CONTAINER_REGISTRY_NAME="$ACR_NAME"
-              case "${{ parameters.service }}" in
-                frontend)        export FRONTEND_IMAGE_TAG="${{ parameters.imageTag }}" ;;
-                function-app)    export FUNCTION_IMAGE_TAG="${{ parameters.imageTag }}" ;;
-                agent)           export AGENT_IMAGE_TAG="${{ parameters.imageTag }}" ;;
-                agent-server)    export AGENT_SERVER_IMAGE_TAG="${{ parameters.imageTag }}" ;;
-              esac
               if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
                 azd env new "$AZURE_ENV_NAME" \
                   --location "$AZURE_LOCATION" \

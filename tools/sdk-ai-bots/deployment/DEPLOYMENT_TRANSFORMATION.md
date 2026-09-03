@@ -52,9 +52,9 @@ Preview / Prod Variables`) and environment list. There is no shared
 1. **Single resource group per environment.** The layer parameter adapters use
   `AZURE_RESOURCE_GROUP`; environment isolation therefore depends on the
   environment-suite assigning a distinct resource group or subscription.
-2. **Backend image is rebuilt in CD.** Build-once / promote-many requires
-   moving `docker build` out of CD into CI. Pipelines below enforce this;
-   `prod` CD only re-tags / pulls.
+2. **Images are built during deployment.** Each orchestrator uses the native
+  `azd` remote-build lifecycle for the selected source revision. CI validates
+  source but does not publish deployment images.
 3. **Teams Toolkit ARM deploy overlaps with main Bicep.** The
    `azure-sdk-qa-bot/infra/azure.bicep` covers a subset of resources also
    created by `qaBotFrontend/userAssignedIdentity.bicep`. Path forward:
@@ -79,8 +79,8 @@ Preview / Prod Variables`) and environment list. There is no shared
 3. **Promote.** Apply to preview, then prod, gated by approvals and
    what-if review.
 
-**Expected benefits.** One source of truth for infra, build-once artifacts,
-explicit rollback, lower onboarding cost, and an auditable production
+**Expected benefits.** One source of truth for infra, consistent remote builds,
+platform revision rollback, lower onboarding cost, and an auditable production
 deployment path that cannot be triggered from a developer laptop.
 
 ---
@@ -130,10 +130,10 @@ Ported from `azd-experiments/infra/` and exposed through azd layers:
 
 - `azd provision --environment <env> --no-prompt` applies all layers in
   dependency order and runs only their owning hooks.
+- `azd provision <layer> --environment <env> --no-prompt` applies one
+  component layer after its deployed dependency outputs have been refreshed.
 - `azd deploy <service> --environment <env> --no-prompt` deploys frontend
-  / function-app / agent (the three azd-services in `azure.yaml`). Backend
-  is deployed with `az webapp config container set` from CD because it
-  uses a slot-swap rollout strategy that azd does not model natively today.
+  / function-app / agent-server / agent (the four services in `azure.yaml`).
 
 ### 3.4 Pipeline model
 
@@ -170,12 +170,10 @@ preserved.
 
 ### 3.6 Rollback model
 
-- Per-component CD must record `LastKnownGoodTag` to App Config
-  (`Deployment:<component>:LastKnownGoodTag`) on successful prod deploy.
-- `pipelines/templates/rollback.yml` reads that value and re-points the
-  App Service / Function App to it (no rebuild). For slot-based components
-  it does a slot swap; for revision-based components it shifts traffic.
-- `scripts/rollback.ps1` is the local-fallback wrapper.
+- Record the source commit and resulting platform revision for each deployment.
+- Prefer restoring the previous App Service slot/revision or Foundry revision.
+- If the platform revision is unavailable, rerun the component orchestrator
+  from the known-good source commit to produce a new remote build.
 
 ### 3.7 Security model
 
@@ -247,38 +245,23 @@ tools/sdk-ai-bots/
 │  │  │  ├─ azd-auth.yml
 │  │  │  ├─ bicep-validate.yml
 │  │  │  ├─ azd-provision.yml
-│  │  │  ├─ container-build.yml
 │  │  │  ├─ azd-deploy.yml
-│  │  │  ├─ webapp-deploy.yml
 │  │  │  ├─ smoke-test.yml
 │  │  │  ├─ swap-slot.yml
-│  │  │  ├─ rollback.yml
 │  │  │  └─ notify.yml
 │  │  └─ orchestrators/
-│  │     ├─ deploy-all-dev.yml
-│  │     ├─ deploy-all-preview.yml
-│  │     └─ deploy-all-prod.yml
-│  ├─ component-pipelines/                ← per-layer provision + component CI/CD
-│  │  ├─ frontend/
-│  │  │  ├─ frontend.ci.yml
-│  │  │  └─ frontend.cd.yml
-│  │  ├─ backend/
-│  │  │  ├─ backend.ci.yml
-│  │  │  └─ backend.cd.yml
-│  │  ├─ function-app/
-│  │  │  ├─ function-app.ci.yml
-│  │  │  └─ function-app.cd.yml
-│  │  ├─ agent/
-│  │  │  ├─ agent.ci.yml
-│  │  │  └─ agent.cd.yml
-│  │  └─ knowledge-sync/
-│  │     ├─ knowledge-sync.ci.yml
-│  │     └─ knowledge-sync.cd.yml
+│  │     ├─ qa-bot-all.yml
+│  │     ├─ frontend/frontend.yml + frontend.ci.yml
+│  │     ├─ agent-server/agent-server.yml
+│  │     ├─ function-app/function-app.yml + function-app.ci.yml
+│  │     ├─ agent/agent.yml + agent.ci.yml
+│  │     ├─ knowledge-sync/knowledge-sync.yml + knowledge-sync.ci.yml
+│  │     ├─ shared-resources/shared-resources.yml
+│  │     └─ logic-app/logic-app.yml
 │  ├─ scripts/
 │  │  ├─ validate-env-suite.ps1
 │  │  ├─ detect-drift.ps1
-│  │  ├─ smoke-test.ps1
-│  │  └─ rollback.ps1
+│  │  └─ smoke-test.ps1
 │  └─ docs/
 │     ├─ deployment-architecture.md
 │     ├─ runbook-deploy.md
@@ -317,31 +300,27 @@ Provision pipeline:
 - Purpose:   Apply the frontend layer + Bot Service registration
 - Trigger:   Manual; PR-paths on infra/layers/frontend/**
 - Input:     environment-suite + parameters.<env>.json
-- azd cmd:   azd provision --environment <env> --no-prompt
+- azd cmd:   azd provision frontend --environment <env> --no-prompt
 - Bicep:     infra/layers/frontend/main.bicep
 - Validate:  bicep build, bicep what-if
-- Approval:  required for preview/prod
+- Approval:  required for every environment
 - Output:    BOT_AZURE_APP_SERVICE_RESOURCE_ID, botIdentityName
 
 CI pipeline:
-- Purpose:   Build Teams app + frontend container, publish to ACR
+- Purpose:   Build and test the Teams app and frontend source
 - Trigger:   PR + main push on azure-sdk-qa-bot/**
 - Steps:     npm ci → npm test → npm run build → teamsapp validate
-             → docker build → docker push <acr>/azure-sdk-qa-bot:<tag>
              → publish appPackage.<env>.zip artifact
-- Artifact:  ACR image + Teams app zip
-- Tags:      <commit-sha> + <semver-from-package.json>
-- Scans:     npm audit, container scan via 1ES
+- Artifact:  Teams app zip
+- Scans:     npm audit via 1ES
 
-CD pipeline:
-- Purpose:   Promote existing ACR image to App Service slot, then swap
-- Trigger:   Manual or post-CI on dev
-- Artifact:  ACR tag from CI
-- Cmd:       az webapp config container set --slot staging
-             → smoke /health → az webapp deployment slot swap
+Deployment pipeline:
+- Purpose:   Remotely build the frontend and deploy it to App Service
+- Trigger:   Manual from the selected source revision
+- Cmd:       azd deploy frontend → smoke /health
 - Rollout:   staging slot → swap
 - Validate:  GET /health 200, GET /api/messages POST 401 (auth required)
-- Rollback:  swap back; update App Config Deployment:frontend:LastKnownGoodTag
+- Rollback:  restore the previous slot/revision or rerun a known-good commit
 ```
 
 ### 6.2 Agent server
@@ -352,26 +331,22 @@ Component: agent-server (azure-sdk-qa-bot-agent/)
 Provision pipeline:
 - Purpose:   Apply the production agent-server App Service
 - Trigger:   Manual; PR-paths on infra/layers/agent-server/**
-- azd cmd:   azd provision --environment <env> --no-prompt (full graph)
+- azd cmd:   azd provision agent-server --environment <env> --no-prompt
 - Bicep:     infra/layers/agent-server/main.bicep
 - Validate:  bicep what-if; confirm site identity and EasyAuth exist
-- Approval:  preview/prod
+- Approval:  required for every environment
 
 CI pipeline:
-- Purpose:   Build and test the Python agent-server container, publish to ACR
+- Purpose:   Build and test the Python agent-server source
 - Trigger:   PR + main push on azure-sdk-qa-bot-agent/**
-- Steps:     pytest → ruff/mypy → docker build → docker push
-- Artifact:  ACR image `<acr>/azure-sdk-qa-bot-agent-server:<tag>`
-- Tags:      `<moduleVersion>_<commit-sha>`
+- Steps:     pytest → ruff/mypy
 
-CD pipeline:
-- Purpose:   Promote an existing ACR image directly to the production site
-- Trigger:   Manual selection of (env, image tag)
-- Artifact:  Must already exist in ACR (build-once enforcement: prod CD
-             never builds)
+Deployment pipeline:
+- Purpose:   Remotely build and deploy directly to the production site
+- Trigger:   Manual selection of environment and source revision
 - Cmd:       azd deploy agent-server → smoke GET /ping
 - Rollout:   direct production image update
-- Rollback:  redeploy LastKnownGoodTag
+- Rollback:  restore the previous revision or rerun a known-good commit
 ```
 
 ### 6.3 Function App
@@ -382,7 +357,7 @@ Component: function-app (azure-sdk-qa-bot-function/)
 Provision pipeline:
 - Purpose:   Create Elastic Premium plan, App Insights, Function App,
              staging slot
-- azd cmd:   azd provision --environment <env> --no-prompt
+- azd cmd:   azd provision function-app --environment <env> --no-prompt
 - Bicep:     infra/layers/function-app/main.bicep
 
 CI pipeline:
@@ -405,22 +380,21 @@ Component: agent (azure-sdk-qa-bot-agent/)
 
 Provision pipeline:
 - Purpose:   Provision Foundry project and model deployments
-- azd cmd:   azd provision --environment <env> --no-prompt
+- azd cmd:   azd provision agent --environment <env> --no-prompt
 - Bicep:     infra/layers/agent/main.bicep
 
 CI pipeline:
 - Steps:     pip install -r requirements-dev.txt → pytest → ruff/mypy
-             → az acr build -f Dockerfile (remote build, avoids pip
-               network restrictions on hosted agent)
-- Artifact:  `<acr>/azure-sdk-qa-bot-agent-server:<appVersion>`
-- Tags:      <appVersion> from `_version.py`; <commit-sha> for dev
+             → build the agent-server App Service image
+- Artifact:  `<acr>/azure-sdk-qa-bot-agent-server:<appVersion>` for the
+             separate agent-server component
 
 CD pipeline:
 - Hosted Foundry agent app:
-  azd deploy agent --environment <env>
+  azd deploy agent --environment <env> (native ACR remote build)
   smoke via Responses /v1/responses ping
-- Rollout:   tag-based; new tag deployed in place
-- Rollback:  re-deploy LastKnownGoodTag via same path
+- Rollout:   new Foundry hosted-agent revision
+- Rollback:  restore the previous Foundry revision
 ```
 
 ### 6.5 Knowledge Sync
@@ -486,15 +460,15 @@ in the environment-suite under `regions[].ring`.
 
 | Component      | Primary                                                         | Fallback                                       | Blocked by                                                     |
 | -------------- | --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- |
-| frontend       | `az webapp deployment slot swap` (back to previous prod)        | redeploy `LastKnownGoodTag` to production slot | none                                                           |
-| function-app   | slot swap back                                                  | redeploy previous tag                          | queue schema change → drain then roll                          |
-| agent-server   | redeploy previous tag to production                             | n/a                                            | none                                                           |
-| hosted agent   | redeploy previous tag via azd                                   | n/a                                            | model deprecation in Foundry project                           |
+| frontend       | restore previous App Service slot/revision                      | rebuild a known-good commit                    | none                                                           |
+| function-app   | restore previous App Service slot/revision                      | rebuild a known-good commit                    | queue schema change → drain then roll                          |
+| agent-server   | restore previous App Service revision                           | rebuild a known-good commit                    | none                                                           |
+| hosted agent   | restore previous Foundry revision                               | rebuild a known-good commit                    | model deprecation in Foundry project                           |
 | logic-app      | re-apply previous ARM template revision                         | manually disable workflow                      | OAuth re-consent if connection was rotated                     |
 | knowledge-sync | restore previous Storage blob snapshot + re-run sync against it | None — no traffic exposure                     | Search index schema migration                                  |
 
-**Hard rule:** rollback never rebuilds artifacts. CD records
-`LastKnownGoodTag` to App Configuration on every successful prod deploy.
+Record the source commit and resulting platform revision for every successful
+production deployment.
 
 ---
 
@@ -508,7 +482,7 @@ Run before promoting a deployment to prod:
 - [ ] `go vet` + `golangci-lint` clean on backend
 - [ ] Containers pass 1ES container-scan
 - [ ] Smoke tests against preview environment passed within 24 h
-- [ ] `Deployment:<component>:LastKnownGoodTag` set in App Config
+- [ ] Candidate source commit and resulting platform revisions recorded
 - [ ] App Insights availability test green for each component endpoint
 - [ ] On-call DRI named in `docs/operational-readiness-checklist.md`
 - [ ] Rollback runbook reviewed (`docs/runbook-rollback.md`)
@@ -528,24 +502,12 @@ The following files are generated by this transformation:
 | [pipelines/templates/azd-auth.yml](pipelines/templates/azd-auth.yml)                             | Federated auth → azd / az login                                |
 | [pipelines/templates/bicep-validate.yml](pipelines/templates/bicep-validate.yml)                 | Layer-scoped Bicep build, parameter build, and lint            |
 | [pipelines/templates/azd-provision.yml](pipelines/templates/azd-provision.yml)                   | Wraps azd preview and apply                                    |
-| [pipelines/templates/container-build.yml](pipelines/templates/container-build.yml)               | Build + push image (CI-only)                                   |
 | [pipelines/templates/azd-deploy.yml](pipelines/templates/azd-deploy.yml)                         | Wraps `azd deploy` (frontend/function/agent)                   |
-| [pipelines/templates/webapp-deploy.yml](pipelines/templates/webapp-deploy.yml)                   | Direct `az webapp config container set` for slot-based deploys |
 | [pipelines/templates/smoke-test.yml](pipelines/templates/smoke-test.yml)                         | HTTP probe with EasyAuth support                               |
 | [pipelines/templates/swap-slot.yml](pipelines/templates/swap-slot.yml)                           | App Service slot swap                                          |
-| [pipelines/templates/rollback.yml](pipelines/templates/rollback.yml)                             | Read LastKnownGoodTag and redeploy                             |
 | [pipelines/templates/notify.yml](pipelines/templates/notify.yml)                                 | Teams + email on success/failure                               |
-| [pipelines/orchestrators/deploy-all-dev.yml](pipelines/orchestrators/deploy-all-dev.yml)         | End-to-end dev rollout                                         |
-| [pipelines/orchestrators/deploy-all-preview.yml](pipelines/orchestrators/deploy-all-preview.yml) | Preview rollout                                                |
-| [pipelines/orchestrators/deploy-all-prod.yml](pipelines/orchestrators/deploy-all-prod.yml)       | Prod rollout (gated)                                           |
-| [component-pipelines/resource-group/](component-pipelines/resource-group/)                       | Resource-group provision                                       |
-| [component-pipelines/shared-resources/](component-pipelines/shared-resources/)                   | Shared-resources provision                                     |
-| [component-pipelines/frontend/](component-pipelines/frontend/)                                   | Frontend provision/CI/CD                                       |
-| [component-pipelines/agent-server/](component-pipelines/agent-server/)                           | Agent-server provision/CD                                      |
-| [component-pipelines/function-app/](component-pipelines/function-app/)                           | Function-app provision/CI/CD                                   |
-| [component-pipelines/agent/](component-pipelines/agent/)                                         | Agent provision/CI/CD                                          |
-| [component-pipelines/logic-app/](component-pipelines/logic-app/)                                 | Logic-app provision                                            |
-| [component-pipelines/knowledge-sync/](component-pipelines/knowledge-sync/)                       | Knowledge-sync provision/CI/CD                                 |
+| [pipelines/orchestrators/qa-bot-all.yml](pipelines/orchestrators/qa-bot-all.yml)                 | End-to-end provision and rollout for dev, preview, or prod      |
+| [pipelines/orchestrators/](pipelines/orchestrators/)                                             | Component CI, combined provision/deploy, and full-stack flows   |
 | [hooks/](hooks/)                                                                                 | azd lifecycle hooks ported from azd-experiments                |
 | [scripts/](scripts/)                                                                             | Local validation + rollback helpers                            |
 | [docs/runbook-deploy.md](docs/runbook-deploy.md)                                                 | Deploy procedure                                               |
@@ -566,13 +528,13 @@ sync.
 
 | Existing manual step                        | Replaced by                                                                                                 |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Portal-created agent-server App Service | `infra/layers/agent-server/main.bicep` applied by the centralized `provision-all-<env>` pipeline (`azd provision`) |
+| Portal-created agent-server App Service | `infra/layers/agent-server/main.bicep` applied by each consolidated deployment orchestrator (`azd provision`) |
 | Portal-created Cosmos DB, Key Vault, Search | `infra/layers/shared-resources/main.bicep`                                                  |
 | Manual Key Vault secret seeding             | `hooks/postprovision.ts` `seedKeyVaultSecrets()` step (currently TODO — flagged)                            |
 | Manual App Configuration key seeding        | `hooks/postprovision.ts` `updateAppConfiguration()` step                                                    |
 | Manual Foundry model deployment             | `infra/layers/agent/main.bicep`                                                                  |
 | Manual Bot Service channel binding          | `infra/layers/frontend/main.bicep`                                                    |
-| `docker build` inside backend CD            | Moved into `backend.ci.yml`; `backend.cd.yml` only pulls existing tag                                       |
+| `docker build` inside component deployment  | Moved into component CI; orchestrators only pull existing tags                                               |
 | `az acr build` inside agent server CD       | Moved into `agent.ci.yml`                                                                                   |
 | Manual Teams / Blob OAuth consent           | One-time step documented in `docs/runbook-deploy.md`; `hooks/postprovision.ts` prints the consent URLs      |
 | Manual production deploy from laptop        | Blocked by `prodDeployOnlyFromPipeline: true` + `hooks/predeploy.ts` guard                                  |
@@ -604,6 +566,6 @@ sync.
    `infra/environments/environment-suite.yaml`.
 3. Run `azd provision --environment dev --no-prompt` against a fresh dev
    resource group.
-4. Cut dev CD pipelines over to the new
-   `component-pipelines/<x>/<x>.cd.yml`.
+4. Cut dev deployment pipelines over to
+  `pipelines/orchestrators/<component>/<component>.yml`.
 5. Validate, then repeat for preview and prod with explicit approvals.

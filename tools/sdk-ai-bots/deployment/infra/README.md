@@ -38,10 +38,8 @@ azd provision agent-server --environment dev --no-prompt
 `azd` previews one layer at a time. The drift script refreshes each layer's
 deployed outputs, runs all seven previews in dependency order, and aggregates
 risky operations. A full preview therefore requires an existing deployment;
-for a first deployment or migration from the deleted monolithic entry point,
-queue the environment's `provision-all-*` pipeline with `bootstrapLayers=true`.
-Bootstrap mode previews and applies each layer in dependency order, stopping on
-any Delete or Modify operation so the next preview receives real outputs.
+initialize a new environment with `azd provision` before running a layered
+preview.
 
 ```pwsh
 pwsh ../scripts/detect-drift.ps1 -Environment prod

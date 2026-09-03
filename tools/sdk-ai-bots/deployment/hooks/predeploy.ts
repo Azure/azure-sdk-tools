@@ -1,12 +1,9 @@
 /**
  * predeploy hook (global) — runs before any `azd deploy`.
  *
- * Per-service predeploy hooks are still responsible for building/pushing
- * their own images. This global hook enforces the build-once contract:
- *
- *   - If AZD_SKIP_IMAGE_BUILD=1 (set by CD pipelines), the per-service
- *     predeploy hooks skip docker build.
- *   - If running outside a pipeline and ENV is prod, fail fast.
+ * Per-service predeploy hooks are responsible for image preparation. All
+ * services use their azd remote-build lifecycle. If running outside a pipeline
+ * and ENV is prod, this hook fails fast.
  *
  */
 
@@ -29,9 +26,6 @@ function enforceProdGuardrail(): void {
 (async () => {
   log(`Starting global predeploy for environment '${ENV_NAME}'`);
   enforceProdGuardrail();
-  if (process.env.AZD_SKIP_IMAGE_BUILD === "1") {
-    log("AZD_SKIP_IMAGE_BUILD=1 — per-service hooks will skip docker build.");
-  }
   log("Predeploy checks passed.");
 })().catch((err) => {
   console.error(`[predeploy] FAILED: ${err.message}`);

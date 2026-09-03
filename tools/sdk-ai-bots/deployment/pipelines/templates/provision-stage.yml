@@ -1,9 +1,8 @@
-# Reusable stage template for provision orchestrators (dev / preview / prod).
+# Reusable preview or apply stage for provision orchestrators.
 #
-# Encapsulates the common shape: load env-suite → azd auth → (optional
-# bicep-validate + azd preview) → (optional azd apply) → (optional readiness
-# reminder). The three provision-all-*.yml orchestrators consume this
-# template with different flag values instead of duplicating the stage body.
+# Encapsulates the shared job body: load env-suite → azd auth → preview or apply
+# → optional readiness reminder. Orchestrators invoke it once for preflight and
+# once for apply, with approval-stage.yml between the two stages.
 #
 # Provisioning uses a normal job and does not depend on an Azure DevOps
 # Environment. Authorization and checks belong to the service connection.
@@ -13,8 +12,10 @@
 #     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
 #       parameters:
 #         environment: preview
+#         layer: frontend
+#         dependencyLayers: resource-group,shared-resources
 #         runValidateAndPreview: true
-#         runProvision: true
+#         runProvision: false
 
 parameters:
     - name: environment
@@ -32,18 +33,24 @@ parameters:
     - name: stageDisplayName
       type: string
       default: 'Provision'
+    - name: dependsOn
+      type: string
+      default: ''
     - name: runValidateAndPreview
       type: boolean
       default: false
     - name: runProvision
       type: boolean
       default: true
-    - name: bootstrapLayers
-      type: boolean
-      default: false
     - name: showReadinessReminder
       type: boolean
       default: false
+    - name: layer
+      type: string
+      default: ''
+    - name: dependencyLayers
+      type: string
+      default: ''
     - name: workingDirectory
       type: string
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
@@ -51,6 +58,8 @@ parameters:
 stages:
     - stage: ${{ parameters.stageName }}
       displayName: ${{ format('{0} ({1})', parameters.stageDisplayName, parameters.environment) }}
+      ${{ if ne(parameters.dependsOn, '') }}:
+          dependsOn: ${{ parameters.dependsOn }}
       jobs:
           - job: AzdProvision
             pool:
@@ -72,26 +81,24 @@ stages:
                         parameters:
                             serviceConnection: ${{ parameters.serviceConnection }}
 
-                - ${{ if parameters.bootstrapLayers }}:
+                - ${{ if parameters.runValidateAndPreview }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
-                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                         parameters:
-                            operation: bootstrap
-                            serviceConnection: ${{ parameters.serviceConnection }}
-                            workingDirectory: ${{ parameters.workingDirectory }}
-
-                - ${{ if and(not(parameters.bootstrapLayers), parameters.runValidateAndPreview) }}:
-                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                            layer: ${{ parameters.layer }}
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                         parameters:
                             operation: preview
+                            layer: ${{ parameters.layer }}
+                            dependencyLayers: ${{ parameters.dependencyLayers }}
                             serviceConnection: ${{ parameters.serviceConnection }}
                             workingDirectory: ${{ parameters.workingDirectory }}
 
-                - ${{ if and(not(parameters.bootstrapLayers), parameters.runProvision) }}:
+                - ${{ if parameters.runProvision }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                         parameters:
                             operation: apply
+                            layer: ${{ parameters.layer }}
+                            dependencyLayers: ${{ parameters.dependencyLayers }}
                             serviceConnection: ${{ parameters.serviceConnection }}
                             workingDirectory: ${{ parameters.workingDirectory }}
 

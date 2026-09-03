@@ -12,9 +12,8 @@ For each of `frontend`, `function-app`, `agent-server`,
 - [ ] On-call rotation includes this component
 - [ ] CI pipeline is green on `main`
 - [ ] CD pipeline last deployed `preview` is healthy for > 24 hours
-- [ ] `Deployment:<component>:LastKnownGoodTag` in App Config matches
-      the candidate tag's predecessor
-- [ ] Rollback verified at least once in preview (slot swap back) within
+- [ ] Candidate source commit and resulting platform revision are recorded
+- [ ] Rollback verified at least once in preview (revision restore or slot swap) within
       the last 90 days
 
 ## Infrastructure

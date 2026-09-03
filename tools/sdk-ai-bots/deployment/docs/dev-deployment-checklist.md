@@ -117,8 +117,8 @@ consumption will block provisioning.
 - [x] The current user can create, edit, and queue YAML pipelines under
       `\tools\sdk-ai-bots`.
 - [ ] Register
-      [provision-all-dev.yml](../pipelines/orchestrators/provision-all-dev.yml)
-      as `tools - sdk-ai-bots - provision-all-dev`.
+      [qa-bot-all.yml](../pipelines/orchestrators/qa-bot-all.yml)
+      as `tools - sdk-ai-bots - provision-and-deploy-all`.
 - [ ] Create or share a workload-identity-federated service connection named
       `Azure SDK Engineering System`.
 - [ ] Give the service connection the required temporary Azure bootstrap roles,

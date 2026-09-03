@@ -46,7 +46,6 @@ services:
             path: Dockerfile
             context: .
             image: azure-sdk-qa-bot-agent-server
-            tag: ${AGENT_SERVER_IMAGE_TAG}
             remoteBuild: true
     frontend:
         project: azure-sdk-qa-bot

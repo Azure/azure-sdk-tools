@@ -74,7 +74,7 @@ environments:
             # Set to 'true' for one provision only when recovering a soft-deleted
             # AIServices account, then reset to 'false' after recovery succeeds.
             AI_RESOURCE_RESTORE: 'false'
-        approvalRequired: false
+        approvalRequired: true
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: true
         healthChecks:

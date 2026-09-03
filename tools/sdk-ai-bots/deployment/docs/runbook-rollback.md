@@ -1,8 +1,7 @@
 # Rollback Runbook
 
-> Rollback NEVER rebuilds. It re-points the app/slot at a previously-built
-> image tag recorded in App Configuration as
-> `Deployment:<component>:LastKnownGoodTag`.
+> Deployments build remotely from source. Rollback restores a previous platform
+> revision or reruns the orchestrator from a known-good source commit.
 
 ## When to roll back
 
@@ -16,30 +15,23 @@
 
 ## Rollback paths per component
 
-| Component      | Primary path                                                                   | Manual fallback                                                                     |
-| -------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| frontend       | run `frontend.cd.yml` with the failure block (auto on CD failure)              | `pwsh deployment/scripts/rollback.ps1 -Component frontend -Environment prod`        |
-| function-app   | slot swap back via `swap-slot.yml`                                             | `pwsh ./scripts/rollback.ps1 -Component function-app -Environment prod`             |
-| agent-server   | redeploy LastKnownGoodTag to production                                        | `pwsh ./scripts/rollback.ps1 -Component agent-server -Environment prod`             |
-| hosted agent   | redeploy LastKnownGoodTag via `azd deploy agent` (azd records previous deploy) | open Foundry portal → revert revision                                               |
-| logic-app      | re-apply previous ARM template (Bicep history in git)                          | `az deployment group create --template-file <prev.json>`                            |
-| knowledge-sync | restore previous Storage blob snapshot, re-run sync                            | manual: re-run sync from previous knowledge manifest                                |
+| Component      | Primary path                                                   | Manual fallback                                      |
+| -------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| frontend       | swap back to the previous App Service slot or revision         | rerun its orchestrator from a known-good commit      |
+| function-app   | swap back to the previous App Service slot or revision         | rerun its orchestrator from a known-good commit      |
+| agent-server   | restore the previous App Service container revision            | rerun its orchestrator from a known-good commit      |
+| hosted agent   | restore the previous Foundry hosted-agent revision             | open Foundry portal and revert the revision          |
+| logic-app      | re-apply the previous Bicep revision from source control       | disable the workflow while recovering               |
+| knowledge-sync | restore the previous Storage blob snapshot and rerun the sync  | rerun from the previous knowledge manifest           |
 
-## Pipeline-driven rollback (preferred)
+## Rollback procedure
 
-Every component CD pipeline has an `on: failure:` block that automatically
-invokes `pipelines/templates/rollback.yml`, which:
-
-1. Reads `Deployment:<component>:LastKnownGoodTag` from App Configuration.
-2. Calls `az webapp config container set` with that tag.
-3. Restarts the app.
-
-To trigger rollback manually:
-
-- For App Service slot-based components, **re-run the swap-slot step**
-  pointing back at the previous source slot. This is the fastest path —
-  no image pull required.
-- Otherwise, run `scripts/rollback.ps1` (see prod safety guard inside).
+1. Identify the last healthy platform revision and source commit from deployment
+  history.
+2. Prefer restoring the previous App Service slot/revision or Foundry revision.
+3. If that revision is unavailable, check out the known-good commit and rerun
+  the matching orchestrator. This performs a new remote build from that source.
+4. Run smoke tests before restoring traffic.
 
 ## What blocks rollback
 
@@ -54,6 +46,6 @@ To trigger rollback manually:
 ## Post-rollback
 
 1. File an incident in the team's tracking system.
-2. Identify root cause; do NOT redeploy the same tag without a fix.
+2. Identify root cause; do not redeploy the failing source revision without a fix.
 3. Update `docs/operational-readiness-checklist.md` if a new gate would have
    prevented the issue.

@@ -13,7 +13,7 @@ parameters:
     - name: operation
       type: string
       default: apply
-      values: [apply, preview, bootstrap]
+      values: [apply, preview]
     - name: layer
       type: string
       default: ''
@@ -142,46 +142,6 @@ steps:
                     exit 1
                   fi
                 fi
-                exit 0
-              fi
-
-              if [ "${{ parameters.operation }}" = "bootstrap" ]; then
-                LAYERS=(resource-group shared-resources agent frontend agent-server function-app logic-app)
-                unset AZD_PROVISION_PREVIEW
-                azd hooks run preprovision \
-                  --layer resource-group \
-                  --environment "$AZURE_ENV_NAME" \
-                  --no-prompt
-                export AZD_PROVISION_PREVIEW=true
-                for LAYER in "${LAYERS[@]}"; do
-                  echo "##[group]Bootstrap preview: $LAYER"
-                  if [ "$LAYER" != "resource-group" ]; then
-                    azd hooks run preprovision \
-                      --layer "$LAYER" \
-                      --environment "$AZURE_ENV_NAME" \
-                      --no-prompt
-                  fi
-                  PREVIEW_OUTPUT="$(Agent.TempDirectory)/azd-bootstrap-preview-$LAYER.json"
-                  azd provision "$LAYER" \
-                    --preview \
-                    --environment "$AZURE_ENV_NAME" \
-                    --no-prompt \
-                    --output json > "$PREVIEW_OUTPUT"
-                  cat "$PREVIEW_OUTPUT"
-                  LAYER_RISK=$(node scripts/list-risky-preview-operations.mjs "$PREVIEW_OUTPUT")
-                  if [ -n "$LAYER_RISK" ]; then
-                    echo "##[error]Bootstrap preview for '$LAYER' contains Delete or Modify operations:"
-                    echo "$LAYER_RISK"
-                    exit 1
-                  fi
-                  echo "##[endgroup]"
-
-                  unset AZD_PROVISION_PREVIEW
-                  azd provision "$LAYER" \
-                    --environment "$AZURE_ENV_NAME" \
-                    --no-prompt
-                  export AZD_PROVISION_PREVIEW=true
-                done
                 exit 0
               fi
 

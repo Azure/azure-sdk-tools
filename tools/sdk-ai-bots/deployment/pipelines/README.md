@@ -3,48 +3,49 @@
 ```text
 pipelines/
 ├─ templates/         ← reusable steps; all component pipelines compose these
-└─ orchestrators/     ← full-stack rollout per env (Provision + 4 component CDs)
+└─ orchestrators/
+    ├─ qa-bot-all.yml  ← full-stack provision and deployment
+    └─ <component>/    ← component CI + provision/deploy pipelines
 ```
 
 ## Composition
 
-Every component pipeline follows the same shape:
+Every deployment orchestrator follows the same shape:
 
 ```yaml
 extends: /eng/pipelines/templates/stages/1es-redirect.yml
 parameters:
     stages:
-        - stage: X
-          jobs:
-                            - job: Y
-                steps:
-                    - template: load-environment-suite.yml
-                    - template: azd-auth.yml
-                    - template: <do the thing>.yml # azd-provision | webapp-deploy | azd-deploy
-                    - template: smoke-test.yml
-                    - template: swap-slot.yml # if preview/prod
-                    - template: notify.yml
-                    - template: rollback.yml # condition: failed()
-                    - template: notify.yml
+        - template: provision-with-approval.yml
+        - template: component-deploy-stage.yml
+          parameters:
+              dependsOn: Provision
 ```
+
+Dev, preview, and production all require a successful infrastructure preview
+and manual approval before apply. The approval task rejects after 24 hours; the
+approval stage itself remains available for three days. When no explicit
+approver list is configured, any user with permission to queue the pipeline can
+approve or reject the run.
 
 ## Component → pipeline map
 
-Infrastructure can be provisioned centrally per environment by the
-`pipelines/orchestrators/provision-all-{dev,preview,prod}.yml` pipelines or one
-layer at a time through the component provision pipelines. Layer pipelines
-default to `preview`; select `apply` when queuing to provision that layer.
+Each component deployment refreshes its dependency layers, previews and applies
+only its matching infrastructure layer, then deploys that component. The
+environment-wide `qa-bot-all.yml` pipeline provisions every layer before
+remotely building and deploying every component. Provision-only layer pipelines
+remain available for focused changes and use the same preview, approval, and
+apply sequence.
 
-| Layer/component  | Provision                       | CI                      | CD                                  |
-| ---------------- | ------------------------------- | ----------------------- | ----------------------------------- |
-| resource-group   | `resource-group.provision.yml`  | n/a                     | n/a                                 |
-| shared-resources | `shared-resources.provision.yml`| n/a                     | n/a                                 |
-| agent             | `agent.provision.yml`           | `agent.ci.yml`          | `agent.cd.yml`                      |
-| frontend          | `frontend.provision.yml`        | `frontend.ci.yml`       | `frontend.cd.yml`                   |
-| agent-server      | `agent-server.provision.yml`    | built by agent CI       | `agent-server.cd.yml`               |
-| function-app      | `function-app.provision.yml`    | `function-app.ci.yml`   | `function-app.cd.yml`               |
-| logic-app         | `logic-app.provision.yml`       | n/a                     | n/a                                 |
-| knowledge-sync    | shared-resources                | `knowledge-sync.ci.yml` | `knowledge-sync.cd.yml` (scheduled) |
+| Layer/component                 | Orchestrator                                  | CI                                     |
+| ------------------------------- | --------------------------------------------- | -------------------------------------- |
+| resource-group + shared-resources | `shared-resources/shared-resources.yml`    | n/a                                    |
+| agent                            | `agent/agent.yml`                             | `agent/agent.ci.yml`                   |
+| frontend                         | `frontend/frontend.yml`                       | `frontend/frontend.ci.yml`             |
+| agent-server                     | `agent-server/agent-server.yml`               | built by agent CI                      |
+| function-app                     | `function-app/function-app.yml`               | `function-app/function-app.ci.yml`     |
+| logic-app                        | `logic-app/logic-app.yml`                     | n/a                                    |
+| knowledge-sync                   | `knowledge-sync/knowledge-sync.yml` (scheduled) | `knowledge-sync/knowledge-sync.ci.yml` |
 
 ## Existing pipelines (phase 1 coexistence)
 
@@ -53,5 +54,5 @@ over to the new structure in phase 2, after dev has been validated:
 
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/{server-ci,server-cd,agent-cd,logicapp-cd}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/{ci,sync_knowledge}.yml`
-- `tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml` (Teams manifest publish only — the ARM step is replaced by the centralized `provision-all-<env>` pipeline)
+- `tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml` (Teams manifest publish only — the ARM step is replaced by the consolidated orchestrator)
 - `tools/sdk-ai-bots/{online,offline}-evaluation.yml` (evaluation framework; not in scope)

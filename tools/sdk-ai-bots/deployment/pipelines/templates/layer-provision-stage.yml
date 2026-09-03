@@ -7,6 +7,9 @@ parameters:
     - name: dependencyLayers
       type: string
       default: ''
+    - name: provisionResourceGroup
+      type: boolean
+      default: false
     - name: environment
       type: string
       default: dev
@@ -15,10 +18,18 @@ parameters:
       type: string
       default: preview
       values: [preview, apply]
+    - name: stageName
+      type: string
+      default: ProvisionLayer
+    - name: dependsOn
+      type: string
+      default: ''
 
 stages:
-    - stage: ProvisionLayer
+    - stage: ${{ parameters.stageName }}
       displayName: '${{ parameters.operation }} ${{ parameters.layer }} (${{ parameters.environment }})'
+      ${{ if ne(parameters.dependsOn, '') }}:
+          dependsOn: ${{ parameters.dependsOn }}
       jobs:
           - job: AzdProvisionLayer
             pool:
@@ -31,6 +42,14 @@ stages:
                   parameters:
                       environment: ${{ parameters.environment }}
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                - ${{ if parameters.provisionResourceGroup }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                        parameters:
+                            layer: resource-group
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                        parameters:
+                            operation: ${{ parameters.operation }}
+                            layer: resource-group
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
                   parameters:
                       layer: ${{ parameters.layer }}

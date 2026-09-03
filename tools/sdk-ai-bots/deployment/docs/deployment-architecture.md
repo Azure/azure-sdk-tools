@@ -3,24 +3,20 @@
 ```mermaid
 graph LR
     DEV[Developer] -->|PR| GH[GitHub: main]
-    GH -->|trigger| CI[Component CI Pipeline<br/>build → test → ACR push]
-    CI -->|publish tag| ACR[(Azure Container Registry)]
+    GH -->|trigger| CI[Component CI Pipeline<br/>build → test]
 
-    GH -->|trigger / manual| ORCH[Orchestrator pipeline<br/>deploy-all-&lt;env&gt;.yml]
-    ORCH -->|stage 1| PROV[Provision pipeline<br/>azd provision]
+    GH -->|trigger / manual| ORCH[Orchestrator pipeline<br/>qa-bot-all.yml]
+    ORCH -->|stage 1| PROV[Provision stage<br/>azd provision]
     PROV -->|reads| ES[environment-suite.yaml]
     PROV -->|applies| INFRA[azd Bicep layers]
     INFRA -->|creates| RG[(Resource Group)]
 
-    ORCH -->|stage 2..N| CD[Component CD Pipelines<br/>frontend / agent-server / function-app / agent]
+    ORCH -->|stage 2..N| CD[Component deployment stages<br/>frontend / agent-server / function-app / agent]
     CD -->|reads| ES
-    CD -->|pulls tag| ACR
-    CD -->|deploys| TARGET[Production site or staging slot]
+    CD -->|remote build| ACR[(Azure Container Registry)]
+    ACR -->|deploys generated image| TARGET[Production site or staging slot]
     TARGET -->|smoke ok| PROMOTE[Promote when applicable]
-    PROMOTE -->|record| APPCFG[(App Configuration<br/>LastKnownGoodTag)]
-
-    CD -.->|on failure| RB[Rollback template]
-    RB -->|read previous tag| APPCFG
+    CD -.->|on failure| RB[Restore previous platform revision or slot]
     RB -->|repoint| TARGET
 ```
 
@@ -28,7 +24,9 @@ graph LR
 
 `azure.yaml` composes the infrastructure from these Bicep layers, wired
 together by `dependsOn`. `azd provision` applies the full graph, while
-`azd provision <layer>` targets one layer.
+`azd provision <layer>` targets one layer. The full-stack orchestrator uses the
+former; component orchestrators refresh the selected layer's dependencies and
+use the latter for both preview and apply.
 
 | #   | Layer             | Bicep entry point                    |
 | --- | ----------------- | ------------------------------------ |

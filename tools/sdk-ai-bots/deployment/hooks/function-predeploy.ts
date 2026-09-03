@@ -3,8 +3,7 @@
  *
  * Builds the function container image in ACR via `az acr build` (cloud-side,
  * no local Docker required — the Dockerfile does the full npm install + build
- * inside the container). Skipped in CI pipelines, which build the image in a
- * dedicated container-build stage and set AZD_SKIP_IMAGE_BUILD=1.
+ * inside the container).
  */
 
 import { execSync } from "child_process";
@@ -13,10 +12,6 @@ import { getNextVersionTag } from "./lib/acr-tags";
 
 const REGISTRY_NAME = process.env.CONTAINER_REGISTRY_NAME ?? "";
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "dev";
-// When FUNCTION_IMAGE_TAG is pinned it is used verbatim; otherwise the tag is
-// resolved dynamically as the next auto-incrementing version (dev-1.0.0,
-// dev-2.0.0, ...) against ACR (see getNextVersionTag).
-const EXPLICIT_TAG = process.env.FUNCTION_IMAGE_TAG;
 const IMAGE_NAME = "azure-sdk-qa-bot-function";
 // Function App that runs the container; needed to repoint it at the freshly
 // built immutable tag (the app is provisioned pinned to ':dev').
@@ -29,17 +24,11 @@ function log(msg: string): void {
 }
 
 (async () => {
-  if (process.env.AZD_SKIP_IMAGE_BUILD === "1") {
-    log("AZD_SKIP_IMAGE_BUILD=1 — skipping image build/push.");
-    return;
-  }
   if (!REGISTRY_NAME) throw new Error("CONTAINER_REGISTRY_NAME not set.");
 
-  // Resolve the image tag. When FUNCTION_IMAGE_TAG is pinned it is used
-  // verbatim; otherwise auto-increment the major version against ACR so a fresh
-  // build gets 'dev-1.0.0' and subsequent builds get 'dev-2.0.0', ...
-  const tag = EXPLICIT_TAG ?? getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
-  if (!EXPLICIT_TAG) log(`Resolved next version tag '${tag}'`);
+  // Auto-increment the major version against ACR for each remote build.
+  const tag = getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
+  log(`Resolved next version tag '${tag}'`);
 
   // The function project root (with the Dockerfile) is two levels up from
   // deployment/hooks/: ../../azure-sdk-qa-bot-function. process.cwd() is the
@@ -54,7 +43,7 @@ function log(msg: string): void {
   );
   log("  ✓ image built and pushed to ACR");
 
-  // Register the pre-built image with azd so its App Service container deploy
+  // Register the remotely built image with azd so its App Service container deploy
   // (azure.yaml `function-app` host: appservice) reuses this exact immutable tag
   // instead of remote-building a fresh 'azd-deploy-<timestamp>' image. This is
   // azd's standard per-service image override.

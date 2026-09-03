@@ -55,7 +55,7 @@ Before `azd`:
 3. **Per-environment isolation** — `.azure/<env>/.env` holds outputs; `azure.yaml` binds services to modules.
 4. **Extensible hooks** at every phase: pre/post provision, pre/post deploy — global and per-service.
 5. **Teams / Foundry hosts already modeled** (`azure.ai.agent`, `appservice`, `function`, …).
-6. **Same commands locally and in CI** — the pipeline just sets `AZURE_ENV_NAME` + `AZD_SKIP_IMAGE_BUILD=1`.
+6. **Same commands locally and in CI** — both paths use the azd remote-build lifecycle.
 
 The goal: **make provisioning a solved problem, and make the interesting work be the app, not the plumbing.**
 

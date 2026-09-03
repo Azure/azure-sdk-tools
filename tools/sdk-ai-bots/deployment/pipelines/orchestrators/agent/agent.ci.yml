@@ -3,15 +3,13 @@ name: tools - sdk-ai-bots-agent - ci
 
 trigger:
     branches:
-        include:
-            - main
+        include: [main]
     paths:
         include:
             - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**
 pr:
     branches:
-        include:
-            - main
+        include: [main]
     paths:
         include:
             - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**
@@ -43,31 +41,18 @@ extends:
                         - template: /eng/pipelines/templates/steps/use-python-version.yml
                           parameters:
                               versionSpec: '3.10'
-
                         - script: |
                               set -euo pipefail
                               python -m pip install --upgrade pip
                               pip install -r requirements-dev.txt
                           workingDirectory: $(workingDirectory)
                           displayName: 'pip install (dev)'
-
                         - script: |
                               set -euo pipefail
                               pip install ruff mypy pytest
                               ruff check .
                           workingDirectory: $(workingDirectory)
                           displayName: 'lint (ruff)'
-
                         - script: pytest -q
                           workingDirectory: $(workingDirectory)
                           displayName: 'pytest'
-
-                        # ACR build to avoid pip network restrictions on the hosted agent.
-                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/container-build.yml
-                          parameters:
-                              imageName: 'azure-sdk-qa-bot-agent-server'
-                              dockerContext: '$(workingDirectory)'
-                              dockerfile: '$(workingDirectory)/Dockerfile'
-                              buildMode: 'acr-build'
-                              tagStrategy: 'semver'
-                              semverFile: '$(workingDirectory)/_version.py'

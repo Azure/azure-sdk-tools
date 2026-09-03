@@ -100,7 +100,7 @@ Before `azd`, standing this up meant:
                                                • patchWorkflow (Logic App)
 ```
 
-Same commands locally and in CI — the pipeline just sets `AZURE_ENV_NAME` + `AZD_SKIP_IMAGE_BUILD=1`.
+Same commands locally and in CI — both paths use the azd remote-build lifecycle.
 
 ---
 

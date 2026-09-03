@@ -3,15 +3,13 @@ name: tools - sdk-ai-bots-function-app - ci
 
 trigger:
     branches:
-        include:
-            - main
+        include: [main]
     paths:
         include:
             - tools/sdk-ai-bots/azure-sdk-qa-bot-function/**
 pr:
     branches:
-        include:
-            - main
+        include: [main]
     paths:
         include:
             - tools/sdk-ai-bots/azure-sdk-qa-bot-function/**
@@ -46,11 +44,3 @@ extends:
                           workingDirectory: $(workingDirectory)
                         - script: npm run build
                           workingDirectory: $(workingDirectory)
-                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/container-build.yml
-                          parameters:
-                              imageName: 'azure-sdk-qa-bot-function'
-                              dockerContext: '$(workingDirectory)'
-                              dockerfile: '$(workingDirectory)/Dockerfile'
-                              buildMode: 'acr-build'
-                              tagStrategy: 'semver'
-                              semverFile: '$(workingDirectory)/package.json'

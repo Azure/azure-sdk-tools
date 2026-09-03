@@ -9,30 +9,36 @@
     ```pwsh
     pwsh deployment/scripts/validate-env-suite.ps1
     ```
-2. Run the dev CI pipeline for whichever component you changed. It publishes
-   a new image tag.
-3. Trigger the matching dev CD pipeline, passing `imageTag=<tag-from-CI>`.
+2. Run the dev CI pipeline for the changed component to validate the source.
+3. Trigger the matching component orchestrator, review its infrastructure
+   preview, and approve the apply stage.
+4. `azd deploy` remotely builds the component from the selected source revision
+   and deploys it.
 
 ## Promotion to preview
 
-1. Confirm dev has been stable for at least 1 hour with the candidate tag.
-2. Trigger `<component>.cd.yml` with `environment=preview` and the same
-   `imageTag`. The preview service connection's configured checks run.
-3. Pipeline deploys to staging slot, smoke-tests, swaps to production slot,
+1. Confirm dev has been stable for at least 1 hour with the candidate commit.
+2. Trigger `pipelines/orchestrators/<component>/<component>.yml` with
+   `environment=preview` from the candidate commit. Review the infrastructure
+   preview and approve the apply stage. The pipeline then performs a native ACR
+   remote build.
+3. The pipeline deploys to staging slot, smoke-tests, swaps to production slot,
    smoke-tests again.
 
 ## Promotion to prod
 
 1. Operational readiness checklist (`docs/operational-readiness-checklist.md`)
    must be signed off.
-2. Trigger `pipelines/orchestrators/deploy-all-prod.yml` with all four image
-   tags. The orchestrator runs:
+2. Trigger `pipelines/orchestrators/qa-bot-all.yml` with `environment=prod`
+   from the approved commit. The orchestrator runs:
     - Preflight (`bicep what-if` + readiness reminder).
-   - Agent-server CD → 10-min watch → function-app → agent → frontend.
+      - Manual approval.
+      - Provision (`azd provision`).
+      - Agent-server → 10-min watch → function-app → agent → frontend.
    The prod service connection's configured approval and branch-control checks
    protect Azure operations in these stages.
-3. Each stage records `Deployment:<component>:LastKnownGoodTag` in App
-   Configuration on success.
+3. Record the successful source revision and resulting App Service or Foundry
+   revision in the deployment record.
 
 ## One-time manual steps
 

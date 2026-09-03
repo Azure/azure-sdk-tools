@@ -60,4 +60,30 @@ steps:
                   azd env refresh "$AZURE_ENV_NAME" --layer "$LAYER" --no-prompt
                 done
               fi
-              azd deploy "${{ parameters.service }}" --environment "$AZURE_ENV_NAME" --no-prompt
+
+              DEPLOY_LOG="$(Agent.TempDirectory)/azd-deploy-${{ parameters.service }}.log"
+              DEPLOY_MAX_ATTEMPTS=2
+              for DEPLOY_ATTEMPT in $(seq 1 "$DEPLOY_MAX_ATTEMPTS"); do
+                set +e
+                azd deploy "${{ parameters.service }}" \
+                  --environment "$AZURE_ENV_NAME" \
+                  --no-prompt 2>&1 | tee "$DEPLOY_LOG"
+                DEPLOY_EXIT_CODE=${PIPESTATUS[0]}
+                set -e
+
+                if [ "$DEPLOY_EXIT_CODE" -eq 0 ]; then
+                  exit 0
+                fi
+
+                if ! grep -Eqi 'streaming remote build logs \(HTTP 5[0-9]{2}\)|ERROR CODE: ServerBusy' "$DEPLOY_LOG"; then
+                  exit "$DEPLOY_EXIT_CODE"
+                fi
+
+                if [ "$DEPLOY_ATTEMPT" -eq "$DEPLOY_MAX_ATTEMPTS" ]; then
+                  echo "##[error]azd deploy still failed after retrying the transient ACR log-stream error."
+                  exit "$DEPLOY_EXIT_CODE"
+                fi
+
+                echo "##[warning]ACR log streaming was temporarily unavailable; retrying azd deploy in 60 seconds."
+                sleep 60
+              done

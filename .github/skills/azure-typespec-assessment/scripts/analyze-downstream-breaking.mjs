@@ -178,6 +178,68 @@ function compareMethods(projectId, base, current, source, facts, candidates) {
   }
 }
 
+function typeReferencesIdentity(type, identity) {
+  if (!type) return false;
+  if (typeIdentity(type) === identity) return true;
+  return typeReferencesIdentity(type.valueType ?? type.items, identity);
+}
+
+function equivalentMovedProperty(before, after) {
+  return (
+    before.name === after.name &&
+    before.serializedName === after.serializedName &&
+    before.optional === after.optional &&
+    before.access === after.access &&
+    before.flatten === after.flatten &&
+    same(before.type, after.type)
+  );
+}
+
+function sameOperation(left, right) {
+  if (left.identity === right.identity) return true;
+  return (
+    left.operation?.verb &&
+    left.operation?.path &&
+    left.operation.verb === right.operation?.verb &&
+    left.operation.path === right.operation?.path
+  );
+}
+
+function isCompatibleResponseWrapperMigration(
+  beforeModel,
+  afterModel,
+  property,
+  base,
+  current,
+) {
+  const baselineMethods = base.methods.filter((method) =>
+    typeReferencesIdentity(method.responseType, beforeModel.identity),
+  );
+  if (!baselineMethods.length) return false;
+
+  return current.models.some((wrapper) => {
+    if (
+      wrapper.identity === afterModel.identity ||
+      !wrapper.reachable ||
+      wrapper.access !== "public"
+    ) {
+      return false;
+    }
+    const movedProperty = wrapper.properties.find((candidate) =>
+      equivalentMovedProperty(property, candidate),
+    );
+    const wrapsBody = wrapper.properties.some((candidate) =>
+      typeReferencesIdentity(candidate.type, afterModel.identity),
+    );
+    if (!movedProperty || !wrapsBody) return false;
+    return current.methods.some(
+      (method) =>
+        typeReferencesIdentity(method.responseType, wrapper.identity) &&
+        baselineMethods.some((baseline) => sameOperation(baseline, method)),
+    );
+  });
+}
+
 function compareModels(projectId, base, current, source, facts, candidates) {
   const currentModels = new Map(current.models.map((item) => [item.identity, item]));
   for (const before of base.models.filter((item) => item.reachable)) {
@@ -199,6 +261,17 @@ function compareModels(projectId, base, current, source, facts, candidates) {
     for (const property of before.properties) {
       const currentProperty = afterProperties.get(property.name);
       if (!currentProperty) {
+        if (
+          isCompatibleResponseWrapperMigration(
+            before,
+            after,
+            property,
+            base,
+            current,
+          )
+        ) {
+          continue;
+        }
         pushCandidate(
           candidates,
           facts,

@@ -102,6 +102,104 @@ function parameterOnlyLroShape(current, finalStateVia = "azure-async-operation")
   return shape;
 }
 
+function responseWrapperShape(current, preserveProperty = true) {
+  const resultType = {
+    kind: "model",
+    name: "LedgerWriteResult",
+    crossLanguageDefinitionId: "ConfidentialLedger.LedgerWriteResult",
+  };
+  const wrapperType = {
+    kind: "model",
+    name: "LedgerWriteResponse",
+    crossLanguageDefinitionId: "ConfidentialLedger.LedgerWriteResponse",
+  };
+  const transactionId = {
+    kind: "property",
+    name: "transactionId",
+    serializedName: "transactionId",
+    optional: false,
+    access: "public",
+    flatten: false,
+    discriminator: false,
+    type: { kind: preserveProperty ? "string" : "boolean" },
+  };
+  return {
+    crossLanguagePackageId: "ConfidentialLedger",
+    crossLanguageVersion: "1",
+    metadata: { apiVersions: ["v1"] },
+    clients: [{
+      kind: "client",
+      name: "Ledger",
+      crossLanguageDefinitionId: "ConfidentialLedger.Ledger",
+      children: [],
+      methods: [{
+        kind: "basic",
+        name: "createLedgerEntry",
+        access: "public",
+        crossLanguageDefinitionId:
+          "ConfidentialLedger.Ledger.createLedgerEntry",
+        parameters: [],
+        operation: {
+          kind: "http",
+          path: "/app/transactions",
+          uriTemplate: "/app/transactions",
+          verb: "post",
+          parameters: [],
+          responses: [{ statusCodes: 200 }],
+          exceptions: [],
+        },
+        response: {
+          kind: "method",
+          type: current ? wrapperType : resultType,
+        },
+      }],
+    }],
+    models: [
+      {
+        ...resultType,
+        access: "public",
+        usage: 4,
+        properties: [
+          ...(!current ? [transactionId] : []),
+          {
+            kind: "property",
+            name: "collectionId",
+            serializedName: "collectionId",
+            optional: false,
+            access: "public",
+            flatten: false,
+            discriminator: false,
+            type: { kind: "string" },
+          },
+        ],
+      },
+      ...(current
+        ? [{
+            ...wrapperType,
+            access: "public",
+            usage: 4,
+            properties: [
+              transactionId,
+              {
+                kind: "property",
+                name: "body",
+                serializedName: "body",
+                optional: false,
+                access: "public",
+                flatten: false,
+                discriminator: false,
+                type: resultType,
+              },
+            ],
+          }]
+        : []),
+    ],
+    enums: [],
+    unions: [],
+    namespaces: [],
+  };
+}
+
 function analyzeShapes(context, base, current) {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".downstream-analyzer-test-"));
   context.after(() => fs.rmSync(work, { recursive: true, force: true }));
@@ -160,6 +258,38 @@ test("does not emit an LRO finding when only a public parameter and nested URI t
 
   assert.ok(rules.includes("method-parameters-changed"));
   assert.ok(!rules.includes("method-lro-changed"));
+});
+
+test("treats promotion to an explicit response wrapper as SDK-compatible", (context) => {
+  const result = analyzeShapes(
+    context,
+    responseWrapperShape(false),
+    responseWrapperShape(true),
+  );
+
+  assert.ok(
+    !result.candidates.some(
+      (item) =>
+        item.rule === "model-property-removed" &&
+        item.actual.includes("transactionId"),
+    ),
+  );
+});
+
+test("retains a removal when the response wrapper changes the moved property", (context) => {
+  const result = analyzeShapes(
+    context,
+    responseWrapperShape(false),
+    responseWrapperShape(true, false),
+  );
+
+  assert.ok(
+    result.candidates.some(
+      (item) =>
+        item.rule === "model-property-removed" &&
+        item.actual.includes("transactionId"),
+    ),
+  );
 });
 
 test("retains actual LRO behavior changes", (context) => {

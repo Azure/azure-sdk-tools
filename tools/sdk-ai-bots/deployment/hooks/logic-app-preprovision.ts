@@ -1,6 +1,7 @@
 import { execSync } from "child_process";
 import { isManagedApiConnection } from "./lib/managed-api-connection.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
+import { hasWorkflowActions } from "./lib/workflow-definition.js";
 
 const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const resourceGroup = process.env.AZURE_RESOURCE_GROUP ?? "";
@@ -125,12 +126,28 @@ function preserveWorkflowDefinition(): void {
     if (!isMissingResource(error)) throw error;
   }
 
-  const includeDefinition = workflowNames.length > 0;
+  const includeDefinition = workflowNames.some((workflowName) => {
+    try {
+      const raw = execSync(
+        `az resource show --resource-type Microsoft.Logic/workflows ` +
+          `--subscription "${subscriptionId}" -g "${resourceGroup}" ` +
+          `-n "${workflowName}" --api-version 2019-05-01 ` +
+          `--query "properties.definition.actions" -o json`,
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      );
+      return hasWorkflowActions(JSON.parse(raw || "null"));
+    } catch (error) {
+      if (!isMissingResource(error)) throw error;
+      return false;
+    }
+  });
   setEnvironmentValue("INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION", includeDefinition);
   log(
     includeDefinition
       ? `Preserving the deployed workflow definition for ${workflowNames.join(", ")}.`
-      : "No workflow exists yet; Bicep will deploy the workflow shell.",
+      : workflowNames.length > 0
+        ? `Existing workflow ${workflowNames.join(", ")} is an empty shell; preserving the shell until Function App postdeploy.`
+        : "No workflow exists yet; Bicep will deploy the workflow shell.",
   );
 }
 

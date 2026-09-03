@@ -6,8 +6,8 @@ import { parseArgs, isMain, runMain, writeJson } from "./cli.mjs";
 import {
   collectChanges,
   createSparseWorktree,
-  deriveServiceRoot,
   discoverProjects,
+  normalizeSparseRoots,
   resolveComparison,
 } from "./git-evidence.mjs";
 import { addCompilerEvidence, buildSourceIndex } from "./source-index.mjs";
@@ -117,8 +117,8 @@ function ensureDependencies(worktree, work, reuseRoot) {
   preflightToolchain(worktree);
 }
 
-function findExternalLocalImports(repo, projects, serviceRoot) {
-  const serviceBoundary = path.resolve(repo, serviceRoot);
+function findExternalLocalImports(repo, projects, sparseRoots) {
+  const serviceBoundaries = sparseRoots.map((root) => path.resolve(repo, root));
   const failures = [];
   const visit = (directory) => {
     if (!fs.existsSync(directory)) return;
@@ -130,7 +130,10 @@ function findExternalLocalImports(repo, projects, serviceRoot) {
         for (const match of content.matchAll(/\bimport\s+["']([^"']+)["']/g)) {
           if (!match[1].startsWith(".")) continue;
           const resolved = path.resolve(path.dirname(file), match[1]);
-          if (resolved !== serviceBoundary && !resolved.startsWith(`${serviceBoundary}${path.sep}`)) {
+          const insideSparseRoots = serviceBoundaries.some(
+            (boundary) => resolved === boundary || resolved.startsWith(`${boundary}${path.sep}`),
+          );
+          if (!insideSparseRoots) {
             failures.push({
               file: path.relative(repo, file).replaceAll("\\", "/"),
               import: match[1],
@@ -144,14 +147,28 @@ function findExternalLocalImports(repo, projects, serviceRoot) {
   return failures;
 }
 
-export async function prepareAssessment({ repo, base, specification, output }) {
+export async function prepareAssessment({
+  repo,
+  base,
+  specification,
+  output,
+  sparse_root,
+  sparseRoots: requestedSparseRoots,
+}) {
   const started = performance.now();
   const repository = path.resolve(repo ?? process.cwd());
   const work = path.resolve(output);
   fs.mkdirSync(work, { recursive: true });
   const comparison = resolveComparison(repository, base ?? "origin/main");
-  const serviceRoot = deriveServiceRoot(specification);
-  const changedFiles = collectChanges(repository, comparison.mergeBaseCommit, specification);
+  const sparseRoots = normalizeSparseRoots(
+    requestedSparseRoots ?? sparse_root,
+    specification,
+  );
+  const changedFiles = collectChanges(repository, comparison.mergeBaseCommit, specification).filter((file) =>
+    sparseRoots.some(
+      (root) => file.path === root || file.path.startsWith(`${root}/`),
+    ),
+  );
   const blockers = [];
   const manifest = {
     schemaVersion: 1,
@@ -166,7 +183,7 @@ export async function prepareAssessment({ repo, base, specification, output }) {
         untracked: changedFiles.some((file) => file.origins.includes("untracked")),
       },
     },
-    sparseCheckout: { mode: "cone", roots: [serviceRoot], verified: false },
+    sparseCheckout: { mode: "cone", roots: sparseRoots, verified: false },
     changedFiles,
     projects: [],
     blockers,
@@ -196,15 +213,27 @@ export async function prepareAssessment({ repo, base, specification, output }) {
   const baseWorktree = path.join(work, "worktrees", "base");
   const currentWorktree = path.join(work, "worktrees", "current");
   try {
-    createSparseWorktree(repository, comparison.mergeBaseCommit, serviceRoot, baseWorktree);
-    createSparseWorktree(repository, comparison.headCommit, serviceRoot, currentWorktree);
+    createSparseWorktree(repository, comparison.mergeBaseCommit, sparseRoots, baseWorktree);
+    createSparseWorktree(repository, comparison.headCommit, sparseRoots, currentWorktree);
     manifest.sparseCheckout.verified = true;
     copyOverlay(repository, currentWorktree, changedFiles);
   } catch (error) {
     blockers.push({ code: "workspace-preparation-failed", message: error.message });
   }
 
-  const discoveredProjects = discoverProjects(repository, changedFiles, serviceRoot);
+  const discoveredProjects = [
+    ...new Set(
+      sparseRoots.flatMap((root) =>
+        discoverProjects(
+          repository,
+          changedFiles.filter(
+            (file) => file.path === root || file.path.startsWith(`${root}/`),
+          ),
+          root,
+        ),
+      ),
+    ),
+  ].sort();
   const projects = discoveredProjects.filter((project) =>
     !discoveredProjects.some((candidate) =>
       candidate !== project && candidate.startsWith(`${project}/`)));
@@ -214,11 +243,11 @@ export async function prepareAssessment({ repo, base, specification, output }) {
       message: `No affected tspconfig.yaml was found under ${specification}.`,
     });
   }
-  const externalImports = findExternalLocalImports(repository, projects, serviceRoot);
+  const externalImports = findExternalLocalImports(repository, projects, sparseRoots);
   if (externalImports.length) {
     blockers.push({
       code: "unsupported-import-outside-service",
-      message: `Local imports leave ${serviceRoot}: ${externalImports
+      message: `Local imports leave ${sparseRoots.join(", ")}: ${externalImports
         .map((item) => `${item.file} -> ${item.import}`)
         .join(", ")}`,
     });
@@ -329,6 +358,7 @@ if (isMain(import.meta.url)) {
     const args = parseArgs(process.argv.slice(2), {
       required: ["specification", "output"],
       defaults: { repo: process.cwd(), base: "origin/main" },
+      arrays: ["sparse-root"],
     });
     const result = await prepareAssessment(args);
     console.log(path.join(path.resolve(args.output), "preparation-manifest.json"));

@@ -221,12 +221,13 @@ function selectedPhases(phase) {
 export function commonSpecificationRoot(sparseRoots) {
   const segments = sparseRoots.map((root) => root.split("/"));
   const common = segments[0].filter((segment, index) =>
-    segments.every((parts) => parts[index] === segment));
+    segments.every((parts) => parts[index] === segment),
+  );
   return common.join("/") || ".";
 }
 
-function analysisArguments(paths, testCase, modelInputBudgetBytes) {
-  return [
+export function analysisArguments(paths, testCase, modelInputBudgetBytes) {
+  const args = [
     analysisScript,
     "--repo",
     paths.headWorkspace,
@@ -245,6 +246,10 @@ function analysisArguments(paths, testCase, modelInputBudgetBytes) {
     "--model-input-budget-bytes",
     String(modelInputBudgetBytes),
   ];
+  for (const sparseRoot of testCase.sparseRoots) {
+    args.push("--sparse-root", sparseRoot);
+  }
+  return args;
 }
 
 function requireDirectory(path, description) {
@@ -509,9 +514,7 @@ function finalizeAssessment(
       throw new Error(`${description} does not exist: ${path}`);
     }
     if (statSync(path).mtimeMs < agentStartedAtEpochMs) {
-      throw new Error(
-        `${description} predates the current Agent run: ${path}`,
-      );
+      throw new Error(`${description} predates the current Agent run: ${path}`);
     }
   }
   const judgmentElapsedMs = Math.max(

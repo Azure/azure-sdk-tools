@@ -1251,14 +1251,18 @@ declaring file and line — which is strictly better than the work item ID `view
 
 - `azsdk_engsys_codeowner_check_package`
 - `azsdk_engsys_codeowner_update_cache`
-- `azsdk_engsys_codeowner_generate` *(new — agents now drive generation after editing YAML)*
-- `azsdk_engsys_codeowner_audit` *(new — agents need the validation result to self-correct)*
 - `azsdk_check_service_label`
 - `azsdk_create_service_label`
 
-Net change: eleven MCP tools become seven, and six write tools become zero. The eleven today are the
+Net change: eleven MCP tools become four, and six write tools become zero. The eleven today are the
 nine on `CodeownersTool` plus `azsdk_check_service_label` and `azsdk_create_service_label` on
-`GitHubLabelsTool`; six add/remove tools are deleted and two are added.
+`GitHubLabelsTool`.
+
+`generate` and `audit` stay CLI-only, as they are today. Both are pipeline steps whose callers are
+`eng/` scripts, not agents: the regeneration job runs `generate` on `main`, and the audit job runs
+`audit --fix`. An agent editing `sdk/<service>/owners.yaml` runs them through the CLI like any other
+build step. Exposing them over MCP would add an agent-reachable path that writes
+`.github/CODEOWNERS` — the one file this design says no agent and no human should write.
 
 ### Component 10: Audit rules
 

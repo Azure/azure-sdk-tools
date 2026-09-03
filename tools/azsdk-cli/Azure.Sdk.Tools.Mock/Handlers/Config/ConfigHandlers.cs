@@ -74,24 +74,3 @@ public class CodeownerUpdateCacheHandler : IMockToolHandler
         Result = new { packagesRefreshed = 1, labelOwnersRefreshed = 1 }
     };
 }
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_generate.</summary>
-public class CodeownerGenerateHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_generate";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new DefaultCommandResponse
-    {
-        Message = "CODEOWNERS regenerated from owners.yaml (mock)",
-        Result = new { outputPath = ".github/CODEOWNERS", inSync = true }
-    };
-}
-
-/// <summary>Mock handler for azsdk_engsys_codeowner_audit.</summary>
-public class CodeownerAuditHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_engsys_codeowner_audit";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new CodeownersAuditResponse
-    {
-        RepoRoot = arguments?.GetValueOrDefault("repoRoot")?.ToString() ?? "/repo"
-    };
-}

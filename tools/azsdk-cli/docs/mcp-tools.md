@@ -21,9 +21,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_create_release_plan | `azsdk release-plan create` | Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. |
 | azsdk_create_service_label |  | Creates a pull request to add a new service label |
 | azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result. |
-| azsdk_engsys_codeowner_audit |  | Audit the repository's ownership YAML against cached org, team, and label data. Update the CODEOWNERS cache before calling this. |
 | azsdk_engsys_codeowner_check_package |  | Check that a package has sufficient owners, PR labels, and service owners. |
-| azsdk_engsys_codeowner_generate |  | Render .github/CODEOWNERS from the repository's ownership YAML. |
 | azsdk_engsys_codeowner_update_cache | `azsdk config codeowners update-cache` | Run the CODEOWNERS cache update pipeline. Use this after making changes to ownership information to unblock releases or other pipelines. |
 | azsdk_example_agent_fibonacci | `azsdk example demo agent` | Demonstrates agent computing Nth Fibonacci number via iterative tool calls |
 | azsdk_example_ai_service | `azsdk example demo ai` | Demonstrates AI service integration using Azure OpenAI |
@@ -78,19 +76,18 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. Provide path to typespec project. |
 | azsdk_upgrade | `azsdk upgrade` | Upgrade the MCP server to the latest version. IMPORTANT: After upgrade completes, the MCP server must be restarted to use the new version. |
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
-|  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
-|  | `azsdk apiview get-content` | Get content by APIView URL |
+|  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
+|  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |
+|  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
+|  | `azsdk quokka` |  |
 |  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |
-|  | `azsdk release-plan list-overdue` |  |
-|  | `azsdk quokka` |  |
-|  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
-|  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |
-|  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |
+|  | `azsdk apiview get-content` | Get content by APIView URL |
+|  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
+|  | `azsdk release-plan list-overdue` |  |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
-|  | `azsdk ingest-telemetry` |  |
+|  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
 |  | `azsdk config codeowners audit` | Audit the repository's ownership YAML for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
@@ -101,5 +98,6 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk eng evaluate` | Evaluate whether Copilot's pipeline-failure fixes worked and survived into merged PRs over the last N days |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk list` |  |
+|  | `azsdk ingest-telemetry` |  |
 |  | `azsdk example hello-world` | Simple echo tool for testing framework features |
 

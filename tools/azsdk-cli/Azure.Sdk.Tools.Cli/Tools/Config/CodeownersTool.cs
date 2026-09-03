@@ -86,8 +86,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string auditCommandName = "audit";
 
         // MCP Tool Names
-        private const string CodeownerGenerateToolName = "azsdk_engsys_codeowner_generate";
-        private const string CodeownerAuditToolName = "azsdk_engsys_codeowner_audit";
         private const string CodeownerCheckPackageToolName = "azsdk_engsys_codeowner_check_package";
         private const string CodeownerUpdateCacheToolName = "azsdk_engsys_codeowner_update_cache";
 
@@ -185,7 +183,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerGenerateToolName), Description("Render .github/CODEOWNERS from the repository's ownership YAML.")]
         public async Task<DefaultCommandResponse> GenerateCodeowners(
             string repoRoot,
             CancellationToken ct = default)
@@ -309,7 +306,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// Audits the repository's ownership YAML for violations.
         /// The CODEOWNERS cache MUST be updated before running audit.
         /// </summary>
-        [McpServerTool(Name = CodeownerAuditToolName), Description("Audit the repository's ownership YAML against cached org, team, and label data. Update the CODEOWNERS cache before calling this.")]
         public async Task<CommandResponse> Audit(string repoRoot, string repo, bool fix = false, bool force = false, CancellationToken ct = default)
         {
             try

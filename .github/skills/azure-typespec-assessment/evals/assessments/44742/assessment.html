@@ -15,7 +15,7 @@
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="fail">×</span> 6</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 17</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">11 direct · 6 from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> 4</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">4 findings<br>4/4 intents assessed</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> 1</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">1 guideline issue<br>4/4 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 4</div><div class="summary-label">Semantic intents</div><div class="summary-detail">10 operations<br>0 Added, 4 Modified, 0 Removed</div></a>
 </div></div></header>
@@ -198,7 +198,7 @@
 <div class="affected-operation-list"><div class="affected-operation"><strong>Directory_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles</code></div><div class="affected-operation"><strong>File_ListHandles</strong><span class="http-method">GET</span><code>?comp=listhandles&amp;_overload=listHandles</code></div></div></details>
 <div class="contract-footer"><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-106722e15dc2d25d"><code>semantic-106722e15dc2d25d</code></a></span></div>
 </div></details></section>
-<section id="azure-compliance"><h2>Azure Guidelines (4)</h2><details class="finding compliance-finding compliance-finding-group">
+<section id="azure-compliance"><h2>Azure Guidelines (1)</h2><details class="finding compliance-finding compliance-finding-group">
 <summary><strong>Existing stable API members are deleted without versioned removal</strong><span class="finding-summary">4 affected intents</span></summary>
 <div class="finding-body">
 <p><strong>Gap:</strong> The fetched versioning guidance requires API changes to be represented across versions without breaking existing clients. Direct deletion changes the already selected stable 2026-12-06 contract instead of introducing a later version and applying @removed there.</p>

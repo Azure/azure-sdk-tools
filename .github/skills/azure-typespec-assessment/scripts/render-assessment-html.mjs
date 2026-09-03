@@ -83,6 +83,9 @@ function headerSummary(assessment) {
   const complianceFindingCount = compliance.legacyFindings
     ? compliance.legacyFindings.length
     : (compliance.findings?.length ?? 0);
+  const complianceIssueCount = compliance.legacyFindings
+    ? compliance.legacyFindings.length
+    : complianceFindingGroups(compliance.findings).length;
   const complianceCoveredCount = compliance.coverage?.assessedIntentCount ?? 0;
   const complianceMaterialCount = compliance.coverage?.semanticIntentCount ?? 0;
   const codeQuality =
@@ -108,6 +111,7 @@ function headerSummary(assessment) {
     downstreamCount,
     complianceStatus: compliance.status,
     complianceFindingCount,
+    complianceIssueCount,
     complianceCoveredCount,
     complianceMaterialCount,
     complianceCoverageDetail: compliance.legacyDocuments
@@ -1547,7 +1551,7 @@ function renderCurrent(assessment) {
 <a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${summary.restCount ? "fail" : "pass"}">${summary.restCount ? "×" : "✓"}</span> ${summary.restCount}</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${summary.downstreamCount ? "fail" : "pass"}">${summary.downstreamCount ? "×" : "✓"}</span> ${summary.downstreamCount}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">${summary.directDownstreamCount} direct · ${summary.restCount} from REST breaking</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${summary.complianceFindingCount}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceFindingCount} findings<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${summary.complianceIssueCount}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceIssueCount} guideline ${summary.complianceIssueCount === 1 ? "issue" : "issues"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${escapeHtml(dimensions.documentQuality.summary)}</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> ${summary.semanticItems.length}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
 </div></div></header>
@@ -1557,7 +1561,7 @@ function renderCurrent(assessment) {
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (${summary.restCount})</h2>${rest}</section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (${summary.downstreamCount})</h2>${downstreamItems}</section>
-<section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceFindingCount})</h2>${renderCompliance(dimensions.compliance, dimensions.semantic.items)}</section>
+<section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceIssueCount})</h2>${renderCompliance(dimensions.compliance, dimensions.semantic.items)}</section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — ${escapeHtml(dimensions.documentQuality.summary)}</div></section>
 <section id="semantic-intents"><h2>Semantic intents (${dimensions.semantic.items.length})</h2>${semantic || '<div class="panel">No semantic review units.</div>'}</section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}

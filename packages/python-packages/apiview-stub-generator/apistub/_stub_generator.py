@@ -42,7 +42,125 @@ INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
 # versions on slower CI agents.
 PACKAGE_INSTALL_TIMEOUT_SECONDS = 800
 
+# A member name starting with a drive letter is rejected on every platform, not
+# just Windows, so that the same archive is accepted or refused identically
+# wherever the parser runs.
+_DRIVE_LETTER_PREFIX = re.compile(r"^[A-Za-z]:")
+
 logging.getLogger().setLevel(logging.ERROR)
+
+
+def _resolve_archive_member(member_name: str, dest_dir: str) -> str:
+    """Resolve *member_name* under *dest_dir* and refuse anything that escapes it.
+
+    Both the wheel and the sdist formats mandate ``/`` as the member path
+    separator and neither has a use for upward traversal, absolute names or
+    drive-relative names, so every rejection below is unreachable for a
+    well-formed package.
+
+    :param str member_name: the member name as recorded in the archive.
+    :param str dest_dir: the already-resolved extraction directory.
+    :returns: the resolved absolute destination path for the member.
+    :rtype: str
+    :raises ValueError: if the member cannot be written inside *dest_dir*.
+    """
+    if "\x00" in member_name:
+        raise ValueError(
+            "Refusing to extract archive member with an embedded null byte."
+        )
+
+    # On Windows a backslash would be collapsed as a separator, while on POSIX
+    # it is an ordinary filename character. Rejecting it outright keeps the
+    # containment decision identical on both.
+    if "\\" in member_name:
+        raise ValueError(
+            "Refusing to extract archive member whose name contains a "
+            f"backslash: {member_name!r}"
+        )
+
+    if member_name.startswith("/") or _DRIVE_LETTER_PREFIX.match(member_name):
+        raise ValueError(
+            "Refusing to extract archive member with an absolute or "
+            f"drive-relative name: {member_name!r}"
+        )
+
+    if any(part == os.pardir for part in member_name.split("/")):
+        raise ValueError(
+            "Refusing to extract archive member that traverses outside the "
+            f"package: {member_name!r}"
+        )
+
+    target = os.path.realpath(os.path.join(dest_dir, member_name))
+    try:
+        contained = os.path.commonpath([dest_dir, target]) == dest_dir
+    except ValueError:
+        # Raised when the paths share no common prefix at all, for example when
+        # they sit on different Windows drives.
+        contained = False
+
+    if not contained:
+        raise ValueError(
+            "Refusing to extract archive member that resolves outside the "
+            f"extraction directory: {member_name!r}"
+        )
+
+    return target
+
+
+def _safe_extract_tar(archive_path: str, dest_dir: str) -> None:
+    """Extract the tar archive at *archive_path* into *dest_dir*.
+
+    Every member is checked before anything is written, and the first
+    unacceptable member aborts the whole extraction, so a rejected package can
+    never be parsed from a half-populated directory.
+
+    :param str archive_path: path to the ``.tar.gz`` to extract.
+    :param str dest_dir: directory to extract into.
+    :raises ValueError: if any member is not a plain file or directory, or
+        would be written outside *dest_dir*.
+    """
+    resolved_dest = os.path.realpath(dest_dir)
+    with tarfile.open(archive_path) as tar_ref:
+        for member in tar_ref.getmembers():
+            # Symlinks, hardlinks, devices and FIFOs are the other half of the
+            # containment problem: their name can sit inside the directory
+            # while their target does not. Source distributions only ever hold
+            # regular files and directories, so allowlist those two.
+            if not (member.isfile() or member.isdir()):
+                raise ValueError(
+                    "Refusing to extract archive member that is not a plain "
+                    f"file or directory: {member.name!r}"
+                )
+            _resolve_archive_member(member.name, resolved_dest)
+
+        # ``filter="data"`` is belt and braces on the interpreters that ship it
+        # (3.12+, and the 3.10/3.11 patch releases that backported it): the
+        # members above have already been vetted, so it has nothing left to
+        # reject. It keeps the extraction safe should a future member type slip
+        # past the checks above.
+        if hasattr(tarfile, "data_filter"):
+            tar_ref.extractall(resolved_dest, filter="data")
+        else:
+            tar_ref.extractall(resolved_dest)
+
+
+def _safe_extract_zip(archive_path: str, dest_dir: str) -> None:
+    """Extract the zip archive at *archive_path* into *dest_dir*.
+
+    ``ZipFile.extractall`` silently rewrites an unsafe member name rather than
+    refusing it. For a tool whose whole job is to report on a package, a
+    package that asks to be written outside its own directory is a finding, so
+    validate the names up front and abort instead.
+
+    :param str archive_path: path to the ``.whl`` or ``.zip`` to extract.
+    :param str dest_dir: directory to extract into.
+    :raises ValueError: if any member would be written outside *dest_dir*.
+    """
+    resolved_dest = os.path.realpath(dest_dir)
+    with zipfile.ZipFile(archive_path) as zip_ref:
+        for member_name in zip_ref.namelist():
+            _resolve_archive_member(member_name, resolved_dest)
+        zip_ref.extractall(resolved_dest)
 
 
 class StubGenerator:
@@ -400,12 +518,10 @@ class StubGenerator:
             "Extracting {0} to directory {1}".format(self.pkg_path, temp_pkg_dir)
         )
         if self.pkg_path.endswith(".tar.gz"):
-            with tarfile.open(self.pkg_path) as tar_ref:
-                tar_ref.extractall(temp_pkg_dir)
-                self._remove_extra_internal_folder(temp_pkg_dir)
+            _safe_extract_tar(self.pkg_path, temp_pkg_dir)
+            self._remove_extra_internal_folder(temp_pkg_dir)
         else:
-            with zipfile.ZipFile(self.pkg_path) as zip_ref:
-                zip_ref.extractall(temp_pkg_dir)
+            _safe_extract_zip(self.pkg_path, temp_pkg_dir)
         logging.debug("Extracted package files into temp path")
 
         return temp_pkg_dir

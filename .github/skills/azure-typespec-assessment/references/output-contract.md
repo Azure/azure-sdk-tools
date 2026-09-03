@@ -169,4 +169,7 @@ with both the operation ID and current Semantic intent. If no fine-grained
 confirmed row is available, they structurally compare normalized before/after
 operation facts and render the narrowest changed parameter, request schema,
 response status/body/header, paging, LRO, method, or path areas. Do not render
-identical top-level summaries when a deeper changed path is available.
+identical top-level summaries when a deeper changed path is available. If the
+normalized comparison produces no changed contract row, omit the table and
+render `HTTP signature and represented payload contract unchanged.` as both
+the operation statement and change outcome.

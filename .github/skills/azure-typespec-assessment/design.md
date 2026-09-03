@@ -2282,7 +2282,11 @@ row presentation:
 - a top-level aspect name is used only when the normalized evidence cannot
   identify a narrower changed path, and identical summaries such as unchanged
   response-status lists must not be presented as the explanation of a deeper
-  change; and
+  change;
+- when normalized structural comparison produces no changed contract row, the
+  operation card omits the Before/After table and states `HTTP signature and
+  represented payload contract unchanged.` even if upstream version-specific
+  reference metadata populated `changedAspects`; and
 - REST breaking cards continue grouping rows by stable REST contract identity,
   while Semantic operation cards group the applicable rows under each
   representative operation.

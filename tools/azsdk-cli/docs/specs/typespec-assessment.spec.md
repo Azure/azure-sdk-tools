@@ -8,7 +8,6 @@
 - [Goals](#goals)
 - [Non-Goals](#non-goals)
 - [User Scenario](#user-scenario)
-- [Future Follow-up Work: Reviewer Workflow](#future-follow-up-work-reviewer-workflow)
 - [Solution](#solution)
     - [Five Assessment Dimensions](#five-assessment-dimensions)
     - [Remediation Integration](#remediation-integration)
@@ -63,10 +62,6 @@ The purpose of `azure-typespec-assessment` skill is to:
 **Agent:** I will apply the approved fixes through the breaking-change mitigation and TypeSpec authoring skills, validate the updated TypeSpec, and reassess it against the same baseline.
 
 ![TypeSpec assessment user workflow](typespec-assessment-workflow.png)
-
----
-
-## Future Follow-up Work: Reviewer Workflow
 
 The reviewer's scenario workflow will be added in a future iteration after the reviewer experience is finalized.
 

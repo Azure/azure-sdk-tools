@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- Product onboarding: removed the `--needs-sdk` option, renamed `N/A` to `I don't know` for `--data-plane` and `--management-plane` options.
+
 ### Bugs Fixed
 
 ### Other Changes

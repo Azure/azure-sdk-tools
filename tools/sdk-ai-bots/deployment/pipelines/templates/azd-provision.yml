@@ -1,0 +1,209 @@
+# Pipeline template — `azd provision` for preview or apply.
+#
+# Required pipeline variables: AZURE_ENV_NAME, AZURE_LOCATION,
+# AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE.
+#
+# Apply runs layer lifecycle hooks normally. Preview skips hooks, so this
+# template invokes each layer's preprovision hook before previewing that layer.
+
+parameters:
+    - name: operation
+      type: string
+      default: apply
+      values: [apply, preview]
+    - name: layer
+      type: string
+      default: ''
+    - name: dependencyLayers
+      type: string
+      default: ''
+    - name: failOnDeleteOrModify
+      type: boolean
+      default: false
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+steps:
+    # 1ES Official blocks direct npmjs.org access. Install the TypeScript hook
+    # runner from the authenticated Azure SDK mirror before invoking azd.
+    - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+      parameters:
+          npmrcPath: $(Agent.TempDirectory)/sdk-ai-bots-deployment.npmrc
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+    - script: npm ci --omit=dev --userconfig "$(resolvedNpmrcPath)"
+      displayName: 'Install deployment hook dependencies'
+      workingDirectory: '${{ parameters.workingDirectory }}'
+
+    - task: AzureCLI@2
+      displayName: 'azd provision (${{ parameters.operation }})'
+      env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
+      inputs:
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          workingDirectory: '${{ parameters.workingDirectory }}'
+          inlineScript: |
+              set -euo pipefail
+              export npm_config_userconfig="$(resolvedNpmrcPath)"
+              if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
+                azd env new "$AZURE_ENV_NAME" \
+                  --location "$AZURE_LOCATION" \
+                  --subscription "$AZURE_SUBSCRIPTION_ID" \
+                  --no-prompt
+              fi
+              azd env select "$AZURE_ENV_NAME" --no-prompt
+
+              PREVIEW_SUMMARY_FILE="$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md"
+              append_preview_summary() {
+                local layer_name="$1"
+                local preview_output="$2"
+                local changes
+                changes=$(node scripts/list-risky-preview-operations.mjs "$preview_output" --all)
+                {
+                  printf '### `%s`\n\n' "$layer_name"
+                  if [ -n "$changes" ]; then
+                    sed 's/^/- /' <<< "$changes"
+                    printf '\n'
+                  else
+                    printf 'No Create, Modify, or Delete operations.\n\n'
+                  fi
+                } >> "$PREVIEW_SUMMARY_FILE"
+              }
+
+              restore_desired_values() {
+                DESIRED_KEYS=(
+                  AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID AZURE_RESOURCE_GROUP
+                  AZURE_LOCATION AZURE_AI_LOCATION AZURE_AI_DEPLOYMENTS_LOCATION
+                  COSMOS_DB_LOCATION SERVER_AUDIENCE SERVER_APPLICATION_ID_URI
+                  RAG_SERVICE_SCOPE DEVELOPER_PRINCIPAL_ID
+                  DEVELOPER_PRINCIPAL_TYPE TEAMS_GROUP_ID TEAMS_CHANNEL_IDS
+                  FRONTEND_SITE_NAME AGENT_SERVER_SITE_NAME FUNCTION_APP_NAME
+                  ACR_NAME CONTAINER_REGISTRY_NAME KEY_VAULT_NAME APP_CONFIG_NAME
+                  FRONTEND_IMAGE_REPOSITORY AGENT_SERVER_IMAGE_REPOSITORY
+                  FUNCTION_IMAGE_REPOSITORY
+                  MANAGED_IDENTITY_NAME_OVERRIDE ACTION_GROUP_NAME_OVERRIDE
+                  KEY_VAULT_NAME_OVERRIDE APP_CONFIG_NAME_OVERRIDE
+                  SEARCH_SERVICE_NAME_OVERRIDE CONTAINER_REGISTRY_NAME_OVERRIDE
+                  STORAGE_ACCOUNT_NAME_OVERRIDE COSMOS_DB_ACCOUNT_NAME_OVERRIDE
+                  AI_RESOURCE_NAME_OVERRIDE AI_PROJECT_NAME_OVERRIDE
+                  AGENT_SERVER_SITE_NAME_OVERRIDE FUNCTION_APP_NAME_OVERRIDE
+                  INTEGRATION_ACCOUNT_NAME_OVERRIDE TEAMS_CONNECTION_NAME_OVERRIDE
+                  AZURE_BLOB_CONNECTION_NAME_OVERRIDE DOCUMENT_DB_CONNECTION_NAME_OVERRIDE
+                  LOGIC_APP_WORKFLOW_NAME_OVERRIDE LOGIC_APP_ALERT_NAME_OVERRIDE
+                )
+                while IFS= read -r OVERRIDE_KEY; do
+                  [ -n "$OVERRIDE_KEY" ] && DESIRED_KEYS+=("$OVERRIDE_KEY")
+                done < <(yq -r ".environments.${AZURE_ENV_NAME}.bicepOverrides // {} | keys | .[]" infra/environments/environment-suite.yaml)
+                for DESIRED_KEY in "${DESIRED_KEYS[@]}"; do
+                  if [ -n "${!DESIRED_KEY+x}" ]; then
+                    azd env set "$DESIRED_KEY" "${!DESIRED_KEY}"
+                  fi
+                done
+              }
+
+              TARGET_LAYER='${{ parameters.layer }}'
+              if [ -n "$TARGET_LAYER" ]; then
+                IFS=',' read -ra DEPENDENCY_LAYERS <<< '${{ parameters.dependencyLayers }}'
+                for DEPENDENCY_LAYER in "${DEPENDENCY_LAYERS[@]}"; do
+                  [ -z "$DEPENDENCY_LAYER" ] && continue
+                  azd env refresh "$AZURE_ENV_NAME" \
+                    --layer "$DEPENDENCY_LAYER" \
+                    --no-prompt
+                done
+
+                if ! REFRESH_OUTPUT=$(azd env refresh "$AZURE_ENV_NAME" \
+                  --layer "$TARGET_LAYER" \
+                  --no-prompt 2>&1); then
+                  if grep -Eqi '(deployment|state).*(not found|does not exist)|no (deployment|state)' <<< "$REFRESH_OUTPUT"; then
+                    echo "No prior state for layer '$TARGET_LAYER'; continuing as a first provision."
+                  else
+                    echo "##[error]Failed to refresh state for layer '$TARGET_LAYER':"
+                    echo "$REFRESH_OUTPUT"
+                    exit 1
+                  fi
+                fi
+
+                restore_desired_values
+
+                if [ "${{ parameters.operation }}" = "apply" ]; then
+                  azd provision "$TARGET_LAYER" \
+                    --environment "$AZURE_ENV_NAME" \
+                    --no-prompt
+                  exit 0
+                fi
+
+                export AZD_PROVISION_PREVIEW=true
+                azd hooks run preprovision \
+                  --layer "$TARGET_LAYER" \
+                  --environment "$AZURE_ENV_NAME" \
+                  --no-prompt
+
+                PREVIEW_OUTPUT="$(Agent.TempDirectory)/azd-preview-$TARGET_LAYER.json"
+                azd provision "$TARGET_LAYER" \
+                  --preview \
+                  --environment "$AZURE_ENV_NAME" \
+                  --no-prompt \
+                  --output json > "$PREVIEW_OUTPUT"
+                cat "$PREVIEW_OUTPUT"
+                append_preview_summary "$TARGET_LAYER" "$PREVIEW_OUTPUT"
+
+                RISKY_OPERATIONS=$(node scripts/list-risky-preview-operations.mjs "$PREVIEW_OUTPUT")
+                if [ -n "$RISKY_OPERATIONS" ]; then
+                  echo "##[warning]azd preview for '$TARGET_LAYER' reports Delete or Modify operations:"
+                  echo "$RISKY_OPERATIONS"
+                  if [ "${{ parameters.failOnDeleteOrModify }}" = "True" ]; then
+                    echo "##[error]Strict preview mode rejects Delete or Modify operations."
+                    exit 1
+                  fi
+                fi
+                exit 0
+              fi
+
+              if [ "${{ parameters.operation }}" = "apply" ]; then
+                azd provision --environment "$AZURE_ENV_NAME" --no-prompt
+                exit 0
+              fi
+
+              export AZD_PROVISION_PREVIEW=true
+              LAYERS=(resource-group shared-resources agent frontend agent-server function-app logic-app)
+              RISKY_OPERATIONS=""
+              for LAYER in "${LAYERS[@]}"; do
+                echo "Previewing provisioning layer: $LAYER"
+                if ! azd env refresh "$AZURE_ENV_NAME" \
+                  --layer "$LAYER" \
+                  --no-prompt; then
+                  echo "##[error]No deployed state is available for layer '$LAYER'."
+                  echo "##[error]Layered preview requires an existing deployment so upstream outputs can be hydrated."
+                  exit 1
+                fi
+                restore_desired_values
+
+                azd hooks run preprovision \
+                  --layer "$LAYER" \
+                  --environment "$AZURE_ENV_NAME" \
+                  --no-prompt
+
+                PREVIEW_OUTPUT="$(Agent.TempDirectory)/azd-preview-$LAYER.json"
+                azd provision "$LAYER" \
+                  --preview \
+                  --environment "$AZURE_ENV_NAME" \
+                  --no-prompt \
+                  --output json > "$PREVIEW_OUTPUT"
+                cat "$PREVIEW_OUTPUT"
+                append_preview_summary "$LAYER" "$PREVIEW_OUTPUT"
+
+                LAYER_RISK=$(node scripts/list-risky-preview-operations.mjs "$PREVIEW_OUTPUT")
+                if [ -n "$LAYER_RISK" ]; then
+                  RISKY_OPERATIONS="${RISKY_OPERATIONS}${LAYER}:\n${LAYER_RISK}\n"
+                fi
+              done
+
+              if [ -n "$RISKY_OPERATIONS" ]; then
+                echo "##[warning]azd preview reports Delete or Modify operations:"
+                printf '%b' "$RISKY_OPERATIONS"
+                if [ "${{ parameters.failOnDeleteOrModify }}" = "True" ]; then
+                  echo "##[error]Strict preview mode rejects Delete or Modify operations."
+                  exit 1
+                fi
+              fi

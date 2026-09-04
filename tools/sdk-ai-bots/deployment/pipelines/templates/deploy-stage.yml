@@ -1,0 +1,66 @@
+# Reusable stage template for the full-stack orchestrator.
+#
+# Encapsulates the shared dependency chain
+#   AgentServer → [optional stabilization watch] → FunctionApp → Agent → Frontend
+# so the overall orchestrator only supplies environment parameters.
+#
+# Azure authorization and deployment checks belong to each component's service
+# connection; component CD pipelines use normal jobs.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: stabilizationSeconds
+      type: number
+      default: 0
+    - name: dependsOn
+      type: string
+      default: ''
+
+stages:
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployAgentServer
+          component: agent-server
+          environment: ${{ parameters.environment }}
+          dependsOn: ${{ parameters.dependsOn }}
+
+    - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
+          - stage: WatchAgentServer
+            dependsOn: DeployAgentServer
+            jobs:
+                - job: Watch
+                  pool:
+                      name: $(LINUXPOOL)
+                      image: $(LINUXVMIMAGE)
+                      os: linux
+                  steps:
+                      - bash: |
+                            echo "Stabilization window: ${{ parameters.stabilizationSeconds }}s."
+                            sleep ${{ parameters.stabilizationSeconds }}
+                        displayName: 'Stabilize ${{ parameters.stabilizationSeconds }}s'
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployFunctionApp
+          component: function-app
+          environment: ${{ parameters.environment }}
+          ${{ if gt(parameters.stabilizationSeconds, 0) }}:
+              dependsOn: WatchAgentServer
+          ${{ else }}:
+              dependsOn: DeployAgentServer
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployAgent
+          component: agent
+          environment: ${{ parameters.environment }}
+          dependsOn: DeployFunctionApp
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployFrontend
+          component: frontend
+          environment: ${{ parameters.environment }}
+          dependsOn: DeployAgent

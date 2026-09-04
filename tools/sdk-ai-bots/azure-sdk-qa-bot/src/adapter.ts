@@ -1,6 +1,7 @@
 import { TeamsAdapter } from '@microsoft/teams-ai';
 
 // This bot's main dialog.
+import { createBotCredentialsFactory } from './auth/botCredentials.js';
 import config from './config/config.js';
 import { LogMiddleware } from './middleware/LogMiddleware.js';
 import { logger } from './logging/logger.js';
@@ -13,7 +14,12 @@ const adapterConfig = config.isLocal && !config.MicrosoftAppId
   ? {} // No authentication for test tool
   : config;
 
-const adapter = new TeamsAdapter(adapterConfig);
+const credentialsFactory = createBotCredentialsFactory({
+  appId: config.MicrosoftAppId,
+  appType: config.MicrosoftAppType,
+});
+
+const adapter = new TeamsAdapter(adapterConfig, credentialsFactory);
 adapter.use(new LogMiddleware());
 
 // Catch-all for errors.

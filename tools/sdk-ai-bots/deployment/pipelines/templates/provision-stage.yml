@@ -1,0 +1,111 @@
+# Reusable preview or apply stage for provision orchestrators.
+#
+# Encapsulates the shared job body: load env-suite → azd auth → preview or apply
+# → optional readiness reminder. Orchestrators invoke it once for preflight and
+# once for apply, with approval-stage.yml between the two stages.
+#
+# Provisioning uses a normal job and does not depend on an Azure DevOps
+# Environment. Authorization and checks belong to the service connection.
+#
+# Usage:
+#   stages:
+#     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+#       parameters:
+#         environment: preview
+#         layer: frontend
+#         dependencyLayers: resource-group,shared-resources
+#         runValidateAndPreview: true
+#         runProvision: false
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: authenticateBeforeEnvironmentLoad
+      type: boolean
+      default: false
+    - name: stageName
+      type: string
+      default: 'Provision'
+    - name: stageDisplayName
+      type: string
+      default: 'Provision'
+    - name: dependsOn
+      type: string
+      default: ''
+    - name: runValidateAndPreview
+      type: boolean
+      default: false
+    - name: runProvision
+      type: boolean
+      default: true
+    - name: showReadinessReminder
+      type: boolean
+      default: false
+    - name: layer
+      type: string
+      default: ''
+    - name: dependencyLayers
+      type: string
+      default: ''
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+stages:
+    - stage: ${{ parameters.stageName }}
+      displayName: ${{ format('{0} ({1})', parameters.stageDisplayName, parameters.environment) }}
+      ${{ if ne(parameters.dependsOn, '') }}:
+          dependsOn: ${{ parameters.dependsOn }}
+      jobs:
+          - job: AzdProvision
+            pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+            steps:
+                - checkout: self
+                - ${{ if parameters.authenticateBeforeEnvironmentLoad }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                      loadServiceConnectionFromSuite: ${{ not(parameters.authenticateBeforeEnvironmentLoad) }}
+                - ${{ if not(parameters.authenticateBeforeEnvironmentLoad) }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                - ${{ if parameters.runValidateAndPreview }}:
+                      - bash: |
+                            set -euo pipefail
+                            : > "$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md"
+                        displayName: 'Initialize preflight result'
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                        parameters:
+                            layer: ${{ parameters.layer }}
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                        parameters:
+                            operation: preview
+                            layer: ${{ parameters.layer }}
+                            dependencyLayers: ${{ parameters.dependencyLayers }}
+                            workingDirectory: ${{ parameters.workingDirectory }}
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/publish-preview-summary.yml
+
+                - ${{ if parameters.runProvision }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                        parameters:
+                            operation: apply
+                            layer: ${{ parameters.layer }}
+                            dependencyLayers: ${{ parameters.dependencyLayers }}
+                            workingDirectory: ${{ parameters.workingDirectory }}
+
+                - ${{ if parameters.showReadinessReminder }}:
+                      - bash: |
+                            echo "Verify operational-readiness-checklist.md is signed off before continuing."
+                        displayName: 'Operational readiness reminder'
+
+          - ${{ if and(parameters.runProvision, or(eq(parameters.layer, ''), eq(parameters.layer, 'logic-app'))) }}:
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/logic-app-consent-jobs.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                      dependsOn: AzdProvision
+                      workingDirectory: ${{ parameters.workingDirectory }}

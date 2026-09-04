@@ -1,0 +1,86 @@
+# Provisions the selected environment, then refreshes the Search index.
+name: tools - sdk-ai-bots-knowledge-sync - provision-and-sync
+
+trigger: none
+pr: none
+
+schedules:
+    - cron: '0 2 * * *'
+      displayName: Daily knowledge sync (02:00 UTC)
+      branches:
+          include: [main]
+      always: true
+
+parameters:
+    - name: environment
+      type: string
+      default: prod
+      values: [dev, preview, prod]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml@self
+      parameters:
+          environment: ${{ parameters.environment }}
+    - name: workingDirectory
+      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+
+resources:
+    repositories:
+        - repository: 1ESPipelineTemplates
+          type: git
+          name: 1ESPipelineTemplates/1ESPipelineTemplates
+          ref: refs/tags/release
+        - repository: azure-sdk-docs-eng.ms
+          type: git
+          name: internal/azure-sdk-docs-eng.ms
+          ref: main
+        - repository: internal-wiki
+          type: git
+          name: internal/internal.wiki
+          ref: wikiMaster
+
+extends:
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+    parameters:
+        settings:
+            skipBuildTagsForGitHubPullRequests: true
+            networkIsolationPolicy: Permissive
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml@self
+              parameters:
+                  environment: ${{ parameters.environment }}
+            - stage: SyncKnowledge
+              displayName: 'Sync knowledge'
+              dependsOn: Provision
+              jobs:
+                  - job: Sync
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - checkout: azure-sdk-docs-eng.ms
+                        - checkout: internal-wiki
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml@self
+                          parameters:
+                              environment: '${{ parameters.environment }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml@self
+                        - task: NodeTool@0
+                          inputs: { versionSpec: '24.x' }
+                        - script: npm ci
+                          workingDirectory: $(workingDirectory)
+                        - script: npm start
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'Run knowledge sync'
+                        - task: AzureCLI@2
+                          displayName: 'Validate Search index doc count'
+                          inputs:
+                              azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              inlineScript: |
+                                  set -euo pipefail
+                                  echo "TODO: implement index regression guard"

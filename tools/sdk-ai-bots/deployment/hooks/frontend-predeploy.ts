@@ -1,0 +1,90 @@
+/**
+ * frontend — predeploy hook
+ *
+ * The frontend image ships only the pre-compiled `lib/` output (its
+ * .dockerignore excludes src/*.ts/tsconfig.json), so the TypeScript must be
+ * built before the image is assembled. This hook:
+ *   1. Runs `npm install` + `npm run build` locally (plain tsc — no Docker), and
+ *   2. Builds/pushes the image via `az acr build` (cloud-side — no Docker),
+ *      which ships the freshly-built `lib/`.
+ */
+
+import { execSync } from "child_process";
+import * as path from "path";
+import { getNextVersionTag } from "./lib/acr-tags";
+import { getEnvSuiteValue } from "./lib/env-suite";
+import { syncTeamsEnv } from "./lib/sync-teams-env";
+
+const REGISTRY_NAME = process.env.CONTAINER_REGISTRY_NAME ?? "";
+const ENV_NAME = process.env.AZURE_ENV_NAME ?? "dev";
+const IMAGE_NAME = "azure-sdk-qa-bot";
+// App Service that runs the frontend container; needed to repoint the site at
+// the freshly built immutable tag (the site is provisioned pinned to ':dev').
+const SITE_NAME = process.env.FRONTEND_SITE_NAME ?? process.env.SERVICE_FRONTEND_NAME ?? "";
+const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
+
+function log(msg: string): void {
+  console.log(`[frontend:predeploy] ${msg}`);
+}
+
+(async () => {
+  if (process.env.AZD_SKIP_TEAMS_PROVISION === "1") {
+    log("AZD_SKIP_TEAMS_PROVISION=1 — skipping Teams environment generation.");
+  } else {
+    syncTeamsEnv({
+      azdEnvName: ENV_NAME,
+      env: process.env,
+      teamsAppId: getEnvSuiteValue(ENV_NAME, "teamsAppId"),
+      teamsAppTenantId: getEnvSuiteValue(ENV_NAME, "teamsAppTenantId"),
+      log,
+    });
+    log("Generated the azd-owned Teams environment file.");
+  }
+
+  if (!REGISTRY_NAME) {
+    throw new Error("CONTAINER_REGISTRY_NAME not set (should come from `azd env` outputs).");
+  }
+
+  // Auto-increment the major version against ACR for each remote build.
+  const tag = getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
+  log(`Resolved next version tag '${tag}'`);
+
+  // The frontend project root (with the Dockerfile) is two levels up from
+  // deployment/hooks/: ../../azure-sdk-qa-bot. process.cwd() is the deployment/
+  // folder when azd runs the hook.
+  const frontendRoot = path.resolve(process.cwd(), "../azure-sdk-qa-bot");
+
+  // 1. Compile lib/ locally (plain tsc — the image only ships compiled output).
+  log("Compiling frontend (npm install + npm run build)...");
+  execSync("npm install", { stdio: "inherit", cwd: frontendRoot });
+  execSync("npm run build", { stdio: "inherit", cwd: frontendRoot });
+
+  // 2. Build + push the image cloud-side (ships the freshly-built lib/).
+  const fullImage = `${REGISTRY_NAME}.azurecr.io/${IMAGE_NAME}:${tag}`;
+  log(`Building ${fullImage} via az acr build (no local Docker)...`);
+  execSync(
+    `az acr build --registry "${REGISTRY_NAME}" --image "${IMAGE_NAME}:${tag}" "${frontendRoot}"`,
+    { stdio: "inherit" }
+  );
+  log("  ✓ image built and pushed to ACR");
+
+  // 3. Repoint the App Service at the freshly built immutable tag. Provisioning
+  //    pins the site to ':dev', and `azd deploy` does not re-provision, so an
+  //    immutable version tag would otherwise never be served.
+  if (SITE_NAME && RESOURCE_GROUP) {
+    log(`Repointing App Service '${SITE_NAME}' → ${fullImage}`);
+    execSync(
+      `az webapp config container set --name "${SITE_NAME}" --resource-group "${RESOURCE_GROUP}" --container-image-name "${fullImage}"`,
+      { stdio: "inherit" }
+    );
+    log("  ✓ App Service image updated");
+  } else {
+    log(
+      "WARNING: FRONTEND_SITE_NAME / AZURE_RESOURCE_GROUP not set — cannot repoint " +
+        "the App Service. It will keep serving its previously configured image."
+    );
+  }
+})().catch((err) => {
+  console.error(`[frontend:predeploy] FAILED: ${err.message}`);
+  process.exit(1);
+});

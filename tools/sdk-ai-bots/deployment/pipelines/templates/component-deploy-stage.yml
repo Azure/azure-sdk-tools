@@ -1,0 +1,55 @@
+# Reusable deployment stage for one sdk-ai-bots component.
+
+parameters:
+    - name: component
+      type: string
+      values: [agent-server, function-app, agent, frontend]
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: stageName
+      type: string
+      default: DeployComponent
+    - name: dependsOn
+      type: string
+      default: Provision
+
+stages:
+    - stage: ${{ parameters.stageName }}
+      displayName: 'Deploy ${{ parameters.component }} (${{ parameters.environment }})'
+      dependsOn: ${{ parameters.dependsOn }}
+      jobs:
+          - job: Deploy
+            pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+            steps:
+                - checkout: self
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                  parameters:
+                      environment: '${{ parameters.environment }}'
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
+                  parameters:
+                      service: ${{ parameters.component }}
+                      # Foundry publication includes ACR upload/build and can exceed azd's 20-minute default.
+                      ${{ if eq(parameters.component, 'agent') }}:
+                          timeoutSeconds: 2400
+
+                - ${{ if or(eq(parameters.component, 'agent-server'), eq(parameters.component, 'frontend')) }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                        parameters:
+                            component: ${{ parameters.component }}
+                            environment: '${{ parameters.environment }}'
+                            status: success
+                            details: 'remote build deployed'
+                            condition: succeeded()
+
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                        parameters:
+                            component: ${{ parameters.component }}
+                            environment: '${{ parameters.environment }}'
+                            status: failure
+                            details: 'remote build or deployment failed'
+                            condition: failed()

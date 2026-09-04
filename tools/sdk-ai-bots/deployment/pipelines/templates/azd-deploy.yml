@@ -1,0 +1,96 @@
+# Pipeline template — `azd deploy <service>`.
+# Every service uses azd's native remote-build lifecycle.
+#
+# Required pipeline variables: AZURE_SERVICE_CONNECTION, AZURE_ENV_NAME,
+# ACR_NAME.
+
+parameters:
+    - name: service
+      type: string # frontend | function-app | agent | agent-server
+    - name: timeoutSeconds
+      type: number
+      default: 1200
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+steps:
+    # 1ES Official blocks direct npmjs.org access. Install the TypeScript hook
+    # runner from the authenticated Azure SDK mirror before invoking azd.
+    - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+      parameters:
+          npmrcPath: $(Agent.TempDirectory)/sdk-ai-bots-deployment.npmrc
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+    - script: npm ci --omit=dev --userconfig "$(resolvedNpmrcPath)"
+      displayName: 'Install deployment hook dependencies'
+      workingDirectory: '${{ parameters.workingDirectory }}'
+
+    - task: AzureCLI@2
+      displayName: 'azd deploy ${{ parameters.service }}'
+      env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
+      inputs:
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          workingDirectory: '${{ parameters.workingDirectory }}'
+          inlineScript: |
+              set -euo pipefail
+              export npm_config_userconfig="$(resolvedNpmrcPath)"
+              # Teams Toolkit uses an interactive Microsoft 365 identity and
+              # Microsoft Graph. Keep that separate from the Azure service
+              # connection so component CD requires Azure RBAC only.
+              export AZD_SKIP_TEAMS_PROVISION="${AZD_SKIP_TEAMS_PROVISION:-1}"
+              export AZURE_ENV_NAME
+              export CONTAINER_REGISTRY_NAME="$ACR_NAME"
+              if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
+                azd env new "$AZURE_ENV_NAME" \
+                  --location "$AZURE_LOCATION" \
+                  --subscription "$AZURE_SUBSCRIPTION_ID" \
+                  --no-prompt
+              fi
+              azd env select "$AZURE_ENV_NAME" --no-prompt
+              # Deployment stages run on fresh agents. Rehydrate the shared
+              # layer outputs required for ACR remote builds before azd reads
+              # the service's docker.registry setting.
+              azd env refresh "$AZURE_ENV_NAME" \
+                --layer shared-resources \
+                --no-prompt
+              if [ "${{ parameters.service }}" = "frontend" ] && [ "${AZD_SKIP_TEAMS_PROVISION:-0}" != "1" ]; then
+                azd env refresh "$AZURE_ENV_NAME" --layer frontend --no-prompt
+              fi
+              if [ "${{ parameters.service }}" = "agent" ]; then
+                azd env refresh "$AZURE_ENV_NAME" --layer agent --no-prompt
+              fi
+              if [ "${{ parameters.service }}" = "function-app" ]; then
+                for LAYER in frontend agent-server function-app logic-app; do
+                  azd env refresh "$AZURE_ENV_NAME" --layer "$LAYER" --no-prompt
+                done
+              fi
+
+              DEPLOY_LOG="$(Agent.TempDirectory)/azd-deploy-${{ parameters.service }}.log"
+              DEPLOY_MAX_ATTEMPTS=2
+              for DEPLOY_ATTEMPT in $(seq 1 "$DEPLOY_MAX_ATTEMPTS"); do
+                set +e
+                azd deploy "${{ parameters.service }}" \
+                  --environment "$AZURE_ENV_NAME" \
+                  --timeout ${{ parameters.timeoutSeconds }} \
+                  --no-prompt 2>&1 | tee "$DEPLOY_LOG"
+                DEPLOY_EXIT_CODE=${PIPESTATUS[0]}
+                set -e
+
+                if [ "$DEPLOY_EXIT_CODE" -eq 0 ]; then
+                  exit 0
+                fi
+
+                if ! grep -Eqi 'streaming remote build logs \(HTTP 5[0-9]{2}\)|ERROR CODE: ServerBusy' "$DEPLOY_LOG"; then
+                  exit "$DEPLOY_EXIT_CODE"
+                fi
+
+                if [ "$DEPLOY_ATTEMPT" -eq "$DEPLOY_MAX_ATTEMPTS" ]; then
+                  echo "##[error]azd deploy still failed after retrying the transient ACR log-stream error."
+                  exit "$DEPLOY_EXIT_CODE"
+                fi
+
+                echo "##[warning]ACR log streaming was temporarily unavailable; retrying azd deploy in 60 seconds."
+                sleep 60
+              done

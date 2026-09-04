@@ -1,0 +1,529 @@
+---
+marp: true
+theme: default
+paginate: true
+size: 16:9
+title: The azd Journey — Deploying the Azure SDK Q&A Bot
+---
+
+<!-- _class: lead -->
+
+# The `azd` Journey
+
+## Deploying the Azure SDK Q&A Bot end-to-end
+
+_From ad-hoc scripts → Infrastructure-as-Code + repeatable service delivery_
+
+---
+
+# What we are actually deploying
+
+A multi-component **AI/chat** service:
+
+| Component        | Runtime                                                                  | Purpose                                   |
+| ---------------- | ------------------------------------------------------------------------ | ----------------------------------------- |
+| **frontend**     | App Service (Node)                                                       | Teams bot `/api/messages`, health, config |
+| **agent-server** | App Service production site (Python FastAPI)                             | RAG orchestration, Cosmos, Search, `/ping` |
+| **agent**        | Foundry hosted agent (`azure.ai.agent`)                                  | Model reasoning / responses               |
+| **function-app** | Function App (TS, container)                                             | `AdoTokenRefresh` timer, hooks            |
+| **logic-app**    | Standard Logic App                                                       | Teams event routing                       |
+| **shared**       | ACR, Key Vault, App Config, Storage, Cosmos, AI Search, AI Foundry, UAMI | Platform                                  |
+
+Plus: **Teams app registration + manifest** (via `teamsapp` CLI), Entra app registration for the server audience, Bot channel registration.
+
+---
+
+# The problem we set out to solve
+
+Before `azd`:
+
+- **Manual, fragile** deployments — a mix of `az` CLI scripts, portal clicks, and hand-edited settings per environment.
+- **No single source of truth**: dev / preview / prod drifted; `.env` files, ARM templates, and pipeline YAML each held partial truth.
+- **Secrets & RBAC** applied out-of-band — repeat provisions kept overwriting or duplicating role assignments.
+- **No repeatable local dev loop** — engineers couldn’t stand up their own copy without tribal knowledge.
+- **Container images** deployed ad-hoc; no traceability between an App Service and the tag it runs.
+- **Cross-team handoffs** (Teams Toolkit, Foundry hosted agents, Logic Apps) each had their own tools — nothing tied them together.
+
+---
+
+# Why we chose `azd`
+
+`azd` gives us:
+
+1. **One command per intent**: `azd provision` (infra) / `azd deploy` (code) / `azd down` (teardown).
+2. **First-class Bicep integration** — infra lives with the code, declaratively.
+3. **Per-environment isolation** — `.azure/<env>/.env` holds outputs; `azure.yaml` binds services to modules.
+4. **Extensible hooks** at every phase: pre/post provision, pre/post deploy — global and per-service.
+5. **Teams / Foundry hosts already modeled** (`azure.ai.agent`, `appservice`, `function`, …).
+6. **Same commands locally and in CI** — both paths use the azd remote-build lifecycle.
+
+The goal: **make provisioning a solved problem, and make the interesting work be the app, not the plumbing.**
+
+---
+
+# Where we are today — high-level flow
+
+```
+┌──────────────────┐   ┌──────────────────┐   ┌──────────────────────────┐
+│ preprovision.ts  │──►│  main.bicep      │──►│ postprovision.ts         │
+│  quotas, Entra   │   │  6 module layers │   │  outputs → env, RBAC,    │
+│  drift, guards   │   │  (shared→agent→  │   │  KV seed, App Config,    │
+│                  │   │   agent-server→…)│   │  Teams env sync          │
+└──────────────────┘   └──────────────────┘   └──────────────────────────┘
+                              │
+                              ▼
+        ┌───────── azd deploy <service> ─────────┐
+        │  predeploy (global) → service predeploy │
+        │           ↓                              │
+        │  azd core deploy (container / package)   │
+        │           ↓                              │
+        │  service postdeploy → postdeploy global  │
+        │           ↓                              │
+        │  patchWorkflow (Logic App live)          │
+        └──────────────────────────────────────────┘
+```
+
+Every service converges on the global Logic App update; hosted-agent RBAC and environment reconciliation run only after agent deploys.
+
+---
+
+# Challenge 1 — Bicep role assignments are **not** idempotent
+
+**Symptom:** `azd provision` failed with `RoleAssignmentExists` because a matching (principal, role, scope) tuple already existed under a different name (from a lock-protected out-of-band grant).
+
+**Why:** ARM allows only ONE role assignment per tuple, and Bicep can’t do _create-if-not-exists_.
+
+**Resolution:**
+
+- Removed the offending `roleAssignments` from Bicep.
+- Added `hooks/lib/ensure-role-assignment.ts` — thin wrapper over `az role assignment create` that treats `RoleAssignmentExists` as success.
+- Called from `postprovision.ts` (`ensureAgentAccountRoleAssignments`) and `agent-postdeploy.ts` (`ensureAgentIdentityRbac`).
+
+**Lesson:** for any grant that may already exist out-of-band (especially in locked RGs), do it in a hook — not in Bicep.
+
+---
+
+# Challenge 2 — Hosted Foundry agent env vars don’t get injected
+
+**Symptom:** hosted agent crashed on boot with `AZURE_APPCONFIG_ENDPOINT env var is required` → `424 session_not_ready` → `/agent/chat` returns 500.
+
+**Root cause:**
+
+- `azd` (`azure.ai.agents` beta.5) has a _“Registering agent environment variables”_ step — it’s effectively a **no-op**: env from `agent.yaml` is not embedded into the deployed version’s definition.
+
+**Resolution:** `hooks/agent-postdeploy.ts` → `ensureAgentAppConfigEnv()`
+
+1. `GET .../agents/<name>/versions/@latest`.
+2. If `environment_variables.AZURE_APPCONFIG_ENDPOINT` is missing → `POST` a new version cloning its definition and image, embedding env.
+3. Idempotent — no-op when already correct.
+
+**Lesson:** `azd` cannot inject hosted-agent env vars; the only working path is the Foundry data-plane API.
+
+---
+
+# Former challenge 3 — named App Service slot deployment
+
+**Symptom:** `azd deploy agent-server` failed at core step: _“unable to find a resource tagged with `azd-service-name: agent-server`”_.
+
+**Why:** the original design ran the agent server in an `agent` deployment slot.
+
+**Current resolution:** the agent server now runs directly on the production site:
+
+- `az acr build` → immutable tag `dev-N.0.0`.
+- azd remotely builds and records the immutable image.
+- `azd deploy agent-server` updates the production site's image natively.
+
+The slot and its targeting environment variable were removed.
+
+---
+
+# Challenge 4 — Function App on `host: function` timed out at deploy
+
+**Symptom:** `azd deploy function-app` hung at _“Uploading deployment package”_ for 20 min, exited 1. Global `postdeploy` was skipped → Logic App workflow never updated.
+
+**Root cause:** Function App is **container-based** (`linuxFxVersion=DOCKER|…`). `azure.yaml` had `host: function, language: ts` → `azd` did a code/zip package deploy → incompatible → hang.
+
+**Resolution:**
+
+- Changed `azure.yaml` → `host: appservice, language: docker, remoteBuild: true`.
+- `function-predeploy.ts` builds via `az acr build`, sets `SERVICE_FUNCTION_APP_IMAGE_NAME`, and `az functionapp config container set` to repoint.
+- Deploy now finishes in ~7 min; global `postdeploy` (Logic App update) runs.
+
+---
+
+# Challenge 5 — Teams OAuth connection re-authorized every provision
+
+**Symptom:** Bicep re-`PUT` the Teams `Microsoft.Web/connections` resource unconditionally → an already-authorized (“Connected”) OAuth connection can lose its bound token.
+
+**Resolution — conditional-create + preprovision probe:**
+
+- Added `createTeamsConnection` to `layers/logic-app/main.bicep`; wrapped `teamsConnection` in `if (createTeamsConnection)`.
+- Workflow `$connections` block computes the connection resourceId manually (symbolic ref would fail when the condition is false).
+- `preprovision.ts` → `ensureTeamsConnectionFlag()` probes the live resource: `status == "Connected"` → set `CREATE_TEAMS_CONNECTION=false`; else `true`.
+
+**Lesson:** treat OAuth-consented resources as **owned by the tenant, not by IaC** — only create the shell once.
+
+---
+
+# Challenge 6 — Teams `.env` clobbered by base-env sync
+
+**Symptom:** every `azd provision` copied `TEAMS_APP_ID` from committed `.env.<baseEnv>` into `.env.azd` → wrong Teams app for the azd env.
+
+**Why:** each Teams Toolkit env has its **own** Teams app registration — inheriting from a base env silently repoints to a foreign app.
+
+**Resolution — env-suite is the source of truth:**
+
+- Added `teamsAppId` / `teamsAppTenantId` **per environment** to `deployment/infra/environments/environment-suite.yaml`.
+- New `hooks/lib/env-suite.ts` → `getEnvSuiteValue(envName, key)`.
+- `sync-teams-env.ts` **never** preserves those keys from the existing `.env.azd`; strips them from any seed file.
+- Placeholder / unknown → keys omitted → `teamsapp provision --env azd` mints a fresh registration on first run.
+
+---
+
+# Challenge 7 — `azd deploy` wipes App Service settings
+
+**Symptom:** the former App Service container deployment overwrote `acrUserManagedIdentityID` → the platform fell back to a nonexistent system-assigned identity → 503 on image pull.
+
+**Resolution:** fixed in `azd` 1.29.0. App Service container deploys now update only `linuxFxVersion`, preserving the ACR pull identity configured by Bicep.
+
+The `repinAcrPullIdentity()` postdeploy workaround was removed after the agent-server moved to native azd deployment.
+
+---
+
+# Challenge 8 — Logic App references a Function that doesn’t exist yet
+
+**Symptom:** first-ever provision failed — Logic App workflow validation calls the Function App on create; the Function App container image isn’t pushed yet.
+
+**Resolution:** two-phase workflow:
+
+1. `main.bicep` creates the workflow **shell** with an empty definition.
+2. `function-postdeploy.ts` → `lib/patch-workflow.ts`:
+    - `GET` the workflow.
+    - Mutate `properties.definition` / `properties.parameters` from `workflowDefinition.json`.
+    - `PUT` it back (Logic Apps don’t accept `PATCH` on `properties`).
+    - Gated on Function App `/admin/host/status = 200`.
+
+- Fires only after the Function App deploy confirms the runtime is ready.
+
+---
+
+# Service Platform Challenges — gaps that `azd` and Bicep can't paper over
+
+These were not `azd` bugs or Bicep model gaps — they are **Azure service-level constraints** that every automated deployment hits.
+
+### 1 — Global service name availability
+
+Many Azure resource types (Storage accounts, Key Vault, App Config, ACR, AI Foundry hubs, …) require **globally unique names** across all tenants.
+
+- Bicep's `uniqueString()` deterministically derives a suffix from the resource group ID — predictable but _not_ guaranteed to be unused by another tenant.
+- First provision of a fresh environment silently failed with `NameNotAvailable` on an App Config store; the name was taken by a deleted resource still in the 14-day soft-delete window.
+- **Resolution:** `preprovision.ts` probes `az appconfig show --name <candidate>` across candidate names and increments a numeric suffix until it finds a free slot. Similar pattern needed for ACR and Key Vault.
+
+### 2 — Quota availability is invisible until you hit a wall
+
+AI Foundry model deployments and Azure OpenAI capacity are **quota-gated per subscription per region** with no standard Bicep/ARM signal before the deploy attempt.
+
+- A provision failure mid-way through 6 Bicep modules left infra in a half-provisioned state that required manual cleanup.
+- **Resolution:** `preprovision.ts` calls `az cognitiveservices account list-usage` and `az ml quota list` to assert capacity _before_ `main.bicep` runs. A missing quota block surfaces a readable error with the `az quota` increase link, not a cryptic ARM 409.
+
+### 3 — No standard management API shape across services
+
+Every service has a **different REST surface** for the same conceptual operations: health checks, app settings, container config, restart, status polling.
+
+- App Service: `az webapp config container set`, `az webapp restart`, `GET .../deployments`
+- Function App: `GET .../admin/host/status`, `az functionapp config container set`
+- Logic App: `GET .../workflows/<name>`, `PUT .../workflows/<name>` (no PATCH on `properties`)
+- Foundry hosted agent: `GET .../agents/<name>/versions/@latest`, `POST .../agents/<name>/versions`
+
+Each hook had to be authored from scratch against that service's own API dialect. There is no cross-service `az resource health` that returns a normalised ready/not-ready signal, so `postdeploy.ts` has **five different health-poll implementations** for five services.
+
+---
+
+# The current workflow, in one picture
+
+```
+    azd provision                                    azd deploy <service>
+    ─────────────                                    ──────────────────────
+ preprovision.ts (global)                         predeploy.ts (global)
+   • env-suite validation                            • prod guardrail
+    • quota check
+   • developer principal                          <service>-predeploy.ts
+   • Teams-connection probe                            • az acr build → dev-N.0.0
+           │                                           • repoint slot / app
+           ▼                                           • azd env set immutable tag
+ main.bicep (6 modules)                                     │
+   sharedResources → qaBotAgent →                           ▼
+    qaBotAgentServer → qaBotFrontend →                azd core deploy
+   qaBotFunctionApp → qaBotLogicApp                         │
+           │                                                ▼
+           ▼                                        <service>-postdeploy.ts
+ postprovision.ts (global)                            • re-seed KV secrets
+    • persistBicepOutputs → azd env                    • Teams provision (frontend)
+    • ensureRole (Foundry User)                        • agent RBAC + env (agent)
+   • uploadBotConfigs → storage                       • health check
+   • seedKeyVault / seedAppConfig                            │
+   • syncTeamsEnv → env/.env.azd                             ▼
+                                           function-postdeploy.ts
+                                               • patchWorkflow (Logic App)
+                                               (RBAC + new Foundry ver)
+```
+
+---
+
+# What this journey cost us
+
+Every one of those 8 challenges was **one workaround per gap** in the platform:
+
+- 3× _because Bicep / ARM couldn’t express the intent_ — idempotent grants, conditional OAuth resources, deferred workflow definition.
+- 3× _because `azd` can’t reach a resource type_ — named App Service slots, hosted-agent env vars, container Function App on `host: function`.
+- 1× _because `azd deploy` re-serializes what it doesn’t own_ — App Service container config (ACR pull identity wiped).
+- 1× _because tools don’t share an env schema_ — Teams Toolkit `.env` vs. azd env.
+
+**≈ 1000 lines of TypeScript hooks** are dedicated to bridging those gaps. That is a lot of glue — glue we control, in one place — but it is still glue.
+
+---
+
+# Why hooks break the workflow's integrity
+
+The declarative promise of `azd`:
+
+```
+azd provision   →   all infra correct, as described in Bicep
+azd deploy      →   services running the right image, done
+```
+
+The actual flow — every ⚡ is a hook we own:
+
+```
+  preprovision ⚡  →  main.bicep  →  postprovision ⚡
+                                        │
+                          fixes what Bicep couldn't express:
+                          RBAC, KV seed, App Config, Teams env sync,
+                          re-reads live Azure state via `az` CLI
+
+  predeploy ⚡  →  <svc>-predeploy ⚡  →  azd core deploy  →  <svc>-postdeploy ⚡  →  postdeploy ⚡
+                                                                                        │
+                                                                       re-applies things azd
+                                                                       just wiped, PUTs the
+                                                                       Logic App workflow, etc.
+```
+
+Each ⚡ is a hidden concern:
+
+- **Imperative** — reason about order, retries, partial failure by hand.
+- **Non-idempotent by default** — every hook has to guard itself.
+- **No plan / no diff / no dry-run** — the hook mutates live Azure with `az` CLI.
+- **Language sprawl** — TypeScript hooks shell out to Bash-quoted `az` invocations that mutate the same resources Bicep declared.
+- **Silent contract** — nothing in `azure.yaml` tells a reader that `azd deploy frontend` actually runs 4 hook files.
+- **Un-typed** — deployment values passed through environment strings can fail silently when misspelled.
+- **Cross-cutting failure modes** — a hook throw fails the whole `azd deploy`, even when the container image already deployed successfully (we hit this repeatedly — see the Function App timeout / Teams provision cases).
+
+> Every hook is a place where `azd`’s two-command story stops being true.
+
+The more hooks we add, the less `azd provision` and `azd deploy` mean what they say. That is the real cost.
+
+---
+
+# The deeper problem — the `azd` experience isn't intuitive
+
+The friction isn't a single missing feature. It's that the **mental model `azd` forces on us doesn't match the thing we're building.**
+
+### We model `azd`, not the service
+
+With **`azd` + Bicep**, we spend our effort describing _how `azd` should orchestrate_ — which host type, which hook fires when, which env var carries state between phases — instead of describing _the service itself_. The service architecture is an emergent property of a pile of config + hooks, not something you can read in one place.
+
+### Hooks have an implicit, unwritten contract
+
+- **Order is convention, not declaration** — `preprovision → main.bicep → postprovision`, and `predeploy → <svc>-predeploy → core → <svc>-postdeploy → postdeploy`. Nothing in `azure.yaml` states this ordering; you learn it by reading every hook.
+- **Hooks don't run in preview** — `azd provision --preview` (what-if) skips hooks entirely. So the _preview never reflects reality_: the RBAC, KV seeding, env injection, and Logic App patch that hooks perform are invisible to the one command whose whole job is "show me what will happen."
+- **State passes through `.env` strings** — values such as `CREATE_TEAMS_CONNECTION` remain untyped and order-dependent.
+
+### "Single source of truth" is maintained by hooks — and that's too weak
+
+The promised SoT is Bicep. In practice the _real_ desired state is **Bicep + ~1000 lines of hooks that re-read and re-mutate live Azure**. A truth that has to be reconstructed imperatively on every run isn't a source of truth — it's a recipe.
+
+### Bicep isn't expressive enough
+
+Idempotent RBAC, conditional OAuth resources, deferred/two-phase workflows, "ensure-if-not-exists" — none are expressible in Bicep, so each one leaks into a hook. Every leak widens the gap between "what Bicep says" and "what's actually deployed."
+
+### Provision vs. deploy boundaries are blurred
+
+- `azd` splits the world into **provision** (infra) and **deploy** (code) — but real services don't cleave there. Pinning a container image, wiring an ACR-pull identity, seeding config a running app needs — is that infra or code?
+- Because the boundary is arbitrary, **people mutate resources in deploy hooks** (slot container config, Logic App workflow PUT). Deploy-time code is now editing infrastructure that provision "owned."
+- `azd` split these two phases apart; our service needed them intertwined. We spend hooks stitching back together what the tool insisted on separating.
+
+> The tool splits the problem where _it_ is easy to build, not where _our service_ naturally divides.
+
+---
+
+# What we plan to improve
+
+## Short term
+
+- Move remaining `az` CLI calls in hooks behind small, tested helper libs (some already: `ensure-role-assignment`, `env-suite`, `acr-tags`).
+- Cover hooks with unit + integration tests (fake `az` / Foundry via nock).
+- Kill remaining `value: ''` App Service settings; require explicit params or omit.
+
+## Medium term
+
+- **Move infra from Bicep to TypeScript** using [`js-provisioning-lib`](https://github.com/Azure/js-provisioning-lib) — same declarative model as Bicep, but authored in the same language as the hooks, so types flow end-to-end. `azd` still consumes the emitted Bicep as usual.
+- Split `main.bicep` explicitly into provision **layers** with parallel deploy in `postprovision` (the layer pipeline exists but is dormant).
+- Publish a `deployment` npm package so hooks are shared code, not per-repo copies.
+
+---
+
+# Where we want to work more closely with `azd`
+
+Concrete feature asks / RFCs to open with the `azd` team:
+
+1. **Direct production deploys** for `host: appservice` — the agent server now uses azd's native container path.
+2. **Hosted agent env injection** (`azure.ai.agent`) — actually persist `agent.yaml environment_variables` into the deployed version (would kill `ensureAgentAppConfigEnv`).
+3. **Per-service hooks on `azure.ai.agent`** — fixed in `azd` 1.29.0 ([azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152)); agent postdeploy reconciliation is service-scoped again.
+4. **Late-resolved `${VAR}` in `azure.yaml`** for `image:` — resolve _after_ predeploy so we can point at the freshly built immutable tag.
+5. **Preserve unknown App Service settings** on `azd deploy` — fixed in `azd` 1.29.0; the `repinAcrPullIdentity` workaround is gone.
+6. **Conditional / idempotent RBAC** — first-class “ensure” semantics for role assignments; today Bicep has none.
+7. **Standard `--service <name>` env var** everywhere so the global `predeploy` can branch without our `AZD_DEPLOY_SERVICE` convention.
+
+---
+
+# How IaC — done properly — should resolve most of this
+
+Every hook we own is a **temporary bridge**. The end state is:
+
+| Today (hook)                                    | Tomorrow (IaC + `azd`)                                                                          |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `ensure-role-assignment.ts`                     | Typed `ensure*` primitives in the provisioning lib — declarative RBAC with idempotency built in |
+| `agent-postdeploy` → new Foundry version w/ env | `azd`’s `azure.ai.agent` host injects `agent.yaml environment_variables` natively               |
+| Agent-server image build and production deploy | Native `azd deploy agent-server` App Service container support                                  |
+| `patch-workflow` (Logic App PUT)                | Deferred / two-phase resources are a first-class construct in the provisioning lib              |
+| `sync-teams-env` (rewrite `.env.azd`)           | `azd` × Teams Toolkit share an env schema; no cross-tool env copying                            |
+| `scripts/create-entra-app.ts`                  | One-time interactive bootstrap; the fixed app ID and URI are inputs to provisioning             |
+
+**Rule of thumb:** if a hook is doing something IaC _should_ be able to express, that hook is a bug report against the platform.
+
+---
+
+# IaC via [`js-provisioning-lib`](https://github.com/Azure/js-provisioning-lib) — infra as _TypeScript_, compiled to Bicep, consumed by `azd`
+
+Instead of authoring Bicep (a separate DSL) plus hooks (TypeScript), we author _both_ in TypeScript. `js-provisioning-lib` compiles our stacks to `.bicep`; `azd` reads those files exactly as it does today.
+
+```ts
+// deployment/infra/main.ts
+import { Stack, ResourceGroup, fn, az } from 'js-provisioning-lib/core';
+import { UserAssignedIdentity } from 'js-provisioning-lib/managedidentity';
+import { Vault as KeyVault } from 'js-provisioning-lib/keyvault';
+import { StorageAccount } from 'js-provisioning-lib/storage';
+import { RoleAssignment } from 'js-provisioning-lib/authorization';
+import { ConfigurationStore } from 'js-provisioning-lib/appconfiguration';
+import { Registry as ContainerRegistry } from 'js-provisioning-lib/container-registry';
+import { serialize } from 'js-provisioning-lib/serialization';
+import { renderBicepFiles } from 'js-provisioning-lib/bicep';
+
+const stack = new Stack('qabot', { targetScope: 'subscription' });
+const rg = new ResourceGroup(stack, { location: 'eastus' });
+
+const identity = new UserAssignedIdentity(rg, { name: 'qabot-identity' });
+const acr = new ContainerRegistry(rg, { name: 'qabotacr', sku: { name: 'Basic' } });
+const kv = new KeyVault(rg, {
+    properties: { tenantId: fn.subscription().tenantId, sku: { name: 'standard', family: 'A' } },
+});
+const storage = new StorageAccount(rg, { sku: { name: 'Standard_LRS' }, kind: 'StorageV2' });
+const appCfg = new ConfigurationStore(rg, { sku: { name: 'standard' } });
+
+// RBAC — typed constants, no more az CLI strings
+new RoleAssignment(kv, {
+    properties: {
+        principalId: identity.properties.principalId,
+        principalType: 'ServicePrincipal',
+        roleDefinitionId: KV_SECRETS_OFFICER_ROLE_ID, // exported from a constants module
+    },
+});
+
+// Outputs — typed, no `az deployment sub show | jq` needed
+stack.outputs.add('MANAGED_IDENTITY_CLIENT_ID', 'string', identity.properties.clientId);
+stack.outputs.add('AZURE_APPCONFIG_ENDPOINT', 'string', appCfg.properties.endpoint);
+
+// azd reads the emitted .bicep files (azure.yaml → infra: { provider: bicep }).
+for (const f of renderBicepFiles(serialize(stack))) writeFileSync(f.path, f.contents);
+```
+
+What this changes:
+
+- **One language, one repo, one type system** — env-suite values, resource IDs, RBAC targets are all typed handles; typos become compile errors, not runtime 503s.
+- **Composable & testable** — the stack is a plain value. `serialize(stack)` is a pure function; snapshot-test in CI.
+- **Reusable `Component`s** — `class QaBotAgentPlatform extends Component { ... }` collapses today’s `qaBotAgent/component.bicep` + `postprovision` grants + KV seeding into one class per concern.
+- **`azd` consumes the emitted Bicep** — no change to `azure.yaml infra: { provider: bicep }`; the library just replaces the _authoring_ surface.
+- **Hooks shrink or disappear** — KV seeding, App Config seeding, RBAC ensuring, output plumbing all become declarative constructs living beside the resources.
+
+> **`js-provisioning-lib` turns hooks back into infrastructure.**
+
+---
+
+# What that unlocks on the `azd` side
+
+- **`azd` extensions API** — turn what remains of our hooks into reusable, versioned extensions rather than repo-local scripts.
+- **`azd` composability** — each service (frontend, agent-server, agent, function-app) becomes its own composable unit; a new environment is `azd env new` + a config file, not a 400-line runbook.
+- **First-class hosts** for the resource types we struggle with today: named App Service slots, Logic App workflows, hosted Foundry agents with env injection.
+- **Bicep provider ecosystem** feeds into `js-provisioning-lib` — Microsoft Graph for Entra apps, Foundry for agent versions — each new provider becomes a new resource package in the library.
+
+**The moment each of those lands, we delete a hook.**
+
+---
+
+# The stretch goal
+
+> A brand new developer clones the repo, runs three commands, and has a working Q&A bot in their own subscription — with no manual steps, no portal clicks, no tribal knowledge, and no `az` CLI invocations outside of what `azd` does for us.
+
+```bash
+azd auth login
+azd env new my-dev
+azd up          # provision + deploy in one go
+```
+
+Every hook we keep is measured against that goal.
+
+---
+
+<!-- _class: lead -->
+
+# Recap
+
+- We picked `azd` because it unifies **provision + deploy + env** in one CLI.
+- The journey exposed real gaps in Bicep, ARM, and `azd`’s host coverage.
+- We resolved every gap in **one place** — the `deployment/hooks/` layer — instead of scattering fixes across pipelines and READMEs.
+- The current workflow is **idempotent, environment-scoped, and repeatable**.
+- Our roadmap is to **shrink the glue** by working with the `azd` and Bicep teams, adopting `js-provisioning-lib`, and turning our hooks into extensions.
+
+**IaC + `azd` is not a silver bullet — it’s the smallest surface area we know of where the remaining gaps are all _someone else’s bug_.**
+
+---
+
+# References
+
+| Category | Link | Description |
+| -------- | ---- | ----------- |
+| Feature | [azure-dev#9246](https://github.com/Azure/azure-dev/issues/9246) | Deploy to a named App Service **slot** (`host: appservice`) |
+| Feature | [azure-dev#9248](https://github.com/Azure/azure-dev/issues/9248) | Late-resolve `${VAR}` in `image:` **after** predeploy |
+| Feature | [azure-dev#9251](https://github.com/Azure/azure-dev/issues/9251) | Expose **target service name** to global hooks |
+| Feature | [azure-dev#9252](https://github.com/Azure/azure-dev/issues/9252) | `azd provision --preview` **omits hook effects** |
+| Feature | [azure-dev#9253](https://github.com/Azure/azure-dev/issues/9253) | First-class **idempotent RBAC** ("ensure") semantics |
+| Feature | [azure-dev#5345](https://github.com/Azure/azure-dev/issues/5345) | App Service deployment-slot strategy — staging/prod slot swap, traffic shifting, custom slot config |
+| Bug | [azure-dev#9247](https://github.com/Azure/azure-dev/issues/9247) | `azure.ai.agent` doesn’t persist `agent.yaml` **env vars** |
+| Fixed in 1.29.0 | [azure-dev#9249](https://github.com/Azure/azure-dev/issues/9249) | Preserve unknown App Service container settings during deploy |
+| Bug | [azure-dev#9250](https://github.com/Azure/azure-dev/issues/9250) | Container-based Function App on `host: function` **hangs** |
+| Fixed in 1.29.0 | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | Preserve service-level hooks and `${ENV}` image templates |
+| Related work | [azure-sdk-tools#16357](https://github.com/Azure/azure-sdk-tools/pull/16357) | Chatbot deployment PoC |
+| Related work | [Azure/js-provisioning-lib](https://github.com/Azure/js-provisioning-lib) | JS provisioning libraries |
+
+---
+
+<!-- _class: lead -->
+
+# Questions / Discussion
+
+Repo: `Azure/azure-sdk-tools` → `tools/sdk-ai-bots/deployment/`
+
+- Hooks: `deployment/hooks/`
+- Bicep: `deployment/infra/layers/`
+- Env contract: `deployment/infra/environments/environment-suite.yaml`
+- Runbook: `deployment/docs/runbook-deploy.md`

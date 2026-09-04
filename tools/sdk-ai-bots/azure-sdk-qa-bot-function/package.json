@@ -8,7 +8,7 @@
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "test": "echo \"No tests yet...\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@azure/arm-search": "^3.3.0",
@@ -37,6 +37,7 @@
     "botframework-schema": "^4.17.0-blobs1",
     "rimraf": "^6.1.3",
     "shx": "^0.4.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },
   "main": "dist/src/index.js",

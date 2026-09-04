@@ -1,0 +1,34 @@
+# Full-stack orchestrator: provision the selected environment, then deploy all
+# component images in dependency order.
+name: tools - sdk-ai-bots - provision-and-deploy-all
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml
+              parameters:
+                  environment: ${{ parameters.environment }}
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
+              parameters:
+                  environment: ${{ parameters.environment }}
+                  dependsOn: Provision
+                  ${{ if eq(parameters.environment, 'prod') }}:
+                      stabilizationSeconds: 600

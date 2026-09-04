@@ -1,0 +1,175 @@
+# Pipeline template — load environment-suite into ADO variables.
+#
+# Reads tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml,
+# selects the requested environment, and exposes its fields as pipeline
+# variables for downstream steps.
+#
+# Usage:
+#   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+#     parameters:
+#       environment: dev   # one of dev | preview | prod
+#
+# Exports (as pipeline variables):
+#   AZURE_ENV_NAME, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, SERVICE_CONNECTION,
+#   AZURE_RESOURCE_GROUP, AZURE_LOCATION, AZURE_AI_LOCATION, ACR_NAME,
+#   CONTAINER_REGISTRY_NAME, KEY_VAULT_NAME, APP_CONFIG_NAME,
+#   FRONTEND_SITE_NAME, AGENT_SERVER_SITE_NAME, FUNCTION_APP_NAME,
+#   *_IMAGE_REPOSITORY, TEAMS_GROUP_ID, TEAMS_CHANNEL_IDS, bicepOverrides,
+#   TEAMS_CHANNEL_IDS_JSON, APPROVAL_REQUIRED, PROD_DEPLOY_ONLY_FROM_PIPELINE,
+#   CHATBOT_EVOLUTION_AGENT_ENABLED, ROLLOUT_STRATEGY
+#
+# Existing non-empty Azure DevOps variables take precedence over values read
+# from the suite. This lets a pipeline definition or queue-time variable select
+# its authorized service connection and target without changing local config.
+#
+# Implementation: uses `yq` (pre-installed on 1ES Linux images) to extract
+# values; no PowerShell yaml parsing required.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: suitePath
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml'
+    - name: loadServiceConnectionFromSuite
+      type: boolean
+      default: true
+
+steps:
+    - bash: |
+          set -euo pipefail
+          SUITE="${{ parameters.suitePath }}"
+          ENV="${{ parameters.environment }}"
+          if [ ! -f "$SUITE" ]; then
+            echo "##[error]environment-suite.yaml not found at $SUITE"
+            exit 1
+          fi
+          command -v yq >/dev/null || { echo "##[error]yq not on PATH"; exit 1; }
+
+          set_var() {
+            local name="$1"
+            local val="$2"
+            echo "##vso[task.setvariable variable=${name}]${val}"
+            echo "  ${name} = ${val}"
+          }
+
+          set_var_from_pipeline_or_default() {
+            local name="$1"
+            local default_value="$2"
+            shift 2
+            local source_name candidate_value
+            local override_name=""
+            local override_value=""
+            for source_name in "$name" "$@"; do
+              candidate_value=$(printenv "$source_name" 2>/dev/null || true)
+              [ -z "$candidate_value" ] && continue
+              if [ -n "$override_name" ] && [ "$candidate_value" != "$override_value" ]; then
+                echo "##[error]Conflicting pipeline overrides: ${override_name} and ${source_name}"
+                exit 1
+              fi
+              override_name="$source_name"
+              override_value="$candidate_value"
+            done
+
+            if [ -n "$override_name" ]; then
+              echo "  ${name}: using pipeline override from ${override_name}"
+              set_var "$name" "$override_value"
+              return
+            fi
+            set_var "$name" "$default_value"
+          }
+
+          export_var() {
+            local name="$1"
+            local path="$2"
+            shift 2
+            local val
+            val=$(yq -r "$path" "$SUITE")
+            if [ -z "$val" ] || [ "$val" = "null" ]; then
+              echo "##[warning]${name} resolved to empty for env=${ENV} (path=${path})"
+              val=""
+            fi
+            set_var_from_pipeline_or_default "$name" "$val" "$@"
+          }
+
+          export_image_repository() {
+            local name="$1"
+            local component="$2"
+            local image_name
+            image_name=$(yq -r ".components.\"${component}\".imageName" "$SUITE")
+            if [ -z "$image_name" ] || [ "$image_name" = "null" ]; then
+              echo "##[error]imageName missing for component=${component}"
+              exit 1
+            fi
+            set_var_from_pipeline_or_default "$name" "${image_name}:${ENV}"
+          }
+
+          echo "Loading environment-suite contract for '$ENV'..."
+          set_var AZURE_ENV_NAME                    "$ENV"
+          if [ '${{ parameters.loadServiceConnectionFromSuite }}' = 'True' ]; then
+            export_var SERVICE_CONNECTION           ".environments.${ENV}.subscription"
+          fi
+          export_var AZURE_SUBSCRIPTION_ID          ".environments.${ENV}.subscriptionId"
+          export_var AZURE_TENANT_ID                ".environments.${ENV}.tenantId"
+          export_var SERVER_AUDIENCE                ".environments.${ENV}.serverApplicationClientId"
+          export_var SERVER_APPLICATION_ID_URI      ".environments.${ENV}.serverApplicationIdUri"
+          export_var RAG_SERVICE_SCOPE              ".environments.${ENV}.serverApplicationIdUri + \"/.default\""
+          export_var AZURE_RESOURCE_GROUP           ".environments.${ENV}.resourceGroupPrefix"
+          export_var AZURE_LOCATION                 ".environments.${ENV}.regions[0].name"
+          export_var AZURE_AI_LOCATION              ".environments.${ENV}.aiLocation"
+          export_var AZURE_AI_DEPLOYMENTS_LOCATION  ".environments.${ENV}.aiLocation"
+          export_var COSMOS_DB_LOCATION             ".environments.${ENV}.cosmosDbLocation"
+          export_var CHATBOT_EVOLUTION_AGENT_ENABLED ".environments.${ENV}.chatbotEvolutionAgentEnabled"
+          export_var ACR_NAME                       ".environments.${ENV}.containerRegistryName" CONTAINER_REGISTRY_NAME CONTAINER_REGISTRY_NAME_OVERRIDE
+          export_var CONTAINER_REGISTRY_NAME        ".environments.${ENV}.containerRegistryName" ACR_NAME CONTAINER_REGISTRY_NAME_OVERRIDE
+          export_var CONTAINER_REGISTRY_NAME_OVERRIDE ".environments.${ENV}.containerRegistryName" ACR_NAME CONTAINER_REGISTRY_NAME
+          export_var KEY_VAULT_NAME                 ".environments.${ENV}.keyVaultName" KEY_VAULT_NAME_OVERRIDE
+          export_var KEY_VAULT_NAME_OVERRIDE        ".environments.${ENV}.keyVaultName" KEY_VAULT_NAME
+          export_var APP_CONFIG_NAME                ".environments.${ENV}.appConfigName" APP_CONFIG_NAME_OVERRIDE
+          export_var APP_CONFIG_NAME_OVERRIDE       ".environments.${ENV}.appConfigName" APP_CONFIG_NAME
+          export_var FRONTEND_SITE_NAME             ".environments.${ENV}.frontendSiteName"
+          export_var AGENT_SERVER_SITE_NAME         ".environments.${ENV}.agentServerSiteName" AGENT_SERVER_SITE_NAME_OVERRIDE
+          export_var AGENT_SERVER_SITE_NAME_OVERRIDE ".environments.${ENV}.agentServerSiteName" AGENT_SERVER_SITE_NAME
+          export_var FUNCTION_APP_NAME              ".environments.${ENV}.functionAppName" FUNCTION_APP_NAME_OVERRIDE
+          export_var FUNCTION_APP_NAME_OVERRIDE     ".environments.${ENV}.functionAppName" FUNCTION_APP_NAME
+          export_image_repository FRONTEND_IMAGE_REPOSITORY frontend
+          export_image_repository AGENT_SERVER_IMAGE_REPOSITORY agent-server
+          export_image_repository FUNCTION_IMAGE_REPOSITORY function-app
+          export_var TEAMS_GROUP_ID                 ".environments.${ENV}.teamsGroupId"
+          TEAMS_CHANNEL_IDS=$(yq -r ".environments.${ENV}.teamsChannelIds | join(\",\")" "$SUITE")
+          set_var_from_pipeline_or_default TEAMS_CHANNEL_IDS "$TEAMS_CHANNEL_IDS"
+          TEAMS_CHANNEL_IDS_JSON=$(yq -o=json -I=0 ".environments.${ENV}.teamsChannelIds" "$SUITE")
+          set_var_from_pipeline_or_default TEAMS_CHANNEL_IDS_JSON "$TEAMS_CHANNEL_IDS_JSON"
+          export_var APPROVAL_REQUIRED              ".environments.${ENV}.approvalRequired"
+          export_var PROD_DEPLOY_ONLY_FROM_PIPELINE ".environments.${ENV}.prodDeployOnlyFromPipeline"
+          export_var ROLLOUT_STRATEGY               ".environments.${ENV}.rolloutStrategy"
+
+          # Environment-specific values override the common mappings above.
+          # Keys are environment variables consumed by the layer parameter adapters.
+          OVERRIDE_INPUT_KEYS=' MANAGED_IDENTITY_NAME ACTION_GROUP_NAME KEY_VAULT_NAME APP_CONFIG_NAME SEARCH_SERVICE_NAME CONTAINER_REGISTRY_NAME STORAGE_ACCOUNT_NAME COSMOS_DB_ACCOUNT_NAME AI_RESOURCE_NAME AI_PROJECT_NAME AGENT_SERVER_SITE_NAME FUNCTION_APP_NAME INTEGRATION_ACCOUNT_NAME TEAMS_CONNECTION_NAME AZURE_BLOB_CONNECTION_NAME DOCUMENT_DB_CONNECTION_NAME LOGIC_APP_WORKFLOW_NAME LOGIC_APP_ALERT_NAME '
+          while IFS=$'\t' read -r name val; do
+            [ -z "$name" ] && continue
+            if [[ "$val" == REPLACE_WITH_* ]]; then
+              echo "##[error]${name} is still a placeholder for env=${ENV}"
+              exit 1
+            fi
+            if [[ "$OVERRIDE_INPUT_KEYS" == *" $name "* ]]; then
+              set_var_from_pipeline_or_default "$name" "$val" "${name}_OVERRIDE"
+              set_var_from_pipeline_or_default "${name}_OVERRIDE" "$val" "$name"
+            else
+              set_var_from_pipeline_or_default "$name" "$val"
+            fi
+          done < <(yq -r ".environments.${ENV}.bicepOverrides // {} | to_entries[] | [.key, (.value | tostring)] | @tsv" "$SUITE")
+
+          # A pipeline may override a resource name that is not present in the
+          # selected environment's bicepOverrides. Keep the canonical value
+          # used by hooks and the adapter's *_OVERRIDE value identical.
+          for name in $OVERRIDE_INPUT_KEYS; do
+            canonical_value=$(printenv "$name" 2>/dev/null || true)
+            bicep_value=$(printenv "${name}_OVERRIDE" 2>/dev/null || true)
+            [ -z "$canonical_value" ] && [ -z "$bicep_value" ] && continue
+            set_var_from_pipeline_or_default "$name" "" "${name}_OVERRIDE"
+            set_var_from_pipeline_or_default "${name}_OVERRIDE" "" "$name"
+          done
+      displayName: 'Load environment-suite (${{ parameters.environment }})'

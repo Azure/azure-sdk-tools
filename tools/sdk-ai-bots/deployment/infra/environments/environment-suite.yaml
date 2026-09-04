@@ -1,0 +1,228 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared environment-suite for the sdk-ai-bots deployment.
+#
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║  ACTION REQUIRED BEFORE FIRST DEPLOY                                      ║
+# ║                                                                           ║
+# ║  Replace every `REPLACE_WITH_*` placeholder below with the real value:    ║
+# ║    - subscriptionId (dev / preview / prod)                                ║
+# ║    - tenantId (if non-default)                                            ║
+# ║    - backend server application client ID and Application ID URI          ║
+# ║    - teamsAppId                                                           ║
+# ║                                                                           ║
+# ║  Validate with:                                                           ║
+# ║    pwsh ./scripts/validate-env-suite.ps1                                  ║
+# ║                                                                           ║
+# ║  Full setup guide: docs/manual-setup.md §4                                ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+#
+# This file is the single source of truth for:
+#   - which environments exist
+#   - which subscription each one targets
+#   - the resource group prefix
+#   - the region / ring topology
+#   - whether approval is required
+#   - whether prod can only be deployed from the pipeline
+#   - the Teams group and channels monitored by each environment
+#
+# All provision / CI / CD pipelines load this file via
+# pipelines/templates/load-environment-suite.yml and read individual fields by
+# name. No pipeline may hard-code an environment list, subscription ID, region,
+# or RG name — change them here and they propagate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+environments:
+    dev:
+        # Azure DevOps service-connection alias. Keep this synchronized with
+        # pipelines/templates/service-connection.yml, which must resolve the
+        # endpoint at template-expansion time.
+        subscription: 'azure-sdk-tests-playground'
+        subscriptionId: 'faa080af-c1d8-40ad-9cce-e1a450ca5b57'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
+        serverApplicationClientId: 'f9b6590e-3710-402a-a17a-d6b99de129a3'
+        serverApplicationIdUri: 'api://72f988bf-86f1-41af-91ab-2d7cd011db47/azure-sdk-qa-bot-playground'
+        resourceGroupPrefix: 'azure-sdk-qa-bot-dev-20260826'
+        keyVaultName: 'azsdkqabot-kv-dev260826'
+        appConfigName: 'azsdkqabot-config-dev-20260826'
+        containerRegistryName: 'azsdkqabotacrdev20260826'
+        # Site names for CD pipelines. These are passed as bicep params
+        # (frontendBaseName / agentServerSiteName / functionAppName) so the
+        # deployed resources match — no post-provision discovery required.
+        frontendSiteName: 'azsdkqabot-dev-20260826'
+        agentServerSiteName: 'azuresdkqabot-server-dev-20260826'
+        functionAppName: 'azuresdkqabot-function-dev-20260826'
+        # Teams Toolkit app registration for this environment. Each env owns a
+        # DIFFERENT Teams app (created by `teamsapp provision`); the value is
+        # written into azure-sdk-qa-bot/env/.env.azd by the postprovision hook
+        # (deployment/hooks/lib/sync-teams-env.ts). If empty on first-ever
+        # provision, teamsapp will create one and you should copy its GUID here.
+        teamsAppId: '9d620152-6b1b-44f2-9635-b1f120c93c4a'
+        teamsAppTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        teamsGroupId: 'e33c7fe9-84fa-47c8-a288-1a23b7b92ea5'
+        teamsChannelIds:
+            - '19:ZK2wSwDjcdWUr_0jR1njUWFbnTCzKJ8QnyyDkNURqUE1@thread.tacv2'
+        regions:
+            - name: 'centralus'
+              ring: 'single'
+              enabled: true
+        aiLocation: 'eastus2'
+        cosmosDbLocation: 'eastus2'
+        chatbotEvolutionAgentEnabled: false
+        bicepOverrides:
+            BOT_SERVICE_NAME: 'azsdkqabot-dev-20260826-federated'
+            # Set to 'true' for one provision only when recovering a soft-deleted
+            # AIServices account, then reset to 'false' after recovery succeeds.
+            AI_RESOURCE_RESTORE: 'false'
+        approvalRequired: true
+        prodDeployOnlyFromPipeline: false
+        localDeployAllowed: true
+        healthChecks:
+            minSuccessRate: 0.90
+            latencyP95Ms: 5000
+        rolloutStrategy: 'direct'
+
+    preview:
+        subscription: 'azuresdkqabot-preview'
+        subscriptionId: 'REPLACE_WITH_PREVIEW_SUBSCRIPTION_ID'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
+        serverApplicationClientId: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_CLIENT_ID'
+        serverApplicationIdUri: 'REPLACE_WITH_PREVIEW_SERVER_APPLICATION_ID_URI'
+        resourceGroupPrefix: 'rg-azuresdkqabot-preview'
+        keyVaultName: 'azsdkqabot-kv-preview'
+        appConfigName: 'azsdkqabot-config-preview'
+        containerRegistryName: 'azsdkqabotacrpreview'
+        frontendSiteName: 'azsdkqabot-preview'
+        agentServerSiteName: 'azuresdkqabot-server-preview'
+        functionAppName: 'azuresdkqabot-function-preview'
+        # See dev.teamsAppId for the contract.
+        teamsAppId: 'REPLACE_WITH_PREVIEW_TEAMS_APP_ID'
+        teamsAppTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
+        teamsChannelIds:
+            - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
+            - '19:906c1efbbec54dc8949ac736633e6bdf@thread.skype'
+        regions:
+            - name: 'westus2'
+              ring: 'single'
+              enabled: true
+        aiLocation: 'westus2'
+        cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: false
+        approvalRequired: true
+        prodDeployOnlyFromPipeline: false
+        localDeployAllowed: false
+        healthChecks:
+            minSuccessRate: 0.95
+            latencyP95Ms: 3000
+        rolloutStrategy: 'slot-swap'
+
+    prod:
+        # Real prod values are captured from the pre-existing `azure-sdk-qa-bot` RG
+        # in the Azure SDK Engineering System subscription. bicepOverrides pins
+        # names that cannot be derived so azd preview/provision attaches to the
+        # existing resources instead of proposing replacements.
+        subscription: 'Azure SDK Engineering System'
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
+        serverApplicationClientId: '899da762-d510-48f2-911a-db9ea0cc41fd'
+        serverApplicationIdUri: 'api://azure-sdk-qa-bot'
+        resourceGroupPrefix: 'azure-sdk-qa-bot'
+        keyVaultName: 'azuresdkqabot-keyvalut'
+        appConfigName: 'azuresdkqabot-config'
+        containerRegistryName: 'azuresdkqabotcontainer'
+        # Site names for CD pipelines (must match the resources currently
+        # deployed to the `azure-sdk-qa-bot` RG).
+        frontendSiteName: 'azsdkqabot'
+        agentServerSiteName: 'azuresdkqabot-server'
+        functionAppName: 'azuresdkqabot-function'
+        # See dev.teamsAppId for the contract.
+        teamsAppId: 'REPLACE_WITH_PROD_TEAMS_APP_ID'
+        teamsAppTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        teamsGroupId: '3e17dcb0-4257-4a30-b843-77f47f1d4121'
+        teamsChannelIds:
+            - '19:de3fce22c2994be18cac50502c55f717@thread.skype'
+            - '19:906c1efbbec54dc8949ac736633e6bdf@thread.skype'
+            - '19:b97d98e6d22c41e0970a1150b484d935@thread.skype'
+            - '19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype'
+            - '19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype'
+            - '19:084875bb626242ed95f3ac8dddfaa12a@thread.skype'
+            - '19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype'
+        regions:
+            - name: 'westus2'
+              ring: 'canary'
+              enabled: true
+            # Future second region — uncomment after multi-region infra lands:
+            # - name: "eastus"
+            #   ring: "broad"
+            #   enabled: false
+        aiLocation: 'swedencentral'
+        cosmosDbLocation: 'westus2'
+        chatbotEvolutionAgentEnabled: true
+        bicepOverrides:
+            DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+            DEVELOPER_PRINCIPAL_TYPE: 'Group'
+            FRONTEND_IMAGE_REPOSITORY: 'azure-sdk-qa-bot:latest'
+            MANAGED_IDENTITY_NAME: 'azuresdkqabot-identity'
+            ACTION_GROUP_NAME: 'azuresdkqabot-alert'
+            SEARCH_SERVICE_NAME: 'azuresdkqabot-search'
+            STORAGE_ACCOUNT_NAME: 'azuresdkqabotstorage'
+            COSMOS_DB_ACCOUNT_NAME: 'azuresdkqabot-db'
+            AI_RESOURCE_NAME: 'azuresdkqabot-ai-resource'
+            AI_PROJECT_NAME: 'azuresdkqabot-ai'
+            AGENT_LOG_WORKSPACE_NAME: 'azuresdkqabot-agent-log'
+            AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-agent'
+            FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabot-insights'
+            FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabot-email-alerts'
+            FRONTEND_DIAGNOSTIC_SETTING_NAME: 'azsdkqabot-diagnostic'
+            FRONTEND_HEALTH_TEST_NAME: 'azsdkqabot-health-test'
+            FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabot-server-errors'
+            FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabot-health-check-failure'
+            FRONTEND_DELETE_LOCK_NAME: 'azsdkqabot-delete-lock'
+            AGENT_SERVER_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-appserviceplan'
+            AGENT_SERVER_LOG_WORKSPACE_NAME: 'azuresdkqabot-log'
+            AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-server202510300250'
+            AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-alert'
+            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-functionserviceplan'
+            FUNCTION_LOG_WORKSPACE_NAME: 'azuresdkqabot-function-log'
+            INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
+            TEAMS_CONNECTION_NAME: 'teams'
+            AZURE_BLOB_CONNECTION_NAME: 'azureblob'
+            DOCUMENT_DB_CONNECTION_NAME: 'documentdb'
+            LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
+            LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
+        approvalRequired: true
+        prodDeployOnlyFromPipeline: true
+        localDeployAllowed: false
+        healthChecks:
+            minSuccessRate: 0.99
+            latencyP95Ms: 2000
+            stabilizationWindowMinutes: 10
+        rolloutStrategy: 'slot-swap-with-watch'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Component contract — names azd / Bicep need to agree on per environment.
+# The pipeline loader and local sync script export these values into the azd
+# environment consumed by the layer parameter adapters.
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+    frontend:
+        imageName: 'azure-sdk-qa-bot'
+        serviceName: 'frontend'
+        healthPath: '/health'
+        slot: 'staging'
+    function-app:
+        imageName: 'azure-sdk-qa-bot-function'
+        serviceName: 'function-app'
+        healthPath: '/api/health'
+        slot: 'staging'
+    agent-server:
+        imageName: 'azure-sdk-qa-bot-agent-server'
+        serviceName: 'agent-server'
+        healthPath: '/ping'
+        easyAuthRequired: true
+    knowledge-sync:
+        schedule: '0 2 * * *' # daily 02:00 UTC
+        searchIndexName: 'azure-sdk-knowledge'

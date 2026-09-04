@@ -1,0 +1,28 @@
+name: tools - sdk-ai-bots-agent - provision-and-deploy
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
+              parameters:
+                  component: agent
+                  dependencyLayers: resource-group,shared-resources
+                  environment: ${{ parameters.environment }}

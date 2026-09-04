@@ -1,0 +1,28 @@
+# Provisions one component's infrastructure layer, then deploys that component.
+# The provisioning modes intentionally mirror the former provision-all
+# orchestrators, including the dev service-connection authentication order.
+
+parameters:
+    - name: component
+      type: string
+      values: [agent-server, function-app, agent, frontend]
+    - name: dependencyLayers
+      type: string
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+
+stages:
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+          layer: ${{ parameters.component }}
+          dependencyLayers: ${{ parameters.dependencyLayers }}
+          scope: '${{ parameters.component }} layer'
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          component: ${{ parameters.component }}
+          environment: ${{ parameters.environment }}
+          dependsOn: Provision

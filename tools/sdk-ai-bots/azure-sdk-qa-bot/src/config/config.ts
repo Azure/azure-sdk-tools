@@ -10,7 +10,8 @@ const config = {
   // RAG
   ragApiKey: process.env.RAG_API_KEY,
   // auth
-  userManagedIdentityClientID: process.env.BOT_ID,
+  userManagedIdentityClientID:
+    process.env.BOT_MANAGED_IDENTITY_CLIENT_ID || process.env.BOT_ID,
   ragScope: process.env.RAG_SERVICE_SCOPE,
   // Computer Vision
   azureComputerVisionEndpoint: process.env.AZURE_COMPUTER_VISION_ENDPOINT,

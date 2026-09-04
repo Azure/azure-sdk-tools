@@ -1,0 +1,45 @@
+name: tools - sdk-ai-bots-logic-app - provision
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+      parameters:
+          environment: ${{ parameters.environment }}
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+              parameters:
+                  layer: logic-app
+                  dependencyLayers: resource-group,shared-resources,frontend,agent-server,function-app
+                  environment: ${{ parameters.environment }}
+                  operation: preview
+                  stageName: PreflightLayer
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
+              parameters:
+                  environment: ${{ parameters.environment }}
+                  stageName: ApproveLayer
+                  dependsOn: PreflightLayer
+                  preflightJobName: AzdProvisionLayer
+                  scope: logic-app layer
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+              parameters:
+                  layer: logic-app
+                  dependencyLayers: resource-group,shared-resources,frontend,agent-server,function-app
+                  environment: ${{ parameters.environment }}
+                  operation: apply
+                  stageName: ProvisionLayer
+                  dependsOn: ApproveLayer

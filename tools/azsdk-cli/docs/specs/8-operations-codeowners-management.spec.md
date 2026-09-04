@@ -39,10 +39,10 @@ consumes, plus a fixed banner pointing readers back at `.github/owners.config.ya
 rationale live as YAML comments next to the entries they explain.
 
 The Azure DevOps `Owner`, `Label`, and `Label Owner` work items, the
-`config codeowners add-*` / `remove-*` command family, `config codeowners view`, and
-`config github-label sync-ado` are removed. The command surface that remains (`generate`, `lint`,
-`check-package`, `export-section`, `update-cache`) keeps its name and shape so downstream pipelines
-and agent skills change as little as possible.
+`config codeowners add-*` / `remove-*` command family, `config codeowners view`,
+`config codeowners audit`, `config codeowners export-section`, and `config github-label sync-ado` are
+removed. Five commands remain — `generate`, `check-package`, `lint-fragments`, `update-cache`, and
+`validate-owner` — and the three that downstream pipelines already call keep their name and shape.
 
 Reference artifacts for this spec:
 
@@ -211,7 +211,7 @@ sections:
 | `configs.minimum-path-owners` | int | no | Minimum individual (non-team) owners on a fragment path entry. Default `2`. Fails `check-package` if not met |
 | `configs.minimum-label-owners` | int | no | Minimum individual (non-team) service owners on a label-owner block, evaluated **after union**. Default `2`. Fails `check-package` if not met |
 | `sections[]` | list | yes | Ordered. Render order equals declaration order. |
-| `sections[].name` | string | yes | Unique. Also the key used by `export-section` and `CodeownersSectionFinder`. |
+| `sections[].name` | string | yes | Unique. Fragments and entries route to a section by this name. |
 | `sections[].defined-in-files` | bool | no | Default `false`. Marks the section as a target for fragment entries. |
 | `sections[].sort` | bool | no | Default `false`. `true` orders the section's entries with `CodeownersEntrySorter.SortEntries`; `false` renders them in authored order. Independent of `defined-in-files`. |
 | `sections[].exclude-from-check-package` | bool | no | Default `false`. Hides the section from `check-package` ownership resolution. Affects nothing about rendering. |
@@ -344,9 +344,11 @@ Fragments may only own their own subtree, and every expression they produce must
 can actually evaluate.
 
 1. **Literal `..` rejection.** If a fragment `path` value contains a `..` path segment anywhere, the
-   load fails immediately with `CFG-PATH-001` before any resolution or normalization is attempted.
+   entry is rejected with `CFG-PATH-001` before any resolution or normalization is attempted.
    `../some-other-service`, `Azure.AI.Inference/../../storage`, and `./..` are all rejected on sight.
-   This check is textual and runs first so that no clever expression can reach the resolver.
+   This check is textual and runs first so that no clever expression can reach the resolver. The
+   entry never reaches the rendered file; `lint-fragments` turns the same condition into a failed
+   build on the pull request that introduced it.
 2. **Repo-absolute rejection.** A leading `/` in a fragment `path` is an error (`CFG-PATH-003`).
    Repo-absolute expressions belong in the owners config. This removes the ambiguity of whether
    `/sdk/ai` means "repo root" or "fragment directory".
@@ -710,7 +712,8 @@ CFG-DUP-001: Path '/sdk/tables/' is defined in more than one place.
 
 ### Component 6: Rendering algorithm
 
-Deterministic. The same inputs always produce a byte-identical file.
+Deterministic. The same inputs — the YAML plus the membership caches — always produce a
+byte-identical file.
 
 1. **Load.** Parse the owners config. Enumerate every file matching
    `configs.allowed-owner-yaml-paths`. Separately, scan the repo for any `owners.yaml` / `owners.yml`
@@ -728,9 +731,12 @@ Deterministic. The same inputs always produce a byte-identical file.
 6. **Validate.** Run the `CFG-*` rules. An entry that cannot be bound — an unknown section, an
    invalid path — is **dropped and reported**; the remaining entries still render. Rendering
    continues so one bad entry does not hide the state of every other one, and so the report names
-   every problem in the file rather than the first. `generate` prints the report, writes nothing,
-   and exits non-zero.
-7. **Order.** Sections render in declaration order. What happens *within* a section is controlled by
+   every problem in the file rather than the first.
+7. **Filter owners.** Drop the fragment owners the membership caches reject, then drop any entry
+   left with nobody
+   ([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)). Config
+   entries are not filtered.
+8. **Order.** Sections render in declaration order. What happens *within* a section is controlled by
    `sections[].sort`, and by nothing else. `sort` and `defined-in-files` are independent: a section
    may be fragment-populated and unsorted, or static-only and sorted.
 
@@ -802,7 +808,7 @@ actionable — as a resolution change between the old file and the new one (see
 [Component 12](#component-12-migration-utilities)) — because that is the moment a team can decide
 between relabelling the descendant and moving the section to `sort: false`.
 
-8. **Emit.** Render the fixed generated-file banner, then each section. Each entry is formatted by
+9. **Emit.** Render the fixed generated-file banner, then each section. Each entry is formatted by
    the existing `CodeownersEntry.FormatCodeownersEntry()`. Whitespace is exact:
    - one blank line after the five-line generated-file banner;
    - one blank line before each section banner and one after it;
@@ -865,31 +871,25 @@ by hand gets one unambiguous error instead of a byte-level diff they cannot act 
 **The regeneration job.** Runs on `main` after merge. Renders, and opens or updates a PR when the
 result differs from the committed file.
 
-`generate` has one job — render the YAML and write the result — and one failure mode: it exits
-non-zero when something in the YAML could not be rendered. Whether the committed file happens to be
-in sync is not `generate`'s question. The regeneration job answers it with `git diff --exit-code`,
-which is what actually decides whether there is a PR to open, and gate 2 does not care at all: a
-contributor's PR is *expected* to leave the committed file stale.
+`generate` has one job — render the YAML and write the result — and it always does it. Whatever it
+could not render is dropped and reported rather than raised
+([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)), so it is not the
+thing that fails a contributor's build. Whether the committed file happens to be in sync is not
+`generate`'s question either: the regeneration job answers that with `git diff --exit-code`, and gate
+2 does not care at all, because a contributor's PR is *expected* to leave the committed file stale.
 
-Gate 2 performs two checks.
-
-**Check 1 — the YAML renders.** Load, normalize, validate, and render every ownership file in the
-checkout. Rendering is a pure function of repository contents (see
-[Component 8](#component-8-invalid-owner-handling)), so this needs no network, no cache, and no
-knowledge of when it runs. The gate passes when `generate` exits 0. The rendered file it produces in
-the contributor's working tree is discarded, not committed.
-
-**Check 2 — `azsdk config codeowners lint`.** Validates every owner declared in the repository's
-fragments against the publicly downloadable owner caches, checks that each entry names enough of
-them, and checks that its labels are in the common label set
+Gate 2 is therefore a single check: **`azsdk config codeowners lint-fragments`**. It validates the
+changed fragments against the publicly downloadable owner caches, checks that each entry resolves to
+enough individuals, and checks that its labels are in the common label set
 ([Component 10](#component-10-lint-rules)). Fail on any violation, and fail if a cache is unusable
 (see [Cache availability](#cache-availability)).
 
-Check 2 runs on the **same trigger as gate 2** — only on PRs that touch
-`.github/owners.config.yaml` or an `owners.yaml`. A pull request that changes no ownership file does
-not run it and cannot be blocked by it. `eng/common/pipelines/templates/steps/lint-codeowners.yml`
-implements the trigger and the step; it is a no-op in a repository that has no
-`.github/owners.config.yaml` yet.
+It runs only on PRs that touch `.github/owners.config.yaml` or an `owners.yaml`. A pull request that
+changes no ownership file does not run it and cannot be blocked by it. When a fragment changes, only
+that fragment is linted; when the config changes, every fragment is linted, because the config
+carries the minimums and can invalidate a fragment nobody touched.
+`eng/common/pipelines/templates/steps/lint-codeowners.yml` implements the trigger and the step; it is
+a no-op in a repository that has no `.github/owners.config.yaml` yet.
 
 The caches it reads are anonymously readable blobs, so the step needs no credential and works on
 pull requests from forks.
@@ -904,13 +904,17 @@ After a PR merges to `main`, the job checks out `main`, runs `generate`, and if 
   force-updates the branch and lets the existing PR pick it up rather than opening a second one.
   Several ownership merges landing in quick succession therefore collapse into one regeneration PR
   carrying the union of their effects.
-- **If `generate` fails it does not open a PR.** A validation error on `main` means the tree is in a
-  state that cannot render. Opening a PR is impossible and silently skipping is worse, so the job
-  alerts. Gate 2 makes this nearly unreachable: a `CFG-*` error cannot merge in the first place.
+- **If `generate` fails it does not open a PR.** The only way it fails is an unusable membership
+  cache, which means the render would drop owners that are actually fine. Opening a PR on that is
+  worse than opening none, so the job alerts and leaves the committed file alone.
 - **The regeneration PR is reviewed like any other.** It modifies `.github/CODEOWNERS`, which the
   repository-root section assigns to repository maintainers, so it lands in front of the people
-  responsible for the file. It is exempt from gate 1 by virtue of its head branch, and it satisfies
-  gate 2 trivially because it changes no YAML.
+  responsible for the file. It is exempt from gate 1 by virtue of its head branch, and it does not
+  run gate 2 at all because it changes no YAML.
+
+  Because the render depends on the caches, this PR is also where an ownership *removal* becomes
+  visible: an owner the caches began rejecting shows up as a deletion in a reviewed diff, attributed
+  by `generate`'s output to the fragment and line that declared them.
 
 **The staleness window is real and is accepted.** Between an ownership PR merging and the
 regeneration PR merging, `main` holds YAML that says one thing and a rendered file that says
@@ -961,41 +965,37 @@ This is a deliberate choice with a real cost, so the reasoning matters:
 The cost is that a contributor can be blocked by a defect they did not introduce. Three things keep
 that bounded. Errors carry the file, line, and rule code, and the remediation is local to the file
 being edited. The most common class of unrelated failure — an owner who has since left — is also
-reported by `check-package` at release time ([Component 8](#component-8-invalid-owner-handling)), so
+reported by `check-package` at release time ([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)), so
 it tends to be cleaned up by the team that owns the file rather than landing on an unrelated author.
 And the condition is self-extinguishing per file — it can only fire once.
 
 This applies to fragments and to `.github/owners.config.yaml` alike. It does not extend across
-files: editing `sdk/ai/owners.yaml` does not validate `sdk/storage/owners.yaml`. The exceptions are
-the cross-file rules that have no single-file meaning — `CFG-DUP-001`, `CFG-DUP-002`, `CFG-DUP-004`,
-and `CFG-LOC-001` — which are evaluated across the whole repository because check 1 re-renders the
-whole repository anyway.
+files: editing `sdk/ai/owners.yaml` does not lint `sdk/storage/owners.yaml`. The exception is a
+change to `.github/owners.config.yaml`, which carries the owner minimums and can therefore invalidate
+a fragment nobody touched; that change lints every fragment.
 
 #### Why validity checking is scoped to ownership changes
 
-Two independent reasons, and the second only became decisive once check 2 was made to fail closed.
+Two independent reasons, and the second only became decisive once gate 2 was made to fail closed.
 
 First, relevance: an author can act on a validity problem in ownership they are editing. They cannot
 act on one in a service they have never touched, and asking them to would mean committing someone
 else's access removal inside an unrelated change — the reviewed-removal flow this design avoids.
 
-Second, blast radius. Check 2 fails closed on an unusable cache, so its trigger decides what an
-outage costs. Scoped to ownership files, a cache outage blocks ownership PRs — a small set, and
-exactly the set that must not proceed on unverified owner data. Run on every PR, the same outage
-would halt all development in every migrated repository. Fail-closed is only a proportionate policy
-because the trigger is narrow; the two decisions have to be read together.
+Second, blast radius. Gate 2 fails closed on an unusable cache, so its trigger decides what an outage
+costs. Scoped to ownership files, a cache outage blocks ownership PRs — a small set, and exactly the
+set that must not proceed on unverified owner data. Run on every PR, the same outage would halt all
+development in every migrated repository. Fail-closed is only a proportionate policy because the
+trigger is narrow; the two decisions have to be read together.
 
-Repository-wide validity drift is not check 2's job. `check-package` finds it at release time, in
-front of the team that owns the package ([Component 8](#component-8-invalid-owner-handling)).
+The same reasoning is why `generate` is not a pull request gate. It reads the caches too, so running
+it on every PR would give a cache outage exactly the blast radius the narrow trigger exists to avoid.
+`generate` runs on `main`, in the regeneration job, where a failed run delays a bot PR instead of
+blocking contributors.
 
-#### Why check 1 ignores owner validity
-
-Owner validity never reaches the rendered file in the first place
-([Component 8](#component-8-invalid-owner-handling)), so check 1 has nothing to exclude. This is what
-makes it safe to run on every PR: it is a pure function of repository contents, and no change in
-remote cache state can make it fail. Had rendering been validity-filtered, the moment any owner
-anywhere lost access **every open PR in the repository** would have failed check 1 — including PRs
-that touched no ownership file at all.
+Repository-wide validity drift is not gate 2's job. `check-package` finds it at release time, in
+front of the team that owns the package
+([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)).
 
 #### Concurrent merges
 
@@ -1028,17 +1028,18 @@ an ordinary source conflict resolved by the people who own that file.
 
 #### Cache availability
 
-`generate` does not consult the owner-validity caches at all — rendering is a pure function of the
-YAML. Only `lint` and `check-package` read them, and **both fail closed.** There is one rule and no
-per-operation exceptions.
+`generate`, `lint-fragments`, `check-package`, and `validate-owner` all read the owner-validity
+caches, and **all four fail closed.** There is one rule and no per-operation exceptions.
 
 A cache is unusable if it is unreachable, empty, older than six hours, or **does not parse**. Any of
 those conditions produces a non-zero exit that names the cache and the specific failure. Neither
 operation proceeds on a partial or assumed-empty cache, and neither downgrades a cache failure to a
 warning.
 
-Both commands share one implementation of the decision, so "is this a valid owner" has a single
-answer in the product rather than one per caller.
+All four share one implementation of the decision — `IOwnerValidator` — so "is this a valid owner"
+has a single answer in the product rather than one per caller. Freshness is checked once per
+execution and the result reused, so a command that asks about hundreds of owners pays for one round
+trip.
 
 ##### Why the PR gate fails closed too
 
@@ -1056,17 +1057,16 @@ artifacts that might be stale.
 Failing closed makes the outage loud and short. Someone is blocked, the cache gets fixed, and
 enforcement resumes at full strength. A cache refresh is a pipeline run, not a multi-day repair.
 
-##### Why `generate` no longer appears in this table
+##### Why `generate` fails closed rather than rendering an empty file
 
-An earlier draft made owner validity part of the render: an owner the cache rejected was omitted
-from the output. That coupled the generated file to a remote, time-varying input, and it needed an
-elaborate guard — because "empty cache" and "nobody is a valid owner" are indistinguishable to a
-renderer, a cold cache would have produced a syntactically valid CODEOWNERS with almost every
-individual owner silently missing.
+"Empty cache" and "nobody is a valid owner" are indistinguishable to a renderer. A cold cache would
+otherwise produce a syntactically valid CODEOWNERS with almost every individual owner silently
+missing — a file that parses, passes drift detection, and routes nothing.
 
-[Component 8](#component-8-invalid-owner-handling) removes that coupling instead of guarding it.
-`generate` reads no caches, so it has no cache failure mode, and the entire class of problem is gone
-rather than mitigated.
+This is the one guard the design needs in exchange for filtering at render time. It is cheap: the
+freshness and non-emptiness of both caches is checked once, before any owner is judged, and the run
+stops there. A `generate` that cannot trust its caches writes nothing and alerts, which in the
+regeneration job means the committed file simply stays as it is until the cache is refreshed.
 
 ##### The safety threshold is retired with `--fix`
 
@@ -1086,75 +1086,103 @@ breaker. Under `lint` and `check-package` it produces a wave of false violations
 human is already looking at — loud, self-evident, and fixed by refreshing the cache. A noisy report
 does not need an override; a destructive edit did.
 
-### Component 8: Invalid Owner Handling
+### Component 8: The shared build pipeline and invalid owner handling
 
-**Rendering is a pure function of the YAML in the checkout.** `generate` reads no caches, contacts no
-network, and makes no judgment about whether an owner still has access. The same commit renders the
-same bytes on any machine at any time.
+Three of the five commands need the same thing: the repository's ownership YAML, loaded, filtered,
+and rendered. That work lives in one place, `ICodeownersModelBuilder`, and every caller gets the same
+answer from it.
 
-Owner validity is enforced at the two moments where someone can act on it:
+```
+load(.github/owners.config.yaml + sdk/*/owners.yaml)
+  -> drop what the membership caches reject   (fragments only)
+  -> optionally drop the guardrail sections   (check-package only)
+  -> render
+  -> CodeownersModel { Content, Entries, Settings, Dropped }
+```
 
-1. **When the owner is added.** `lint` runs on any pull request that touches ownership YAML
-   ([Who writes the rendered file](#who-writes-the-rendered-file)) and resolves every owner in the fragments
-   against the GitHub caches, reporting failures as `LNT-OWN-001` / `LNT-OWN-002`. The author is
-   present, the change is one line, and the build is red until it is corrected.
-2. **When the package ships.** `check-package` resolves the owners that actually govern the package
-   and validates them the same way. An owner who was valid at merge time and has since left the org
-   is caught here. Invalid owners do not count toward `minimum-path-owners` or
-   `minimum-label-owners`, so a package whose owner list has decayed to one real person reports as
-   insufficiently owned rather than passing on a name that no longer routes anywhere.
+`Dropped` is the part that makes the rest legible: every entry and every owner that did not survive,
+with the rule that rejected it and the file and line it was authored on.
 
-Neither command edits the repository. Removing a departed owner is a pull request someone writes,
-reviews, and merges, like any other change to ownership.
+#### Fragments are filtered; the config is not
 
-The invalid owner therefore stays in the rendered file until that happens. That is deliberate:
-GitHub already declines to route reviews to someone without write access, so the entry is inert
-before it is deleted, and deleting it is an ownership decision rather than a mechanical one.
+An owner named in `sdk/<service>/owners.yaml` is checked against the org- and team-membership caches
+and removed if the caches reject it. An owner named in `.github/owners.config.yaml` is rendered
+exactly as written and never checked.
 
-#### Why filtering at render time was rejected
+The two files decay differently. Fragments are authored by service teams, number in the hundreds, and
+go stale quietly as people change teams. The config is maintained by repository maintainers, is
+reviewed as a unit, and carries entries carried over from a CODEOWNERS file GitHub has been enforcing
+all along. Filtering it would mean this tool silently editing entries its maintainers deliberately
+wrote, on the strength of a cache — so it does not.
 
-The alternative — omit invalid owners during rendering, leaving them in the YAML — looks like it
-ejects faster. It does not buy what it appears to, and it costs three things.
+#### An emptied entry is dropped, not rendered ownerless
 
-It buys little because GitHub already enforces this. Per GitHub's documentation, *"The people you
-choose as code owners must have write permissions for the repository"*; an entry naming someone
-without write access does not produce a review request. Functional ejection happens on GitHub's side
-the moment access is revoked, whether or not our file still lists the alias.
+When every owner on a path entry is rejected, the entry is removed rather than rendered with an empty
+owner list. In CODEOWNERS an ownerless path means *nobody* owns this, and because matching is
+last-match-wins it also **stops** the path from falling through to the broader entry that would
+otherwise catch it. Rendering the empty entry would therefore be strictly worse than rendering
+nothing: a decayed service entry would disown its own directory instead of deferring to the
+repository backstop.
 
-The costs are concrete:
+The same applies to a label-owner block whose owners are all rejected (`GEN-DROP-002`).
 
-- **The generated file stops being verifiable.** Its content would depend on cache state at the
-  moment of the run, which no later check can reconstruct. The regeneration job would have to
-  either report drift forever or re-query the cache, making drift detection network-dependent and
-  time-dependent — so a cache outage would block every CODEOWNERS pull request.
-- **Ownership could transfer silently.** If filtering emptied an entry's owner list, the renderer
-  would have to drop the entry, and under last-match-wins the path would fall through to the
-  previous matching entry — usually a broad catch-all. A change in remote cache state would reassign
-  a directory's owners with no diff in the YAML and no human in the loop.
-- **Intent would become invisible.** The YAML would say one thing, the rendered file another, and
-  nothing in the repository would explain the gap.
+This is a real transfer of ownership driven by remote cache state rather than by a commit, and it is
+accepted deliberately. What makes it acceptable is that the backstop is the destination, the transfer
+is reported in `generate`'s output and in the regeneration pull request's diff, and `check-package`
+refuses to count the backstop — so a package whose owners have all decayed fails its release gate
+rather than passing on the strength of `/sdk/ @Azure/azure-sdk-write`.
 
-Under the lint-and-report model each of those becomes a reviewed commit in Git history, written by
-someone who saw the violation and decided what the ownership should be instead.
+#### Generate always produces a file
+
+Structural problems — a path containing `..`, a path outside the fragment's own subtree, a duplicate
+definition — are treated the same way as a rejected owner: the offending entry is dropped, the reason
+is reported, and the rest of the file renders. `generate` exits 0.
+
+A repository of this size always contains some decayed ownership. A `generate` that refused to render
+until every fragment was clean would leave `.github/CODEOWNERS` frozen at whatever it happened to say
+on the day the first fragment went stale, and every unrelated ownership change would queue up behind
+someone else's problem. Reporting and continuing keeps the rendered file current; `lint-fragments`
+is what turns those same conditions into a red build, on the pull request that introduced them.
+
+#### Cache availability
+
+Because rendering now depends on the caches, `generate` **fails closed** when they are unavailable,
+stale, or empty rather than rendering as though every owner were invalid. An empty cache would reject
+every owner in the repository and produce a CODEOWNERS file containing almost nothing. The same rule
+covers the common label set for `lint-fragments`. Freshness is checked once per execution and the
+result is reused, so a command that asks several times pays for one round trip.
+
+#### What this costs
+
+Rendering is no longer a pure function of the checkout: the same commit can render differently as
+membership changes. Drift detection therefore compares the checked-in file against a **fresh**
+render rather than against a replay of an older one, and the regeneration job is the only writer of
+`.github/CODEOWNERS` ([Who writes the rendered file](#who-writes-the-rendered-file)). A run against
+an unavailable cache is an error, not a diff.
 
 ### Component 9: Command surface
 
-#### Kept, unchanged name
+Five commands.
+
+| Command | What it does | Exit code |
+|---------|--------------|-----------|
+| `generate` | Builds the model and writes `.github/CODEOWNERS`. Reports everything it dropped. | Always 0 unless the caches are unavailable |
+| `check-package` | Builds the model without the guardrail sections, resolves one package directory against it, and counts owners. | Non-zero when the package is under-owned |
+| `lint-fragments` | Validates one fragment, or every fragment, in isolation. | Non-zero on any violation |
+| `update-cache` | Starts the membership-cache refresh pipeline. | Non-zero if the pipeline cannot be queued |
+| `validate-owner` | Answers whether one alias or team can own code, and what to change if not. | Non-zero when the owner is invalid |
+
+Commands deserialize their inputs and serialize their results. The rules live in helpers:
+`ICodeownersModelBuilder`, `ICheckPackageHelper`, `ICodeownersLintHelper`, and `IOwnerValidator`.
+
+#### Changes to the commands that already existed
 
 | Command | Change |
 |---------|--------|
-| `azsdk config codeowners generate` | Reads YAML instead of Azure DevOps. `--package-types`, `--section`, and `--invalid-owner-lookback-days` removed (sections come from the config; the grace period is gone). |
-| `azsdk config codeowners check-package` | Resolves ownership by rendering the checkout's ownership YAML instead of downloading a rendered CODEOWNERS artifact. `--codeowners-cache` and the blob fallback are removed. Now also validates resolved owners against the caches. |
-| `azsdk config codeowners export-section` | Unchanged. Operates on the rendered file; its remaining caller is `Test-CodeownersSections.ps1`. |
-| `azsdk config codeowners update-cache` | Unchanged trigger. The pipeline it starts now refreshes only the org- and team-membership caches. |
-| `azsdk config github-label check` | Unchanged. |
-| `azsdk config github-label create` | Unchanged. |
-
-#### Renamed
-
-| Command | Change |
-|---------|--------|
-| `azsdk config codeowners audit` → `lint` | Rules rebased onto YAML and cut to owner validity, owner counts, and labels. New `--repo-root`. `--fix`, `--force`, and `--repo` are removed; labels come from the common label set rather than a per-repo blob. |
+| `generate` | Reads YAML instead of Azure DevOps. `--package-types`, `--section`, and `--invalid-owner-lookback-days` are removed; `--omit-fallback-sections` and `--output-file` are added. |
+| `check-package` | Resolves ownership by building the model from the checkout instead of downloading a rendered CODEOWNERS artifact. `--codeowners-cache` and the blob fallback are removed. |
+| `update-cache` | Unchanged trigger. The pipeline it starts now refreshes only the org- and team-membership caches. |
+| `config github-label check` / `create` | Unchanged. |
 
 #### Deleted
 
@@ -1167,11 +1195,38 @@ someone who saw the violation and decided what the ownership should be instead.
 | `azsdk config codeowners remove-package-label` | `azsdk_engsys_codeowner_remove_package_label` |
 | `azsdk config codeowners remove-label-owner` | `azsdk_engsys_codeowner_remove_label_owner` |
 | `azsdk config codeowners view` | `azsdk_engsys_codeowner_view` |
+| `azsdk config codeowners audit` | (none) |
+| `azsdk config codeowners export-section` | (none) |
 | `azsdk config github-label sync-ado` | (none) |
 
 Ownership mutation is now a file edit in a pull request. An agent edits `sdk/<service>/owners.yaml`
-directly, then runs `lint` to confirm the result is valid. It does not stage `.github/CODEOWNERS`;
-the regeneration job owns that file.
+directly, then runs `lint-fragments` to confirm the result is valid. It does not stage
+`.github/CODEOWNERS`; the regeneration job owns that file.
+
+#### `audit` is deleted, not renamed
+
+`audit` fixed things: it deleted owners from source files, which forced a safety threshold, a
+`--force` override, a YAML editor, and a job to commit the result and open a pull request. Removing
+the write path removes all of it.
+
+What remains of its value is split between two places that already had to exist. `generate` drops
+invalid owners from the rendered file, so the decay never reaches GitHub. `lint-fragments` reports
+those same owners against the file that declares them, on the pull request that introduces them,
+where a human is present and the change is one line. Nothing else in `audit`'s rule set survived
+contact with the YAML model ([Component 10](#component-10-lint-rules)).
+
+#### `export-section` is deleted
+
+`export-section` existed to slice a section out of a rendered CODEOWNERS file. Its two callers were
+the ownership-extraction pipeline — which is deleted along with the rendered-CODEOWNERS cache — and
+`Test-CodeownersSections.ps1`, which diffs a section across two revisions to detect drift.
+
+That second caller keeps its job during migration: until a repository is generating its CODEOWNERS,
+gate 1 does not apply to it and the section comparison is the only thing protecting the file.
+Rather than hold the command alive for it, the script slices sections itself. A section is a
+three-line `###` / `# <Name>` / `###` fence running to the next `###`, which is a dozen lines of
+PowerShell and costs the check its dependency on the CLI — the template no longer installs one.
+Once every repository has migrated, gate 1 supersedes the script and both retire together.
 
 #### `view` is deleted, not reimplemented
 
@@ -1198,47 +1253,81 @@ declaring file and line — which is strictly better than the work item ID `view
 
 - `azsdk_engsys_codeowner_check_package`
 - `azsdk_engsys_codeowner_update_cache`
+- `azsdk_engsys_codeowner_validate_owner`
 - `azsdk_check_service_label`
 - `azsdk_create_service_label`
 
-Net change: eleven MCP tools become four, and six write tools become zero. The eleven today are the
-nine on `CodeownersTool` plus `azsdk_check_service_label` and `azsdk_create_service_label` on
-`GitHubLabelsTool`.
+Net change: eleven MCP tools become five, and six write tools become zero.
 
-`generate` and `lint` stay CLI-only, as they are today. Both are pipeline steps whose callers are
-`eng/` scripts, not agents: the regeneration job runs `generate` on `main`, and the pull request
-build runs `lint`. An agent editing `sdk/<service>/owners.yaml` runs them through the CLI like any other
-build step. Exposing them over MCP would add an agent-reachable path that writes
+`validate-owner` is the one addition. It exists because "why was my owner rejected?" is the question
+an agent actually gets asked, and answering it from `lint-fragments` output means running a whole
+file's rules to learn one thing. The two reasons an alias fails — no write access, or private Azure
+org membership — are fixed by different people in different places, so the answer has to name which
+one applies.
+
+`generate` and `lint-fragments` stay CLI-only. Both are pipeline steps whose callers are `eng/`
+scripts, not agents: the regeneration job runs `generate` on `main`, and the pull request build runs
+`lint-fragments`. Exposing `generate` over MCP would add an agent-reachable path that writes
 `.github/CODEOWNERS` — the one file this design says no agent and no human should write.
 
 ### Component 10: Lint rules
 
-`lint` replaces `audit`. It answers one question — does this ownership YAML name owners and labels
-that exist? — and reports the answer. It never edits the repository and never renders
-`.github/CODEOWNERS`.
+`lint-fragments` answers one question — **is this fragment valid on its own?** — and reports the
+answer. It never edits the repository and never renders `.github/CODEOWNERS`.
 
 | Rule ID | Description | Data dependency |
 |---------|-------------|-----------------|
+| `LNT-SCHEMA-001` | The file does not parse, or violates the fragment schema | — |
 | `LNT-OWN-001` | Individual owner is not in `azure-sdk-write`, or their Azure org membership is not public | `azure-sdk-write-teams-blob`, `user-org-visibility-blob` |
 | `LNT-OWN-002` | Team alias is malformed, or the team does not descend from `azure-sdk-write` | `azure-sdk-write-teams-blob` |
-| `LNT-OWN-003` | Fragment path entry has fewer than `configs.minimum-path-owners` individual owners | Rendered output |
-| `LNT-OWN-004` | Unioned label-owner block has fewer than `configs.minimum-label-owners` individual service owners | Rendered output |
-| `LNT-LBL-001` | Fragment label is not in the common label set | `common-labels.csv` |
+| `LNT-OWN-003` | Path entry resolves to fewer than `configs.minimum-path-owners` individuals | `azure-sdk-write-teams-blob` |
+| `LNT-OWN-004` | Label-owner block resolves to fewer than `configs.minimum-label-owners` individual service owners | `azure-sdk-write-teams-blob` |
+| `LNT-LBL-001` | Label is not in the common label set | `common-labels.csv` |
+| `LNT-LBL-002` | Path entry declares no `pr-labels` | — |
+| `LNT-LBL-003` | A `pr-label` is not claimed by any `label-owners` block in the same file | — |
+| `CFG-PATH-*` | Path escapes the fragment's directory, contains `..`, or is otherwise unresolvable | Repository tree |
 
-Anything that stops the repository from loading or rendering is reported with its own `CFG-*` code
-and the rules above do not run. There is nothing useful to say about owners in a file that does not
-describe valid ownership yet.
+#### Each fragment is judged alone
 
-#### Why lint does not fix anything
+Linting `sdk/ai/owners.yaml` loads `sdk/ai/owners.yaml`. It does not load the other fragments, and it
+does not build the rendered model.
 
-`audit --fix` deleted owners from source files. That is what forced the safety threshold, the
-`--force` override, the YAML editor, and the requirement that a job commit the result and open a
-pull request. Removing the write path removes all of it.
+That is what makes the result actionable. A fragment that only passes because a *different* service's
+file supplies the missing owners is not a fragment its team can maintain, and a violation whose cause
+lives in a file the author did not touch is a violation the author cannot fix. Judging in isolation
+keeps every reported problem inside the diff under review.
 
-The replacement is earlier, not weaker. `lint` runs on the pull request that introduces the bad
-owner ([Who writes the rendered file](#who-writes-the-rendered-file)), where a human is already present and the
-change is one line rather than a repository-wide sweep. An owner who was valid at merge time and
-later leaves the org is caught by `check-package`, which every release passes through.
+`LNT-LBL-003` is the rule that enforces this directly: a path may declare a PR label only if the same
+file also says who owns that label. Without it a fragment could route pull requests to a label whose
+service owners are declared elsewhere — or nowhere.
+
+The one thing lint reads outside the fragment is `.github/owners.config.yaml`, and only for the
+`configs` block that carries the minimums. When there is no config, the model defaults apply.
+
+#### Minimums count individuals, and teams expand
+
+`LNT-OWN-003` and `LNT-OWN-004` count the distinct individuals the declared owners resolve to. A team
+contributes its cached membership; an alias contributes itself; someone named both directly and
+through a team counts once.
+
+Counting teams as zero — the previous behavior — told a service that had correctly delegated ownership
+to `Azure/<their-team>` that it had no owners. Counting a team as one would let a two-owner minimum be
+satisfied by a team of one. Expanding is the only count that matches what GitHub will actually do when
+it requests reviews.
+
+A team with no cached membership expands to nobody, which is the same answer `LNT-OWN-002` gives for
+it, so an unresolvable team is never quietly credited with members.
+
+#### Lint reads fragments, not the owners config
+
+Every rule above evaluates `owners.yaml` fragments. `.github/owners.config.yaml` is not linted.
+
+The config is maintained by repository maintainers, is small, and changes rarely; the fragments are
+where the churn is and where an owner goes stale unnoticed. The label rule in particular would
+misfire on it: the config carries the management-library and end-to-end-sample sections, whose labels
+are repo-specific by design and are not in the common set. Extending the rules to cover the config
+later is a change of scope, not of structure — the loader already produces the same entry shape for
+both sources.
 
 #### Why labels come from the common label set
 
@@ -1248,33 +1337,30 @@ rather than the labels that happen to exist on one repository.
 
 Fragments describe services, and a service spans language repos. A label that exists only in
 `azure-sdk-for-net` routes issues nowhere in the other five. Holding fragments to the sanctioned
-common set is what keeps a service's triage identical across repositories, and it makes lint's
-answer independent of which repo it is run in.
+common set is what keeps a service's triage identical across repositories, and it makes lint's answer
+independent of which repo it is run in.
 
 If the CSV is unreachable or parses to zero labels, lint fails rather than passing. Treating an
 unreachable list as "no labels are known" would report every label in the repository as invalid;
 treating it as "all labels are known" would silently stop checking. Neither is a result worth
 returning, so it raises.
 
-#### Lint reads fragments, not the owners config
+#### Lint also reports who owns what
 
-Every rule above evaluates `owners.yaml` fragments. `.github/owners.config.yaml` is not linted.
-
-The config is maintained by repository maintainers, is small, and changes rarely; the fragments are
-where the churn is and where an owner goes stale unnoticed. The label rule in particular would
-misfire on it: the config carries the management-library and end-to-end-sample sections, whose
-labels are repo-specific by design and are not in the common set. Extending the rules to cover the
-config later is a change of scope, not of structure — the loader already produces the same entry
-shape for both sources.
+Alongside the violations, each fragment's result carries the directories it governs and the owners
+each one resolves to, walking one level below the fragment's own directory. The reviewer of an
+ownership change wants to see the effect of the change, not only that it was legal, and one level is
+where packages live in every repository this targets. Walking the whole tree would bury that in
+output.
 
 #### Rules that were not carried over
 
 | Retired rule | Why |
 |---|---|
-| `AUD-PATH-001` (path matches nothing on disk) | A path can be legitimately absent between a deletion and the next ownership edit. The condition it detected — an entry with no owners left — is now a `check-package` failure at release time, where it blocks something. |
-| `AUD-ORD-001` (ownership inversion) | Report-only, expected to fire on existing data, and not resolvable by the tool. It measured the rendered file rather than the YAML, so it belongs with the migration tooling that produced the ordering, not with a lint run on one changed fragment. |
+| `AUD-PATH-001` (path matches nothing on disk) | A path can be legitimately absent between a deletion and the next ownership edit. The condition it detected is now a `check-package` failure at release time, where it blocks something. |
+| `AUD-ORD-001` (ownership inversion) | Report-only, expected to fire on existing data, and not resolvable by the tool. It measured the rendered file rather than the YAML, so it belongs with the migration tooling that produced the ordering. |
 | `AUD-LBL-002` (`Service Attention` misuse) | Subsumed by `LNT-LBL-001` plus schema validation. |
-| `AUD-STR-001` / `AUD-STR-002` (empty label owner blocks) | Schema violations that fail at load, before anything can be rendered. |
+| `AUD-STR-001` / `AUD-STR-002` (empty label owner blocks) | Schema violations that fail at load, reported as `LNT-SCHEMA-001`. |
 
 ### Component 11: `check-package` source resolution
 
@@ -1284,48 +1370,49 @@ memory rather than downloaded.
 
 Given `--directory-path sdk/ai/Azure.AI.Inference`:
 
-1. **Render the repository.** Load `.github/owners.config.yaml` and every fragment, and render, as
-   [Component 6](#component-6-rendering-algorithm) describes. Nothing is written to disk.
-2. **Drop the excluded sections.** Discard every entry belonging to a section marked
-   `exclude-from-check-package`.
-3. **Resolve the directory** against what remains, last-match-wins, the same way GitHub resolves the
+1. **Build the model** with `omitFallbackSections: true`
+   ([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)). Invalid owners
+   are already gone; the guardrail sections are already excluded. Nothing is written to disk.
+2. **Resolve the directory** against the result, last-match-wins, the same way GitHub resolves the
    whole file. If nothing matches, report `no_matching_path`.
-4. **Read owners, PR labels, and service owners** off the matched entry and off the label-owner
-   block whose `labels` are fully contained in the entry's `pr-labels` — the containment rule
+3. **Read owners, PR labels, and service owners** off the matched entry and off the label-owner block
+   whose `labels` are fully contained in the entry's `pr-labels` — the containment rule
    `CheckPackageHelper` already implements.
-5. **Reject invalid owners.** Every individual owner is checked against the org- and
-   team-membership caches — the same `OwnerValidator` `lint` uses, subject to
-   [Cache availability](#cache-availability). A rejected owner is reported as `invalid_owner` **and
-   removed before the minimums are counted**, so a package whose two owners include one who has left
-   the org reports as under-owned rather than passing.
-6. **Report the remaining `CheckPackageIssue.Codes` as today.**
+4. **Expand teams to individuals** and count the distinct people, then compare against
+   `minimum-path-owners` and `minimum-label-owners`.
+5. **Report the remaining `CheckPackageIssue.Codes` as today.**
 
 The example assets resolve `Azure.AI.Inference` to owners `test-user-07, test-user-09,
 test-user-23`, PR label `AI Model Inference`, and service owners `test-user-07, test-user-09,
 test-user-23`.
 
-#### Why resolve through the renderer
+#### Why resolve through the shared builder
 
 Because the rendered file is what GitHub enforces, and the release gate should ask its question of
 the thing that decides the answer. Reading a single fragment directly is simpler, but it answers a
 different question — "what did this team write down" rather than "who owns this package" — and the
 two diverge exactly where it matters: when a static config entry, a parent fragment, or another
-section also claims the path. The renderer already resolves that competition; reproducing any part
-of it in the release gate would create a second ordering implementation to keep in sync forever.
+section also claims the path. The builder already resolves that competition; reproducing any part of
+it in the release gate would create a second ordering implementation to keep in sync forever.
 
 The cost is that `check-package` loads the whole model instead of one file. That is the same work
-`generate` does, on a checkout that is already on disk, with no network access.
+`generate` does, on a checkout that is already on disk.
 
-#### Why check-package validates owners too
+#### Owner validity is inherited, not re-checked
 
-`lint` proves the owners were real when the fragment was written. It cannot prove they are still
-real a year later, and nothing re-runs it on an unchanged file. Ownership decays silently: people
-change teams and leave the company without touching any YAML.
+`check-package` does not validate owners. The builder has already dropped everyone the caches reject,
+so what it counts is what GitHub would actually route to. Checking again would be a second
+implementation of the same rule, reachable only from this command.
 
-`check-package` is the one gate every release passes through, and it already loads the caches'
-answer to "who owns this". Counting an owner who is no longer in `azure-sdk-write` toward
-`minimum-path-owners` would mean shipping a package whose stated owners cannot approve a change to
-it. So the count is taken after rejection, not before.
+The consequence is that a package can report fewer owners than its `owners.yaml` lists. So the
+response carries the owners the builder dropped from the governing fragment whenever the check fails,
+with the reason and the authoring line — otherwise a release engineer reads "1 unique owner" against a
+file that plainly names three and has nowhere to go with that.
+
+Ownership decays silently: people change teams and leave the company without touching any YAML, and
+nothing re-runs `lint-fragments` on a file nobody edited. `check-package` is the one gate every
+release passes through, which is why the decay has to be visible here even though the rule that
+detects it lives elsewhere.
 
 #### Why guardrail sections are excluded
 
@@ -1363,10 +1450,10 @@ and team membership. Those describe GitHub state that no repository can derive l
 exactly why they belong in a cache. A rendered CODEOWNERS section never met that test — it was
 derived from data this system already owns.
 
-`export-section` is **not** deleted. The pipeline was one of its two callers; the other is
-`eng/common/scripts/Test-CodeownersSections.ps1`, which exports a section from two revisions of a
-CODEOWNERS file to diff them. That use is unrelated to the cache and continues to work against the
-rendered file.
+`export-section` goes with it. The pipeline was one of its two callers; the other is
+`eng/common/scripts/Test-CodeownersSections.ps1`, which exported a section from two revisions of a
+CODEOWNERS file to diff them. Section order is now declared in `.github/owners.config.yaml` and the
+whole file is generated, so that comparison is a diff of the generated file.
 
 `eng/common/scripts/Test-CodeownersForArtifacts.ps1` calls `check-package --directory-path --repo
 --output json` and needs **no change**. `--directory-path` already locates the package inside the
@@ -1532,23 +1619,32 @@ This feature is complete when:
 - [ ] Two ownership PRs merging in quick succession produce one regeneration PR, not two.
 - [ ] A service team can add or remove an owner by editing only `sdk/<service>/owners.yaml`, and the
       resulting PR is routed to the existing owners for review.
-- [ ] A fragment that declares `../some-other-service` fails immediately with `CFG-PATH-001`.
-- [ ] A fragment path entry with no `pr-labels` fails with `CFG-LBL-001`, while a static path entry
-      in the owners config with no `pr-labels` renders unchanged.
+- [ ] A fragment that declares `../some-other-service` is reported as `CFG-PATH-001` and does not
+      appear in the rendered file, and `lint-fragments` fails the pull request that introduced it.
+- [ ] A fragment path entry with no `pr-labels` fails lint with `LNT-LBL-002`, while a static path
+      entry in the owners config with no `pr-labels` renders unchanged.
+- [ ] A fragment `pr-label` with no `label-owners` block in the same file fails with `LNT-LBL-003`.
 - [ ] A PR that edits one entry in `sdk/ai/owners.yaml` fails on a validation error in a different,
       unmodified entry in that same file.
 - [ ] Two fragments declaring the same label set render one `# ServiceLabel:` block with unioned
       owners and a `# Sources:` comment naming both files.
 - [ ] The rendered file contains no comment other than the fixed banner, the monikers, and
       `# Sources:` lines; `CodeownersParser` re-parses it with zero block errors.
-- [ ] `lint` reports `LNT-OWN-003` / `LNT-OWN-004` for path entries and unioned label-owner blocks
-      that fall below `configs.minimum-path-owners` / `configs.minimum-label-owners`.
-- [ ] `lint` reports `LNT-OWN-001` for an owner missing from the caches and exits non-zero.
-- [ ] `lint` reports `LNT-LBL-001` for a fragment label absent from `common-labels.csv`, and reports
-      nothing for a label used only by `.github/owners.config.yaml`.
-- [ ] `check-package` reports `invalid_owner` for a cached-invalid owner and does not count them
-      toward `minimum-path-owners` or `minimum-label-owners`.
-- [ ] An owners config section that duplicates a fragment path or label set fails with
+- [ ] `lint-fragments` reports `LNT-OWN-003` / `LNT-OWN-004` for path entries and label-owner blocks
+      that fall below `configs.minimum-path-owners` / `configs.minimum-label-owners`, counting a team
+      as the individuals it expands to.
+- [ ] `lint-fragments` reports `LNT-OWN-001` for an owner missing from the caches and exits non-zero.
+- [ ] `lint-fragments` reports `LNT-LBL-001` for a fragment label absent from `common-labels.csv`, and
+      reports nothing for a label used only by `.github/owners.config.yaml`.
+- [ ] `lint-fragments --fragment sdk/ai/owners.yaml` reads no other fragment.
+- [ ] `generate` removes a cached-invalid owner from the rendered file, reports it, and exits 0; a
+      path left with no owners is omitted rather than rendered ownerless.
+- [ ] `generate` renders a config-declared owner unchanged even when the caches reject it.
+- [ ] `generate` exits non-zero when the membership caches are unavailable.
+- [ ] `check-package` counts the individuals a team expands to, and lists the dropped owners of the
+      governing fragment when it fails.
+- [ ] `validate-owner` exits non-zero for an invalid alias and names which requirement failed.
+- [ ] An owners config section that duplicates a fragment path or label set is reported as
       `CFG-DUP-001` / `CFG-DUP-004`.
 - [ ] `check-package` passes and fails identically before and after migration for a sampled set of
       packages across all five language repos.
@@ -1572,10 +1668,11 @@ Add @alice as an owner of sdk/ai in azure-sdk-for-net.
 
 1. Locate `sdk/ai/owners.yaml`.
 2. Add `alice` to the `owners` list of the `path: .` entry.
-3. Run `azsdk config codeowners generate` to confirm the file still renders, then discard the
-   rendered `.github/CODEOWNERS`.
-4. Run `azsdk config codeowners lint` and report any `LNT-OWN-*` finding for `alice` (for example,
-   not a member of an `azure-sdk-write` team, or Azure org membership not public).
+3. Run `azsdk config codeowners validate-owner --owner alice` and report the result. If `alice` is
+   invalid, name which half failed — write access or public Azure org membership — since the two are
+   fixed in different places.
+4. Run `azsdk config codeowners lint-fragments --fragment sdk/ai/owners.yaml` to confirm the file is
+   valid as a whole.
 5. Remind the user to open a PR containing **only** the YAML change, and that `.github/CODEOWNERS`
    is regenerated by a follow-up bot PR after theirs merges. Do not run `generate` and do not stage
    `.github/CODEOWNERS`.
@@ -1594,8 +1691,7 @@ Create ownership for the new sdk/contoso service. Owners are @alice and @bob, PR
 2. Create `sdk/contoso/owners.yaml` with a `path: .` entry (with `pr-labels: [Contoso]`, which is
    required) and a `label-owners` entry for `Contoso`.
 3. Run `azsdk config github-label check contoso` and offer `create` if the service label is missing.
-4. Run `azsdk config codeowners generate` and `azsdk config codeowners lint`, then discard the
-   rendered `.github/CODEOWNERS`.
+4. Run `azsdk config codeowners lint-fragments --fragment sdk/contoso/owners.yaml`.
 5. Report the block that *will* land in the `Client Libraries` section once the regeneration job
    runs, and remind the user not to commit `.github/CODEOWNERS`.
 
@@ -1604,7 +1700,8 @@ Create ownership for the new sdk/contoso service. Owners are @alice and @bob, PR
 **Prompt:**
 
 ```text
-generate is failing with CFG-DUP-001 for /sdk/ai/Azure.AI.Inference/. What do I do?
+generate is reporting CFG-DUP-001 for /sdk/ai/Azure.AI.Inference/ and the entry is missing
+from CODEOWNERS. What do I do?
 ```
 
 **Expected Agent Activity:**
@@ -1659,35 +1756,35 @@ azsdk config codeowners generate --repo-root .
 **Options:**
 
 - `--repo-root <path>`: Repository root. Defaults to the current git repo root.
-- `--config <path>`: Owners config path. Default `<repo-root>/.github/owners.config.yaml`.
-- `--output <path>`: Override `configs.output`.
+- `--output-file <path>`: Override `configs.output`.
+- `--omit-fallback-sections`: Skip sections marked `exclude-from-check-package`. Used by
+  `check-package`; rarely useful on its own.
 
-Exits **0** after writing the rendered file, or **1** when any entry failed to bind. Nothing is
-written on failure.
+Exits **0** after writing the rendered file. Entries it could not render are dropped and reported,
+not raised. It exits non-zero only when the membership caches are unavailable, since rendering
+against an empty cache would drop nearly every owner in the repository.
 
 **Expected Output:**
 
 ```text
-Loaded .github/owners.config.yaml (12 sections)
-Loaded 147 owners.yaml fragments
-Rendered 1,004 lines to .github/CODEOWNERS
+Wrote .github/CODEOWNERS.
 
-✓ 0 validation errors
-✓ 3 label sets unioned across multiple fragments
+Excluded 3 item(s) from the rendered file:
+  [LNT-OWN-001] sdk/ai/owners.yaml:14: 'test-user-31' — 'test-user-31' is not in
+    Azure/azure-sdk-write and their Azure org membership is not public. Both are required.
+  [CFG-PATH-001] sdk/ai/owners.yaml:22: '../storage' — path contains a '..' segment.
+    Fragments may only declare paths at or below their own directory (sdk/ai/).
+  [GEN-DROP-001] sdk/openai/owners.yaml:9: 'Azure.AI.OpenAI/' — Every owner on this path was
+    rejected by the membership cache, so the path is not rendered and falls through to the
+    next broader match.
 ```
 
-**Error Cases:**
+**Error Case (exit 1):**
 
 ```text
-✗ CFG-PATH-001: sdk/ai/owners.yaml:14 - path '../storage' contains a '..' segment.
-  Fragments may only declare paths at or below their own directory (sdk/ai/).
-
-✗ CFG-DUP-004: Label set [AI Projects] is declared in both
-    .github/owners.config.yaml:88 (section 'Core Libraries')
-    sdk/ai/owners.yaml:22
-  Label-owner union is only supported between owners.yaml fragments.
-
-Generation aborted. .github/CODEOWNERS was not modified.
+✗ Cached membership for 'Azure/azure-sdk-write' or Azure org visibility came back empty.
+  Refusing to validate owners against an empty cache; run
+  'azsdk config codeowners update-cache' and retry.
 ```
 
 ### Check the YAML without keeping the result
@@ -1705,16 +1802,6 @@ A contributor validating a YAML change runs `generate` and then discards the ren
 `.github/CODEOWNERS` is the *expected* state of their branch, and the regeneration job produces the
 real one after the change merges. The same two commands in the regeneration job, with `git diff
 --exit-code`, are what decide whether there is a pull request to open.
-
-**Error Cases (exit 1):**
-
-```text
-✗ CFG-LBL-001: sdk/ai/owners.yaml:23 - path entry 'Azure.AI.Projects.Agents/' has no 'pr-labels'.
-  pr-labels is required on fragment path entries. Every entry in this file is
-  validated, including ones your change did not touch.
-
-.github/CODEOWNERS was not modified.
-```
 
 **Gate 1 (a hand edit to the generated file):**
 
@@ -1742,19 +1829,45 @@ Results carry the declaring file and line, which is what `view` reported and mor
 surrounding entries stay visible. See
 [`view` is deleted](#view-is-deleted-not-reimplemented).
 
-### Lint ownership
+### Lint fragments
 
 ```bash
-azsdk config codeowners lint
+azsdk config codeowners lint-fragments --fragment sdk/ai/owners.yaml
+azsdk config codeowners lint-fragments                                  # every fragment
 ```
 
 **Options:**
 
+- `--fragment <relative-path>`: Repeatable. Defaults to every fragment in the repository.
 - `--repo-root <path>`: Repository root. Defaults to the enclosing git checkout.
 
-`lint` reports and exits non-zero on any violation. It does not edit the repository, so it has no
-`--fix` and no `--force`. It takes no `--repo`: owners come from repository-independent caches and
-labels from the common label set.
+Each fragment is judged on its own. `lint-fragments` reports and exits non-zero on any violation. It
+does not edit the repository, so it has no `--fix` and no `--force`. It takes no `--repo`: owners come
+from repository-independent caches and labels from the common label set.
+
+**Error Cases (exit 1):**
+
+```text
+sdk/ai/owners.yaml
+  ✗ LNT-LBL-002: line 23 - path entry 'Azure.AI.Projects.Agents/' declares no pr-labels.
+  ✗ LNT-LBL-003: line 14 - pr-label 'AI Agents' is not claimed by any label-owners block
+      in this file.
+  ✗ LNT-OWN-003: line 9 - path 'Azure.AI.Inference/' resolves to 1 owner; 2 are required.
+```
+
+### Validate one owner
+
+```bash
+azsdk config codeowners validate-owner --owner test-user-07
+azsdk config codeowners validate-owner --owner Azure/azure-sdk-eng
+```
+
+**Options:**
+
+- `--owner <alias-or-team>`: Required. A GitHub alias or an `Azure/<team>` handle.
+
+Exits 0 when the owner can own code, non-zero when it cannot. An invalid alias fails for one of two
+reasons that are fixed by different people, so the output names which one applies.
 
 ### Check package ownership
 
@@ -1773,16 +1886,9 @@ fragments, not from a rendered CODEOWNERS file. It therefore has **no** `--codeo
 `--codeowners-cache`, or `--section` option — there is no rendered artifact to point it at and no
 section to scope it to.
 
-Output shape, issue codes, and `--output json` are unchanged from the previous design.
-
-### Export a section
-
-```bash
-azsdk config codeowners export-section --codeowners-path .github/CODEOWNERS --section "Client Libraries" --output-file out/CODEOWNERS.client
-```
-
-Operates on a rendered CODEOWNERS file. Retained for `Test-CodeownersSections.ps1`, which exports the
-same section from two revisions to diff them.
+Output shape, issue codes, and `--output json` are unchanged from the previous design, with one
+addition: when the check fails, the response also lists the owners `generate` dropped from the
+governing fragment, so an owner count that disagrees with the file on disk is explicable.
 
 ### Refresh caches
 
@@ -1850,14 +1956,16 @@ azsdk config github-label create azure-openai --link https://learn.microsoft.com
 
 ### Phase 3: Enforcement
 
-- Milestone: gate 1 rejects hand edits to `.github/CODEOWNERS`; gate 2 validates every touched
-  ownership file in full; the regeneration job opens PRs from `main`; `check-package` resolves from
-  the YAML.
+- Milestone: gate 1 rejects hand edits to `.github/CODEOWNERS`; gate 2 lints every touched fragment;
+  the regeneration job opens PRs from `main`; `check-package` resolves from the YAML.
 - Pipeline changes in `eng/pipelines/pipeline-owners-extraction.yml`:
-  - delete the `Export Client Libraries section` and `Upload CODEOWNERS cache` tasks, and the
-    `generate` invocation that fed them, **gated per repo** — these steps run per target repository,
-    so they may only be removed for a repo that has completed Phase 2. Removing them while only .NET
-    has migrated breaks `check-package` for the other four.
+  - delete the `Export Client Libraries section` and `Upload CODEOWNERS cache` tasks. Nothing reads
+    `cache/azure/<repo>/CODEOWNERS.cache` once `check-package` resolves from the YAML, so the
+    producer retires with its only consumer rather than being gated per repo.
+  - strip the removed `--package-types` and `--section` options from the `generate` invocation that
+    fed them. The **repo-level gating that matters is `check-package` itself**: it cannot resolve a
+    repository that has not completed Phase 2, so the release checks for the other four repos have
+    to keep running the pre-migration CLI until they have.
   - keep `BuildTeamCache`. It produces the org- and team-membership caches, which remain the only
     things the storage account serves.
   - the `GenerateCodeowners` stage is **repurposed, not deleted**. It already contains the only
@@ -1867,8 +1975,9 @@ azsdk config github-label create azure-openai --link https://learn.microsoft.com
 - **The scheduled audit step is removed.** `pipeline-owners-extraction.yml` ran
   `azsdk config codeowners audit --fix` on a schedule with `workingDirectory:
   tools/azsdk-cli/Azure.Sdk.Tools.Cli`, against no checkout of any target repository. There is no
-  replacement: `lint` runs on the pull request that introduces a bad owner, and `check-package`
-  catches decay at release time. The `AuditCodeowners` parameter goes with it.
+  replacement: `generate` drops decayed owners on every render, `lint-fragments` runs on the pull
+  request that introduces a bad owner, and `check-package` catches decay at release time. The
+  `AuditCodeowners` parameter goes with it.
 - Dependencies: Phase 2.
 
 ### Phase 4: Deletion
@@ -1893,8 +2002,7 @@ azsdk config github-label create azure-openai --link https://learn.microsoft.com
     deleted — see [`view` is deleted](#view-is-deleted-not-reimplemented).
   - the `CacheBaseUrl` constant, the `--codeowners-cache` option, and the blob-download path in
     `CheckPackage` (`Tools/Config/CodeownersTool.cs`) — `check-package` no longer reads a rendered
-    CODEOWNERS artifact from storage. `export-section` itself is **kept**;
-    `Test-CodeownersSections.ps1` still calls it.
+    CODEOWNERS artifact from storage. `export-section` and its options go with it.
   - `Helpers/Codeowners/Rules/LabelOwnerMissingOwnersRule.cs`,
     `LabelOwnerMissingLabelsRule.cs` (replaced by schema validation)
   - `Azure.Sdk.Tools.Cli.Tests/Helpers/CodeownersManagementHelperTests.cs`,
@@ -2067,26 +2175,29 @@ migrated.
 - **Sparse rendering**: YAML comments in the owners config and in fragments never appear in the
   output; the banner is byte-identical across repos; the only comments emitted are the banner,
   `# Sources:`, and monikers.
-- **Required PR labels**: a fragment path entry with `pr-labels` absent, `null`, or `[]` fails with
-  `CFG-LBL-001`; the same shapes on a static owners config path entry render without a `# PRLabel:`
-  moniker and produce no diagnostic.
-- **Exit codes**: `generate` returns 0 after writing the rendered file and 1 when any entry failed
-  to bind, in which case nothing is written.
-- **Partial rendering**: a tree with one unbindable entry still renders every other entry, reports
-  the unbindable one, and writes nothing.
-- **Whole-file validation**: a file containing one valid and one invalid entry reports the invalid
-  one regardless of which entry a simulated diff touched; multiple independent violations in one
-  file are all reported in a single run rather than stopping at the first; a violation in a
-  *different* ownership file that the PR did not touch is not reported by check 2, while the
-  cross-file rules (`CFG-DUP-001`, `CFG-DUP-002`, `CFG-DUP-004`, `CFG-LOC-001`) still are.
+- **Required PR labels**: a fragment path entry with `pr-labels` absent, `null`, or `[]` fails lint
+  with `LNT-LBL-002`; the same shapes on a static owners config path entry render without a
+  `# PRLabel:` moniker and produce no diagnostic.
+- **Exit codes**: `generate` returns 0 after writing the rendered file even when entries were
+  dropped, and non-zero only when the caches are unavailable.
+- **Dropping**: an invalid fragment owner is removed and reported; a path left with no owners is
+  omitted rather than rendered ownerless (`GEN-DROP-001`); an emptied label-owner block is omitted
+  (`GEN-DROP-002`); a `..` path is dropped and reported rather than raised; a config-declared owner
+  the caches reject renders unchanged and is not reported.
+- **Whole-file validation**: a fragment containing one valid and one invalid entry reports the
+  invalid one regardless of which entry a simulated diff touched; multiple independent violations in
+  one file are all reported in a single run rather than stopping at the first.
+- **Fragment isolation**: linting one fragment reads no other fragment; a fragment whose labels are
+  owned only by a *different* fragment fails `LNT-LBL-003`.
 - **Minimums**: `LNT-OWN-003` and `LNT-OWN-004` fire below threshold and stay silent at or above it;
-  `LNT-OWN-004` is evaluated after union, so two fragments contributing one service owner each
-  satisfy `minimum-label-owners: 2`; team aliases do not count toward either minimum; owners the
-  cache rejects do not count toward either minimum in `check-package`.
+  a team counts as the individuals it expands to; someone named both directly and through a team
+  counts once; a team with no cached membership counts as nobody.
 - **Lint**: an owner absent from either cache is reported with a message naming which half failed;
   an empty cache raises rather than reporting every owner invalid; a label used only by
   `.github/owners.config.yaml` is not reported; label comparison is case-insensitive; an
   unreachable common label list raises rather than passing.
+- **Schema**: the checked-in JSON Schemas accept the reference assets and reject a `..` path, a
+  missing `pr-labels`, a misspelled key, a label-owner block with no owners, and a duplicate owner.
 - **Determinism**: rendering the same inputs twice is byte-identical; rendering with fragments
   enumerated in reverse order is byte-identical.
 - **Round trip**: the rendered asset re-parses through `CodeownersParser` with zero block errors, and
@@ -2098,9 +2209,9 @@ migrated.
   `assets/codeowners/CODEOWNERS.rendered`. This is the executable contract for the whole design.
   The asset is generated mechanically by the renderer, never hand-edited; it currently parses to 52
   entries (38 with paths, 14 label-only) across 12 discoverable sections with zero block errors.
-- `generate` returns 0 and writes the file on a clean tree, and 1 without writing on a `CFG-*`
-  error. Gate 1 rejects a hand edit to `.github/CODEOWNERS` on the changed-file list alone,
-  including one that renders identically.
+- `generate` returns 0 and writes the file on a clean tree, and also on a tree carrying a `CFG-*`
+  error — reporting the dropped entry rather than failing. Gate 1 rejects a hand edit to
+  `.github/CODEOWNERS` on the changed-file list alone, including one that renders identically.
 - `check-package` against the **YAML assets** for a package that passes, and
   one that fails each of the four package-validation codes in `CheckPackageIssue.Codes` —
   `no_matching_path`, `insufficient_owners`, `missing_pr_label`, and `insufficient_service_owners`.
@@ -2110,7 +2221,7 @@ migrated.
 - `check-package` resolution parity: for a sampled set of package directories, the owners it reports
   from the YAML match the owners `CodeownersParser` resolves from the rendered asset. This is what
   proves the two resolution paths agree.
-- Audit rules against fixture caches, including the fail-fast behavior on stale, empty, and
+- Lint rules against fixture caches, including the fail-fast behavior on stale, empty, and
   inconsistent caches.
 
 ### Migration Utility Tests

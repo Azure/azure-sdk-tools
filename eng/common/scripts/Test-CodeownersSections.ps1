@@ -4,15 +4,20 @@
   Tests that specified CODEOWNERS sections are identical between two file versions.
 
   .DESCRIPTION
-  Uses the azsdk CLI to export named sections from a "before" and "after" copy of
-  the CODEOWNERS file.  If any of the specified sections differ between the two
+  Slices named sections out of a "before" and "after" copy of the CODEOWNERS file
+  and compares them.  If any of the specified sections differ between the two
   files the script exits with code 1.
 
-  All filesystem and git setup (creating the before/after files, installing the
-  CLI, etc.) is expected to be done by the calling pipeline step template.
+  A section is delimited by the three-line fence the CODEOWNERS format uses:
 
-  .PARAMETER AzsdkCliPath
-  Path to the azsdk CLI executable.
+    ###
+    # Client Libraries
+    ###
+
+  and runs until the next "###" line or the end of the file.
+
+  All filesystem and git setup (creating the before/after files, etc.) is
+  expected to be done by the calling pipeline step template.
 
   .PARAMETER BeforeFile
   Path to the CODEOWNERS file representing the base state (e.g. parent commit).
@@ -28,9 +33,6 @@
 #>
 [CmdletBinding()]
 param (
-  [Parameter(Mandatory)]
-  [string] $AzsdkCliPath,
-
   [Parameter(Mandatory)]
   [string] $BeforeFile,
 
@@ -59,20 +61,43 @@ if (-not (Test-Path $AfterFile)) {
   Write-Error "AfterFile not found: $AfterFile"
   exit 1
 }
-if (-not (Test-Path $AzsdkCliPath)) {
-  Write-Error "azsdk CLI not found: $AzsdkCliPath"
-  exit 1
+# ---------------------------------------------------------------------------
+# 2. Section slicing
+# ---------------------------------------------------------------------------
+function Get-CodeownersSection {
+  param (
+    [Parameter(Mandatory)] [string[]] $Lines,
+    [Parameter(Mandatory)] [string] $SectionName
+  )
+
+  $fence = '###'
+  $header = "# $SectionName"
+
+  for ($i = 0; $i -lt $Lines.Count - 2; $i++) {
+    if ($Lines[$i].Trim() -ne $fence) { continue }
+    if ($Lines[$i + 1].Trim() -ne $header) { continue }
+    if ($Lines[$i + 2].Trim() -ne $fence) { continue }
+
+    $end = $Lines.Count
+    for ($j = $i + 3; $j -lt $Lines.Count; $j++) {
+      if ($Lines[$j].Trim() -eq $fence) { $end = $j; break }
+    }
+
+    return , $Lines[$i..($end - 1)]
+  }
+
+  return $null
 }
 
 # ---------------------------------------------------------------------------
-# 2. Ensure temp directory exists
+# 3. Ensure temp directory exists
 # ---------------------------------------------------------------------------
 if (-not (Test-Path $TempDirectory)) {
   New-Item -ItemType Directory -Path $TempDirectory -Force | Out-Null
 }
 
 # ---------------------------------------------------------------------------
-# 3. Export and compare each section
+# 4. Export and compare each section
 # ---------------------------------------------------------------------------
 $failed = $false
 
@@ -81,27 +106,31 @@ Write-Host "Before file: $beforePath"
 $afterPath  = Resolve-Path $AfterFile
 Write-Host "After file:  $afterPath"
 
+$beforeLines = @(Get-Content -Path $beforePath)
+$afterLines  = @(Get-Content -Path $afterPath)
+
 foreach ($section in $Sections) {
   $safeName      = $section -replace ' ', '_'
   $beforeSection = Join-Path $TempDirectory "before.${safeName}.txt"
   $afterSection  = Join-Path $TempDirectory "after.${safeName}.txt"
 
-  Write-Host "Exporting section '$section' from before file..."
-  & $AzsdkCliPath config codeowners export-section --codeowners-path $beforePath --section $section --output-file $beforeSection
-  if ($LASTEXITCODE) {
-    LogError "Failed to export section '$section' from before file (exit code $LASTEXITCODE)."
+  $beforeSlice = Get-CodeownersSection -Lines $beforeLines -SectionName $section
+  if ($null -eq $beforeSlice) {
+    LogError "Section '$section' not found in before file."
     exit 1
   }
 
-  Write-Host "Exporting section '$section' from after file..."
-  & $AzsdkCliPath config codeowners export-section --codeowners-path $afterPath --section $section --output-file $afterSection
-  if ($LASTEXITCODE) {
-    LogError "Failed to export section '$section' from after file (exit code $LASTEXITCODE)."
+  $afterSlice = Get-CodeownersSection -Lines $afterLines -SectionName $section
+  if ($null -eq $afterSlice) {
+    LogError "Section '$section' not found in after file."
     exit 1
   }
 
-  $beforeContent = Get-Content -Path $beforeSection -Raw
-  $afterContent  = Get-Content -Path $afterSection -Raw
+  Set-Content -Path $beforeSection -Value $beforeSlice
+  Set-Content -Path $afterSection -Value $afterSlice
+
+  $beforeContent = $beforeSlice -join "`n"
+  $afterContent  = $afterSlice -join "`n"
 
   if ($beforeContent -ne $afterContent) {
     LogError "Protected CODEOWNERS section '$section' has been modified. Changes to this section are not allowed through normal PRs. To update CODEOWNERS, follow instructions at https://aka.ms/azsdk/codeowners"
@@ -115,7 +144,7 @@ foreach ($section in $Sections) {
 }
 
 # ---------------------------------------------------------------------------
-# 4. Exit
+# 5. Exit
 # ---------------------------------------------------------------------------
 if ($failed) {
   $sectionList = ($Sections | ForEach-Object { "'$_'" }) -join ", "

@@ -14,8 +14,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners;
 /// </summary>
 internal class CheckPackageResolutionTests
 {
-    private static async Task<CheckPackageResponse> Check(OwnersTestRepo repo, string directoryPath) =>
-        await new CheckPackageHelper(OwnerValidatorFake.AcceptAll()).CheckPackage(directoryPath, repo.Root, "Azure/azure-sdk-for-net", CancellationToken.None);
+    private static async Task<CheckPackageResponse> Check(
+        OwnersTestRepo repo,
+        string directoryPath,
+        IOwnerValidator? ownerValidator = null)
+    {
+        var validator = ownerValidator ?? OwnerValidatorFake.AcceptAll();
+
+        return await new CheckPackageHelper(new CodeownersModelBuilder(validator), validator)
+            .CheckPackage(directoryPath, repo.Root, "Azure/azure-sdk-for-net", CancellationToken.None);
+    }
 
     [Test]
     public async Task ExcludedSectionsDoNotSatisfyOwnership()
@@ -126,5 +134,27 @@ internal class CheckPackageResolutionTests
         var issue = result.Issues.Single();
         Assert.That(issue.Code, Is.EqualTo(CheckPackageIssue.Codes.InsufficientOwners));
         Assert.That(issue.NextStep, Does.Contain("sdk/openai/owners.yaml"));
+    }
+
+    [Test]
+    public async Task DroppedOwnersAreReportedSoOwnerCountsStayExplicable()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: Azure.AI.Inference/
+                owners: [test-user-07, departed-one]
+                pr-labels: [AI Model Inference]
+            label-owners:
+              - labels: [AI Model Inference]
+                service-owners: [test-user-07, test-user-09]
+            """);
+
+        // Without this, the failure reads "1 unique owner(s)" against a file that lists two.
+        var result = await Check(repo, "sdk/ai/Azure.AI.Inference", OwnerValidatorFake.Rejecting("departed-one"));
+
+        Assert.That(result.Issues.Single().Code, Is.EqualTo(CheckPackageIssue.Codes.InsufficientOwners));
+        Assert.That(result.DroppedOwners.Select(d => d.Subject), Does.Contain("departed-one"));
     }
 }

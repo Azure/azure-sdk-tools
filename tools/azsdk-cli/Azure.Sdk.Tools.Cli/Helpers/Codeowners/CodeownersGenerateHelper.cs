@@ -1,54 +1,64 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.Cli.Models.Codeowners;
-
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 /// <summary>
-/// Orchestration only: load the checkout's ownership YAML, render it, and write the result. The
-/// rules live in <see cref="CodeownersRenderer"/>.
+/// Renders <c>.github/CODEOWNERS</c> from the in-repo ownership YAML and writes it.
 /// </summary>
-public class CodeownersGenerateHelper : ICodeownersGenerateHelper
+public interface ICodeownersGenerateHelper
 {
-    public async Task<CodeownersGenerateResult> Generate(string repoRoot, CancellationToken ct)
+    /// <param name="repoRoot">Absolute path to the repository root.</param>
+    /// <param name="omitFallbackSections">Drop sections marked <c>exclude-from-check-package</c>.</param>
+    /// <param name="outputPath">
+    /// Where to write, overriding the config's <c>configs.output</c>. Relative paths resolve against
+    /// <paramref name="repoRoot"/>.
+    /// </param>
+    Task<CodeownersGenerateResult> Generate(
+        string repoRoot,
+        bool omitFallbackSections,
+        string? outputPath,
+        CancellationToken ct);
+}
+
+/// <summary>
+/// Outcome of a generate run. Generation always succeeds: anything unusable is dropped and reported
+/// in <see cref="Dropped"/>.
+/// </summary>
+public class CodeownersGenerateResult
+{
+    /// <summary>Repo-relative path the CODEOWNERS content was written to.</summary>
+    public string OutputPath { get; set; } = string.Empty;
+
+    public string RenderedContent { get; set; } = string.Empty;
+
+    /// <summary>Entries and owners excluded from the rendered file, with the reason for each.</summary>
+    public IReadOnlyList<DroppedItem> Dropped { get; set; } = [];
+}
+
+public class CodeownersGenerateHelper(ICodeownersModelBuilder modelBuilder) : ICodeownersGenerateHelper
+{
+    public async Task<CodeownersGenerateResult> Generate(
+        string repoRoot,
+        bool omitFallbackSections,
+        string? outputPath,
+        CancellationToken ct)
     {
-        var result = new CodeownersGenerateResult();
-        var errors = new List<OwnersValidationError>();
+        var model = await modelBuilder.Build(repoRoot, omitFallbackSections, ct);
 
-        OwnersRepository repository;
-        try
-        {
-            repository = OwnersRepositoryLoader.Load(repoRoot, errors);
-        }
-        catch (OwnersYamlException ex)
-        {
-            // Without a config there is no output path and no section list, so there is nothing
-            // further worth reporting.
-            result.Errors.Add(ex.Message);
-            return result;
-        }
-
-        var rendered = CodeownersRenderer.Render(repository);
-        errors.AddRange(rendered.Errors);
-
-        result.OutputPath = repository.Config.Configs.Output;
-        result.RenderedContent = rendered.Content;
-
-        if (errors.Count > 0)
-        {
-            // The render is still reported so a reviewer can see what the fix would produce, but
-            // nothing is written until every entry binds.
-            result.Errors.AddRange(errors.Select(e => e.ToString()));
-            return result;
-        }
-
-        var outputFile = Path.Combine(
-            repoRoot, repository.Config.Configs.Output.Replace('/', Path.DirectorySeparatorChar));
+        var relativePath = string.IsNullOrWhiteSpace(outputPath) ? model.OutputPath : outputPath;
+        var outputFile = Path.IsPathRooted(relativePath)
+            ? relativePath
+            : Path.Combine(repoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputFile)!);
-        await File.WriteAllTextAsync(outputFile, rendered.Content, ct);
+        await File.WriteAllTextAsync(outputFile, model.Content, ct);
 
-        return result;
+        return new CodeownersGenerateResult
+        {
+            OutputPath = relativePath,
+            RenderedContent = model.Content,
+            Dropped = model.Dropped,
+        };
     }
 }

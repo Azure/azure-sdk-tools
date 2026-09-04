@@ -1,0 +1,85 @@
+parameters:
+  SourceRootPath: '$(System.DefaultWorkingDirectory)'
+
+steps:
+  - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+    # Ownership YAML is not covered by check-package: a change to sdk/<service>/owners.yaml
+    # produces no package artifacts, so nothing downstream would look at it. Lint is what
+    # catches an invalid owner before it is merged.
+    - pwsh: |
+        if (!(Test-Path ".github/owners.config.yaml")) {
+          Write-Host "This repository does not use ownership YAML yet."
+          Write-Host "##vso[task.setvariable variable=ShouldLintCodeowners]false"
+          exit 0
+        }
+
+        $scriptPath = [System.IO.Path]::Combine("${{ parameters.SourceRootPath }}", "eng", "common", "scripts", "get-changedfiles.ps1")
+        try {
+          # A single pathspec, so match both owners.yaml fragments and the repo-level config and
+          # filter the result below rather than diffing twice.
+          $changedFiles = & $scriptPath `
+            -DiffPath "*owners*.y*ml" `
+            -DiffFilterType ''
+
+          if ($LASTEXITCODE -gt 1) {
+            Write-Host "git diff returned exit code $LASTEXITCODE, which indicates an error. Output: $changedFiles"
+            exit 1
+          }
+        } catch {
+          Write-Host "Error running get-changedfiles.ps1: $_"
+          exit 1
+        }
+
+        $configChanged = $changedFiles -contains ".github/owners.config.yaml"
+        $fragments = @($changedFiles | Where-Object { $_ -match '(^|/)owners\.ya?ml$' })
+
+        if (!$configChanged -and !$fragments) {
+          Write-Host "No ownership YAML changed."
+          Write-Host "##vso[task.setvariable variable=ShouldLintCodeowners]false"
+          exit 0
+        }
+
+        # The config carries the owner minimums, so a change to it can invalidate a fragment nobody
+        # touched. Lint everything in that case; otherwise lint only what changed.
+        if ($configChanged) {
+          Write-Host ".github/owners.config.yaml changed; linting every fragment."
+          $fragmentList = ""
+        }
+        else {
+          Write-Host "Fragments changed:"
+          $fragments | ForEach-Object { Write-Host "    $_" }
+          $fragmentList = $fragments -join ";"
+        }
+
+        Write-Host "##vso[task.setvariable variable=LintCodeownersFragments]$fragmentList"
+        Write-Host "##vso[task.setvariable variable=ShouldLintCodeowners]true"
+      displayName: 'Check if ownership YAML changed'
+      workingDirectory: ${{ parameters.SourceRootPath }}
+      condition: and(succeeded(), ne(variables['Skip.LintCodeowners'], 'true'))
+
+    - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+      parameters:
+        SourceRootPath: ${{ parameters.SourceRootPath }}
+        Condition: and(succeeded(), eq(variables['ShouldLintCodeowners'], 'true'))
+
+    # No credential: lint reads the membership caches from anonymously readable blob storage.
+    - pwsh: |
+        $arguments = @("config", "codeowners", "lint-fragments", "--repo-root", "${{ parameters.SourceRootPath }}")
+
+        # Paths come from a pull request diff, so they are passed as arguments rather than
+        # interpolated into a command line.
+        foreach ($fragment in ($env:LINTCODEOWNERSFRAGMENTS -split ";" | Where-Object { $_ })) {
+          $arguments += @("--fragment", $fragment)
+        }
+
+        & "$(AZSDK)" @arguments
+
+        if ($LASTEXITCODE) {
+          Write-Host "##vso[task.logissue type=error]Ownership YAML failed lint. See the violations above."
+          exit 1
+        }
+      displayName: 'Lint ownership YAML'
+      env:
+        LINTCODEOWNERSFRAGMENTS: $(LintCodeownersFragments)
+      workingDirectory: ${{ parameters.SourceRootPath }}
+      condition: and(succeeded(), eq(variables['ShouldLintCodeowners'], 'true'))

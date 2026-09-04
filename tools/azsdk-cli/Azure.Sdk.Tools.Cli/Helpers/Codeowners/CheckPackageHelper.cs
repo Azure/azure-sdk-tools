@@ -26,7 +26,7 @@ public interface ICheckPackageHelper
         CancellationToken ct);
 }
 
-public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageHelper
+public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerValidator ownerValidator) : ICheckPackageHelper
 {
     public const string CurrentGitHubUserPlaceholder = "<github-aliases-to-add>";
 
@@ -38,14 +38,18 @@ public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageH
     private static readonly string[] FragmentFileNames = ["owners.yaml", "owners.yml"];
 
     /// <summary>
-    /// Renders the repository's ownership YAML and resolves <paramref name="directoryPath"/> against
-    /// the result, minus the sections marked <c>exclude-from-check-package</c>.
+    /// Resolves <paramref name="directoryPath"/> against the rendered CODEOWNERS model, minus the
+    /// sections marked <c>exclude-from-check-package</c>.
     /// <para>
     /// Resolving through the render rather than through a single fragment means this answers the
     /// question GitHub will answer — who actually owns this path, under last-match-wins — instead of
     /// a parallel approximation of it. Excluding the guardrail sections is what makes that useful:
     /// the root, <c>/sdk/</c>, EngSys and management catch-alls own every package's path but say
     /// nothing about whether the package declared owners of its own.
+    /// </para>
+    /// <para>
+    /// Owners are not re-validated here. <see cref="ICodeownersModelBuilder"/> has already dropped
+    /// everyone the membership caches reject, so what remains is what GitHub would actually route to.
     /// </para>
     /// </summary>
     public async Task<CheckPackageResponse> CheckPackage(
@@ -54,27 +58,26 @@ public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageH
         string? repo,
         CancellationToken ct)
     {
-        await ownerValidator.EnsureUsableAsync(ct);
+        var model = await modelBuilder.Build(repoRoot, omitFallbackSections: true, ct);
+        var governingFragment = FindGoverningFragmentPath(directoryPath, repoRoot);
 
-        var repository = OwnersRepositoryLoader.Load(repoRoot, []);
-        var rendered = CodeownersRenderer.Render(repository);
-
-        var excludedSections = repository.Config.Sections
-            .Where(section => section.ExcludeFromCheckPackage)
-            .Select(section => section.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var entries = rendered.Entries
-            .Where(entry => !excludedSections.Contains(entry.SectionName))
-            .Select(entry => entry.Entry)
-            .ToList();
-
-        return Evaluate(
+        var response = Evaluate(
             directoryPath,
             repo,
-            entries,
-            repository.Config.Configs,
-            FindGoverningFragmentPath(directoryPath, repoRoot));
+            [.. model.Entries.Select(entry => entry.Entry)],
+            model.Settings,
+            governingFragment);
+
+        if (response.Issues.Count > 0 && governingFragment != null)
+        {
+            response.DroppedOwners =
+            [
+                .. model.Dropped.Where(item =>
+                    item.Where.StartsWith(governingFragment + ":", StringComparison.OrdinalIgnoreCase))
+            ];
+        }
+
+        return response;
     }
 
     /// <summary>
@@ -166,12 +169,7 @@ public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageH
         var (resolvedTargetType, resolvedTarget) = ResolveMatchedTarget(directoryPath, matchedEntry.PathExpression);
         response.ResolvedTargetType = resolvedTargetType;
         response.ResolvedTarget = resolvedTarget;
-        var owners = RejectInvalidOwners(
-            GetUniqueIndividualOwners(matchedEntry.SourceOwners),
-            $"the {FormatPromptValue(resolvedTarget)} path entry",
-            ownersFilePath,
-            directoryPath,
-            response.Issues);
+        List<string> owners = [.. ownerValidator.ExpandToIndividuals(matchedEntry.SourceOwners ?? [])];
 
         response.Owners = owners;
         response.PRLabels = matchedEntry.PRLabels ?? [];
@@ -228,13 +226,6 @@ public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageH
 
         response.ServiceLabels = matchingServiceEntry.ServiceLabels ?? [];
         serviceOwnerLabels = GetServiceOwnerPromptLabels(response.ServiceLabels);
-
-        serviceOwners = RejectInvalidOwners(
-            serviceOwners,
-            $"the {FormatPromptValue(string.Join(", ", serviceOwnerLabels))} label owners entry",
-            ownersFilePath,
-            directoryPath,
-            response.Issues);
 
         response.ServiceOwners = serviceOwners;
 
@@ -296,10 +287,10 @@ public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageH
 
     /// <summary>
     /// Finds the last CODEOWNERS entry whose ServiceLabels, after removing Service Attention,
-    /// are fully contained within the matched entry's PRLabels, and collects its unique service
-    /// owners for the caller to measure against the configured minimum.
+    /// are fully contained within the matched entry's PRLabels, and expands its service owners to
+    /// the individuals GitHub would notify.
     /// </summary>
-    internal static (CodeownersEntry? matchingEntry, List<string> serviceOwners) FindMatchingServiceEntry(
+    internal (CodeownersEntry? matchingEntry, List<string> serviceOwners) FindMatchingServiceEntry(
         CodeownersEntry matchedEntry,
         List<CodeownersEntry> allEntries)
     {
@@ -321,69 +312,11 @@ public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageH
 
             if (requiredLabels.Intersect(entryServiceLabels, StringComparer.OrdinalIgnoreCase).Count() == entryServiceLabels.Count)
             {
-                var uniqueServiceOwners = GetUniqueIndividualOwners(entry.ServiceOwners);
-                return (entry, uniqueServiceOwners);
+                return (entry, [.. ownerValidator.ExpandToIndividuals(entry.ServiceOwners ?? [])]);
             }
         }
 
         return (null, []);
-    }
-
-    /// <summary>
-    /// Drops owners who are not code owners and records why, returning only those left.
-    /// <para>
-    /// Invalid owners are removed before counting rather than reported alongside the count, because
-    /// an owner GitHub will not route a review to does not own the package in any sense that matters.
-    /// Counting them would let a package with one real owner and one departed one look adequately
-    /// owned right up until the review request goes nowhere.
-    /// </para>
-    /// </summary>
-    private List<string> RejectInvalidOwners(
-        List<string> owners,
-        string location,
-        string? ownersFilePath,
-        string directoryPath,
-        List<CheckPackageIssue> issues)
-    {
-        var valid = new List<string>();
-
-        foreach (var owner in owners)
-        {
-            var violation = ownerValidator.Validate(owner, where: null);
-            if (violation == null)
-            {
-                valid.Add(owner);
-                continue;
-            }
-
-            issues.Add(new CheckPackageIssue
-            {
-                Code = CheckPackageIssue.Codes.InvalidOwner,
-                Message =
-                    $"check-package failed for path '{directoryPath}': {violation.Description} " +
-                    violation.Detail,
-                NextStep =
-                    $"Remove {FormatPromptValue(owner)} from {location} in " +
-                    $"{FormatOwnersFile(ownersFilePath, directoryPath)}, or have them meet the requirements above",
-                CurrentValues = [owner],
-            });
-        }
-
-        return valid;
-    }
-
-    /// <summary>
-    /// Returns a distinct list of individual owner aliases.
-    /// GitHub team aliases are intentionally omitted because the CODEOWNERS parser can leave
-    /// unresolved teams in the owner list when team expansion fails against the cache.
-    /// </summary>
-    internal static List<string> GetUniqueIndividualOwners(IEnumerable<string>? owners)
-    {
-        return (owners ?? [])
-            .Select(o => o.TrimStart('@').Trim())
-            .Where(o => !string.IsNullOrEmpty(o) && !ParsingUtils.IsGitHubTeam(o))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
     }
 
     internal static string ResolvePackageName(string directoryPath)

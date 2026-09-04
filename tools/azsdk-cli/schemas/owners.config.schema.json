@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/azsdk-cli/schemas/owners.config.schema.json",
+  "title": "owners.config.yaml",
+  "description": "Repository-level CODEOWNERS configuration: the ordered sections of the generated file, their static entries, and the settings governing fragment discovery.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "configs", "sections"],
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Schema version."
+    },
+    "configs": { "$ref": "#/$defs/settings" },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ordered. Render order equals declaration order, and CODEOWNERS matching is last-match-wins, so broader matches belong earlier.",
+      "items": { "$ref": "#/$defs/section" }
+    }
+  },
+  "$defs": {
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed-owner-yaml-paths", "default-section"],
+      "properties": {
+        "allowed-owner-yaml-paths": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Repo-root-relative globs naming every location a fragment may occupy. A fragment found anywhere else is an error, so ownership cannot be hidden in an unexpected place.",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "default-section": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Section that receives fragment entries that name no section of their own."
+        },
+        "output": {
+          "type": "string",
+          "default": ".github/CODEOWNERS",
+          "description": "Rendered file, relative to the repository root."
+        },
+        "minimum-path-owners": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 2,
+          "description": "Owners required on a fragment path entry. Teams count as the individuals they expand to."
+        },
+        "minimum-label-owners": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 2,
+          "description": "Service owners required on a label-owners block, evaluated after fragments are unioned. Teams count as the individuals they expand to."
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique. Fragments and entries route to a section by this name."
+        },
+        "defined-in-files": {
+          "type": "boolean",
+          "default": false,
+          "description": "Accepts entries contributed by owners.yaml fragments. A section may also declare static entries; the two sets are ordered together with no positional privilege."
+        },
+        "sort": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sort this section's entries. When false they render in authored order."
+        },
+        "exclude-from-check-package": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hides this section from check-package path resolution. Set it on repo-wide guardrails, which own every package's path but say nothing about whether a package declared owners of its own. The entries still render."
+        },
+        "paths": {
+          "type": "array",
+          "description": "Static path entries, rendered exactly as written and never validated against the membership cache.",
+          "items": { "$ref": "#/$defs/configPathEntry" }
+        },
+        "label-owners": {
+          "type": "array",
+          "description": "Static label-owner blocks, rendered exactly as written.",
+          "items": { "$ref": "#/$defs/configLabelOwnerEntry" }
+        }
+      }
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^@?([A-Za-z0-9][A-Za-z0-9-]*|[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*)$"
+    },
+    "ownerList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/owner" }
+    },
+    "configPathEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repo-absolute CODEOWNERS path expression, rendered verbatim."
+        },
+        "owners": { "$ref": "#/$defs/ownerList" },
+        "pr-labels": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "section": { "type": "string" }
+      }
+    },
+    "configLabelOwnerEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["labels"],
+      "properties": {
+        "labels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "service-owners": { "$ref": "#/$defs/ownerList" },
+        "azure-sdk-owners": { "$ref": "#/$defs/ownerList" },
+        "section": { "type": "string" }
+      }
+    }
+  }
+}

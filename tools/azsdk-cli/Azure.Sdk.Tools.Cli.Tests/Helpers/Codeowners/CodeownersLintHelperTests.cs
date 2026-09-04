@@ -2,10 +2,6 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
-using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
-using Azure.Sdk.Tools.CodeownersUtils.Caches;
-using Azure.Sdk.Tools.CodeownersUtils.Utils;
-using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners;
@@ -21,26 +17,64 @@ internal class CodeownersLintHelperTests
 
     private static readonly string[] KnownLabels = ["AI Model Inference", "AI Projects", "OpenAI"];
 
+    private const string AiFragment = "sdk/ai/owners.yaml";
+
     private static CodeownersLintHelper Lint(
         IEnumerable<string>? owners = null,
         IEnumerable<string>? labels = null,
-        IDictionary<string, List<string>>? teams = null) =>
+        IDictionary<string, List<string>>? teams = null,
+        IEnumerable<string>? orgVisible = null) =>
         new(
-            OwnerValidatorFake.Create(owners ?? ValidOwners, teams),
-            new FakeCommonLabelSource(labels ?? KnownLabels),
-            NullLogger<CodeownersLintHelper>.Instance);
+            OwnerValidatorFake.Create(owners ?? ValidOwners, teams, orgVisible),
+            new FakeCommonLabelSource(labels ?? KnownLabels));
 
-    private static IEnumerable<string> RuleIds(CodeownersLintResponse response) =>
-        response.Violations.Select(v => v.RuleId);
+    private static async Task<IReadOnlyList<string>> RuleIds(
+        CodeownersLintHelper lint,
+        OwnersTestRepo repo,
+        params string[] fragments)
+    {
+        var result = await lint.Lint(repo.Root, fragments, CancellationToken.None);
+
+        return [.. result.AllViolations.Select(v => v.RuleId)];
+    }
 
     [Test]
-    public async Task ValidRepositoryReportsNothing()
+    public async Task ValidFragmentReportsNothing()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
 
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
+        var result = await Lint().Lint(repo.Root, [AiFragment], CancellationToken.None);
 
-        Assert.That(result.Violations.Select(v => $"{v.RuleId} {v.Description}"), Is.Empty);
+        Assert.That(
+            result.AllViolations.Select(v => $"{v.RuleId} {v.Description}"),
+            Is.Empty);
+    }
+
+    [Test]
+    public async Task EveryFragmentIsCheckedWhenNoneAreNamed()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+
+        var result = await Lint().Lint(repo.Root, [], CancellationToken.None);
+
+        Assert.That(
+            result.Fragments.Select(f => f.FilePath),
+            Is.EquivalentTo(new[] { AiFragment, "sdk/openai/owners.yaml" }));
+    }
+
+    [Test]
+    public async Task OneFragmentIsJudgedWithoutLoadingTheOthers()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+
+        // A fragment nobody asked about is broken beyond parsing. Linting a different file must
+        // still succeed, which is what makes this usable as a per-file pull request gate.
+        repo.WriteFragment("sdk/broken", "this: is: not: valid: yaml:");
+
+        var result = await Lint().Lint(repo.Root, [AiFragment], CancellationToken.None);
+
+        Assert.That(result.Fragments.Select(f => f.FilePath), Is.EqualTo(new[] { AiFragment }));
+        Assert.That(result.AllViolations, Is.Empty);
     }
 
     [Test]
@@ -49,10 +83,10 @@ internal class CodeownersLintHelperTests
         using var repo = OwnersTestRepo.FromSpecAssets();
 
         var result = await Lint(owners: ValidOwners.Except(["test-user-09"]))
-            .RunLint(repo.Root, CancellationToken.None);
+            .Lint(repo.Root, [AiFragment], CancellationToken.None);
 
-        Assert.That(RuleIds(result), Does.Contain("LNT-OWN-001"));
-        Assert.That(result.Violations.First(v => v.RuleId == "LNT-OWN-001").Description, Does.Contain("test-user-09"));
+        var violation = result.AllViolations.First(v => v.RuleId == "LNT-OWN-001");
+        Assert.That(violation.Description, Does.Contain("test-user-09"));
     }
 
     [Test]
@@ -60,113 +94,62 @@ internal class CodeownersLintHelperTests
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
 
-        var result = await Lint(owners: ValidOwners)
-            .RunLint(repo.Root, CancellationToken.None);
+        var result = await Lint(orgVisible: ValidOwners.Except(["test-user-09"]))
+            .Lint(repo.Root, [AiFragment], CancellationToken.None);
 
-        Assert.That(result.Violations, Is.Empty);
-
-        var hidden = new CodeownersLintHelper(
-            OwnerValidatorFake.Create(ValidOwners, orgVisible: ValidOwners.Except(["test-user-09"])),
-            new FakeCommonLabelSource(KnownLabels),
-            NullLogger<CodeownersLintHelper>.Instance);
-
-        var hiddenResult = await hidden.RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(
-            hiddenResult.Violations.First(v => v.RuleId == "LNT-OWN-001").Detail,
-            Does.Contain("orgs/Azure/people"));
+        var violation = result.AllViolations.First(v => v.RuleId == "LNT-OWN-001");
+        Assert.That(violation.Detail, Does.Contain("github.com/orgs/Azure/people"));
     }
 
     [Test]
-    public void EmptyMembershipCacheFailsClosed()
+    public async Task TeamThatDoesNotDescendFromWriteIsReported()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", FragmentOwnedBy("@Azure/some-other-team"));
 
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await Lint(owners: []).RunLint(repo.Root, CancellationToken.None));
-
-        Assert.That(ex!.Message, Does.Contain("empty cache"));
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-OWN-002"));
     }
 
     [Test]
     public async Task MalformedTeamAliasIsReported()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.WriteFragment("sdk/openai", FragmentOwnedBy("someorg/some-team"));
+        repo.WriteFragment("sdk/ai", FragmentOwnedBy("@Contoso/team/extra"));
 
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Contain("LNT-OWN-002"));
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-OWN-002"));
     }
 
     [Test]
-    public async Task TeamOutsideAzureSdkWriteIsReported()
+    public async Task TeamMembersCountTowardThePathMinimum()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.WriteFragment("sdk/openai", FragmentOwnedBy("Azure/not-a-descendant"));
-
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Contain("LNT-OWN-002"));
-    }
-
-    [Test]
-    public async Task TeamInsideAzureSdkWriteIsAccepted()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.WriteFragment("sdk/openai", FragmentOwnedBy("Azure/azure-sdk-write-net-core"));
+        repo.WriteFragment("sdk/ai", FragmentWithOwners("@Azure/ai-team"));
 
         var teams = new Dictionary<string, List<string>>
         {
-            ["Azure/azure-sdk-write-net-core"] = ["test-user-13"],
+            ["Azure/ai-team"] = ["test-user-02", "test-user-24"],
         };
 
-        var result = await Lint(teams: teams).RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Not.Contain("LNT-OWN-002"));
+        // One declared owner, but it expands to two people, so the minimum of 2 is met.
+        Assert.That(await RuleIds(Lint(teams: teams), repo, AiFragment), Does.Not.Contain("LNT-OWN-003"));
     }
 
     [Test]
-    public async Task PathWithTooFewIndividualOwnersIsReported()
+    public async Task PathWithTooFewOwnersIsReported()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.WriteFragment("sdk/openai",
-            """
-            version: 1
-            paths:
-              - path: .
-                owners: [test-user-02]
-                pr-labels: [OpenAI]
-            label-owners:
-              - labels: [OpenAI]
-                service-owners: [test-user-02, test-user-24]
-            """);
+        repo.WriteFragment("sdk/ai", FragmentWithOwners("test-user-02"));
 
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Contain("LNT-OWN-003"));
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-OWN-003"));
     }
 
     [Test]
-    public async Task LabelOwnerCountIsMeasuredAfterTheUnion()
+    public async Task LabelBlockWithTooFewServiceOwnersIsReported()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
-        // On its own this block is below the minimum; unioned with sdk/ai's it is not.
-        repo.WriteFragment("sdk/openai",
-            """
-            version: 1
-            paths:
-              - path: .
-                owners: [test-user-02, test-user-24]
-                pr-labels: [AI Projects]
-            label-owners:
-              - labels: [AI Projects]
-                service-owners: [test-user-02]
-            """);
+        repo.WriteFragment("sdk/ai", FragmentWithServiceOwners("test-user-02"));
 
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Not.Contain("LNT-OWN-004"));
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-OWN-004"));
     }
 
     [Test]
@@ -174,51 +157,113 @@ internal class CodeownersLintHelperTests
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
 
-        var result = await Lint(labels: KnownLabels.Except(["OpenAI"]))
-            .RunLint(repo.Root, CancellationToken.None);
+        var result = await Lint(labels: ["OpenAI"]).Lint(repo.Root, [AiFragment], CancellationToken.None);
 
-        Assert.That(RuleIds(result), Does.Contain("LNT-LBL-001"));
-        Assert.That(result.Violations.First(v => v.RuleId == "LNT-LBL-001").Description, Does.Contain("OpenAI"));
+        Assert.That(result.AllViolations.Select(v => v.RuleId), Does.Contain("LNT-LBL-001"));
     }
 
     [Test]
-    public async Task LabelsAreMatchedWithoutRegardToCase()
+    public async Task PathWithNoPrLabelsIsReported()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
-
-        var result = await Lint(labels: ["ai model inference", "AI PROJECTS", "openai"])
-            .RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Not.Contain("LNT-LBL-001"));
-    }
-
-    [Test]
-    public async Task ConfigLabelsAreNotLinted()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-
-        // The base config names many labels the common set does not carry; only fragments are linted.
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
-
-        Assert.That(RuleIds(result), Does.Not.Contain("LNT-LBL-001"));
-    }
-
-    [Test]
-    public async Task ValidationErrorsAreReportedInsteadOfLintRules()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.WriteFragment("sdk/openai",
-            """
+        repo.WriteFragment("sdk/ai", """
             version: 1
             paths:
-              - path: ../ai/
-                owners: [test-user-02]
-                pr-labels: [OpenAI]
+              - path: .
+                owners: [test-user-02, test-user-24]
+            label-owners:
+              - labels: [OpenAI]
+                service-owners: [test-user-02, test-user-24]
             """);
 
-        var result = await Lint().RunLint(repo.Root, CancellationToken.None);
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-LBL-002"));
+    }
 
-        Assert.That(RuleIds(result).ToArray(), Is.EqualTo(new[] { "CFG-PATH-001" }));
+    [Test]
+    public async Task PrLabelWithNoOwnersInTheSameFileIsReported()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: .
+                owners: [test-user-02, test-user-24]
+                pr-labels: [OpenAI]
+            label-owners:
+              - labels: [AI Projects]
+                service-owners: [test-user-02, test-user-24]
+            """);
+
+        var result = await Lint().Lint(repo.Root, [AiFragment], CancellationToken.None);
+
+        var violation = result.AllViolations.First(v => v.RuleId == "LNT-LBL-003");
+        Assert.That(violation.Description, Does.Contain("OpenAI"));
+    }
+
+    [Test]
+    public async Task PathEscapingTheFragmentSubtreeIsReported()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: ../openai/
+                owners: [test-user-02, test-user-24]
+                pr-labels: [OpenAI]
+            label-owners:
+              - labels: [OpenAI]
+                service-owners: [test-user-02, test-user-24]
+            """);
+
+        // generate drops this silently, so lint is the only thing that reports it.
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("CFG-PATH-001"));
+    }
+
+    [Test]
+    public async Task UnparseableFragmentIsReportedRatherThanThrown()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", "version: 1\npaths: not-a-list\n");
+
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-SCHEMA-001"));
+    }
+
+    [Test]
+    public async Task DirectoriesUnderTheFragmentAreReportedWithTheirOwners()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+
+        var result = await Lint().Lint(repo.Root, [AiFragment], CancellationToken.None);
+        var directories = result.Fragments.Single().Directories;
+
+        Assert.That(
+            directories.Select(d => d.Directory),
+            Is.EqualTo(new[] { "sdk/ai/Azure.AI.Inference", "sdk/ai/Azure.AI.Projects" }));
+        Assert.That(directories.All(d => d.Owners.Count > 0), Is.True);
+    }
+
+    [Test]
+    public async Task DirectoryNoPathEntryClaimsIsReportedAsUnowned()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.CreateDirectory("sdk/ai/Azure.AI.Unclaimed");
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: Azure.AI.Inference/
+                owners: [test-user-02, test-user-24]
+                pr-labels: [OpenAI]
+            label-owners:
+              - labels: [OpenAI]
+                service-owners: [test-user-02, test-user-24]
+            """);
+
+        var result = await Lint().Lint(repo.Root, [AiFragment], CancellationToken.None);
+        var unclaimed = result.Fragments.Single().Directories
+            .Single(d => d.Directory == "sdk/ai/Azure.AI.Unclaimed");
+
+        Assert.That(unclaimed.MatchedPath, Is.Null);
+        Assert.That(unclaimed.Owners, Is.Empty);
     }
 
     private static string FragmentOwnedBy(string team) =>
@@ -228,6 +273,33 @@ internal class CodeownersLintHelperTests
           - path: .
             owners: [test-user-02, test-user-24, {team}]
             pr-labels: [OpenAI]
+        label-owners:
+          - labels: [OpenAI]
+            service-owners: [test-user-02, test-user-24]
+        """;
+
+    private static string FragmentWithOwners(string owners) =>
+        $"""
+        version: 1
+        paths:
+          - path: .
+            owners: [{owners}]
+            pr-labels: [OpenAI]
+        label-owners:
+          - labels: [OpenAI]
+            service-owners: [test-user-02, test-user-24]
+        """;
+
+    private static string FragmentWithServiceOwners(string serviceOwners) =>
+        $"""
+        version: 1
+        paths:
+          - path: .
+            owners: [test-user-02, test-user-24]
+            pr-labels: [OpenAI]
+        label-owners:
+          - labels: [OpenAI]
+            service-owners: [{serviceOwners}]
         """;
 
     private sealed class FakeCommonLabelSource(IEnumerable<string> labels) : ICommonLabelSource

@@ -36,7 +36,7 @@ public class CheckPackageHelperTests
     [SetUp]
     public void SetUp()
     {
-        helper = new CheckPackageHelper(OwnerValidatorFake.AcceptAll());
+        helper = Helper(OwnerValidatorFake.AcceptAll());
     }
 
     [Test]
@@ -395,49 +395,38 @@ public class CheckPackageHelperTests
     }
 
     [Test]
-    public void CheckPackage_OwnerNotInTheCache_IsReportedAndDoesNotCount()
+    public void CheckPackage_TeamOwner_CountsAsItsMembers()
     {
-        var result = new CheckPackageHelper(OwnerValidatorFake.Rejecting("ownerBob")).Evaluate(
-            "sdk/two-owners/Azure.TwoOwners",
+        var teams = new Dictionary<string, List<string>> { ["Azure/two-people"] = ["ownerAlice", "ownerBob"] };
+
+        var result = Helper(OwnerValidatorFake.Create(["ownerAlice", "ownerBob"], teams)).Evaluate(
+            "sdk/team-owned/Azure.TeamOwned",
             "Azure/azure-sdk-for-net",
-            entries,
+            CreateEntries(["@Azure/two-people"], ["Team Owned"], ["serviceOwnerAlice", "serviceOwnerBob"], "/sdk/team-owned/"),
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InvalidOwner));
+        Assert.That(result.Owners, Is.EquivalentTo(new[] { "ownerAlice", "ownerBob" }));
+        Assert.That(result.Issues.Select(i => i.Code), Does.Not.Contain(CheckPackageIssue.Codes.InsufficientOwners));
+    }
 
-        // Removing the invalid owner leaves one, which is below the minimum, so the count fails too.
+    [Test]
+    public void CheckPackage_TeamWithNoCachedMembers_CountsAsNobody()
+    {
+        var result = Helper(OwnerValidatorFake.Create(["ownerAlice"])).Evaluate(
+            "sdk/team-owned/Azure.TeamOwned",
+            "Azure/azure-sdk-for-net",
+            CreateEntries(["@Azure/unknown-team"], ["Team Owned"], ["serviceOwnerAlice", "serviceOwnerBob"], "/sdk/team-owned/"),
+            settings: DefaultSettings, ownersFilePath: null);
+
+        Assert.That(result.Owners, Is.Empty);
         Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InsufficientOwners));
-        Assert.That(result.Owners, Is.EqualTo(new[] { "ownerAlice" }));
     }
 
-    [Test]
-    public void CheckPackage_InvalidServiceOwner_IsReportedAndDoesNotCount()
-    {
-        var result = new CheckPackageHelper(OwnerValidatorFake.Rejecting("serviceOwnerBob")).Evaluate(
-            "sdk/two-owners/Azure.TwoOwners",
-            "Azure/azure-sdk-for-net",
-            entries,
-            settings: DefaultSettings, ownersFilePath: null);
-
-        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InvalidOwner));
-        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InsufficientServiceOwners));
-        Assert.That(result.ServiceOwners, Does.Not.Contain("serviceOwnerBob"));
-    }
-
-    [Test]
-    public void CheckPackage_InvalidOwnerIssue_NamesTheOwnerToRemove()
-    {
-        var result = new CheckPackageHelper(OwnerValidatorFake.Rejecting("ownerBob")).Evaluate(
-            "sdk/two-owners/Azure.TwoOwners",
-            "Azure/azure-sdk-for-net",
-            entries,
-            settings: DefaultSettings, ownersFilePath: "sdk/two-owners/owners.yaml");
-
-        var issue = result.Issues.First(i => i.Code == CheckPackageIssue.Codes.InvalidOwner);
-
-        Assert.That(issue.CurrentValues, Is.EqualTo(new[] { "ownerBob" }));
-        Assert.That(issue.NextStep, Does.Contain("sdk/two-owners/owners.yaml"));
-    }
+    /// <summary>
+    /// These tests drive <c>Evaluate</c> with hand-built entries, so the model builder is never used.
+    /// </summary>
+    private static CheckPackageHelper Helper(IOwnerValidator ownerValidator) =>
+        new(OwnerValidatorFake.UnusedModelBuilder(), ownerValidator);
 
     private static List<CodeownersEntry> CreateEntries(
         List<string> sourceOwners,

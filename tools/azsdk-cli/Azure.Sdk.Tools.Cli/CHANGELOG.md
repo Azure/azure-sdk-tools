@@ -4,12 +4,17 @@
 
 ### Features Added
 
+- Added `config codeowners validate-owner`, which reports whether a GitHub alias or `Azure/<team>` handle can own code and which requirement failed when it cannot. Also exposed as the `azsdk_engsys_codeowner_validate_owner` MCP tool.
+- Added JSON Schemas for `owners.config.yaml` and `owners.yaml` under `tools/azsdk-cli/schemas/`, referenced from the example assets with a `yaml-language-server` modeline.
+
 ### Breaking Changes
 
 - Removed the Azure DevOps work item backed ownership commands in favor of in-repo ownership YAML: `config codeowners view`, `config codeowners add-package-owner`, `add-package-label`, `add-label-owner`, `remove-package-owner`, `remove-package-label`, `remove-label-owner`, and `config github-label sync-ado`.
 - `config codeowners generate` and `check-package` now read ownership from `.github/owners.config.yaml` and `owners.yaml` fragments. `check-package` gains `--repo-root`; `generate --package-types`, `--section`, `--invalid-owner-lookback-days`, and `check-package --codeowners-cache` are removed.
-- Replaced `config codeowners audit` with `config codeowners lint`, which reports invalid owners, insufficient owners, and labels outside the common label set. It does not fix anything: `--fix` and `--force` are removed, as are the ordering, path-existence, and Service Attention rules.
-- `config codeowners check-package` now validates resolved owners against the CODEOWNERS cache. Owners who are not in `azure-sdk-write` or whose Azure org membership is private are reported and do not count toward the required owner minimums.
+- Replaced `config codeowners audit` with `config codeowners lint-fragments`, which validates one `owners.yaml`, or every one, in isolation. It reports invalid owners, insufficient owners, labels outside the common label set, and PR labels that no `label-owners` block in the same file claims. It does not fix anything: `--fix` and `--force` are removed, as are the ordering, path-existence, and Service Attention rules.
+- Removed `config codeowners export-section`. Section order is declared in `.github/owners.config.yaml` and the whole file is generated, so the command has no remaining caller.
+- `config codeowners generate` now drops owners the membership caches reject, along with any entry left with no owners, and reports what it excluded. It exits 0 even when entries were dropped, and non-zero only when the caches are unavailable. It gains `--omit-fallback-sections` and `--output-file`.
+- Owner minimums now count the individuals a team expands to. Previously a team contributed nothing, so a service that had delegated ownership to `Azure/<team>` reported as unowned.
 
 ### Bugs Fixed
 

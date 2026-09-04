@@ -3,6 +3,7 @@
 
 using System.Text;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
@@ -46,6 +47,14 @@ public class CheckPackageResponse : CommandResponse
 
     [JsonPropertyName("issues")]
     public List<CheckPackageIssue> Issues { get; } = [];
+
+    /// <summary>
+    /// Owners that <c>generate</c> removed from the fragment governing this package. Reported on
+    /// failure so an owner count that disagrees with the checked-in <c>owners.yaml</c> is explicable
+    /// rather than mysterious.
+    /// </summary>
+    [JsonPropertyName("dropped_owners")]
+    public IReadOnlyList<DroppedItem> DroppedOwners { get; set; } = [];
 
     [JsonIgnore]
     public int IssueCount => Issues.Count;
@@ -107,6 +116,16 @@ public class CheckPackageResponse : CommandResponse
             if (issue.CurrentValues?.Count > 0)
             {
                 sb.AppendLine($"  Current values: {string.Join(", ", issue.CurrentValues)}");
+            }
+        }
+
+        if (DroppedOwners.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"Owners excluded from the rendered file ({DroppedOwners.Count}):");
+            foreach (var item in DroppedOwners)
+            {
+                sb.AppendLine($"- [{item.RuleId}] {item.Where}: '{item.Subject}' — {item.Reason}");
             }
         }
 

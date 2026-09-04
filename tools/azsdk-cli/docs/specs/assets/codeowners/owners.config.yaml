@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/azsdk-cli/schemas/owners.config.schema.json
 # Example .github/owners.config.yaml for Azure/azure-sdk-for-net
 #
 # Derived from https://github.com/Azure/azure-sdk-for-net/blob/main/.github/CODEOWNERS
@@ -29,11 +30,11 @@ configs:
   # Rendered output, relative to repo root.
   output: .github/CODEOWNERS
 
-  # Minimum individual (non-team) owners required on a fragment path entry.
+  # Owners required on a fragment path entry. A team counts as the individuals it
+  # expands to in the membership cache.
   minimum-path-owners: 2
 
-  # Minimum individual (non-team) service owners required on a label-owner block,
-  # evaluated after union.
+  # Service owners required on a label-owner block, evaluated after union.
   minimum-label-owners: 2
 
 sections:

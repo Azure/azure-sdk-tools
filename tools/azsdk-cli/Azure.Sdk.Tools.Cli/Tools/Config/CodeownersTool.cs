@@ -37,22 +37,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             DefaultValueFactory = _ => ".",
         };
 
-        private readonly Option<string> codeownersPathOption = new("--codeowners-path")
+        private readonly Option<string> outputFilePathOption = new("--output-file")
         {
-            Description = "Path to the CODEOWNERS file",
-            Required = true,
+            Description = "Where to write the rendered CODEOWNERS file (default: configs.output from the owners config)",
+            Required = false,
         };
 
-        private readonly Option<string[]> sectionsOption = new("--section")
+        private readonly Option<bool> omitFallbackSectionsOption = new("--omit-fallback-sections")
         {
-            Description = "Section name to export. Can be specified multiple times.",
-            Required = true,
+            Description = "Omit sections marked exclude-from-check-package from the rendered output",
+            Required = false,
+        };
+
+        private readonly Option<string[]> fragmentPathsOption = new("--fragment")
+        {
+            Description = "Repo-relative path to an owners.yaml to lint. Repeatable; defaults to every fragment in the repo.",
+            Required = false,
             AllowMultipleArgumentsPerToken = false,
         };
 
-        private readonly Option<string> outputFilePathOption = new("--output-file")
+        private readonly Option<string> ownerOption = new("--owner")
         {
-            Description = "File path to write exported content",
+            Description = "GitHub alias (alice) or team alias (Azure/azure-sdk-write) to validate",
             Required = true,
         };
 
@@ -65,19 +71,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         // Command names
         private const string generateCodeownersCommandName = "generate";
-        private const string exportSectionCommandName = "export-section";
         private const string checkPackageCommandName = "check-package";
         private const string updateCacheCommandName = "update-cache";
-        private const string lintCommandName = "lint";
+        private const string lintFragmentsCommandName = "lint-fragments";
+        private const string validateOwnerCommandName = "validate-owner";
 
         // MCP Tool Names
         private const string CodeownerCheckPackageToolName = "azsdk_engsys_codeowner_check_package";
         private const string CodeownerUpdateCacheToolName = "azsdk_engsys_codeowner_update_cache";
+        private const string CodeownerValidateOwnerToolName = "azsdk_engsys_codeowner_validate_owner";
 
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
         private readonly ICheckPackageHelper checkPackageHelper;
         private readonly ICodeownersLintHelper codeownersLintHelper;
+        private readonly IOwnerValidator ownerValidator;
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
 
@@ -87,6 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ICodeownersGenerateHelper codeownersGenerateHelper,
             ICheckPackageHelper checkPackageHelper,
             ICodeownersLintHelper codeownersLintHelper,
+            IOwnerValidator ownerValidator,
             IGitHelper gitHelper,
             IDevOpsService devOpsService
         )
@@ -95,6 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.codeownersGenerateHelper = codeownersGenerateHelper;
             this.checkPackageHelper = checkPackageHelper;
             this.codeownersLintHelper = codeownersLintHelper;
+            this.ownerValidator = ownerValidator;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
 
@@ -105,20 +115,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         [
             new(generateCodeownersCommandName, "Render .github/CODEOWNERS from the repository's ownership YAML")
             {
-                repoRootOption,
-            },
-            new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
-            {
-                codeownersPathOption, sectionsOption, outputFilePathOption,
+                repoRootOption, omitFallbackSectionsOption, outputFilePathOption,
             },
             new(checkPackageCommandName, "Check that a package has sufficient owners, PR labels, and service owners")
             {
                 directoryPathOption, repoRootOption, repoOption,
             },
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
-            new(lintCommandName, "Check the repository's ownership YAML for invalid owners, insufficient owners, and unknown labels. You MUST update the CODEOWNERS cache before running this command.")
+            new(lintFragmentsCommandName, "Check owners.yaml fragments for invalid owners, insufficient owners, and unknown labels. You MUST update the CODEOWNERS cache before running this command.")
             {
-                repoRootOption,
+                repoRootOption, fragmentPathsOption,
+            },
+            new McpCommand(validateOwnerCommandName, "Check whether a GitHub alias or team can be a code owner", CodeownerValidateOwnerToolName)
+            {
+                ownerOption,
             },
         ];
 
@@ -131,13 +141,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 case generateCodeownersCommandName:
                     return await GenerateCodeowners(
                         await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct),
-                        ct);
-
-                case exportSectionCommandName:
-                    return await ExportSection(
-                        parseResult.GetValue(codeownersPathOption)!,
-                        parseResult.GetValue(sectionsOption)!,
-                        parseResult.GetValue(outputFilePathOption)!,
+                        parseResult.GetValue(omitFallbackSectionsOption),
+                        parseResult.GetValue(outputFilePathOption),
                         ct);
 
                 case checkPackageCommandName:
@@ -150,78 +155,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 case updateCacheCommandName:
                     return await UpdateCache(ct);
 
-                case lintCommandName:
-                    return await Lint(
+                case lintFragmentsCommandName:
+                    return await LintFragments(
                         await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct),
+                        parseResult.GetValue(fragmentPathsOption) ?? [],
                         ct);
+
+                case validateOwnerCommandName:
+                    return await ValidateOwner(parseResult.GetValue(ownerOption)!, ct);
 
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
             }
         }
 
-        public async Task<DefaultCommandResponse> GenerateCodeowners(
+        /// <summary>
+        /// Renders the CODEOWNERS file. Always writes: entries the caches will not stand behind are
+        /// dropped and reported rather than failing the run, so the rendered file keeps up with the
+        /// YAML instead of freezing whenever some ownership decays.
+        /// </summary>
+        public async Task<CommandResponse> GenerateCodeowners(
             string repoRoot,
+            bool omitFallbackSections,
+            string? outputPath,
             CancellationToken ct = default)
         {
             try
             {
-                var result = await codeownersGenerateHelper.Generate(repoRoot, ct);
+                var result = await codeownersGenerateHelper.Generate(repoRoot, omitFallbackSections, outputPath, ct);
 
-                if (result.Errors.Count > 0)
+                return new CodeownersGenerateResponse
                 {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = string.Join(Environment.NewLine, result.Errors),
-                    };
-                }
-
-                return new DefaultCommandResponse { Message = $"Wrote {result.OutputPath}." };
+                    OutputPath = result.OutputPath,
+                    Dropped = result.Dropped,
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to generate CODEOWNERS file");
                 return new DefaultCommandResponse { ResponseError = $"Failed to generate CODEOWNERS file: {ex.Message}" };
             }
-        }
-
-        public async Task<DefaultCommandResponse> ExportSection(
-            string codeownersPath,
-            string[] sections,
-            string output, CancellationToken ct)
-        {
-            if (!File.Exists(codeownersPath))
-            {
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"CODEOWNERS file not found: {codeownersPath}"
-                };
-            }
-
-            var lines = (await File.ReadAllLinesAsync(codeownersPath, ct)).ToList();
-            var exportedLines = new List<string>();
-
-            foreach (var sectionName in sections)
-            {
-                var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindSection(lines, sectionName);
-                if (headerStart == -1)
-                {
-                    logger.LogError("Section '{SectionName}' not found in CODEOWNERS file", sectionName);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Section '{sectionName}' not found in CODEOWNERS file"
-                    };
-                }
-
-                exportedLines.AddRange(lines.GetRange(headerStart, sectionEnd - headerStart));
-            }
-
-            await File.WriteAllLinesAsync(output, exportedLines, ct);
-
-            return new DefaultCommandResponse
-            {
-                Message = $"Exported {sections.Length} section(s) to {output}"
-            };
         }
 
         /// <summary>
@@ -280,19 +253,51 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         }
 
         /// <summary>
-        /// Checks the repository's ownership YAML for violations.
-        /// The CODEOWNERS cache MUST be updated before running lint.
+        /// Checks owners.yaml fragments. Each fragment is judged on its own, so this is safe to run
+        /// against only the files a pull request touched.
+        /// The CODEOWNERS cache MUST be updated before running it.
         /// </summary>
-        public async Task<CommandResponse> Lint(string repoRoot, CancellationToken ct = default)
+        public async Task<CommandResponse> LintFragments(
+            string repoRoot,
+            string[] fragmentPaths,
+            CancellationToken ct = default)
         {
             try
             {
-                return await codeownersLintHelper.RunLint(repoRoot, ct);
+                var result = await codeownersLintHelper.Lint(repoRoot, fragmentPaths, ct);
+
+                return new CodeownersLintResponse { Fragments = result.Fragments };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Lint failed");
-                return new DefaultCommandResponse { ResponseError = $"Lint failed: {ex.Message}" };
+                logger.LogError(ex, "lint-fragments failed");
+                return new DefaultCommandResponse { ResponseError = $"lint-fragments failed: {ex.Message}" };
+            }
+        }
+
+        /// <summary>
+        /// Answers whether one alias or team can be a code owner, and what to do when it cannot.
+        /// </summary>
+        [McpServerTool(Name = CodeownerValidateOwnerToolName), Description("Check whether a GitHub alias or team alias is a valid CODEOWNERS owner, and report what must change if it is not.")]
+        public async Task<CommandResponse> ValidateOwner(string owner, CancellationToken ct = default)
+        {
+            try
+            {
+                await ownerValidator.EnsureUsableAsync(ct);
+                var violation = ownerValidator.Validate(owner, where: null);
+
+                return new ValidateOwnerResponse
+                {
+                    Owner = owner,
+                    Valid = violation == null,
+                    Members = ownerValidator.ExpandToIndividuals([owner]),
+                    Violation = violation,
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "validate-owner failed");
+                return new DefaultCommandResponse { ResponseError = $"validate-owner failed: {ex.Message}" };
             }
         }
 

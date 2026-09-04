@@ -37,14 +37,15 @@ public class OwnersConfigSettings
     public string Output { get; set; } = ".github/CODEOWNERS";
 
     /// <summary>
-    /// Minimum individual (non-team) owners on a fragment path entry. Reported by the audit and by
-    /// check-package; never fails generation.
+    /// Minimum owners on a fragment path entry, counted as the distinct individuals the declared
+    /// owners expand to. Enforced by lint-fragments and check-package; never fails generation.
     /// </summary>
     public int MinimumPathOwners { get; set; } = 2;
 
     /// <summary>
-    /// Minimum individual (non-team) service owners on a label-owner block, evaluated after union.
-    /// Reported by the audit and by check-package; never fails generation.
+    /// Minimum service owners on a label-owner block, counted as the distinct individuals the
+    /// declared owners expand to. Enforced by lint-fragments per fragment and by check-package after
+    /// the fragments are unioned; never fails generation.
     /// </summary>
     public int MinimumLabelOwners { get; set; } = 2;
 }
@@ -59,7 +60,7 @@ public class OwnersSection : IYamlSourceLine
     [YamlIgnore]
     public int Line { get; set; }
 
-    /// <summary>Unique. Also the key used by <c>export-section</c> and <c>CodeownersSectionFinder</c>.</summary>
+    /// <summary>Unique. Fragments and entries route to a section by this name.</summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Marks the section as a target for entries contributed by <c>owners.yaml</c> fragments.</summary>

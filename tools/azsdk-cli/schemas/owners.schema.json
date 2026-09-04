@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/azsdk-cli/schemas/owners.schema.json",
+  "title": "owners.yaml",
+  "description": "Per-service ownership fragment. Contributes path entries and label-owner blocks to the repository's generated CODEOWNERS file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Schema version. Must match the version in .github/owners.config.yaml."
+    },
+    "section": {
+      "type": "string",
+      "description": "Routes every entry in this file to a named section of owners.config.yaml instead of the configured default section."
+    },
+    "paths": {
+      "type": "array",
+      "description": "Directories and files owned by this service.",
+      "items": { "$ref": "#/$defs/pathEntry" }
+    },
+    "label-owners": {
+      "type": "array",
+      "description": "Who is notified for a set of issue labels. Blocks that declare the same label set are unioned across all fragments.",
+      "items": { "$ref": "#/$defs/labelOwnerEntry" }
+    }
+  },
+  "$defs": {
+    "owner": {
+      "type": "string",
+      "description": "A GitHub alias, or an Azure/<team> handle. Must have write access to the repository and public Azure org membership.",
+      "pattern": "^@?([A-Za-z0-9][A-Za-z0-9-]*|Azure/[A-Za-z0-9][A-Za-z0-9._-]*)$"
+    },
+    "ownerList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/owner" }
+    },
+    "labelList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Must exist in the common label set: tools/github/data/common-labels.csv."
+      }
+    },
+    "pathEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "owners", "pr-labels"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Relative to the directory containing this file. Use \".\" for that directory itself. Must not contain \"..\" and must not address anything outside this directory.",
+          "not": { "pattern": "(^|/)\\.\\.(/|$)" }
+        },
+        "owners": {
+          "allOf": [{ "$ref": "#/$defs/ownerList" }],
+          "description": "Who reviews changes under this path. Teams expand to their members when owners are counted."
+        },
+        "pr-labels": {
+          "allOf": [{ "$ref": "#/$defs/labelList" }],
+          "description": "Labels applied to pull requests touching this path. Every label here must also be claimed by a label-owners block in this same file."
+        },
+        "section": {
+          "type": "string",
+          "description": "Routes this entry to a named section, overriding the file-level section."
+        }
+      }
+    },
+    "labelOwnerEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["labels"],
+      "anyOf": [
+        { "required": ["service-owners"] },
+        { "required": ["azure-sdk-owners"] }
+      ],
+      "properties": {
+        "labels": {
+          "allOf": [{ "$ref": "#/$defs/labelList" }],
+          "description": "The label set this block owns. Used as the union key across fragments."
+        },
+        "service-owners": {
+          "allOf": [{ "$ref": "#/$defs/ownerList" }],
+          "description": "Notified when an issue carries these labels."
+        },
+        "azure-sdk-owners": {
+          "allOf": [{ "$ref": "#/$defs/ownerList" }],
+          "description": "Azure SDK team contacts for these labels."
+        },
+        "section": {
+          "type": "string",
+          "description": "Routes this entry to a named section, overriding the file-level section."
+        }
+      }
+    }
+  }
+}

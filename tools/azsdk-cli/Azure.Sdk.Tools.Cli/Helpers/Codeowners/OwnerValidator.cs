@@ -24,6 +24,12 @@ public interface IOwnerValidator
 
     /// <summary>Returns null when <paramref name="owner"/> is a valid code owner.</summary>
     LintViolation? Validate(string owner, string? where);
+
+    /// <summary>
+    /// Resolves a list of declared owners to the distinct individuals GitHub would notify, replacing
+    /// each team with its cached membership. A team with no cached membership contributes nobody.
+    /// </summary>
+    IReadOnlyList<string> ExpandToIndividuals(IEnumerable<string> owners);
 }
 
 public class OwnerValidator(
@@ -36,21 +42,67 @@ public class OwnerValidator(
 
     public const string AzureSdkWriteTeam = "Azure/azure-sdk-write";
 
-    public async Task EnsureUsableAsync(CancellationToken ct)
+    /// <summary>
+    /// Several commands ask for the caches in one execution and the freshness check is a network
+    /// round trip, so the result is kept rather than re-fetched. Failures are not memoized: a caller
+    /// that retries after fixing the cache gets a real answer.
+    /// </summary>
+    private Task? ensureUsable;
+
+    public Task EnsureUsableAsync(CancellationToken ct) => ensureUsable ??= EnsureUsableCoreAsync(ct);
+
+    private async Task EnsureUsableCoreAsync(CancellationToken ct)
     {
-        var minimumLastModifiedUtc = DateTime.UtcNow.Subtract(CacheMaxAge);
-
-        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
-        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.UserOrgVisibilityBlobStorageURI, minimumLastModifiedUtc, ct);
-
-        // Fail closed. An empty cache would report every owner in the repository as invalid.
-        if (teamUserCache.GetUsersForTeam(AzureSdkWriteTeam).Count == 0
-            || userOrgVisibilityCache.UserOrgVisibilityDict.Count == 0)
+        try
         {
-            throw new InvalidOperationException(
-                $"Cached membership for '{AzureSdkWriteTeam}' or Azure org visibility came back empty. " +
-                "Refusing to validate owners against an empty cache; run 'azsdk config codeowners update-cache' and retry.");
+            var minimumLastModifiedUtc = DateTime.UtcNow.Subtract(CacheMaxAge);
+
+            await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
+            await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.UserOrgVisibilityBlobStorageURI, minimumLastModifiedUtc, ct);
+
+            // Fail closed. An empty cache would report every owner in the repository as invalid.
+            if (teamUserCache.GetUsersForTeam(AzureSdkWriteTeam).Count == 0
+                || userOrgVisibilityCache.UserOrgVisibilityDict.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Cached membership for '{AzureSdkWriteTeam}' or Azure org visibility came back empty. " +
+                    "Refusing to validate owners against an empty cache; run 'azsdk config codeowners update-cache' and retry.");
+            }
         }
+        catch
+        {
+            ensureUsable = null;
+            throw;
+        }
+    }
+
+    public IReadOnlyList<string> ExpandToIndividuals(IEnumerable<string> owners)
+    {
+        var individuals = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var owner in owners ?? [])
+        {
+            var alias = owner?.TrimStart('@') ?? string.Empty;
+            if (alias.Length == 0)
+            {
+                continue;
+            }
+
+            var resolved = ParsingUtils.IsGitHubTeam(alias)
+                ? teamUserCache.GetUsersForTeam(alias)
+                : (IReadOnlyCollection<string>)[alias];
+
+            foreach (var individual in resolved)
+            {
+                if (seen.Add(individual))
+                {
+                    individuals.Add(individual);
+                }
+            }
+        }
+
+        return individuals;
     }
 
     public LintViolation? Validate(string owner, string? where)

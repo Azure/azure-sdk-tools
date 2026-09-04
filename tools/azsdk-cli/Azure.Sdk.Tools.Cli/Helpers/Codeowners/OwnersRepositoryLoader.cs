@@ -80,7 +80,7 @@ public static class OwnersRepositoryLoader
     /// Walks the whole checkout rather than just the allowed globs, because a fragment hiding outside
     /// them is exactly what <c>CFG-LOC-001</c> exists to catch.
     /// </summary>
-    private static IEnumerable<string> FindFragmentFiles(string repoRoot)
+    public static IEnumerable<string> FindFragmentFiles(string repoRoot)
     {
         var options = new EnumerationOptions
         {

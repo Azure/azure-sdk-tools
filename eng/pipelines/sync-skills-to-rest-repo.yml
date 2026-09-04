@@ -17,6 +17,11 @@ parameters:
   default:
     - RepoOwner: Azure
       RepoName: azure-rest-api-specs
+- name: PRValidationPipelines
+  type: object
+  default:
+    - Repository: azure-rest-api-specs
+      DefinitionId: 110
 
 trigger: none
 
@@ -53,3 +58,4 @@ extends:
         workingDirectory: .github
         displayName: Check TypeSpec authoring skill formatting with Prettier
     Repos: ${{ parameters.Repos }}
+    PRValidationPipelines: ${{ parameters.PRValidationPipelines }}

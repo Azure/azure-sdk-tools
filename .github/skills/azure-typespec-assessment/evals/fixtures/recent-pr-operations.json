@@ -1,0 +1,674 @@
+{
+  "43308": [
+    {
+      "operationId": "ScenarioConfigurations_Execute",
+      "apiVersions": ["2026-05-01-preview"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: no body; Location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Starts a scenario run and returns before execution completes.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Wait Retry-After, then poll the Location URL until the scenario run reaches a terminal state.",
+        "finalResult": "ScenarioRun from the Location endpoint."
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ScenarioConfigurations_Validate",
+      "apiVersions": ["2026-05-01-preview"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/validate",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: no body; Location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Starts asynchronous validation of a scenario configuration.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Poll Location after Retry-After until terminal completion.",
+        "finalResult": "Validation result from the Location endpoint."
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ScenarioConfigurations_Cancel",
+      "apiVersions": ["2024-11-01-preview"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/cancel",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: no body; Location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Requests cancellation through the scenario configuration endpoint in versions before its removal.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Poll Location after Retry-After until Succeeded, Failed, or Canceled.",
+        "finalResult": "OperationStatusResult from the Location endpoint."
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ScenarioConfigurations_FixResourcePermissions",
+      "apiVersions": ["2026-05-01-preview"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/fixResourcePermissions",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, workspaceName, scenarioName, scenarioConfigurationName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "optional application/json body: FixResourcePermissionsRequest",
+      "responses": [
+        "202: no body; Location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Starts asynchronous repair of permissions required by the scenario.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Poll Location after Retry-After until terminal completion.",
+        "finalResult": "PermissionsFix result from the Location endpoint."
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ScenarioRuns_Cancel",
+      "apiVersions": ["2026-05-01-preview"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, workspaceName, scenarioName, runId: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: no body; Location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Requests cancellation of an active scenario run.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Poll Location after Retry-After until Succeeded, Failed, or Canceled.",
+        "finalResult": "ScenarioRun from the Location endpoint."
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "Workspaces_RefreshRecommendations",
+      "apiVersions": ["2026-05-01-preview"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/refreshRecommendations",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, workspaceName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: no body; Location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Starts asynchronous regeneration of workspace recommendations.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Poll Location after Retry-After until terminal completion.",
+        "finalResult": "No response body after successful completion."
+      },
+      "paging": { "isPaged": false }
+    }
+  ],
+  "44742": [
+    {
+      "operationId": "Directory_ListFilesAndDirectories",
+      "apiVersions": ["2026-12-06"],
+      "method": "GET",
+      "path": "/{filesystem}/{directoryPath}",
+      "parameters": [
+        "path filesystem and directoryPath: string, required",
+        "query restype=directory and comp=list: constant, required",
+        "query include, marker, maxresults, prefix, timeout: optional"
+      ],
+      "request": "none",
+      "responses": [
+        "200: application/xml ListFilesAndDirectoriesSegmentResponse",
+        "default: StorageError"
+      ],
+      "serviceBehavior": "Lists directory entries, including NFS-specific item shapes when requested.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "File or Directory entry",
+        "nextLinkName": "NextMarker",
+        "continuation": "Send the returned marker in the next marker query parameter; stop when absent."
+      }
+    }
+  ],
+  "43745": [
+    {
+      "operationId": "CloudHsmClusters_CreateOrUpdate",
+      "apiVersions": ["2025-03-31"],
+      "method": "PUT",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, cloudHsmClusterName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: CloudHsmCluster with sku.name",
+      "responses": ["200 or 201: CloudHsmCluster", "default: ErrorResponse"],
+      "serviceBehavior": "Creates or replaces a Cloud HSM cluster using the requested SKU.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "azure-async-operation"
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "CloudHsmClusters_Get",
+      "apiVersions": ["2025-03-31"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, cloudHsmClusterName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: CloudHsmCluster", "default: ErrorResponse"],
+      "serviceBehavior": "Returns a Cloud HSM cluster and its SKU.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "CloudHsmClusters_ListByResourceGroup",
+      "apiVersions": ["2025-03-31"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+      "parameters": [
+        "path subscriptionId and resourceGroupName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: CloudHsmClusterListResult", "default: ErrorResponse"],
+      "serviceBehavior": "Lists Cloud HSM clusters and their SKU values in one resource group.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "CloudHsmCluster",
+        "nextLinkName": "nextLink",
+        "continuation": "GET the opaque nextLink until it is absent."
+      }
+    }
+  ],
+  "42853": [
+    {
+      "operationId": "BackupResourceStorageConfigsNonCRR_BMSPrepareDataMove",
+      "apiVersions": ["2026-02-01"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/prepareDataMove",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, vaultName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: PrepareDataMoveRequest",
+      "responses": ["200: no body", "default: ErrorResponse"],
+      "serviceBehavior": "Validates and prepares backup data movement.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "BackupResourceStorageConfigsNonCRR_BMSTriggerDataMove",
+      "apiVersions": ["2026-02-01"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/triggerDataMove",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, vaultName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: TriggerDataMoveRequest",
+      "responses": [
+        "202: Azure-AsyncOperation and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Starts asynchronous movement of backup data.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "azure-async-operation"
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "BackupResourceConfigOperationStatuses_GetOperationStatus",
+      "apiVersions": ["2026-02-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig/operationStatus/{operationId}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, vaultName, operationId: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: OperationStatus", "default: ErrorResponse"],
+      "serviceBehavior": "Returns the current status of a backup storage configuration operation.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "RecoveryPoints_MoveRecoveryPoint",
+      "apiVersions": ["2026-02-01"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/move",
+      "parameters": [
+        "all ARM resource path identifiers: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: MoveRecoveryPointRequest",
+      "responses": [
+        "202: Azure-AsyncOperation and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Starts asynchronous movement of a recovery point.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "azure-async-operation"
+      },
+      "paging": { "isPaged": false }
+    }
+  ],
+  "44200": [
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_ListByTrafficController",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "200: PrivateEndpointConnectionListResult",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Lists private endpoint connections under a traffic controller.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "PrivateEndpointConnection",
+        "nextLinkName": "nextLink",
+        "continuation": "Follow the opaque nextLink URL returned by the service."
+      }
+    },
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_Get",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateEndpointConnectionName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: PrivateEndpointConnection", "default: ErrorResponse"],
+      "serviceBehavior": "Gets one private endpoint connection.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_Update",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "PUT",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateEndpointConnectionName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: PrivateEndpointConnection",
+      "responses": [
+        "200: PrivateEndpointConnection",
+        "201: PrivateEndpointConnection",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Creates or replaces a private endpoint connection synchronously.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "PrivateEndpointConnectionsInterface_Delete",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "DELETE",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateEndpointConnections/{privateEndpointConnectionName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateEndpointConnectionName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "202: deletion accepted with Location and Retry-After headers",
+        "204: resource does not exist",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Deletes a private endpoint connection asynchronously.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location"
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "PrivateLinkResourcesInterface_ListByTrafficController",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "200: PrivateLinkResourceListResult",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Lists private-link resources under a traffic controller.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "PrivateLinkResource",
+        "nextLinkName": "nextLink",
+        "continuation": "Follow the opaque nextLink URL returned by the service."
+      }
+    },
+    {
+      "operationId": "PrivateLinkResourcesInterface_Get",
+      "apiVersions": ["2025-10-01-preview", "2026-03-01"],
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/privateLinkResources/{privateLinkResourceName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, privateLinkResourceName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": ["200: PrivateLinkResource", "default: ErrorResponse"],
+      "serviceBehavior": "Gets one private-link resource.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "Associations_Update",
+      "apiVersions": ["2025-05-01-preview"],
+      "method": "PATCH",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceNetworking/trafficControllers/{trafficControllerName}/associations/{associationName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, trafficControllerName, associationName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: AssociationUpdate",
+      "responses": [
+        "200: Association",
+        "202: async headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Updates an association; JavaScript now receives properties as a nested object.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "azure-async-operation"
+      },
+      "paging": { "isPaged": false }
+    }
+  ],
+  "44454": [
+    {
+      "operationId": "ElasticMonitors_ListAssociatedTrafficFilters",
+      "apiVersions": ["2024-03-01"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, monitorName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "200: ElasticTrafficFilterResponse",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Lists traffic filters associated with the Elastic monitor.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ElasticMonitors_CreateAndAssociateIPFilter",
+      "apiVersions": ["2024-03-01"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, monitorName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: IPFilter",
+      "responses": [
+        "200: ElasticTrafficFilterResponse",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Creates an IP traffic filter and associates it with the monitor.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ElasticMonitors_CreateAndAssociatePLFilter",
+      "apiVersions": ["2024-03-01"],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, monitorName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: PrivateLinkFilter",
+      "responses": [
+        "200: ElasticTrafficFilterResponse",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Creates a private-link traffic filter and associates it with the monitor.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    }
+  ],
+  "44882": [
+    {
+      "operationId": "NewRelicMonitors_Delete",
+      "apiVersions": ["2026-06-01"],
+      "method": "DELETE",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, monitorName: string, required",
+        "query userEmail: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "none",
+      "responses": [
+        "200 or 204: no body",
+        "202: async headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Deletes the New Relic monitor; the Go override preserves historical parameter order.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location"
+      },
+      "paging": { "isPaged": false }
+    }
+  ],
+  "45536": [
+    {
+      "operationId": "ReservationRecommendationDetails_Get",
+      "apiVersions": ["2024-08-01", "2026-06-01"],
+      "method": "GET",
+      "path": "/{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails",
+      "parameters": [
+        "path resourceScope: string, required",
+        "query scope, region, term, lookBackPeriod, product, api-version: required"
+      ],
+      "request": "none",
+      "responses": [
+        "200: ReservationRecommendationDetails",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Returns reservation recommendation details using the selected look-back period.",
+      "lro": { "isLongRunning": false },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "ReservationsSummaries_List",
+      "apiVersions": ["2024-08-01", "2026-06-01"],
+      "method": "GET",
+      "path": "/{resourceScope}/providers/Microsoft.Consumption/reservationSummaries",
+      "parameters": [
+        "path resourceScope: string, required",
+        "query grain: Datagrain, required",
+        "query filter and api-version"
+      ],
+      "request": "none",
+      "responses": [
+        "200: ReservationSummariesListResult",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Lists daily or monthly reservation summaries.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "ReservationSummary",
+        "nextLinkName": "nextLink",
+        "continuation": "GET the opaque nextLink until it is absent."
+      }
+    },
+    {
+      "operationId": "UsageDetails_List",
+      "apiVersions": ["2024-08-01", "2026-06-01"],
+      "method": "GET",
+      "path": "/{scope}/providers/Microsoft.Consumption/usageDetails",
+      "parameters": [
+        "path scope: string, required",
+        "query metric: Metrictype, optional",
+        "query $expand, $filter, $skiptoken, $top, api-version: optional/required as emitted"
+      ],
+      "request": "none",
+      "responses": ["200: UsageDetailsListResult", "default: ErrorResponse"],
+      "serviceBehavior": "Lists cost or usage records using the selected metric.",
+      "lro": { "isLongRunning": false },
+      "paging": {
+        "isPaged": true,
+        "itemType": "UsageDetail",
+        "nextLinkName": "nextLink",
+        "continuation": "GET the opaque nextLink, which carries $skiptoken, until absent."
+      }
+    }
+  ],
+  "42435": [
+    {
+      "operationId": "OutboundRules_Post",
+      "apiVersions": [
+        "2025-10-01-preview",
+        "2025-12-01",
+        "2026-01-15-preview",
+        "2026-03-01"
+      ],
+      "method": "POST",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, accountName, managedNetworkName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: ManagedNetworkSettingsBasicResource",
+      "responses": [
+        "200: OutboundRuleListResult",
+        "202: no body; location and Retry-After headers",
+        "default: ErrorResponse"
+      ],
+      "serviceBehavior": "Asynchronously updates outbound rules. A successful final response contains a page of rules and an optional nextLink for additional pages.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "location",
+        "polling": "Poll the Location URL after Retry-After until terminal completion.",
+        "finalResult": "OutboundRuleListResult"
+      },
+      "paging": {
+        "isPaged": true,
+        "itemType": "OutboundRuleBasicResource",
+        "itemsProperty": "value",
+        "nextLinkName": "nextLink",
+        "continuation": "GET the opaque absolute nextLink until it is absent."
+      }
+    }
+  ],
+  "45348": [
+    {
+      "operationId": "SchemaRegistries_CreateOrReplace",
+      "apiVersions": ["2026-11-01-preview", "2026-11-02-preview"],
+      "method": "PUT",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/schemaRegistries/{schemaRegistryName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, schemaRegistryName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: SchemaRegistry",
+      "responses": ["200 or 201: SchemaRegistry", "default: ErrorResponse"],
+      "serviceBehavior": "Creates or replaces a schema registry using ARM common-types v5 envelopes.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "azure-async-operation"
+      },
+      "paging": { "isPaged": false }
+    },
+    {
+      "operationId": "Namespaces_CreateOrReplace",
+      "apiVersions": ["2026-11-01-preview", "2026-11-02-preview"],
+      "method": "PUT",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DeviceRegistry/namespaces/{namespaceName}",
+      "parameters": [
+        "path subscriptionId, resourceGroupName, namespaceName: string, required",
+        "query api-version: string, required"
+      ],
+      "request": "application/json body: Namespace",
+      "responses": ["200 or 201: Namespace", "default: ErrorResponse"],
+      "serviceBehavior": "Creates or replaces a namespace using ARM common-types v5 envelopes.",
+      "lro": {
+        "isLongRunning": true,
+        "pattern": "arm",
+        "finalStateVia": "azure-async-operation"
+      },
+      "paging": { "isPaged": false }
+    }
+  ]
+}

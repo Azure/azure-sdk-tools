@@ -1,0 +1,493 @@
+[
+  {
+    "pr": 43308,
+    "title": "Fix TypeSpec LRO operations: remove @extension, use @useFinalStateVia",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/43308",
+    "state": "merged",
+    "createdAt": "2026-05-18T16:45:29Z",
+    "baseCommit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
+    "headCommit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
+    "case": "lro-sdk-recognition-fix",
+    "result": "rest-compatible-downstream-breaking-change",
+    "intent": "Make six ARM action operations visible as LROs to both OpenAPI and SDK generators by replacing OpenAPI-only extensions with TypeSpec LRO metadata.",
+    "transformationChain": [
+      "Replace x-ms-long-running-operation extensions with @useFinalStateVia(\"location\").",
+      "Retain 202, Location, Retry-After, polling, and final-result wire behavior."
+    ],
+    "restRepresentation": "The six POST operations remain 202 ARM LROs using Location and Retry-After with final-state-via location; the change fixes SDK LRO recognition without changing their REST signatures.",
+    "artifactEvidence": {
+      "autorest": "base/head OpenAPI both retain x-ms-long-running-operation and final-state-via location",
+      "tcgc": "the head uses TypeSpec LRO metadata understood by TCGC instead of an OpenAPI-only extension"
+    },
+    "restFindings": [],
+    "downstreamFindings": [
+      {
+        "id": "pr-43308-lro-recognition",
+        "title": "Generated SDK methods change from synchronous to long-running",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "The wire contract is unchanged, but SDKs now expose poller/LRO return types and asynchronous completion semantics.",
+        "evidence": [
+          "@useFinalStateVia makes the existing LRO behavior available to generated clients, while the prior raw OpenAPI extension did not provide equivalent TypeSpec LRO metadata."
+        ]
+      }
+    ],
+    "sourceReferences": [
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+        "revision": "head",
+        "startLine": 22,
+        "endLine": 119,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+        "revision": "head",
+        "startLine": 48,
+        "endLine": 84,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+        "revision": "head",
+        "startLine": 44,
+        "endLine": 52,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52"
+      },
+      {
+        "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+        "revision": "head",
+        "startLine": 69,
+        "endLine": 80,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L69-L80"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 44742,
+    "title": "Removed NFSv2 from STG103/104 TypeSpec & Swagger",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44742",
+    "state": "merged",
+    "createdAt": "2026-07-16T22:13:58Z",
+    "baseCommit": "af067c9fc987b837f27a34b86e3ac591507711c9",
+    "headCommit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
+    "case": "rest-contract-removal",
+    "result": "rest-breaking-change",
+    "intent": "Remove NFSv2 file types, include values, response fields, and item models from the 2026-12-06 File Storage API.",
+    "transformationChain": [
+      "Delete versioned enum values.",
+      "Delete XML response properties and NFS item models."
+    ],
+    "restRepresentation": "The stable 2026-12-06 OpenAPI removes accepted include values and response shapes such as BlockDeviceItem, CharDeviceItem, FIFO, Socket, and NFS metadata.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded; OpenAPI removes enum values, properties, and schemas",
+      "tcgc": "base/head succeeded; client models and properties are removed"
+    },
+    "restFindings": [
+      {
+        "id": "pr-44742-rest-removal",
+        "title": "Stable API response and enum surface is removed",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes.",
+        "evidence": [
+          "AutoRest removes enum values and response schemas from a stable API version."
+        ]
+      }
+    ],
+    "downstreamFindings": [
+      {
+        "id": "pr-44742-sdk-removal",
+        "title": "Generated SDK models, properties, and enum values are removed",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "Regenerated SDKs remove the public NFSv2 models, response properties, and enum values, so existing source code that references them no longer compiles and response handling loses those shapes.",
+        "evidence": [
+          "The generated client surface removes the NFSv2 models, response properties, and enum values together with the stable REST contract."
+        ]
+      }
+    ],
+    "sourceReferences": [
+      {
+        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+        "revision": "base",
+        "startLine": 284,
+        "endLine": 806,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/af067c9fc987b837f27a34b86e3ac591507711c9/specification/storage/data-plane/FileStorage/models.tsp#L284-L806"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 43745,
+    "title": "Updated CloudHsmClusterSkuName from closed enum to extensible enum",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/43745",
+    "state": "merged",
+    "createdAt": "2026-06-04T11:21:53Z",
+    "baseCommit": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+    "headCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+    "case": "closed-to-extensible-enum",
+    "result": "rest-compatible-downstream-breaking-change",
+    "intent": "Make CloudHsmClusterSkuName forward-compatible by changing it from a closed enum to an extensible string union.",
+    "transformationChain": [
+      "Replace enum with union including string.",
+      "Preserve the two known wire values."
+    ],
+    "restRepresentation": "The same known strings remain valid and unknown strings become allowed; OpenAPI x-ms-enum modelAsString changes from false to true.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded; modelAsString changes false to true",
+      "tcgc": "base/head succeeded; enum metadata and StandardB10 definition identity change"
+    },
+    "restFindings": [],
+    "downstreamFindings": [
+      {
+        "id": "pr-43745-enum-shape",
+        "title": "Generated closed enum becomes an extensible string-backed shape",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "REST becomes more permissive, but generated enum typing, construction, comparison, and exhaustive handling can change.",
+        "evidence": [
+          "AutoRest sets modelAsString to true.",
+          "Generated clients change from a fixed enum to an extensible string-backed shape."
+        ]
+      }
+    ],
+    "sourceReferences": [
+      {
+        "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",
+        "revision": "head",
+        "startLine": 283,
+        "endLine": 296,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 42853,
+    "title": "Add 2026-02-01 API version for RecoveryServices and RecoveryServicesBackup",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/42853",
+    "state": "merged",
+    "createdAt": "2026-05-04T11:21:59Z",
+    "baseCommit": "519e87e016492a37ce9ea6ac0fdf80d26767f47d",
+    "headCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
+    "case": "client-location-change",
+    "result": "rest-compatible-downstream-breaking-change",
+    "intent": "Add a stable API version while changing Go client placement for four existing operations.",
+    "transformationChain": [
+      "Add the 2026-02-01 stable version.",
+      "Exclude Go from four existing client-location rules."
+    ],
+    "restRepresentation": "For Go, four existing methods move to a different generated client; their REST paths, parameters, requests, and responses remain unchanged.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded for both projects; a new stable OpenAPI version is emitted",
+      "tcgc": "base/head succeeded; generic model generated, while Go-scoped movement is confirmed from source decorators"
+    },
+    "restFindings": [],
+    "downstreamFindings": [
+      {
+        "id": "pr-42853-go-client-move",
+        "title": "Existing Go methods move between generated clients",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "Existing Go construction and method calls can stop compiling although the REST contract is unchanged.",
+        "evidence": [
+          "The clientLocation scope changes from !csharp to !csharp,!go."
+        ]
+      }
+    ],
+    "sourceReferences": [
+      {
+        "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 67,
+        "endLine": 112,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/efe76fb07ac03d9c54e2c64de15ef3ff90fc4030/specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp#L67-L112"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 44200,
+    "title": "Support for Private Frontend on Application Gateway for Containers",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44200",
+    "state": "open",
+    "createdAt": "2026-06-24T21:30:02Z",
+    "baseCommit": "c3011918b7318f44dcc15e92d4ffb307aa50a475",
+    "headCommit": "b1582b12f39f1d122fce3c7bbb24b812b0c5c487",
+    "case": "property-flattening-scope",
+    "result": "downstream-break-with-rest-assessment-blocker",
+    "intent": "Add private frontend support and stop flattening AssociationUpdate.properties for JavaScript.",
+    "transformationChain": [
+      "Add new private frontend versions, models, and operations.",
+      "Change flattenProperty to exclude JavaScript."
+    ],
+    "restRepresentation": "Adds private endpoint connection and private-link discovery operations while preserving the AssociationUpdate wire shape.",
+    "semanticItems": [
+      {
+        "id": "pr-44200-private-frontend",
+        "intent": "Add private endpoint connection and private-link discovery operations.",
+        "transformationChain": [
+          "Add private endpoint connection and private-link resource models.",
+          "Expose the resources through two new ARM operation interfaces."
+        ],
+        "restRepresentation": "Adds four private endpoint connection operations and two private-link discovery operations in the preview and stable API versions.",
+        "operationIds": [
+          "PrivateEndpointConnectionsInterface_ListByTrafficController",
+          "PrivateEndpointConnectionsInterface_Get",
+          "PrivateEndpointConnectionsInterface_Update",
+          "PrivateEndpointConnectionsInterface_Delete",
+          "PrivateLinkResourcesInterface_ListByTrafficController",
+          "PrivateLinkResourcesInterface_Get"
+        ],
+        "linkedFindingIds": [],
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 543,
+            "endLine": 558,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+          }
+        ]
+      },
+      {
+        "id": "pr-44200-js-flattening",
+        "intent": "Stop flattening AssociationUpdate.properties for JavaScript.",
+        "transformationChain": [
+          "Scope the legacy flattenProperty customization away from JavaScript."
+        ],
+        "restRepresentation": "The JSON properties object is unchanged while JavaScript model access becomes nested.",
+        "operationIds": ["Associations_Update"],
+        "linkedFindingIds": ["pr-44200-js-nesting"],
+        "sourceReferences": [
+          {
+            "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+            "revision": "head",
+            "startLine": 122,
+            "endLine": 127,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+          }
+        ]
+      }
+    ],
+    "artifactEvidence": {
+      "autorest": "base succeeded; head failed with duplicate FrontendAssociationUpdate type name",
+      "tcgc": "base/head succeeded and shows AssociationUpdate model-shape changes"
+    },
+    "restFindings": [],
+    "downstreamFindings": [
+      {
+        "id": "pr-44200-js-nesting",
+        "title": "JavaScript property access changes from flattened to nested",
+        "severity": "high",
+        "confidence": "high",
+        "summary": "Existing JavaScript construction and member access can break while the intended wire object remains properties.",
+        "evidence": [
+          "flattenProperty changes to flattenProperty(\"!javascript\")."
+        ]
+      }
+    ],
+    "sourceReferences": [
+      {
+        "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+        "revision": "head",
+        "startLine": 543,
+        "endLine": 558,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+      },
+      {
+        "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+        "revision": "head",
+        "startLine": 122,
+        "endLine": 127,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+      }
+    ],
+    "errors": [
+      "Head AutoRest compilation failed with duplicate type name FrontendAssociationUpdate; full REST assessment is blocked."
+    ]
+  },
+  {
+    "pr": 44454,
+    "title": "Mitigate operation group casing breaking changes for azure-mgmt-elastic",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454",
+    "state": "merged",
+    "createdAt": "2026-07-06T09:59:03Z",
+    "baseCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+    "headCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+    "case": "operation-group-casing-mitigation",
+    "result": "compatibility-mitigation",
+    "intent": "Restore released Python PascalCase operation-group names without changing other languages.",
+    "transformationChain": [
+      "Exclude Python from shared camelCase locations.",
+      "Add Python-only PascalCase client locations."
+    ],
+    "restRepresentation": "REST operations, paths, parameters, and payloads are unchanged.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded with no wire artifact diff",
+      "tcgc": "base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence"
+    },
+    "restFindings": [],
+    "downstreamFindings": [],
+    "sourceReferences": [
+      {
+        "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 94,
+        "endLine": 131,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 44882,
+    "title": "Add new stable version 2026-06-01 for New Relic",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882",
+    "state": "merged",
+    "createdAt": "2026-07-22T09:00:52Z",
+    "baseCommit": "9eb0993333857ef0ffb2863ccc76f8b123cae90b",
+    "headCommit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
+    "case": "parameter-order-mitigation",
+    "result": "compatibility-mitigation",
+    "intent": "Add a stable API version while preserving the released Go delete parameter order.",
+    "transformationChain": [
+      "Declare a replacement operation with historical parameter order.",
+      "Apply a Go-only override."
+    ],
+    "restRepresentation": "The delete path and userEmail query parameter remain unchanged.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded; new stable OpenAPI includes the same path/query serialization",
+      "tcgc": "base/head succeeded; generic output generated, while Go-only order is confirmed from source"
+    },
+    "restFindings": [],
+    "downstreamFindings": [],
+    "sourceReferences": [
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 321,
+        "endLine": 354,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 45536,
+    "title": "Preserve Java Consumption enum names",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45536",
+    "state": "merged",
+    "createdAt": "2026-08-17T02:25:48Z",
+    "baseCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+    "headCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+    "case": "client-enum-name-mitigation",
+    "result": "compatibility-mitigation",
+    "intent": "Preserve released Java enum constants while retaining existing serialized values.",
+    "transformationChain": [
+      "Add Java-scoped client names for six existing enum members."
+    ],
+    "restRepresentation": "Serialized enum values and OpenAPI schemas remain unchanged.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded with no wire artifact diff",
+      "tcgc": "base/head succeeded; generic output does not apply Java-only names, so source decorators are primary evidence"
+    },
+    "restFindings": [],
+    "downstreamFindings": [],
+    "sourceReferences": [
+      {
+        "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+        "revision": "head",
+        "startLine": 532,
+        "endLine": 543,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 42435,
+    "title": "Add x-ms-pageable to batchOutboundRules POST for CognitiveServices",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/42435",
+    "state": "merged",
+    "createdAt": "2026-04-16T18:56:30Z",
+    "baseCommit": "4664d78a647b029c314177addf80ebecd8b2a3ff",
+    "headCommit": "96eae0e7d5c7ede040ee0cc646d397e5d8375912",
+    "case": "lro-paging-metadata",
+    "result": "rest-compatible-downstream-breaking-change",
+    "intent": "Expose the existing nextLink-based OutboundRules_Post response as pageable while retaining its ARM LRO behavior.",
+    "transformationChain": [
+      "Add @list to the existing POST action.",
+      "Reuse OutboundRuleListResult @pageItems and @nextLink metadata."
+    ],
+    "restRepresentation": "POST batchOutboundRules remains a 200/202 Location-based LRO returning OutboundRuleListResult; OpenAPI additionally emits x-ms-pageable with nextLinkName nextLink.",
+    "artifactEvidence": {
+      "autorest": "all four API versions add x-ms-pageable nextLinkName nextLink without changing paths or schemas",
+      "tcgc": "@list plus @pageItems/@nextLink exposes paged iteration metadata to SDK generators"
+    },
+    "restFindings": [],
+    "downstreamFindings": [
+      {
+        "id": "pr-42435-pageable-shape",
+        "title": "Generated SDK result changes to a pageable abstraction",
+        "severity": "medium",
+        "confidence": "high",
+        "summary": "The service response already carried value and nextLink, but SDK method return and iteration behavior can change when paging metadata becomes visible.",
+        "evidence": [
+          "AutoRest adds x-ms-pageable with nextLinkName nextLink to OutboundRules_Post."
+        ]
+      }
+    ],
+    "sourceReferences": [
+      {
+        "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+        "revision": "head",
+        "startLine": 79,
+        "endLine": 89,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+      },
+      {
+        "path": "specification/cognitiveservices/CognitiveServices.Management/models.tsp",
+        "revision": "head",
+        "startLine": 5483,
+        "endLine": 5497,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "pr": 45348,
+    "title": "Fix cross-version breaking changes for 2026-11 previews",
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45348",
+    "state": "merged",
+    "createdAt": "2026-08-07T23:55:26Z",
+    "baseCommit": "2991970c5377110244bcf9614be03e5aaf32362f",
+    "headCommit": "b209254310b3e569b16210d3c59fc8b8ac3b84b4",
+    "case": "cross-version-common-types-mitigation",
+    "result": "rest-compatibility-mitigation",
+    "intent": "Align the two new Device Registry previews with ARM common-types v5 used by prior versions.",
+    "transformationChain": [
+      "Change armCommonTypesVersion from v6 to v5 for both preview versions."
+    ],
+    "restRepresentation": "Generated OpenAPI references v5 ARM envelopes instead of v6, removing cross-version identity, SKU, plan, and requiredness drift.",
+    "artifactEvidence": {
+      "autorest": "base/head succeeded; both preview OpenAPI files switch common-type references from v6 to v5",
+      "tcgc": "base/head succeeded; client model reflects aligned ARM envelope types"
+    },
+    "restFindings": [],
+    "downstreamFindings": [],
+    "sourceReferences": [
+      {
+        "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+        "revision": "head",
+        "startLine": 75,
+        "endLine": 84,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84"
+      }
+    ],
+    "errors": []
+  }
+]

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TypeSpec Assessment",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "comparison",
+    "confidence",
+    "safety",
+    "dimensions",
+    "blockers"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "pullRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "url"],
+      "properties": {
+        "number": { "type": "integer", "minimum": 1 },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "required": ["baseRef", "baseCommit", "headCommit", "workingTree"],
+      "properties": {
+        "baseRef": { "type": "string" },
+        "baseCommit": { "type": "string" },
+        "headCommit": { "type": "string" },
+        "workingTree": { "type": "object" }
+      }
+    },
+    "confidence": { "enum": ["high", "medium", "low"] },
+    "safety": {
+      "type": "object",
+      "required": ["scope", "status"],
+      "properties": {
+        "scope": { "const": "rest-and-downstream-only" },
+        "status": { "enum": ["passed", "failed", "not-assessed"] }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "required": [
+        "semantic",
+        "rest",
+        "downstream",
+        "compliance",
+        "documentQuality"
+      ],
+      "properties": {
+        "compliance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "summary",
+            "coverage",
+            "intentAssessments",
+            "findings",
+            "retrievalFailures",
+            "blockers"
+          ],
+          "properties": {
+            "status": { "enum": ["passed", "failed", "not-assessed"] },
+            "summary": { "type": "string", "minLength": 1 },
+            "coverage": {
+              "type": "object",
+              "required": [
+                "semanticIntentCount",
+                "assessedIntentCount",
+                "selectedDocumentCount",
+                "unassessedIntentIds"
+              ]
+            },
+            "intentAssessments": { "type": "array" },
+            "findings": { "type": "array" },
+            "retrievalFailures": { "type": "array" },
+            "blockers": { "type": "array" }
+          }
+        },
+        "documentQuality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "summary"],
+          "properties": {
+            "status": { "const": "not-assessed" },
+            "summary": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "blockers": { "type": "array" }
+  }
+}

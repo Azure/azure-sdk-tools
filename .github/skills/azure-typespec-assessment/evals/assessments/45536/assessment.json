@@ -1,0 +1,1026 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-04T02:04:23.325Z",
+  "title": "TypeSpec assessment: specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+  "repository": {
+    "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45536\\head",
+    "remoteUrl": "https://github.com/Azure/azure-rest-api-specs.git"
+  },
+  "comparison": {
+    "baseRef": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+    "baseCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+    "headCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+    "workingTree": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "artifactComparisons": [
+    {
+      "projectId": "project-49e7a00359db",
+      "mode": "existing-api-version",
+      "baseline": {
+        "sourceRevision": "base",
+        "commit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+        "apiVersion": "2026-06-01",
+        "reason": "affected-existing-version"
+      },
+      "target": {
+        "sourceRevision": "current",
+        "commit": "1395797d6112cb083837b3772083bafe0a91460c",
+        "apiVersion": "2026-06-01",
+        "reason": "affected-existing-version"
+      },
+      "base": "2026-06-01",
+      "current": "2026-06-01",
+      "baseReason": "affected-existing-version",
+      "currentReason": "latest-version",
+      "addedCurrentVersions": [],
+      "available": {
+        "base": [
+          "2024-08-01",
+          "2026-06-01"
+        ],
+        "current": [
+          "2024-08-01",
+          "2026-06-01"
+        ]
+      }
+    }
+  ],
+  "confidence": "high",
+  "safety": {
+    "scope": "rest-and-downstream-only",
+    "status": "passed"
+  },
+  "dimensions": {
+    "semantic": {
+      "status": "assessed",
+      "items": [
+        {
+          "id": "semantic-5c37e529c22fc782",
+          "projectId": "project-49e7a00359db",
+          "action": "modify",
+          "changeKind": "modify",
+          "sourceChangeIds": [
+            "source-c1e2c387eea01645"
+          ],
+          "hunkIds": [
+            "hunk-eecc1413cf4aeedb"
+          ],
+          "declarationIds": [],
+          "declarationNames": [],
+          "ownedOperationIds": [],
+          "operations": [],
+          "operationIds": [],
+          "beforeFactIds": [],
+          "afterFactIds": [],
+          "changedAspects": [],
+          "title": "Preserve released Java enum constant names",
+          "summary": "Adds Java-specific @clientName augment decorators for six existing Consumption enum members so generated Java enum constants retain their released names. The customization does not change REST operations or wire enum values and introduces no downstream SDK break.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [],
+            "complianceSearchRequestIds": [
+              "compliance-search-d60881e7d2a3f496"
+            ],
+            "relatedOperationIds": [],
+            "coveredHunkIds": [],
+            "uncoveredHunkIds": [
+              "hunk-eecc1413cf4aeedb"
+            ],
+            "classifications": [
+              {
+                "hunkId": "hunk-eecc1413cf4aeedb",
+                "status": "unknown",
+                "reason": "language-specific-sdk-customization-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              }
+            ],
+            "gaps": [
+              {
+                "hunkId": "hunk-eecc1413cf4aeedb",
+                "reason": "language-specific-sdk-customization-not-represented"
+              }
+            ]
+          },
+          "inferenceRequired": true,
+          "inferenceResults": [
+            {
+              "requestId": "inference-request-5944e22ab7ab5f44",
+              "hunkId": "hunk-eecc1413cf4aeedb",
+              "decision": "no-impact",
+              "rationale": "The added Java-only @clientName augment decorators preserve the enum constant names identified by the changed source as belonging to the released SDK. They do not alter a REST operation or wire enum value, and they avoid rather than introduce an incompatible generated Java SDK rename.",
+              "candidateIds": []
+            }
+          ],
+          "sources": [
+            {
+              "id": "source-c1e2c387eea01645",
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "status": "modified",
+              "origins": [
+                "committed"
+              ],
+              "hunks": [
+                {
+                  "id": "hunk-eecc1413cf4aeedb",
+                  "base": {
+                    "startLine": 532,
+                    "endLine": 534
+                  },
+                  "current": {
+                    "startLine": 532,
+                    "endLine": 542
+                  },
+                  "lines": [
+                    "   ModernChargeSummary.properties,",
+                    "   \"csharp\"",
+                    " );",
+                    "+",
+                    "+// Preserve Java enum value names from the released SDK.",
+                    "+@@clientName(Metrictype.ActualCostMetricType, \"ACTUALCOST\", \"java\");",
+                    "+@@clientName(Metrictype.AmortizedCostMetricType, \"AMORTIZEDCOST\", \"java\");",
+                    "+@@clientName(Metrictype.UsageMetricType, \"USAGE\", \"java\");",
+                    "+@@clientName(Datagrain.DailyGrain, \"DAILY\", \"java\");",
+                    "+@@clientName(Datagrain.MonthlyGrain, \"MONTHLY\", \"java\");",
+                    "+@@clientName(LookBackPeriod.Last07Days, \"LAST7DAYS\", \"java\");",
+                    ""
+                  ]
+                }
+              ],
+              "declarations": []
+            }
+          ],
+          "relatedFindings": {
+            "rest": [],
+            "downstream": [],
+            "sharedTypeImpact": []
+          }
+        }
+      ],
+      "sourceHunkIds": [
+        "hunk-eecc1413cf4aeedb"
+      ],
+      "blockers": []
+    },
+    "rest": {
+      "status": "passed",
+      "findings": [],
+      "rejectedCandidateCount": 0,
+      "blockers": []
+    },
+    "downstream": {
+      "status": "passed",
+      "findings": [],
+      "operationGroups": [],
+      "sharedTypeImpacts": [],
+      "rootCauses": [],
+      "impliedByRest": [],
+      "rejectedCandidateCount": 0,
+      "blockers": []
+    },
+    "compliance": {
+      "status": "passed",
+      "summary": "All Semantic intents were assessed; no applicable guidance was found for one or more intents.",
+      "coverage": {
+        "semanticIntentCount": 1,
+        "assessedIntentCount": 1,
+        "selectedDocumentCount": 4,
+        "unassessedIntentIds": []
+      },
+      "intentAssessments": [
+        {
+          "semanticIntentId": "semantic-5c37e529c22fc782",
+          "reviewUnitId": "semantic-5c37e529c22fc782",
+          "applicableGuidance": [],
+          "sourceChangeIds": [
+            "source-c1e2c387eea01645"
+          ],
+          "hunkIds": [
+            "hunk-eecc1413cf4aeedb"
+          ],
+          "declarationIds": [],
+          "decision": "no-applicable-guidance",
+          "actual": "The change applies six Java-specific @clientName augment decorators to existing enum members to preserve released Java SDK constant names.",
+          "rationale": "The four highest-ranked fetched documents describe TypeSpec enums, augment-decorator syntax, built-in decorators, and OpenAPI decorators, but none governs language-specific SDK enum naming through the client-generator @clientName decorator. The completed catalog search therefore found no applicable compliance requirement.",
+          "gap": "The four highest-ranked fetched documents describe TypeSpec enums, augment-decorator syntax, built-in decorators, and OpenAPI decorators, but none governs language-specific SDK enum naming through the client-generator @clientName decorator. The completed catalog search therefore found no applicable compliance requirement.",
+          "sourceLinks": [],
+          "codeSnippets": [
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "hunkId": "hunk-eecc1413cf4aeedb",
+              "lines": [
+                "+",
+                "+// Preserve Java enum value names from the released SDK.",
+                "+@@clientName(Metrictype.ActualCostMetricType, \"ACTUALCOST\", \"java\");",
+                "+@@clientName(Metrictype.AmortizedCostMetricType, \"AMORTIZEDCOST\", \"java\");",
+                "+@@clientName(Metrictype.UsageMetricType, \"USAGE\", \"java\");",
+                "+@@clientName(Datagrain.DailyGrain, \"DAILY\", \"java\");",
+                "+@@clientName(Datagrain.MonthlyGrain, \"MONTHLY\", \"java\");",
+                "+@@clientName(LookBackPeriod.Last07Days, \"LAST7DAYS\", \"java\");"
+              ]
+            }
+          ],
+          "catalogRanking": [
+            {
+              "rank": 1,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly covers enum members and service-facing enum values whose Java SDK names are being preserved."
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly covers augment decorators (`@@`) applied to existing enum members."
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Covers standard decorator behavior but does not document the client-generator `@clientName` customization."
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Covers decorator metadata for OpenAPI, but not language-specific SDK client names."
+            },
+            {
+              "rank": 5,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Matches the modification context, but the change does not evolve a wire API versioned contract."
+            },
+            {
+              "rank": 6,
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 7,
+              "catalogOrder": 2,
+              "title": "Specific extension resource sample",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 8,
+              "catalogOrder": 3,
+              "title": "Agent base type",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 9,
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 10,
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 11,
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 12,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 14,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 15,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 16,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 17,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 18,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 19,
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 20,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 21,
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 22,
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 23,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 24,
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 26,
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 27,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to resource-manager TypeSpec generally, but does not match the client-name customization or enum-member naming pattern."
+            },
+            {
+              "rank": 28,
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the resource-manager service plane or the client-name customization and enum-member naming pattern."
+            },
+            {
+              "rank": 29,
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the resource-manager service plane or the client-name customization and enum-member naming pattern."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the resource-manager service plane or the client-name customization and enum-member naming pattern."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the resource-manager service plane or the client-name customization and enum-member naming pattern."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the resource-manager service plane or the client-name customization and enum-member naming pattern."
+            }
+          ],
+          "documents": [
+            {
+              "rank": 1,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly covers enum members and service-facing enum values whose Java SDK names are being preserved.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:50:58.812191Z",
+              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly covers augment decorators (`@@`) applied to existing enum members.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:50:58.835661Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Covers standard decorator behavior but does not document the client-generator `@clientName` customization.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:50:58.835661Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Covers decorator metadata for OpenAPI, but not language-specific SDK client names.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:50:58.836667Z",
+              "contentHash": "sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e"
+            }
+          ],
+          "blockers": []
+        }
+      ],
+      "findings": [],
+      "retrievalFailures": [],
+      "blockers": []
+    },
+    "documentQuality": {
+      "status": "not-assessed",
+      "summary": "Document Quality and Agent Friendliness is not assessed."
+    }
+  },
+  "changedFiles": [
+    {
+      "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+      "status": "modified",
+      "origin": "committed",
+      "origins": [
+        "committed"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "project-49e7a00359db",
+      "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+      "sourceChangeIds": [
+        "source-c1e2c387eea01645"
+      ],
+      "artifacts": {
+        "baseline": {
+          "comparisonRole": "baseline",
+          "sourceRevision": "base",
+          "sourceCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+          "apiVersion": "2026-06-01",
+          "autorest": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "--emit=@azure-tools/typespec-autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\baseline\\autorest",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-autorest.version=2026-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 8064,
+            "configPath": "worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
+            "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
+            "logPath": "logs\\project-49e7a00359db-baseline-autorest.log",
+            "comparisonRole": "baseline",
+            "sourceRevision": "base",
+            "sourceCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+            "selectedApiVersion": "2026-06-01",
+            "format": "swagger-2.0",
+            "files": [
+              {
+                "path": "projects\\project-49e7a00359db\\baseline\\autorest\\stable\\2026-06-01\\openapi.json",
+                "apiVersion": "2026-06-01",
+                "documentRole": "primary",
+                "contentHash": "ebf05573377fa61bb27920ad77ec98308b1d6f7a5c0397e93f0ede9cbb7f9289"
+              }
+            ]
+          },
+          "tcgc": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "--emit=@azure-tools/typespec-client-generator-core",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\baseline\\tcgc",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 7062,
+            "configPath": "worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
+            "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
+            "logPath": "logs\\project-49e7a00359db-baseline-tcgc.log",
+            "comparisonRole": "baseline",
+            "sourceRevision": "base",
+            "sourceCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+            "selectedApiVersion": "2026-06-01",
+            "format": "tcgc-yaml",
+            "files": [
+              {
+                "path": "projects\\project-49e7a00359db\\baseline\\tcgc\\tcgc-output.yaml",
+                "contentHash": "c3bb24f6182223ee300c7fbf64967d5c96481abdf75804017731f251a99ffcfa"
+              }
+            ]
+          }
+        },
+        "target": {
+          "comparisonRole": "target",
+          "sourceRevision": "current",
+          "sourceCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+          "apiVersion": "2026-06-01",
+          "autorest": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "--emit=@azure-tools/typespec-autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\target\\autorest",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-autorest.version=2026-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 7047,
+            "configPath": "worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
+            "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
+            "logPath": "logs\\project-49e7a00359db-target-autorest.log",
+            "comparisonRole": "target",
+            "sourceRevision": "current",
+            "sourceCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+            "selectedApiVersion": "2026-06-01",
+            "format": "swagger-2.0",
+            "files": [
+              {
+                "path": "projects\\project-49e7a00359db\\target\\autorest\\stable\\2026-06-01\\openapi.json",
+                "apiVersion": "2026-06-01",
+                "documentRole": "primary",
+                "contentHash": "877f0d4d236b59ed87b974e1e61b0ea74e432129bd4d4112fcf43f54da8d25ac"
+              }
+            ]
+          },
+          "tcgc": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "--emit=@azure-tools/typespec-client-generator-core",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\target\\tcgc",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 6947,
+            "configPath": "worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
+            "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
+            "logPath": "logs\\project-49e7a00359db-target-tcgc.log",
+            "comparisonRole": "target",
+            "sourceRevision": "current",
+            "sourceCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+            "selectedApiVersion": "2026-06-01",
+            "format": "tcgc-yaml",
+            "files": [
+              {
+                "path": "projects\\project-49e7a00359db\\target\\tcgc\\tcgc-output.yaml",
+                "contentHash": "6a40546811ef543d15e963cc5eb5c37d6902e1e7887f3576a7a11f1802a67af5"
+              }
+            ]
+          }
+        }
+      },
+      "artifactComparison": {
+        "mode": "existing-api-version",
+        "baseline": {
+          "sourceRevision": "base",
+          "commit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+          "apiVersion": "2026-06-01",
+          "reason": "affected-existing-version"
+        },
+        "target": {
+          "sourceRevision": "current",
+          "commit": "1395797d6112cb083837b3772083bafe0a91460c",
+          "apiVersion": "2026-06-01",
+          "reason": "affected-existing-version"
+        },
+        "base": "2026-06-01",
+        "current": "2026-06-01",
+        "baseReason": "affected-existing-version",
+        "currentReason": "latest-version",
+        "addedCurrentVersions": [],
+        "available": {
+          "base": [
+            "2024-08-01",
+            "2026-06-01"
+          ],
+          "current": [
+            "2024-08-01",
+            "2026-06-01"
+          ]
+        }
+      },
+      "apiVersions": {
+        "base": "2026-06-01",
+        "current": "2026-06-01",
+        "baseReason": "affected-existing-version",
+        "currentReason": "affected-existing-version",
+        "addedCurrentVersions": [],
+        "available": {
+          "base": [
+            "2024-08-01",
+            "2026-06-01"
+          ],
+          "current": [
+            "2024-08-01",
+            "2026-06-01"
+          ]
+        }
+      }
+    }
+  ],
+  "blockers": [],
+  "provenance": {
+    "modelInput": "model-input.json",
+    "inference": "inference.json",
+    "complianceSearchEvidence": "compliance-search-evidence.json",
+    "judgment": "assessment-judgment.json",
+    "preparationManifest": "preparation-manifest.json"
+  },
+  "inputAccounting": {
+    "budgetTier": "small",
+    "budgetBytes": 131072,
+    "bytes": 5576,
+    "estimatedTokens": 1394,
+    "retained": {
+      "evidenceSets": 1,
+      "facts": 0,
+      "semanticReviewUnits": 1,
+      "restCandidates": 0,
+      "downstreamCandidates": 0,
+      "downstreamRootCauses": 0,
+      "complianceSearchRequests": 1,
+      "inferenceRequests": 1
+    },
+    "omittedRedundant": {
+      "rawEmitterArtifacts": true,
+      "compilerLogs": true,
+      "unchangedInventories": true,
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
+    },
+    "inference": {
+      "requestCount": 1,
+      "inferredCandidateCount": 0,
+      "noImpactCount": 1,
+      "blockedCount": 0
+    },
+    "compliance": {
+      "catalogEntriesScored": 32,
+      "documentsFetched": 4,
+      "documentBytesFetched": 1666971,
+      "guidanceExcerptsRetained": 0,
+      "guidanceExcerptBytesRetained": 0
+    }
+  },
+  "timings": {
+    "totalMs": 49294,
+    "semanticAnalysisMs": 41,
+    "restAnalysisMs": 35,
+    "downstreamAnalysisMs": 1594
+  },
+  "pr": 45536,
+  "pullRequest": {
+    "number": 45536,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45536"
+  }
+}

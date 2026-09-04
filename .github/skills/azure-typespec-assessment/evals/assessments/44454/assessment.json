@@ -1,0 +1,1725 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-04T02:04:14.729Z",
+  "title": "TypeSpec assessment: specification/elastic/Elastic.Management",
+  "repository": {
+    "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44454\\head",
+    "remoteUrl": "https://github.com/Azure/azure-rest-api-specs.git"
+  },
+  "comparison": {
+    "baseRef": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+    "baseCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+    "headCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+    "workingTree": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "artifactComparisons": [
+    {
+      "projectId": "project-77e02a92a87a",
+      "mode": "existing-api-version",
+      "baseline": {
+        "sourceRevision": "base",
+        "commit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+        "apiVersion": "2025-06-01",
+        "reason": "affected-existing-version"
+      },
+      "target": {
+        "sourceRevision": "current",
+        "commit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+        "apiVersion": "2025-06-01",
+        "reason": "affected-existing-version"
+      },
+      "base": "2025-06-01",
+      "current": "2025-06-01",
+      "baseReason": "affected-existing-version",
+      "currentReason": "latest-version",
+      "addedCurrentVersions": [],
+      "available": {
+        "base": [
+          "2025-06-01"
+        ],
+        "current": [
+          "2025-06-01"
+        ]
+      }
+    }
+  ],
+  "confidence": "high",
+  "safety": {
+    "scope": "rest-and-downstream-only",
+    "status": "passed"
+  },
+  "dimensions": {
+    "semantic": {
+      "status": "assessed",
+      "items": [
+        {
+          "id": "semantic-3d8a84ab0984f292",
+          "projectId": "project-77e02a92a87a",
+          "projectIds": [
+            "project-77e02a92a87a"
+          ],
+          "action": "modify",
+          "changeKind": "modify",
+          "sourceChangeIds": [
+            "source-c1e49e3c867c88fb"
+          ],
+          "hunkIds": [
+            "hunk-083033f3d0862b87"
+          ],
+          "declarationIds": [],
+          "declarationNames": [],
+          "ownedOperationIds": [],
+          "versionTransitionOperationIds": [],
+          "sourceMappedOperationIds": [],
+          "publicationEligibleOperationIds": [],
+          "operations": [],
+          "operationIds": [],
+          "beforeFactIds": [],
+          "afterFactIds": [],
+          "changedAspects": [],
+          "groupingEvidence": {
+            "kind": "deterministic-coherent-change",
+            "reasons": [],
+            "memberHunkIds": [
+              "hunk-083033f3d0862b87"
+            ]
+          },
+          "title": "Preserve Python casing for traffic and IP filter operation groups",
+          "summary": "Modify client-location augment decorators so Python uses PascalCase operation-group locations for listing associated traffic filters and creating/associating IP filters, while the existing lower-camel locations remain in effect for other targeted languages. The wire API is unchanged.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [],
+            "complianceSearchRequestIds": [
+              "compliance-search-95a58c6b437ad222"
+            ],
+            "relatedOperationIds": [],
+            "coveredHunkIds": [],
+            "uncoveredHunkIds": [
+              "hunk-083033f3d0862b87"
+            ],
+            "classifications": [
+              {
+                "hunkId": "hunk-083033f3d0862b87",
+                "status": "unknown",
+                "reason": "language-specific-client-location-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              }
+            ],
+            "gaps": [
+              {
+                "hunkId": "hunk-083033f3d0862b87",
+                "reason": "language-specific-client-location-not-represented"
+              }
+            ]
+          },
+          "inferenceRequired": true,
+          "inferenceResults": [
+            {
+              "requestId": "inference-request-2bee93223944b6bf",
+              "hunkId": "hunk-083033f3d0862b87",
+              "decision": "no-impact",
+              "rationale": "The hunk keeps the existing lower-camel client locations for all previously targeted languages by adding Python to the exclusions, then adds Python-only PascalCase locations. It changes generated Python wrapper placement to preserve its established operation-group casing, without changing the REST contract or establishing a language-neutral public SDK break from the bounded evidence.",
+              "candidateIds": []
+            }
+          ],
+          "sources": [
+            {
+              "id": "source-c1e49e3c867c88fb",
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "status": "modified",
+              "origins": [
+                "committed"
+              ],
+              "hunks": [
+                {
+                  "id": "hunk-083033f3d0862b87",
+                  "base": {
+                    "startLine": 94,
+                    "endLine": 106
+                  },
+                  "current": {
+                    "startLine": 94,
+                    "endLine": 116
+                  },
+                  "lines": [
+                    " @@clientLocation(",
+                    "   ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+                    "   \"listAssociatedTrafficFilters\",",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!python\"",
+                    "+);",
+                    "+@@clientLocation(",
+                    "+  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+                    "+  \"ListAssociatedTrafficFilters\",",
+                    "+  \"python\"",
+                    " );",
+                    " @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, \"list\");",
+                    " @@clientLocation(",
+                    "   ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+                    "   \"createAndAssociateIPFilter\",",
+                    "-  \"!csharp,!java\"",
+                    "+  \"!csharp,!java,!python\"",
+                    "+);",
+                    "+@@clientLocation(",
+                    "+  ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+                    "+  \"CreateAndAssociateIPFilter\",",
+                    "+  \"python\"",
+                    " );",
+                    " @@clientName(",
+                    "   ElasticMonitorResources.createAndAssociateIPFilterCreate,"
+                  ]
+                }
+              ],
+              "declarations": []
+            }
+          ],
+          "relatedFindings": {
+            "rest": [],
+            "downstream": [],
+            "sharedTypeImpact": []
+          }
+        },
+        {
+          "id": "semantic-a3ce2a2ef2e5fba3",
+          "projectId": "project-77e02a92a87a",
+          "projectIds": [
+            "project-77e02a92a87a"
+          ],
+          "action": "modify",
+          "changeKind": "modify",
+          "sourceChangeIds": [
+            "source-c1e49e3c867c88fb"
+          ],
+          "hunkIds": [
+            "hunk-9834454183c6cab6"
+          ],
+          "declarationIds": [],
+          "declarationNames": [],
+          "ownedOperationIds": [],
+          "versionTransitionOperationIds": [],
+          "sourceMappedOperationIds": [],
+          "publicationEligibleOperationIds": [],
+          "operations": [],
+          "operationIds": [],
+          "beforeFactIds": [],
+          "afterFactIds": [],
+          "changedAspects": [],
+          "groupingEvidence": {
+            "kind": "deterministic-coherent-change",
+            "reasons": [],
+            "memberHunkIds": [
+              "hunk-9834454183c6cab6"
+            ]
+          },
+          "title": "Preserve Python casing for private-link filter operation group",
+          "summary": "Modify the private-link filter create-and-associate client location so Python uses the PascalCase operation-group location while non-Python generators retain the existing lower-camel location. The wire API is unchanged.",
+          "deterministicCoverage": {
+            "restCandidateIds": [],
+            "downstreamCandidateIds": [],
+            "complianceSearchRequestIds": [
+              "compliance-search-c1c3978f917ee2d0"
+            ],
+            "relatedOperationIds": [],
+            "coveredHunkIds": [],
+            "uncoveredHunkIds": [
+              "hunk-9834454183c6cab6"
+            ],
+            "classifications": [
+              {
+                "hunkId": "hunk-9834454183c6cab6",
+                "status": "unknown",
+                "reason": "language-specific-client-location-not-represented",
+                "restCandidateIds": [],
+                "downstreamCandidateIds": []
+              }
+            ],
+            "gaps": [
+              {
+                "hunkId": "hunk-9834454183c6cab6",
+                "reason": "language-specific-client-location-not-represented"
+              }
+            ]
+          },
+          "inferenceRequired": true,
+          "inferenceResults": [
+            {
+              "requestId": "inference-request-ca9ef9c46010a3c2",
+              "hunkId": "hunk-9834454183c6cab6",
+              "decision": "no-impact",
+              "rationale": "The hunk preserves the existing lower-camel location for non-Python generators and adds a Python-only PascalCase location. This is a wrapper-compatibility mapping for Python casing; the bounded evidence supplies no REST change or language-neutral SDK contract change that warrants a candidate.",
+              "candidateIds": []
+            }
+          ],
+          "sources": [
+            {
+              "id": "source-c1e49e3c867c88fb",
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "status": "modified",
+              "origins": [
+                "committed"
+              ],
+              "hunks": [
+                {
+                  "id": "hunk-9834454183c6cab6",
+                  "base": {
+                    "startLine": 109,
+                    "endLine": 115
+                  },
+                  "current": {
+                    "startLine": 119,
+                    "endLine": 130
+                  },
+                  "lines": [
+                    " @@clientLocation(",
+                    "   ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+                    "   \"createAndAssociatePLFilter\",",
+                    "-  \"!csharp\"",
+                    "+  \"!csharp,!python\"",
+                    "+);",
+                    "+@@clientLocation(",
+                    "+  ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+                    "+  \"CreateAndAssociatePLFilter\",",
+                    "+  \"python\"",
+                    " );",
+                    " @@clientName(",
+                    "   ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+                    ""
+                  ]
+                }
+              ],
+              "declarations": []
+            }
+          ],
+          "relatedFindings": {
+            "rest": [],
+            "downstream": [],
+            "sharedTypeImpact": []
+          }
+        }
+      ],
+      "sourceHunkIds": [
+        "hunk-083033f3d0862b87",
+        "hunk-9834454183c6cab6"
+      ],
+      "blockers": []
+    },
+    "rest": {
+      "status": "passed",
+      "findings": [],
+      "rejectedCandidateCount": 0,
+      "blockers": []
+    },
+    "downstream": {
+      "status": "passed",
+      "findings": [],
+      "operationGroups": [],
+      "sharedTypeImpacts": [],
+      "rootCauses": [],
+      "impliedByRest": [],
+      "rejectedCandidateCount": 0,
+      "blockers": []
+    },
+    "compliance": {
+      "status": "passed",
+      "summary": "All Semantic intents were assessed; no applicable guidance was found for one or more intents.",
+      "coverage": {
+        "semanticIntentCount": 2,
+        "assessedIntentCount": 2,
+        "selectedDocumentCount": 8,
+        "unassessedIntentIds": []
+      },
+      "intentAssessments": [
+        {
+          "semanticIntentId": "semantic-3d8a84ab0984f292",
+          "reviewUnitId": "semantic-3d8a84ab0984f292",
+          "applicableGuidance": [],
+          "sourceChangeIds": [
+            "source-c1e49e3c867c88fb"
+          ],
+          "hunkIds": [
+            "hunk-083033f3d0862b87"
+          ],
+          "declarationIds": [],
+          "decision": "no-applicable-guidance",
+          "actual": "The change partitions @@clientLocation by language and adds Python-only PascalCase locations for two existing methods.",
+          "rationale": "The completed catalog search found general decorator syntax, built-in/OpenAPI decorator references, and API-evolution guidance, but none governs @clientLocation language filters or Python wrapper operation-group casing. No compliance requirement can be applied without inventing guidance.",
+          "gap": "The completed catalog search found general decorator syntax, built-in/OpenAPI decorator references, and API-evolution guidance, but none governs @clientLocation language filters or Python wrapper operation-group casing. No compliance requirement can be applied without inventing guidance.",
+          "sourceLinks": [],
+          "codeSnippets": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "hunkId": "hunk-083033f3d0862b87",
+              "lines": [
+                "-  \"!csharp\"",
+                "+  \"!csharp,!python\"",
+                "+);",
+                "+@@clientLocation(",
+                "+  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+                "+  \"ListAssociatedTrafficFilters\",",
+                "+  \"python\"",
+                "-  \"!csharp,!java\"",
+                "+  \"!csharp,!java,!python\"",
+                "+);",
+                "+@@clientLocation(",
+                "+  ElasticMonitorResources.createAndAssociateIPFilterCreate,"
+              ]
+            }
+          ],
+          "catalogRanking": [
+            {
+              "rank": 1,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements."
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers."
+            },
+            {
+              "rank": 5,
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 6,
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 7,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 8,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 9,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 10,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 11,
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 12,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 14,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 15,
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 16,
+              "catalogOrder": 2,
+              "title": "Specific extension resource sample",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 17,
+              "catalogOrder": 3,
+              "title": "Agent base type",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 18,
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 19,
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 20,
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 21,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 22,
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 23,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 24,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 26,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 27,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 28,
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 29,
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            }
+          ],
+          "documents": [
+            {
+              "rank": 1,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e"
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
+            }
+          ],
+          "blockers": []
+        },
+        {
+          "semanticIntentId": "semantic-a3ce2a2ef2e5fba3",
+          "reviewUnitId": "semantic-a3ce2a2ef2e5fba3",
+          "applicableGuidance": [],
+          "sourceChangeIds": [
+            "source-c1e49e3c867c88fb"
+          ],
+          "hunkIds": [
+            "hunk-9834454183c6cab6"
+          ],
+          "declarationIds": [],
+          "decision": "no-applicable-guidance",
+          "actual": "The change partitions @@clientLocation by language and adds a Python-only PascalCase location for the private-link filter method.",
+          "rationale": "The completed catalog search contains no official document governing @clientLocation language filters or Python wrapper operation-group casing. General decorator and API-evolution pages do not establish a requirement for this customization.",
+          "gap": "The completed catalog search contains no official document governing @clientLocation language filters or Python wrapper operation-group casing. General decorator and API-evolution pages do not establish a requirement for this customization.",
+          "sourceLinks": [],
+          "codeSnippets": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "hunkId": "hunk-9834454183c6cab6",
+              "lines": [
+                "-  \"!csharp\"",
+                "+  \"!csharp,!python\"",
+                "+);",
+                "+@@clientLocation(",
+                "+  ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+                "+  \"CreateAndAssociatePLFilter\",",
+                "+  \"python\""
+              ]
+            }
+          ],
+          "catalogRanking": [
+            {
+              "rank": 1,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements."
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator."
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers."
+            },
+            {
+              "rank": 5,
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 6,
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 7,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 8,
+              "catalogOrder": 19,
+              "title": "TypeSpec pagination",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 9,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 10,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 11,
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 12,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 32,
+              "title": "Directives",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 14,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance."
+            },
+            {
+              "rank": 15,
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 16,
+              "catalogOrder": 2,
+              "title": "Specific extension resource sample",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 17,
+              "catalogOrder": 3,
+              "title": "Agent base type",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 18,
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 19,
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 20,
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 21,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 22,
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 23,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 24,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 25,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 26,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 27,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 28,
+              "catalogOrder": 17,
+              "title": "ARM long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 29,
+              "catalogOrder": 20,
+              "title": "Azure.ResourceManager data types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 31,
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            },
+            {
+              "rank": 32,
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "Does not match the data-plane client-customization decorator change."
+            }
+          ],
+          "documents": [
+            {
+              "rank": 1,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Matches the decorator category but does not document the clientLocation customization decorator.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e"
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.",
+              "guidance": [],
+              "noRelevantGuidance": true,
+              "retrievedAt": "2026-09-03T08:16:52.630351Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
+            }
+          ],
+          "blockers": []
+        }
+      ],
+      "findings": [],
+      "retrievalFailures": [],
+      "blockers": []
+    },
+    "documentQuality": {
+      "status": "not-assessed",
+      "summary": "Document Quality and Agent Friendliness is not assessed."
+    }
+  },
+  "changedFiles": [
+    {
+      "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+      "status": "modified",
+      "origin": "committed",
+      "origins": [
+        "committed"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "project-77e02a92a87a",
+      "path": "specification/elastic/Elastic.Management",
+      "sourceChangeIds": [
+        "source-c1e49e3c867c88fb"
+      ],
+      "artifacts": {
+        "baseline": {
+          "comparisonRole": "baseline",
+          "sourceRevision": "base",
+          "sourceCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+          "apiVersion": "2025-06-01",
+          "autorest": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
+                "--emit=@azure-tools/typespec-autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\autorest",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-autorest.version=2025-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 8863,
+            "configPath": "worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
+            "logPath": "logs\\project-77e02a92a87a-baseline-autorest.log",
+            "comparisonRole": "baseline",
+            "sourceRevision": "base",
+            "sourceCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+            "selectedApiVersion": "2025-06-01",
+            "format": "swagger-2.0",
+            "files": [
+              {
+                "path": "projects\\project-77e02a92a87a\\baseline\\autorest\\resource-manager\\Microsoft.Elastic\\stable\\2025-06-01\\elastic.json",
+                "apiVersion": "2025-06-01",
+                "documentRole": "feature",
+                "contentHash": "ae7b5085060b034e1b0de10ef4c0b52f282299f4ab6a659c9dfbabb6f86dac94"
+              }
+            ]
+          },
+          "tcgc": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
+                "--emit=@azure-tools/typespec-client-generator-core",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\tcgc",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.api-version=2025-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 7933,
+            "configPath": "worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
+            "logPath": "logs\\project-77e02a92a87a-baseline-tcgc.log",
+            "comparisonRole": "baseline",
+            "sourceRevision": "base",
+            "sourceCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+            "selectedApiVersion": "2025-06-01",
+            "format": "tcgc-yaml",
+            "files": [
+              {
+                "path": "projects\\project-77e02a92a87a\\baseline\\tcgc\\tcgc-output.yaml",
+                "contentHash": "4ed7c1311d456fc25c27df26fab1e54b0576070fb66279b3c78914aba26fc07a"
+              }
+            ]
+          }
+        },
+        "target": {
+          "comparisonRole": "target",
+          "sourceRevision": "current",
+          "sourceCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+          "apiVersion": "2025-06-01",
+          "autorest": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
+                "--emit=@azure-tools/typespec-autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\autorest",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-autorest.version=2025-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 7980,
+            "configPath": "worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
+            "logPath": "logs\\project-77e02a92a87a-target-autorest.log",
+            "comparisonRole": "target",
+            "sourceRevision": "current",
+            "sourceCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+            "selectedApiVersion": "2025-06-01",
+            "format": "swagger-2.0",
+            "files": [
+              {
+                "path": "projects\\project-77e02a92a87a\\target\\autorest\\resource-manager\\Microsoft.Elastic\\stable\\2025-06-01\\elastic.json",
+                "apiVersion": "2025-06-01",
+                "documentRole": "feature",
+                "contentHash": "399b9bd5a7e4394a5aaf3b851570200a112fd63b94f1a25847c151746213c0dc"
+              }
+            ]
+          },
+          "tcgc": {
+            "status": "succeeded",
+            "command": {
+              "executable": "node_modules\\.bin\\tsp.cmd",
+              "args": [
+                "compile",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
+                "--emit=@azure-tools/typespec-client-generator-core",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\tcgc",
+                "--warn-as-error",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.api-version=2025-06-01"
+              ]
+            },
+            "exitCode": 0,
+            "durationMs": 7789,
+            "configPath": "worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
+            "logPath": "logs\\project-77e02a92a87a-target-tcgc.log",
+            "comparisonRole": "target",
+            "sourceRevision": "current",
+            "sourceCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+            "selectedApiVersion": "2025-06-01",
+            "format": "tcgc-yaml",
+            "files": [
+              {
+                "path": "projects\\project-77e02a92a87a\\target\\tcgc\\tcgc-output.yaml",
+                "contentHash": "65be1e9869fb08661e212de75d2f81da42ef74527787a9d1a7dccd6723e05067"
+              }
+            ]
+          }
+        }
+      },
+      "artifactComparison": {
+        "mode": "existing-api-version",
+        "baseline": {
+          "sourceRevision": "base",
+          "commit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+          "apiVersion": "2025-06-01",
+          "reason": "affected-existing-version"
+        },
+        "target": {
+          "sourceRevision": "current",
+          "commit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+          "apiVersion": "2025-06-01",
+          "reason": "affected-existing-version"
+        },
+        "base": "2025-06-01",
+        "current": "2025-06-01",
+        "baseReason": "affected-existing-version",
+        "currentReason": "latest-version",
+        "addedCurrentVersions": [],
+        "available": {
+          "base": [
+            "2025-06-01"
+          ],
+          "current": [
+            "2025-06-01"
+          ]
+        }
+      },
+      "apiVersions": {
+        "base": "2025-06-01",
+        "current": "2025-06-01",
+        "baseReason": "affected-existing-version",
+        "currentReason": "affected-existing-version",
+        "addedCurrentVersions": [],
+        "available": {
+          "base": [
+            "2025-06-01"
+          ],
+          "current": [
+            "2025-06-01"
+          ]
+        }
+      }
+    }
+  ],
+  "blockers": [],
+  "provenance": {
+    "modelInput": "model-input.json",
+    "inference": "inference.json",
+    "complianceSearchEvidence": "compliance-search-evidence.json",
+    "judgment": "assessment-judgment.json",
+    "preparationManifest": "preparation-manifest.json"
+  },
+  "inputAccounting": {
+    "budgetTier": "small",
+    "budgetBytes": 131072,
+    "bytes": 8344,
+    "estimatedTokens": 2086,
+    "retained": {
+      "evidenceSets": 2,
+      "facts": 0,
+      "semanticReviewUnits": 2,
+      "restCandidates": 0,
+      "downstreamCandidates": 0,
+      "downstreamRootCauses": 0,
+      "complianceSearchRequests": 2,
+      "inferenceRequests": 2
+    },
+    "omittedRedundant": {
+      "rawEmitterArtifacts": true,
+      "compilerLogs": true,
+      "unchangedInventories": true,
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
+    },
+    "inference": {
+      "requestCount": 2,
+      "inferredCandidateCount": 0,
+      "noImpactCount": 2,
+      "blockedCount": 0
+    },
+    "compliance": {
+      "catalogEntriesScored": 64,
+      "documentsFetched": 8,
+      "documentBytesFetched": 3483062,
+      "guidanceExcerptsRetained": 0,
+      "guidanceExcerptBytesRetained": 0
+    }
+  },
+  "timings": {
+    "totalMs": 54778,
+    "semanticAnalysisMs": 44,
+    "restAnalysisMs": 46,
+    "downstreamAnalysisMs": 1726
+  },
+  "pr": 44454,
+  "pullRequest": {
+    "number": 44454,
+    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454"
+  }
+}

@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TypeSpec Assessment</title>
+<style>
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--good:#047857;--warn:#b45309;--danger:#b91c1c;--add-bg:#dcfce7;--add-text:#166534;--remove-bg:#fee2e2;--remove-text:#991b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,sans-serif}.container{width:min(1100px,calc(100% - 32px));margin:auto}.hero{padding:38px 0 42px;background:linear-gradient(120deg,#172554,#2554d8);color:white}.hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:13px;font-weight:800;color:#dbeafe}.hero h1{margin:.35em 0 .55em;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.025em}.hero-meta{font-size:16px;color:#e0e7ff}.hero-meta strong{color:#86efac;text-transform:capitalize}.hero a{color:#dbeafe}.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:28px}.summary-card{display:block;min-height:150px;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.09);color:white!important;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}.summary-card:hover,.summary-card:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);transform:translateY(-2px);outline:none}.summary-card:focus-visible{box-shadow:0 0 0 3px #93c5fd}.summary-value{display:flex;gap:10px;align-items:center;font-size:25px;font-weight:800}.summary-value .pass{color:#86efac}.summary-value .fail{color:#fecaca}.summary-label{margin-top:8px;font-size:16px;font-weight:750}.summary-detail{margin-top:7px;color:#dbeafe;font-size:13px}.notice{padding:16px 0;background:#fffbeb;color:#713f12;border-bottom:1px solid #fde68a}main{padding:28px 0}section{margin:0 0 30px}.dimension-details>summary{cursor:pointer;list-style-position:outside}.dimension-details>summary h2{display:inline-block;margin:0 0 12px}.panel,.finding,.intent,.operation,.compliance-intent,.compliance-comparison{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0}.finding{border-left:4px solid var(--warn)}.finding.high,.compliance-comparison.applicable-fail{border-left:4px solid var(--danger)}.finding.low{border-left-color:var(--muted)}.intent>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.intent>summary .action{margin-left:0}.intent-finding-badges{display:inline-flex;gap:7px;flex-wrap:wrap;margin-left:auto}.intent-finding-badge{border:1px solid #991b1b;border-radius:999px;padding:3px 10px;background:#b91c1c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none}.intent-finding-badge:hover,.intent-finding-badge:focus-visible{background:#7f1d1d;outline:2px solid #fca5a5;outline-offset:2px}.intent>summary,.representative-example>summary,.operation summary,.compliance-intent>summary,.compliance-comparison>summary,.finding>summary,.comparison-details>summary,.affected-operations>summary,.root-cause-provenance>summary{cursor:pointer}.intent>summary,.compliance-intent>summary{font-size:18px}.intent-body,.compliance-intent-body,.compliance-comparison-body{padding-top:12px}.finding>summary{display:flex;align-items:center;gap:12px;font-size:18px}.sdk-contract-card>summary,.sdk-method-card>summary{flex-wrap:wrap}.finding-summary{margin-left:auto;color:var(--muted);font-size:15px}.severity,.origin-tag,.contract-tag{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800}.contract-tag{background:#dbeafe;color:#1e40af}.severity{text-transform:lowercase}.severity.high{background:#fee2e2;color:#991b1b}.severity.medium{background:#fef3c7;color:#92400e}.severity.low{background:#dbeafe;color:#1e40af}.origin-tag.rest-breaking-tag{background:#fee2e2;color:#991b1b}.downstream-rest-link{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.downstream-rest-link:hover strong,.downstream-rest-link:focus-visible strong{text-decoration:underline}.finding-body{padding-top:12px}.comparison-details{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--panel) 94%,var(--accent))}.comparison-details>summary{font-size:16px}.comparison-body{padding-top:12px}.contract-metadata{grid-template-columns:max-content minmax(0,1fr);margin:4px 0 22px}.http-contract{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}.contract-change-table{border:1px solid var(--line);border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}.contract-change-table th{background:#eaf0f9}.contract-change-table th,.contract-change-table td{padding:13px 15px;border-right:1px solid var(--line)}.contract-change-table th:last-child,.contract-change-table td:last-child{border-right:0}.contract-member{width:31%;background:color-mix(in srgb,#eaf0f9 70%,var(--panel))}.contract-area-kind{display:block;margin-bottom:3px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.contract-before{width:34.5%;background:#fff1f1}.contract-after{width:34.5%;background:#eefaf3}.contract-value{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700}.contract-value.before{background:var(--remove-bg);color:var(--remove-text)}.contract-value.after{background:var(--add-bg);color:var(--add-text)}.contract-detail{display:block;margin-top:4px;color:var(--muted);font-size:13px}.breaking-rationale{margin:17px 0 22px;padding:12px 14px;border-left:3px solid #e7a400;background:#fff9e8}.affected-operations{margin:20px 0}.affected-operations>summary{font-size:18px}.affected-operation-list{display:grid;gap:7px;margin-top:10px}.affected-operation{display:grid;grid-template-columns:minmax(230px,.8fr) 65px minmax(300px,1.8fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}.http-method{color:#075cab;font-family:ui-monospace,monospace;font-weight:800}.contract-footer{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;color:var(--muted);font-size:13px}.root-cause-provenance{margin-top:14px}.mapping-unavailable{color:var(--muted)}.representative-example{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px}.operation summary{display:flex;gap:12px;align-items:center}.operation summary span,.action{margin-left:auto;border-radius:999px;padding:2px 8px;background:#dbeafe;color:#1e40af}.operation-body{padding-top:12px}.diff{background:#111827;color:#e5e7eb;border-radius:10px;overflow:auto;margin:12px 0}.diff-path{padding:7px 12px;background:#1f2937}.diff-path a{color:#93c5fd}.diff pre{padding:12px;margin:0}.diff pre span{display:block}.diff pre .line-number{display:inline-block;width:42px;color:#94a3b8;user-select:none}.diff .add{background:#123d2a;color:#bbf7d0}.diff .remove{background:#51212a;color:#fecaca}.parameter-diff{margin:12px 0}.parameter-line{display:flex;gap:8px;align-items:baseline;padding:5px 9px;margin:3px 0;border-radius:6px}.parameter-line.add,.delta-after,ins{background:var(--add-bg);color:var(--add-text)}.parameter-line.remove,.delta-before,del{background:var(--remove-bg);color:var(--remove-text)}.parameter-line.modify,.parameter-line.reorder{background:#fef3c7;color:#92400e}.parameter-line>span:first-child{font-weight:800}.parameter-attribute{white-space:nowrap}.delta-before,.delta-after,del,ins{padding:2px 5px;border-radius:4px;text-decoration:none}dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px}dt{font-weight:700}dd{margin:0}.not-assessed{color:var(--muted);font-weight:700}.good,.compliance-summary.passed{color:var(--good)}.compliance-summary.failed{color:var(--danger)}.sources{color:var(--muted);font-size:13px}blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 90%,var(--accent))}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.affected-operation{grid-template-columns:1fr 65px}.affected-operation code{grid-column:1/-1}}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.finding-summary{width:100%;margin-left:0}.contract-change-table{display:block;overflow-x:auto}.contract-change-table th,.contract-change-table td{min-width:210px}}@media(max-width:540px){.summary-grid{grid-template-columns:1fr}.hero h1{font-size:32px}}@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--panel:#172033;--text:#e5e7eb;--muted:#9ca3af;--line:#334155;--add-bg:#123d2a;--add-text:#bbf7d0;--remove-bg:#51212a;--remove-text:#fecaca}.notice{background:#422006;color:#fde68a}.parameter-line.modify,.parameter-line.reorder{background:#422006;color:#fde68a}.contract-change-table th{background:#202d45}.contract-member{background:#1d293d}.contract-before{background:#431f29}.contract-after{background:#15382b}.breaking-rationale{background:#3b2f13}.http-method{color:#76b9ff}}
+.tag{border-radius:999px;padding:3px 10px;background:#dbeafe;color:#1e40af;font-size:13px;font-weight:800}.finding-summary-meta{margin-left:auto;color:var(--muted);font-size:14px}.rest-operation-list{display:grid;gap:7px}.rest-operation-line{display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(260px,2fr);gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:8px}.rest-operation-line>span{color:var(--muted)}@media(max-width:700px){.rest-operation-line{grid-template-columns:1fr}.finding-summary-meta{width:100%;margin-left:0}}
+.finding{border-left:1px solid var(--line)}
+.rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}
+.notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
+.compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
+</style></head><body>
+<header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>11 TypeSpec changes for Network and Vmss</h1>
+<p class="hero-meta">TypeSpec source diff: <code>9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5</code> → <code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e</code></p>
+<div class="summary-grid">
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">3 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×</span> 3</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">3 guideline issues<br>11/11 intents assessed</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 11</div><div class="summary-label">Semantic intents</div><div class="summary-detail">183 operations<br>8 Added, 3 Modified, 0 Removed</div></a>
+</div></div></header>
+<details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
+<div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
+<p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
+<main class="container">
+<section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
+<section id="downstream-breaking"><h2>Downstream breaking changes (3)</h2><details class="finding sdk-method-card" id="downstream-downstream-group-cba76aa475e394f2"><summary><strong>FirewallPolicies_CreateOrUpdate</strong><span class="contract-tag">SDK method</span><span class="finding-summary">1 SDK contract change</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>Microsoft.Network.FirewallPolicies.createOrUpdate</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">PUT</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}</code></span></dd><dt>Change:</dt><dd>An optional parameter was added to the generated public method signature</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Method parameter · query</span><code>afcManagedSync</code></td><td class="contract-before"><code class="contract-value before">not present</code><span class="contract-detail">Existing generated method signature</span></td><td class="contract-after"><code class="contract-value after">boolean?</code><span class="contract-detail">Optional method parameter</span></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The optional afcManagedSync parameter is inserted before the existing request parameter, changing ordered generated method signatures for existing SDK callers.</div>
+<div class="contract-footer"><span><strong>Parameters:</strong> 1 added, 3 unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-4ebd789676a2e275"><code>semantic-4ebd789676a2e275</code></a></span></div>
+</div></details>
+<details class="finding sdk-method-card" id="downstream-downstream-group-aa1b7b0342cdca50"><summary><strong>ServiceGateways_UpdateAddressLocations</strong><span class="contract-tag">SDK method</span><span class="finding-summary">3 SDK contract changes</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>Microsoft.Network.ServiceGateways.updateAddressLocationsLro</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">POST</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceGateways/{serviceGatewayName}/updateAddressLocations</code></span></dd><dt>Change:</dt><dd>3 generated SDK method contract members changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Method kind</span><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">lro</code></td><td class="contract-after"><code class="contract-value after">basic</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Long-running behavior</span><code>Long-running behavior</code></td><td class="contract-before"><code class="contract-value before">{&quot;finalStateVia&quot;:&quot;location&quot;,&quot;logicalResult&quot;:&quot;Azure.ResourceManager.ArmOperationStatus&quot;,&quot;pollingStep&quot;:&quot;model&quot;,&quot;finalStep&quot;:&quot;finalOperationLink&quot;,&quot;statusMonitorStep&quot;:&quot;nextOperationLink&quot;}</code></td><td class="contract-after"><code class="contract-value after">none</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response type</span><code>Response type</code></td><td class="contract-before"><code class="contract-value before">void</code></td><td class="contract-after"><code class="contract-value after">Microsoft.Network.ServiceGatewayActionOkResponseBody</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The existing Microsoft.Network.ServiceGateways.updateAddressLocationsLro generated method changes its invocation or result contract as shown by the bounded before/after TCGC facts.</div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
+</div></details>
+<details class="finding sdk-method-card" id="downstream-downstream-group-fc78bb40fa130e57"><summary><strong>ServiceGateways_UpdateServices</strong><span class="contract-tag">SDK method</span><span class="finding-summary">3 SDK contract changes</span></summary>
+<div class="finding-body">
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>Microsoft.Network.ServiceGateways.updateServicesLro</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">POST</span><code>/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceGateways/{serviceGatewayName}/updateServices</code></span></dd><dt>Change:</dt><dd>3 generated SDK method contract members changed</dd></dl>
+<h4>Breaking changes</h4>
+<table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Method kind</span><code>Method kind</code></td><td class="contract-before"><code class="contract-value before">lro</code></td><td class="contract-after"><code class="contract-value after">basic</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Long-running behavior</span><code>Long-running behavior</code></td><td class="contract-before"><code class="contract-value before">{&quot;finalStateVia&quot;:&quot;location&quot;,&quot;logicalResult&quot;:&quot;Azure.ResourceManager.ArmOperationStatus&quot;,&quot;pollingStep&quot;:&quot;model&quot;,&quot;finalStep&quot;:&quot;finalOperationLink&quot;,&quot;statusMonitorStep&quot;:&quot;nextOperationLink&quot;}</code></td><td class="contract-after"><code class="contract-value after">none</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response type</span><code>Response type</code></td><td class="contract-before"><code class="contract-value before">void</code></td><td class="contract-after"><code class="contract-value after">Microsoft.Network.ServiceGatewayActionOkResponseBody</code></td></tr></tbody></table>
+<div class="breaking-rationale"><strong>Why this is breaking:</strong> The existing Microsoft.Network.ServiceGateways.updateServicesLro generated method changes its invocation or result contract as shown by the bounded before/after TCGC facts.</div>
+<div class="contract-footer"><span><strong>Parameters:</strong> unchanged</span><span><strong>Related semantic intents:</strong> <a href="#intent-semantic-39306d50134f94c0"><code>semantic-39306d50134f94c0</code></a></span></div>
+</div></details></section>
+<section id="azure-compliance"><h2>Azure Guidelines (3)</h2><details class="finding compliance-finding" id="compliance-finding-compliance-669a010d2fb35c4b">
+<summary><strong>Legacy suppression retains a placeholder justification</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The changed #suppress message is still a FIXME placeholder, so it does not provide the justification required by the directive contract.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>Suppress directive allows suppressing a specific warning diagnostic. It takes 2 arguments: The diagnostic code to suppress and a message to justify the suppression.</p>
+<p><strong>Guidance:</strong> <a href="https://typespec.io/docs/language-basics/directives/">Directives</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:20397-20403</div><pre><span class="add"><span class="line-number">20397</span>+/**</span>
+<span class="add"><span class="line-number">20398</span>+ * Request body for the MoveIpConfigurations operation.</span>
+<span class="add"><span class="line-number">20399</span>+ */</span>
+<span class="add"><span class="line-number">20400</span>+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span>
+<span class="add"><span class="line-number">20401</span>+@added(Versions.v2025_09_01)</span>
+<span class="add"><span class="line-number">20402</span>+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)</span>
+<span class="add"><span class="line-number">20403</span>+model MoveIpConfigurationsRequest {</span>
+<span class="add"><span class="line-number">20404</span>+  /**</span>
+<span class="add"><span class="line-number">20405</span>+   * A list of IP configuration move items.</span>
+<span class="add"><span class="line-number">20406</span>+   */</span>
+<span class="add"><span class="line-number">20407</span>+  @identifiers(#[])</span>
+<span class="add"><span class="line-number">20408</span>+  moveIpConfigurationItems: MoveIpConfigurationItem[];</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-23cf6865c336a2a8"><code>semantic-23cf6865c336a2a8</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding" id="compliance-finding-compliance-1767678c13fd37d9">
+<summary><strong>Connection Analyzer uses a legacy routed-operation template</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The new Connection Analyzer surface is based on Legacy.RoutedOperations instead of the documented standard ARM resource-operation templates.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>TypeSpec operation templates provide a simple mechanism for producing the most common operation patterns in ARM, using best practices and conforming to ARM RPC guidelines.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:55-60</div><pre><span class="add"><span class="line-number">55</span>+alias ConnectionAnalyzerOps = Azure.ResourceManager.Legacy.RoutedOperations&lt;</span>
+<span class="add"><span class="line-number">56</span>+  {</span>
+<span class="add"><span class="line-number">57</span>+    ...ApiVersionParameter;</span>
+<span class="add"><span class="line-number">58</span>+    ...SubscriptionIdParameter;</span>
+<span class="add"><span class="line-number">59</span>+    ...ResourceGroupParameter;</span>
+<span class="add"><span class="line-number">60</span>+</span>
+<span class="add"><span class="line-number">61</span>+    /** The name of the network watcher. */</span>
+<span class="add"><span class="line-number">62</span>+    @path</span>
+<span class="add"><span class="line-number">63</span>+    @segment(&quot;networkWatchers&quot;)</span>
+<span class="add"><span class="line-number">64</span>+    @key</span>
+<span class="add"><span class="line-number">65</span>+    @pattern(&quot;^[0-9a-zA-Z]([0-9a-zA-Z_.-]{0,62}[0-9a-zA-Z_])?$&quot;)</span>
+<span class="add"><span class="line-number">66</span>+    networkWatcherName: string;</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-9e1ae8c664f60144"><code>semantic-9e1ae8c664f60144</code></a></p>
+</div></details>
+</div></details><details class="finding compliance-finding" id="compliance-finding-compliance-6c4e771f22b3d619">
+<summary><strong>Behavior-affecting operationId suppression bypasses TypeSpec semantics</strong></summary>
+<div class="finding-body">
+<p><strong>Gap:</strong> The changed code suppresses no-openapi to force wire operation IDs, but the fetched Azure guidance explicitly says behavior-affecting @operationId usage must not be suppressed.</p>
+<details class="comparison-details expected-details" open><summary><strong>Expected</strong></summary><div class="comparison-body">
+<p>Decorators that do affect behavior should never be suppressed: name your interface and operation accordingly instead of using @operationId, and define the types correctly in TypeSpec instead of using @useRef.</p>
+<p><strong>Guidance:</strong> <a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></p>
+
+</div></details>
+<details class="comparison-details actual-details" open><summary><strong>Actual</strong></summary><div class="comparison-body">
+<h4>TypeSpec code</h4><div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div><pre><span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;The LRO variant uses a different TypeSpec member name to enable versioning, but must preserve the original operationId for wire backward compatibility with 2025-05-01 and 2025-07-01.&quot;</span>
+<span class="add">+@@operationId(</span>
+<span class="add">+  ServiceGateways.updateAddressLocationsLro,</span>
+<span class="add">+  &quot;ServiceGateways_UpdateAddressLocations&quot;</span>
+<span class="add">+);</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;The LRO variant uses a different TypeSpec member name to enable versioning, but must preserve the original operationId for wire backward compatibility with 2025-05-01 and 2025-07-01.&quot;</span>
+<span class="add">+@@operationId(</span>
+<span class="add">+  ServiceGateways.updateServicesLro,</span>
+<span class="add">+  &quot;ServiceGateways_UpdateServices&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  ServiceGateways.updateAddressLocationsLro::parameters.body,</span></pre></div>
+<p><strong>Related semantic intents:</strong> <a href="#intent-semantic-c407807c969d3377"><code>semantic-c407807c969d3377</code></a></p>
+</div></details>
+</div></details>
+</section>
+<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
+<section id="semantic-intents"><h2>Semantic intents (11)</h2><details class="intent" id="intent-semantic-23cf6865c336a2a8"><summary><strong><span class="action">modify</span> Publish shared Network contracts for the 2025-09-01 API</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-669a010d2fb35c4b">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Updates shared Network models, enums, resource shapes, and paging contracts that flow into the 2025-09-01 operation surface, including load-balancer mode and IP-configuration movement support.</p>
+<p><strong>Deterministic coverage:</strong> 34 of 34 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp</div><pre><span class="context">    * The 2025-07-01 API version.</span>
+<span class="context">    */</span>
+<span class="context">   v2025_07_01: &quot;2025-07-01&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The 2025-09-01 API version.</span>
+<span class="add">+   */</span>
+<span class="add">+  v2025_09_01: &quot;2025-09-01&quot;,</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> #suppress &quot;@azure-tools/typespec-azure-core/no-enum&quot; &quot;FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details&quot;</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp:45</code>.</p></details>
+<h4>Affected REST operations (143)</h4>
+<p><strong>Operation impact:</strong> 143 REST operations are affected; 3 representative operation(s) are shown below and 140 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>ApplicationGatewayPrivateEndpointConnections_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}/privateEndpointConnections/{connectionName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<details class="operation"><summary><strong>ApplicationGatewayPrivateEndpointConnections_List</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}/privateEndpointConnections</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<details class="operation"><summary><strong>ApplicationGatewayPrivateEndpointConnections_Update</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}/privateEndpointConnections/{connectionName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><p class="good"><strong>HTTP signature and represented payload contract unchanged.</strong></p>
+<p><strong>Change outcome:</strong> HTTP signature and represented payload contract unchanged.</p></div></details>
+<p id="related-findings-semantic-23cf6865c336a2a8"><strong>Related findings:</strong> <a href="#compliance-finding-compliance-669a010d2fb35c4b">compliance-669a010d2fb35c4b</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-39306d50134f94c0"><summary><strong><span class="action">modify</span> Introduce synchronous Service Gateway update actions</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-aa1b7b0342cdca50">Downstream breaking changes</a></span></summary><div class="intent-body">
+<p>Adds synchronous service and address-location update actions for 2025-09-01 while retaining the prior long-running operation variants for earlier API versions.</p>
+<p><strong>Deterministic coverage:</strong> 7 of 7 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</div><pre><span class="context">    *</span>
+<span class="context">    * For address-level partial updates, if no services are provided, the existing services will be considered for deletion.</span>
+<span class="context">    */</span>
+<span class="remove">-  updateAddressLocations is ArmResourceActionAsync&lt;</span>
+<span class="add">+  @removed(Versions.v2025_09_01)</span>
+<span class="add">+  @action(&quot;updateAddressLocations&quot;)</span>
+<span class="add">+  @sharedRoute</span>
+<span class="add">+  updateAddressLocationsLro is ArmResourceActionAsync&lt;</span>
+<span class="context">     ServiceGateway,</span>
+<span class="context">     ServiceGatewayUpdateAddressLocationsRequest,</span>
+<span class="context">     NoContentResponse,</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp:74</code>.</p></details>
+<h4>Affected REST operations (2)</h4>
+<p><strong>Operation impact:</strong> 2 REST operations are affected; 2 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>ServiceGateways_UpdateAddressLocations</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceGateways/{serviceGatewayName}/updateAddressLocations</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">LRO</span><code>enabled</code></td><td class="contract-before"><code class="contract-value before">true</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">LRO</span><code>options.final-state-via</code></td><td class="contract-before"><code class="contract-value before">location</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response status</span><code>200</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">ServiceGatewayActionOkResponseBody</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response status</span><code>202</code></td><td class="contract-before"><code class="contract-value before">present</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response status</span><code>204</code></td><td class="contract-before"><code class="contract-value before">present</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses, lro.</p></div></details>
+<details class="operation"><summary><strong>ServiceGateways_UpdateServices</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceGateways/{serviceGatewayName}/updateServices</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">LRO</span><code>enabled</code></td><td class="contract-before"><code class="contract-value before">true</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">LRO</span><code>options.final-state-via</code></td><td class="contract-before"><code class="contract-value before">location</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response status</span><code>200</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">ServiceGatewayActionOkResponseBody</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response status</span><code>202</code></td><td class="contract-before"><code class="contract-value before">present</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response status</span><code>204</code></td><td class="contract-before"><code class="contract-value before">present</code></td><td class="contract-after"><code class="contract-value after">removed</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: responses, lro.</p></div></details>
+<p id="related-findings-semantic-39306d50134f94c0"><strong>Related findings:</strong> <a href="#downstream-downstream-group-aa1b7b0342cdca50">downstream-group-aa1b7b0342cdca50</a>, <a href="#downstream-downstream-group-fc78bb40fa130e57">downstream-group-fc78bb40fa130e57</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-4ebd789676a2e275"><summary><strong><span class="action">modify</span> Allow AFC-managed Firewall Policy synchronization</strong><span class="intent-finding-badges"><a class="intent-finding-badge downstream" href="#downstream-downstream-group-cba76aa475e394f2">Downstream breaking changes</a></span></summary><div class="intent-body">
+<p>Adds the optional afcManagedSync query parameter to FirewallPolicies.createOrUpdate starting in 2025-09-01.</p>
+<p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp</div><pre><span class="context">   @tag(&quot;FirewallPolicies&quot;)</span>
+<span class="context">   createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="context">     FirewallPolicy,</span>
+<span class="add">+    Parameters = {</span>
+<span class="add">+      /**</span>
+<span class="add">+       * Indicates that the write originates from AFC (Azure Firewall for Containers) and is permitted to modify an AFC-managed Firewall Policy.</span>
+<span class="add">+       */</span>
+<span class="add">+      @added(Versions.v2025_09_01)</span>
+<span class="add">+      @query(&quot;afcManagedSync&quot;)</span>
+<span class="add">+      afcManagedSync?: boolean;</span>
+<span class="add">+    },</span>
+<span class="context">     Error = CloudError</span>
+<span class="context">   &gt;;</span>
+<span class="context"> </span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp:47</code>.</p></details>
+<h4>Affected REST operations (1)</h4>
+<p><strong>Operation impact:</strong> 1 REST operations are affected; 1 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>FirewallPolicies_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Query parameter</span><code>afcManagedSync</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">boolean · optional</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Request body property</span><code>properties.afcManaged</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">boolean (optional)</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Request body property</span><code>properties.kubeSelectorGroups</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">array (optional)</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response body property</span><code>200 · properties.afcManaged</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">boolean (optional)</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response body property</span><code>200 · properties.kubeSelectorGroups</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">array (optional)</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response body property</span><code>201 · properties.afcManaged</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">boolean (optional)</code></td></tr><tr><td class="contract-member"><span class="contract-area-kind">Response body property</span><code>201 · properties.kubeSelectorGroups</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">array (optional)</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: parameters, request, responses.</p></div></details>
+<p id="related-findings-semantic-4ebd789676a2e275"><strong>Related findings:</strong> <a href="#downstream-downstream-group-cba76aa475e394f2">downstream-group-cba76aa475e394f2</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-9e1ae8c664f60144"><summary><strong><span class="action">add</span> Add Connection Analyzer and related Network diagnostic contracts</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-1767678c13fd37d9">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Adds the Connection Analyzer resource and routed operations, together with supporting diagnostic, service-gateway, and virtual-appliance models.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</div><pre><span class="context">     ArmResponse&lt;PacketCaptureListResult&gt;,</span>
+<span class="context">     Error = ErrorResponse</span>
+<span class="context">   &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Creates or updates a connection analyzer in the specified network watcher.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;ConnectionAnalyzers&quot;)</span>
+<span class="add">+  @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span>
+<span class="add">+  @put</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
+<span class="add">+  connectionAnalyzersCreate is ConnectionAnalyzerOps.ActionAsync&lt;</span>
+<span class="add">+    NetworkWatcher,</span>
+<span class="add">+    ConnectionAnalyzer,</span>
+<span class="add">+    ConnectionAnalyzer,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmResourceUpdatedResponse&lt;ConnectionAnalyzer&gt;</span>
+<span class="add">+      | ArmResourceCreatedResponse&lt;</span>
+<span class="add">+          ConnectionAnalyzer,</span>
+<span class="add">+          LroHeaders = ArmAsyncOperationHeader&lt;FinalResult = ConnectionAnalyzer&gt; &amp;</span>
+<span class="add">+            Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="add">+        &gt;,</span>
+<span class="add">+    OverrideErrorType = ErrorResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets the specified connection analyzer by name.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;ConnectionAnalyzers&quot;)</span>
+<span class="add">+  @get</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
+<span class="add">+  connectionAnalyzersGet is ConnectionAnalyzerOps.ActionSync&lt;</span>
+<span class="add">+    NetworkWatcher,</span>
+<span class="add">+    void,</span>
+<span class="add">+    Response = ArmResponse&lt;ConnectionAnalyzer&gt;,</span>
+<span class="add">+    OverrideErrorType = ErrorResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Deletes the specified connection analyzer.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;ConnectionAnalyzers&quot;)</span>
+<span class="add">+  @delete</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
+<span class="add">+  connectionAnalyzersDelete is ConnectionAnalyzerOps.ActionAsync&lt;</span>
+<span class="add">+    NetworkWatcher,</span>
+<span class="add">+    void,</span>
+<span class="add">+    void,</span>
+<span class="add">+    Response = ArmDeleteAcceptedLroResponse | ArmDeletedNoContentResponse,</span>
+<span class="add">+    OverrideErrorType = ErrorResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Updates the tags of the specified connection analyzer.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;ConnectionAnalyzers&quot;)</span>
+<span class="add">+  @patch(#{ implicitOptionality: false })</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}&quot;)</span>
+<span class="add">+  connectionAnalyzersUpdateTags is ConnectionAnalyzerOps.ActionSync&lt;</span>
+<span class="add">+    NetworkWatcher,</span>
+<span class="add">+    TagsObject,</span>
+<span class="add">+    Response = ArmResponse&lt;ConnectionAnalyzer&gt;,</span>
+<span class="add">+    OverrideErrorType = ErrorResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Lists all connection analyzers in the specified network watcher.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;ConnectionAnalyzers&quot;)</span>
+<span class="add">+  @list</span>
+<span class="add">+  @get</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers&quot;)</span>
+<span class="add">+  connectionAnalyzersList(</span>
+<span class="add">+    ...ApiVersionParameter,</span>
+<span class="add">+    ...SubscriptionIdParameter,</span>
+<span class="add">+    ...ResourceGroupParameter,</span>
+<span class="add">+</span>
+<span class="add">+    /** The name of the network watcher. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @pattern(&quot;^[0-9a-zA-Z]([0-9a-zA-Z_.-]{0,62}[0-9a-zA-Z_])?$&quot;)</span>
+<span class="add">+    networkWatcherName: string,</span>
+<span class="add">+  ): ArmResponse&lt;ConnectionAnalyzerListResult&gt; | ErrorResponse;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Queries the specified connection analyzer for diagnostic results.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;ConnectionAnalyzers&quot;)</span>
+<span class="add">+  @Azure.Core.useFinalStateVia(&quot;azure-async-operation&quot;)</span>
+<span class="add">+  @post</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}/query&quot;)</span>
+<span class="add">+  connectionAnalyzersQuery is ConnectionAnalyzerOps.ActionAsync&lt;</span>
+<span class="add">+    NetworkWatcher,</span>
+<span class="add">+    void,</span>
+<span class="add">+    ConnectionAnalyzerQueryStatusResult,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmResponse&lt;ConnectionAnalyzerQueryStatusResult&gt;</span>
+<span class="add">+      | ArmAcceptedLroResponse&lt;</span>
+<span class="add">+          &quot;Operation succeeded.&quot;,</span>
+<span class="add">+          LroHeaders = ArmLroLocationHeader&lt;FinalResult = ConnectionAnalyzerQueryStatusResult&gt; &amp;</span>
+<span class="add">+            ArmAsyncOperationHeader&lt;FinalResult = ConnectionAnalyzerQueryStatusResult&gt; &amp;</span>
+<span class="add">+            Azure.Core.Foundations.RetryAfterHeader</span>
+<span class="add">+        &gt;,</span>
+<span class="add">+    OverrideErrorType = ErrorResponse</span>
+<span class="add">+  &gt;;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> @@doc(NetworkWatcher.name, &quot;The name of the network watcher.&quot;);</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp:67</code>.</p></details>
+<h4>Affected REST operations (6)</h4>
+<p><strong>Operation impact:</strong> 6 REST operations are affected; 3 representative operation(s) are shown below and 3 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>NetworkWatchers_ConnectionAnalyzersCreate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>NetworkWatchers_ConnectionAnalyzersDelete</strong> <code>DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>NetworkWatchers_ConnectionAnalyzersGet</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionAnalyzers/{connectionAnalyzerName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses.</p></div></details>
+<p id="related-findings-semantic-9e1ae8c664f60144"><strong>Related findings:</strong> <a href="#compliance-finding-compliance-1767678c13fd37d9">compliance-1767678c13fd37d9</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-c407807c969d3377"><summary><strong><span class="action">add</span> Add First-Party Service Tags and compatibility customizations</strong><span class="intent-finding-badges"><a class="intent-finding-badge compliance" href="#compliance-finding-compliance-6c4e771f22b3d619">Azure Guidelines</a></span></summary><div class="intent-body">
+<p>Adds First-Party Service Tag resources and operations and applies operation-ID and combined-client customizations needed to preserve established SDK and wire identities.</p>
+<p><strong>Deterministic coverage:</strong> 4 of 4 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
+<span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
+<span class="add">+import &quot;@typespec/openapi&quot;;</span>
+<span class="add">+import &quot;@typespec/rest&quot;;</span>
+<span class="add">+import &quot;./models.tsp&quot;;</span>
+<span class="add">+import &quot;../Common/main.tsp&quot;;</span>
+<span class="add">+</span>
+<span class="add">+using TypeSpec.Rest;</span>
+<span class="add">+using Azure.ResourceManager;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="add">+using TypeSpec.OpenAPI;</span>
+<span class="add">+using TypeSpec.Versioning;</span>
+<span class="add">+using Common;</span>
+<span class="add">+using Azure.ClientGenerator.Core;</span>
+<span class="add">+</span>
+<span class="add">+namespace Microsoft.Network;</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * First party service tag resource.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-private-usage&quot; &quot;Follows the shared Network Common.Resource pattern used by every resource in this converted project&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage&quot; &quot;Network resources extend the shared Common.Resource custom resource for backward compatibility with the existing swagger hierarchy&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/composition-over-inheritance&quot; &quot;Back compatibility with the previous Network AutoRest C# hierarchy&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Legacy.feature decorator is required for swagger file splitting in this converted project&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firstPartyServiceTag)</span>
+<span class="add">+@Http.Private.includeInapplicableMetadataInPayload(false)</span>
+<span class="add">+model FirstPartyServiceTag extends Common.Resource {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Properties of the first party service tag.</span>
+<span class="add">+   */</span>
+<span class="add">+  properties?: FirstPartyServiceTagPropertiesFormat;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The unique identifier of the resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  id?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The type of the resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  type?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The name of the first party service tag.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  @path</span>
+<span class="add">+  @key(&quot;firstPartyServiceTagName&quot;)</span>
+<span class="add">+  @segment(&quot;firstPartyServiceTags&quot;)</span>
+<span class="add">+  @maxLength(80)</span>
+<span class="add">+  @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$&quot;)</span>
+<span class="add">+  name: string;</span>
+<span class="add">+</span>
+<span class="add">+  /** A unique read-only string that changes whenever the resource is updated. */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-invalid-envelope-property&quot; &quot;Etag is a standard read-only envelope property across all Network resources for backward compatibility&quot;</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  etag?: string;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * Properties of the first party service tag.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Legacy.feature decorator is required for swagger file splitting in this converted project&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firstPartyServiceTag)</span>
+<span class="add">+model FirstPartyServiceTagPropertiesFormat {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The value of the first party service tag.</span>
+<span class="add">+   */</span>
+<span class="add">+  value: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The reason for failure, if any.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  failedReason?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The resource GUID property of the first party service tag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  resourceGuid?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The provisioning state of the first party service tag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  provisioningState?: ProvisioningState;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;FirstPartyServiceTags interface uses Azure.ResourceManager.Legacy features for backward compatibility with existing swagger API&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firstPartyServiceTag)</span>
+<span class="add">+@armResourceOperations</span>
+<span class="add">+interface FirstPartyServiceTags {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets the specified first party service tag.</span>
+<span class="add">+   */</span>
+<span class="add">+  get is ArmResourceRead&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Creates or updates a first party service tag.</span>
+<span class="add">+   */</span>
+<span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="add">+    FirstPartyServiceTag,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Updates a first party service tag tags.</span>
+<span class="add">+   */</span>
+<span class="add">+  @patch(#{ implicitOptionality: false })</span>
+<span class="add">+  updateTags is ArmCustomPatchAsync&lt;</span>
+<span class="add">+    FirstPartyServiceTag,</span>
+<span class="add">+    PatchModel = TagsObject,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Deletes the specified first party service tag.</span>
+<span class="add">+   */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-delete-operation-response-codes&quot; &quot;Matching existing Network resource pattern (VirtualNetwork, LoadBalancer, etc.) that supports both sync (200) and async (202) delete&quot;</span>
+<span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
+<span class="add">+    FirstPartyServiceTag,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmDeletedResponse</span>
+<span class="add">+      | ArmDeleteAcceptedLroResponse</span>
+<span class="add">+      | ArmDeletedNoContentResponse,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets all the first party service tags in a resource group.</span>
+<span class="add">+   */</span>
+<span class="add">+  list is ArmResourceListByParent&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets all the first party service tags in a subscription.</span>
+<span class="add">+   */</span>
+<span class="add">+  listAll is ArmListBySubscription&lt;FirstPartyServiceTag, Error = CloudError&gt;;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+@@doc(FirstPartyServiceTag.name, &quot;The name of the first party service tag.&quot;);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirstPartyServiceTag.properties,</span>
+<span class="add">+  &quot;Properties of the first party service tag.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirstPartyServiceTags.createOrUpdate::parameters.resource,</span>
+<span class="add">+  &quot;Parameters supplied to the create or update first party service tag operation.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirstPartyServiceTags.updateTags::parameters.properties,</span>
+<span class="add">+  &quot;Parameters supplied to update first party service tag tags.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientName(</span>
+<span class="add">+  FirstPartyServiceTags.createOrUpdate::parameters.resource,</span>
+<span class="add">+  &quot;parameters&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@clientName(</span>
+<span class="add">+  FirstPartyServiceTags.updateTags::parameters.properties,</span>
+<span class="add">+  &quot;parameters&quot;</span>
+<span class="add">+);</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp:18</code>.</p></details>
+<h4>Affected REST operations (6)</h4>
+<p><strong>Operation impact:</strong> 6 REST operations are affected; 3 representative operation(s) are shown below and 3 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>FirstPartyServiceTags_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firstPartyServiceTags/{firstPartyServiceTagName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firstPartyServiceTags/{firstPartyServiceTagName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>FirstPartyServiceTags_Delete</strong> <code>DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firstPartyServiceTags/{firstPartyServiceTagName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firstPartyServiceTags/{firstPartyServiceTagName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>FirstPartyServiceTags_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firstPartyServiceTags/{firstPartyServiceTagName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firstPartyServiceTags/{firstPartyServiceTagName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses.</p></div></details>
+<p id="related-findings-semantic-c407807c969d3377"><strong>Related findings:</strong> <a href="#compliance-finding-compliance-6c4e771f22b3d619">compliance-6c4e771f22b3d619</a></p>
+</div></details>
+<details class="intent" id="intent-semantic-19b6a61a83d34134"><summary><strong><span class="action">add</span> Add Network Virtual Appliance migration actions</strong></summary><div class="intent-body">
+<p>Adds versioned prepare, execute, commit, and abort actions for Network Virtual Appliance migration workflows, plus boot-diagnostic retrieval inputs.</p>
+<p><strong>Deterministic coverage:</strong> 3 of 3 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</div><pre><span class="context">     NetworkVirtualApplianceInstanceId,</span>
+<span class="context">     Error = CloudError</span>
+<span class="context">   &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Prepares the migration of the specified Network Virtual Appliance. This is the first step of a migration workflow, such as migrating to a new OS version or to the new internal load balancer architecture.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  prepareMigration is ArmResourceActionAsyncBase&lt;</span>
+<span class="add">+    NetworkVirtualAppliance,</span>
+<span class="add">+    Request = NetworkVirtualAppliancePrepareMigrationRequest,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmAcceptedLroResponse</span>
+<span class="add">+      | ArmNoContentResponse&lt;&quot;Action completed successfully.&quot;&gt;,</span>
+<span class="add">+    BaseParameters = Azure.ResourceManager.Foundations.DefaultBaseParameters&lt;NetworkVirtualAppliance&gt;,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Executes the migration of the specified Network Virtual Appliance. This step performs the migration workflow that was previously prepared.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  executeMigration is ArmResourceActionAsyncBase&lt;</span>
+<span class="add">+    NetworkVirtualAppliance,</span>
+<span class="add">+    Request = NetworkVirtualApplianceExecuteMigrationRequest,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmAcceptedLroResponse</span>
+<span class="add">+      | ArmNoContentResponse&lt;&quot;Action completed successfully.&quot;&gt;,</span>
+<span class="add">+    BaseParameters = Azure.ResourceManager.Foundations.DefaultBaseParameters&lt;NetworkVirtualAppliance&gt;,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Commits the migration of the specified Network Virtual Appliance. This finalizes a previously executed migration workflow.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  commitMigration is ArmResourceActionAsyncBase&lt;</span>
+<span class="add">+    NetworkVirtualAppliance,</span>
+<span class="add">+    Request = NetworkVirtualApplianceCommitMigrationRequest,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmAcceptedLroResponse</span>
+<span class="add">+      | ArmNoContentResponse&lt;&quot;Action completed successfully.&quot;&gt;,</span>
+<span class="add">+    BaseParameters = Azure.ResourceManager.Foundations.DefaultBaseParameters&lt;NetworkVirtualAppliance&gt;,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Aborts an in-progress migration of the specified Network Virtual Appliance and rolls back to the previous state.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  abortMigration is ArmResourceActionAsyncBase&lt;</span>
+<span class="add">+    NetworkVirtualAppliance,</span>
+<span class="add">+    Request = void,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmAcceptedLroResponse</span>
+<span class="add">+      | ArmNoContentResponse&lt;&quot;Action completed successfully.&quot;&gt;,</span>
+<span class="add">+    BaseParameters = Azure.ResourceManager.Foundations.DefaultBaseParameters&lt;NetworkVirtualAppliance&gt;,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="context"> @@doc(NetworkVirtualAppliance.name, &quot;The name of Network Virtual Appliance.&quot;);</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp:138</code>.</p></details>
+<h4>Affected REST operations (4)</h4>
+<p><strong>Operation impact:</strong> 4 REST operations are affected; 3 representative operation(s) are shown below and 1 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>NetworkVirtualAppliances_AbortMigration</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/abortMigration</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/abortMigration</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>NetworkVirtualAppliances_CommitMigration</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/commitMigration</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/commitMigration</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>NetworkVirtualAppliances_ExecuteMigration</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/executeMigration</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/executeMigration</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<p id="related-findings-semantic-19b6a61a83d34134"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-6c82b99519c5512d"><summary><strong><span class="action">add</span> Add Virtual Network Gateway route and resiliency actions</strong></summary><div class="intent-body">
+<p>Adds versioned actions that retrieve advertised routes, effective routes, and resiliency information for virtual network gateways.</p>
+<p><strong>Deterministic coverage:</strong> 2 of 2 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp</div><pre><span class="context">     Error = CloudError</span>
+<span class="context">   &gt;;</span>
+<span class="context"> </span>
+<span class="add">+  /**</span>
+<span class="add">+   * This operation retrieves a list of effective routes for the virtual network gateway.</span>
+<span class="add">+   */</span>
+<span class="add">+  @added(Versions.v2025_09_01)</span>
+<span class="add">+  @tag(&quot;VirtualNetworkGateways&quot;)</span>
+<span class="add">+  getEffectiveRoutes is ArmResourceActionAsync&lt;</span>
+<span class="add">+    VirtualNetworkGateway,</span>
+<span class="add">+    void,</span>
+<span class="add">+    GatewayEffectiveRouteListResult,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="context">   /**</span>
+<span class="context">    * This operation retrieves the resiliency information for an Express Route Gateway, including the gateway&#39;s current resiliency score and recommendations to further improve the score</span>
+<span class="context">    */</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp:54</code>.</p></details>
+<h4>Affected REST operations (1)</h4>
+<p><strong>Operation impact:</strong> 1 REST operations are affected; 1 representative operation(s) are shown below. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>VirtualNetworkGateways_GetEffectiveRoutes</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}/getEffectiveRoutes</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}/getEffectiveRoutes</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<p id="related-findings-semantic-6c82b99519c5512d"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-719ad7123f9b3ae0"><summary><strong><span class="action">add</span> Add Network Manager, IPAM, and virtual-network workflow contracts</strong></summary><div class="intent-body">
+<p>Introduces the models and resource actions needed for active configuration queries, IPAM pool usage, and moving virtual-network IP configurations in 2025-09-01.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp</div><pre><span class="context">   weight?: int32;</span>
+<span class="context"> }</span>
+<span class="context"> </span>
+<span class="add">+/**</span>
+<span class="add">+ * List of virtual network gateway effective routes.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;This model is part of the existing Network Gateway resource type and must use legacy patterns for backward compatibility&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.networkGateway)</span>
+<span class="add">+model GatewayEffectiveRouteListResult {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * List of gateway effective routes.</span>
+<span class="add">+   */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/missing-x-ms-identifiers&quot; &quot;Effective route items have no single stable identifier property to key on.&quot;</span>
+<span class="add">+  @pageItems</span>
+<span class="add">+  value?: GatewayEffectiveRoute[];</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * Gateway effective routing details.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;This model is part of the existing Network Gateway resource type and must use legacy patterns for backward compatibility&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.networkGateway)</span>
+<span class="add">+model GatewayEffectiveRoute {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The gateway&#39;s local address.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  localAddress?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The list of address prefixes for the effective route.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  addressPrefixes?: string[];</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The IP address of the next hop for the effective route.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  nextHopIpAddress?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The next hop type of the effective route.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  nextHopType?: GatewayEffectiveRouteNextHopType;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * The next hop type of a gateway effective route.</span>
+<span class="add">+ */</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+union GatewayEffectiveRouteNextHopType {</span>
+<span class="add">+  string,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The next hop is a VPN tunnel.</span>
+<span class="add">+   */</span>
+<span class="add">+  Tunnel: &quot;Tunnel&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The next hop is within the local virtual network.</span>
+<span class="add">+   */</span>
+<span class="add">+  VirtualNetwork: &quot;VirtualNetwork&quot;,</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The next hop type could not be determined.</span>
+<span class="add">+   */</span>
+<span class="add">+  Unknown: &quot;Unknown&quot;,</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="context"> /**</span>
+<span class="context">  * Gateway Resiliency Information</span>
+<span class="context">  */</span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp:21606</code>.</p></details>
+<h4>Affected REST operations (15)</h4>
+<p><strong>Operation impact:</strong> 15 REST operations are affected; 3 representative operation(s) are shown below and 12 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>ExpressRouteLags_GenerateLoa</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/generateLoa</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/generateLoa</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses.</p></div></details>
+<details class="operation"><summary><strong>ExpressRouteLags_LinksGet</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses.</p></div></details>
+<details class="operation"><summary><strong>ExpressRouteLags_LinksList</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, paging.</p></div></details>
+<p id="related-findings-semantic-719ad7123f9b3ae0"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-7871d3941bf461df"><summary><strong><span class="action">add</span> Add Firewall Policy Kubernetes selector-group child resources</strong></summary><div class="intent-body">
+<p>Adds the Kubernetes selector-group resource model and its create, read, delete, and list operations beneath Firewall Policy.</p>
+<p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
+<span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
+<span class="add">+import &quot;@typespec/openapi&quot;;</span>
+<span class="add">+import &quot;@typespec/rest&quot;;</span>
+<span class="add">+import &quot;./models.tsp&quot;;</span>
+<span class="add">+import &quot;./FirewallPolicy.tsp&quot;;</span>
+<span class="add">+import &quot;../Common/main.tsp&quot;;</span>
+<span class="add">+</span>
+<span class="add">+using TypeSpec.Rest;</span>
+<span class="add">+using Azure.ResourceManager;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="add">+using TypeSpec.OpenAPI;</span>
+<span class="add">+using TypeSpec.Versioning;</span>
+<span class="add">+using Common;</span>
+<span class="add">+</span>
+<span class="add">+namespace Microsoft.Network;</span>
+<span class="add">+/**</span>
+<span class="add">+ * Firewall Policy Kubernetes Selector Group resource.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-private-usage&quot; &quot;@Http.Private.includeInapplicableMetadataInPayload is required to preserve the existing firewall policy sub-resource payload shape produced by the original Swagger.&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/composition-over-inheritance&quot; &quot;KubeSelectorGroup extends SubResourceModel to preserve the existing id-only firewall policy sub-resource envelope from the original Swagger; inheritance is required for wire-format compatibility.&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage&quot; &quot;firewallPolicy child resources use the ARM Legacy custom-resource pattern; @parentResource(FirewallPolicy) with Legacy.feature is required to match the existing firewall policy resource hierarchy.&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;firewallPolicy uses the ARM Legacy resource pattern; @Azure.ResourceManager.Legacy.feature(Features.firewallPolicy) is required to keep KubeSelectorGroup consistent with the parent firewall policy resource tree.&quot;</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firewallPolicy)</span>
+<span class="add">+@parentResource(FirewallPolicy)</span>
+<span class="add">+@Http.Private.includeInapplicableMetadataInPayload(false)</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+model FirewallPolicyKubeSelectorGroup extends SubResourceModel {</span>
+<span class="add">+  properties?: FirewallPolicyKubeSelectorGroupProperties;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The name of the resource that is unique within a resource group. This name can be used to access the resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  @path</span>
+<span class="add">+  @key(&quot;kubeSelectorGroupName&quot;)</span>
+<span class="add">+  @segment(&quot;kubeSelectorGroups&quot;)</span>
+<span class="add">+  @pattern(&quot;^[a-zA-Z0-9]([a-zA-Z0-9-._]{0,78}[a-zA-Z0-9_])?$&quot;)</span>
+<span class="add">+  name: string;</span>
+<span class="add">+</span>
+<span class="add">+  /** A unique read-only string that changes whenever the resource is updated. */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-invalid-envelope-property&quot; &quot;etag is an existing firewall policy sub-resource envelope property carried over from the original Swagger for optimistic concurrency; it must remain on the resource model.&quot;</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  etag?: string;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;These operations target the KubeSelectorGroup child of firewallPolicy, which uses the ARM Legacy resource pattern; @Azure.ResourceManager.Legacy.feature(Features.firewallPolicy) is required for consistency with the parent firewall policy resource tree.&quot;</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.firewallPolicy)</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@armResourceOperations</span>
+<span class="add">+interface FirewallPolicyKubeSelectorGroups {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets the specified FirewallPolicyKubeSelectorGroup.</span>
+<span class="add">+   */</span>
+<span class="add">+  get is ArmResourceRead&lt;FirewallPolicyKubeSelectorGroup, Error = CloudError&gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Creates or updates the specified FirewallPolicyKubeSelectorGroup.</span>
+<span class="add">+   */</span>
+<span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="add">+    FirewallPolicyKubeSelectorGroup,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Deletes the specified FirewallPolicyKubeSelectorGroup.</span>
+<span class="add">+   */</span>
+<span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
+<span class="add">+    FirewallPolicyKubeSelectorGroup,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Lists all FirewallPolicyKubeSelectorGroups in a FirewallPolicy resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  list is ArmResourceListByParent&lt;</span>
+<span class="add">+    FirewallPolicyKubeSelectorGroup,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirewallPolicyKubeSelectorGroup.name,</span>
+<span class="add">+  &quot;The name of the FirewallPolicyKubeSelectorGroup.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirewallPolicyKubeSelectorGroup.name,</span>
+<span class="add">+  &quot;The name of the resource that is unique within a resource group. This name can be used to access the resource.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirewallPolicyKubeSelectorGroup.properties,</span>
+<span class="add">+  &quot;The properties of the firewall policy Kubernetes selector group.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  FirewallPolicyKubeSelectorGroups.createOrUpdate::parameters.resource,</span>
+<span class="add">+  &quot;Parameters supplied to the create or update FirewallPolicyKubeSelectorGroup operation.&quot;</span>
+<span class="add">+);</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp:17</code>.</p></details>
+<h4>Affected REST operations (4)</h4>
+<p><strong>Operation impact:</strong> 4 REST operations are affected; 3 representative operation(s) are shown below and 1 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>FirewallPolicyKubeSelectorGroups_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/kubeSelectorGroups/{kubeSelectorGroupName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/kubeSelectorGroups/{kubeSelectorGroupName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>FirewallPolicyKubeSelectorGroups_Delete</strong> <code>DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/kubeSelectorGroups/{kubeSelectorGroupName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/kubeSelectorGroups/{kubeSelectorGroupName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>FirewallPolicyKubeSelectorGroups_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/kubeSelectorGroups/{kubeSelectorGroupName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/kubeSelectorGroups/{kubeSelectorGroupName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses.</p></div></details>
+<p id="related-findings-semantic-7871d3941bf461df"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-a5f89c525f92f8f5"><summary><strong><span class="action">add</span> Add ExpressRoute LAG resource family</strong></summary><div class="intent-body">
+<p>Adds ExpressRoute LAG resources, links, members, operations, request models, enums, and paged list results for 2025-09-01.</p>
+<p><strong>Deterministic coverage:</strong> 5 of 5 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
+<span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
+<span class="add">+import &quot;@typespec/openapi&quot;;</span>
+<span class="add">+import &quot;@typespec/rest&quot;;</span>
+<span class="add">+import &quot;./models.tsp&quot;;</span>
+<span class="add">+import &quot;../Common/main.tsp&quot;;</span>
+<span class="add">+</span>
+<span class="add">+using TypeSpec.Rest;</span>
+<span class="add">+using Azure.ResourceManager;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="add">+using TypeSpec.OpenAPI;</span>
+<span class="add">+using TypeSpec.Versioning;</span>
+<span class="add">+using Common;</span>
+<span class="add">+</span>
+<span class="add">+namespace Microsoft.Network;</span>
+<span class="add">+/**</span>
+<span class="add">+ * ExpressRouteLag resource definition.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-private-usage&quot; &quot;The includeInapplicableMetadataInPayload decorator is currently under Http.Private and is required to keep payload shape aligned with existing Network RP swagger output.&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage&quot; &quot;This tracked resource explicitly defines name/etag/identity envelope fields to preserve existing Network RP contract and generated OpenAPI shape for ExpressRoute LAG.&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/composition-over-inheritance&quot; &quot;This resource extends the shared Common.Resource envelope used across Network RP to maintain consistency with existing model composition.&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;The Network RP TypeSpec project currently uses Azure.ResourceManager.Legacy feature toggles and operation templates across this API surface; this file must remain consistent with that project pattern.&quot;</span>
+<span class="add">+@summary(&quot;ExpressRoute LAG&quot;)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
+<span class="add">+@Http.Private.includeInapplicableMetadataInPayload(false)</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+model ExpressRouteLag extends Common.Resource {</span>
+<span class="add">+  /** ExpressRouteLag properties. */</span>
+<span class="add">+  properties?: ExpressRouteLagPropertiesFormat;</span>
+<span class="add">+</span>
+<span class="add">+  /** The unique identifier of the resource. */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  id?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /** The type of the resource. */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  type?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /** The name of the resource. */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  @path</span>
+<span class="add">+  @key(&quot;expressRouteLagName&quot;)</span>
+<span class="add">+  @minLength(1)</span>
+<span class="add">+  @maxLength(80)</span>
+<span class="add">+  @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+  @segment(&quot;expressRouteLags&quot;)</span>
+<span class="add">+  name: string;</span>
+<span class="add">+</span>
+<span class="add">+  /** A unique read-only string that changes whenever the resource is updated. */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-invalid-envelope-property&quot; &quot;etag is intentionally modeled as a read-only envelope field to match existing ExpressRoute resource contracts in Network RP.&quot;</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  etag?: string;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * The identity of ExpressRouteLag, if configured.</span>
+<span class="add">+   */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-invalid-envelope-property&quot; &quot;identity is intentionally exposed at the resource envelope level to align with managed identity behavior of peer ExpressRoute resources.&quot;</span>
+<span class="add">+  identity?: Common.ManagedServiceIdentity;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+alias ExpressRouteLagLinkOps = Azure.ResourceManager.Legacy.RoutedOperations&lt;</span>
+<span class="add">+  {</span>
+<span class="add">+    ...ApiVersionParameter;</span>
+<span class="add">+    ...SubscriptionIdParameter;</span>
+<span class="add">+    ...ResourceGroupParameter;</span>
+<span class="add">+</span>
+<span class="add">+    /** The name of the express route LAG. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @segment(&quot;expressRouteLags&quot;)</span>
+<span class="add">+    @key</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    expressRouteLagName: string;</span>
+<span class="add">+  },</span>
+<span class="add">+  {</span>
+<span class="add">+    /** The name of the express route LAG link. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @segment(&quot;links&quot;)</span>
+<span class="add">+    @key</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    linkName: string;</span>
+<span class="add">+  },</span>
+<span class="add">+  ResourceRoute = #{</span>
+<span class="add">+    route: &quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}&quot;,</span>
+<span class="add">+  }</span>
+<span class="add">+&gt;;</span>
+<span class="add">+</span>
+<span class="add">+alias ExpressRouteLagMemberOps = Azure.ResourceManager.Legacy.RoutedOperations&lt;</span>
+<span class="add">+  {</span>
+<span class="add">+    ...ApiVersionParameter;</span>
+<span class="add">+    ...SubscriptionIdParameter;</span>
+<span class="add">+    ...ResourceGroupParameter;</span>
+<span class="add">+</span>
+<span class="add">+    /** The name of the express route LAG. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @segment(&quot;expressRouteLags&quot;)</span>
+<span class="add">+    @key</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    expressRouteLagName: string;</span>
+<span class="add">+</span>
+<span class="add">+    /** The name of the express route LAG link. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @segment(&quot;links&quot;)</span>
+<span class="add">+    @key</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    linkName: string;</span>
+<span class="add">+  },</span>
+<span class="add">+  {</span>
+<span class="add">+    /** The name of the express route LAG member. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @segment(&quot;members&quot;)</span>
+<span class="add">+    @key</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    memberName: string;</span>
+<span class="add">+  },</span>
+<span class="add">+  ResourceRoute = #{</span>
+<span class="add">+    route: &quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}/members/{memberName}&quot;,</span>
+<span class="add">+  }</span>
+<span class="add">+&gt;;</span>
+<span class="add">+</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;The containing service namespace still relies on Azure.ResourceManager.Legacy feature flags and templates; this interface follows the same established project-level pattern.&quot;</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.expressRoute)</span>
+<span class="add">+@armResourceOperations(#{ allowStaticRoutes: true, omitTags: true })</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+interface ExpressRouteLags {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Retrieves the requested ExpressRouteLag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  get is ArmResourceRead&lt;ExpressRouteLag, Error = CloudError&gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Creates or updates the specified ExpressRouteLag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Update ExpressRouteLag tags or identity.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  @patch(#{ implicitOptionality: false })</span>
+<span class="add">+  update is ArmCustomPatchSync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    PatchModel = ExpressRouteLagUpdateTagsOrIdentityRequest,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Deletes the specified ExpressRouteLag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    Response =</span>
+<span class="add">+      | ArmDeleteAcceptedLroResponse&lt;ArmCombinedLroHeaders &amp;</span>
+<span class="add">+          Azure.Core.Foundations.RetryAfterHeader&gt;</span>
+<span class="add">+      | ArmDeletedNoContentResponse,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * List all the ExpressRouteLag resources in the specified resource group.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  listByResourceGroup is ArmResourceListByParent&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    Response = ExpressRouteLagListResult,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * List all the ExpressRouteLag resources in the specified subscription.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  list is ArmListBySubscription&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    Response = ExpressRouteLagListResult,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Generate a letter of authorization for the requested ExpressRouteLag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLags&quot;)</span>
+<span class="add">+  @action(&quot;generateLoa&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  generateLoa is ArmResourceActionSync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    GenerateExpressRouteLagsLOARequest,</span>
+<span class="add">+    ArmResponse&lt;GenerateExpressRouteLagsLOAResult&gt;,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Retrieves the specified ExpressRouteLagLink resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLagLinks&quot;)</span>
+<span class="add">+  @get</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}&quot;)</span>
+<span class="add">+  linksGet is ExpressRouteLagLinkOps.ActionSync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    void,</span>
+<span class="add">+    Response = ArmResponse&lt;ExpressRouteLagLink&gt;,</span>
+<span class="add">+    OverrideErrorType = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Retrieve the ExpressRouteLagLink sub-resources of the specified ExpressRouteLag resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLagLinks&quot;)</span>
+<span class="add">+  @list</span>
+<span class="add">+  @get</span>
+<span class="add">+  @action(&quot;links&quot;)</span>
+<span class="add">+  @autoRoute</span>
+<span class="add">+  linksList is ArmResourceActionSync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    void,</span>
+<span class="add">+    ArmResponse&lt;ExpressRouteLagLinkListResult&gt;,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Retrieves the specified ExpressRouteLagMember resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLagMembers&quot;)</span>
+<span class="add">+  @get</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}/members/{memberName}&quot;)</span>
+<span class="add">+  membersGet is ExpressRouteLagMemberOps.ActionSync&lt;</span>
+<span class="add">+    ExpressRouteLag,</span>
+<span class="add">+    void,</span>
+<span class="add">+    Response = ArmResponse&lt;ExpressRouteLagMember&gt;,</span>
+<span class="add">+    OverrideErrorType = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Retrieve the ExpressRouteLagMember sub-resources of the specified ExpressRouteLagLink resource.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;ExpressRouteLagMembers&quot;)</span>
+<span class="add">+  @list</span>
+<span class="add">+  @get</span>
+<span class="add">+  @route(&quot;/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/links/{linkName}/members&quot;)</span>
+<span class="add">+  membersList(</span>
+<span class="add">+    ...ApiVersionParameter,</span>
+<span class="add">+    ...SubscriptionIdParameter,</span>
+<span class="add">+    ...ResourceGroupParameter,</span>
+<span class="add">+</span>
+<span class="add">+    /** The name of the express route LAG. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    expressRouteLagName: string,</span>
+<span class="add">+</span>
+<span class="add">+    /** The name of the express route LAG link. */</span>
+<span class="add">+    @path</span>
+<span class="add">+    @minLength(1)</span>
+<span class="add">+    @maxLength(80)</span>
+<span class="add">+    @pattern(&quot;^[a-zA-Z0-9][a-zA-Z0-9._-]*$&quot;)</span>
+<span class="add">+    linkName: string,</span>
+<span class="add">+  ): ArmResponse&lt;ExpressRouteLagMemberListResult&gt; | CloudError;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+@@doc(ExpressRouteLag.name, &quot;The name of ExpressRouteLag.&quot;);</span>
+<span class="add">+@@doc(ExpressRouteLag.properties, &quot;ExpressRouteLag properties.&quot;);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  ExpressRouteLags.createOrUpdate::parameters.resource,</span>
+<span class="add">+  &quot;Parameters supplied to the create ExpressRouteLag operation.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  ExpressRouteLags.update::parameters.properties,</span>
+<span class="add">+  &quot;Parameters supplied to update ExpressRouteLag resource tags or identity.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  ExpressRouteLags.generateLoa::parameters.body,</span>
+<span class="add">+  &quot;Request parameters supplied to generate a letter of authorization.&quot;</span>
+<span class="add">+);</span>
+<span class="add">+</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-openapi&quot; &quot;x-ms-pageable extension is required for this manually-routed list operation; ArmResourceListByParent is not used here&quot;</span>
+<span class="add">+@@extension(</span>
+<span class="add">+  ExpressRouteLags.membersList,</span>
+<span class="add">+  &quot;x-ms-pageable&quot;,</span>
+<span class="add">+  #{ nextLinkName: &quot;nextLink&quot; }</span>
+<span class="add">+);</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp:16</code>.</p></details>
+<h4>Affected REST operations (12)</h4>
+<p><strong>Operation impact:</strong> 12 REST operations are affected; 3 representative operation(s) are shown below and 9 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>ExpressRouteLags_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>ExpressRouteLags_Delete</strong> <code>DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>ExpressRouteLags_GenerateLoa</strong> <code>POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/generateLoa</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteLags/{expressRouteLagName}/generateLoa</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses.</p></div></details>
+<p id="related-findings-semantic-a5f89c525f92f8f5"><strong>Related findings:</strong> None</p>
+</div></details>
+<details class="intent" id="intent-semantic-ba5c64982aa9eea2"><summary><strong><span class="action">add</span> Add Address Prefix Set child resources</strong></summary><div class="intent-body">
+<p>Adds Address Prefix Set models and create, read, delete, and list operations as a new Network child-resource surface.</p>
+<p><strong>Deterministic coverage:</strong> 2 of 2 changed hunks classified. AI inference skipped.</p>
+<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
+<div class="diff"><div class="diff-path">specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</div><pre><span class="add">+import &quot;@azure-tools/typespec-azure-core&quot;;</span>
+<span class="add">+import &quot;@azure-tools/typespec-azure-resource-manager&quot;;</span>
+<span class="add">+import &quot;@typespec/rest&quot;;</span>
+<span class="add">+import &quot;@typespec/versioning&quot;;</span>
+<span class="add">+import &quot;./models.tsp&quot;;</span>
+<span class="add">+import &quot;./ApplicationSecurityGroup.tsp&quot;;</span>
+<span class="add">+import &quot;../Common/ApplicationSecurityGroup.tsp&quot;;</span>
+<span class="add">+</span>
+<span class="add">+using TypeSpec.Rest;</span>
+<span class="add">+using Azure.ResourceManager;</span>
+<span class="add">+using TypeSpec.Http;</span>
+<span class="add">+using TypeSpec.Versioning;</span>
+<span class="add">+using Common;</span>
+<span class="add">+</span>
+<span class="add">+namespace Microsoft.Network;</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * Address prefix set child resource of an application security group.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Legacy feature decorator required for Network RP feature gating, consistent with other Network RP interface definitions&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-private-usage&quot; &quot;Required for includeInapplicableMetadataInPayload which suppresses systemData in the response payload, consistent with other Network RP nested resources&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-custom-resource-usage-discourage&quot; &quot;AddressPrefixSet uses the local Network RP ProxyResource base type consistent with other Network RP nested resources (e.g. ConnectionPolicy)&quot;</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/composition-over-inheritance&quot; &quot;Extending the local Network RP ProxyResource is the established pattern for nested resources in this RP&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)</span>
+<span class="add">+@parentResource(ApplicationSecurityGroup)</span>
+<span class="add">+@Http.Private.includeInapplicableMetadataInPayload(false)</span>
+<span class="add">+model AddressPrefixSet extends ProxyResource {</span>
+<span class="add">+  /** Properties of the address prefix set. */</span>
+<span class="add">+  properties?: AddressPrefixSetPropertiesFormat;</span>
+<span class="add">+</span>
+<span class="add">+  /** The name of the address prefix set. */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  @path</span>
+<span class="add">+  @key(&quot;addressPrefixSetName&quot;)</span>
+<span class="add">+  @segment(&quot;addressPrefixSets&quot;)</span>
+<span class="add">+  @pattern(&quot;^[a-zA-Z0-9]([a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_])?$&quot;)</span>
+<span class="add">+  name: string;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+/**</span>
+<span class="add">+ * Properties of address prefix set.</span>
+<span class="add">+ */</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Uses legacy ARM resource patterns consistent with other Network RP property models&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)</span>
+<span class="add">+model AddressPrefixSetPropertiesFormat {</span>
+<span class="add">+  /** The list of address prefixes in CIDR notation. Supports both IPv4 and IPv6 CIDR notation (e.g. &#39;10.0.0.0/16&#39;, &#39;2001:db8::/32&#39;). */</span>
+<span class="add">+  @minItems(1)</span>
+<span class="add">+  addressPrefixes: string[];</span>
+<span class="add">+</span>
+<span class="add">+  /** The provisioning state of the address prefix set resource. */</span>
+<span class="add">+  @visibility(Lifecycle.Read)</span>
+<span class="add">+  provisioningState?: ProvisioningState;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+#suppress &quot;@azure-tools/typespec-azure-core/no-legacy-usage&quot; &quot;Uses legacy ARM resource patterns consistent with other Network RP operation interfaces&quot;</span>
+<span class="add">+@added(Versions.v2025_09_01)</span>
+<span class="add">+@Azure.ResourceManager.Legacy.feature(Features.virtualNetwork)</span>
+<span class="add">+@armResourceOperations(#{ omitTags: true })</span>
+<span class="add">+interface AddressPrefixSets {</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets the specified address prefix set.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
+<span class="add">+  get is ArmResourceRead&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Creates or updates an address prefix set.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
+<span class="add">+  createOrUpdate is ArmResourceCreateOrReplaceAsync&lt;</span>
+<span class="add">+    AddressPrefixSet,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Deletes the specified address prefix set.</span>
+<span class="add">+   */</span>
+<span class="add">+  #suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-delete-operation-response-codes&quot; &quot;Network RP delete operations use 202+204 pattern without 200, matching existing ASG and other resource delete conventions&quot;</span>
+<span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
+<span class="add">+  delete is ArmResourceDeleteWithoutOkAsync&lt;</span>
+<span class="add">+    AddressPrefixSet,</span>
+<span class="add">+    Response = ArmDeleteAcceptedLroResponse | ArmDeletedNoContentResponse,</span>
+<span class="add">+    Error = CloudError</span>
+<span class="add">+  &gt;;</span>
+<span class="add">+</span>
+<span class="add">+  /**</span>
+<span class="add">+   * Gets all address prefix sets in an application security group.</span>
+<span class="add">+   */</span>
+<span class="add">+  @tag(&quot;AddressPrefixSets&quot;)</span>
+<span class="add">+  list is ArmResourceListByParent&lt;AddressPrefixSet, Error = CloudError&gt;;</span>
+<span class="add">+}</span>
+<span class="add">+</span>
+<span class="add">+@@doc(AddressPrefixSet.name, &quot;The name of the address prefix set.&quot;);</span>
+<span class="add">+@@doc(AddressPrefixSet.properties, &quot;Properties of the address prefix set.&quot;);</span>
+<span class="add">+@@doc(</span>
+<span class="add">+  AddressPrefixSets.createOrUpdate::parameters.resource,</span>
+<span class="add">+  &quot;Parameters supplied to the create or update address prefix set operation.&quot;</span>
+<span class="add">+);</span>
+<span class="context"></span></pre></div>
+<p class="sources"><strong>Source:</strong> <code>specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp:17</code>.</p></details>
+<h4>Affected REST operations (4)</h4>
+<p><strong>Operation impact:</strong> 4 REST operations are affected; 3 representative operation(s) are shown below and 1 are omitted from HTML. The complete inventory is retained in assessment.json.</p>
+<details class="operation"><summary><strong>AddressPrefixSets_CreateOrUpdate</strong> <code>PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationSecurityGroups/{applicationSecurityGroupName}/addressPrefixSets/{addressPrefixSetName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationSecurityGroups/{applicationSecurityGroupName}/addressPrefixSets/{addressPrefixSetName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, request, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>AddressPrefixSets_Delete</strong> <code>DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationSecurityGroups/{applicationSecurityGroupName}/addressPrefixSets/{addressPrefixSetName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationSecurityGroups/{applicationSecurityGroupName}/addressPrefixSets/{addressPrefixSetName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses, lro.</p></div></details>
+<details class="operation"><summary><strong>AddressPrefixSets_Get</strong> <code>GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationSecurityGroups/{applicationSecurityGroupName}/addressPrefixSets/{addressPrefixSetName}</code> <span>2025-09-01</span></summary>
+<div class="operation-body"><table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td class="contract-member"><span class="contract-area-kind">Operation</span><code>operation</code></td><td class="contract-before"><code class="contract-value before">not present</code></td><td class="contract-after"><code class="contract-value after">GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationSecurityGroups/{applicationSecurityGroupName}/addressPrefixSets/{addressPrefixSetName}</code></td></tr></tbody></table>
+<p><strong>Change outcome:</strong> REST contract changed: method, path, parameters, responses.</p></div></details>
+<p id="related-findings-semantic-ba5c64982aa9eea2"><strong>Related findings:</strong> None</p>
+</div></details></section>
+<section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
+<h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Network</code></td><td>new-api-version</td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-07-01</code><br><small>current · previous-latest-stable</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2025-09-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/network/resource-manager/Microsoft.Network/Network/Vmss</code></td><td>existing-api-version</td><td><code>9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5@2018-10-01</code><br><small>base · affected-existing-version</small></td><td><code>780a61ace56c22ce10dd01caa8ab95ca4514ac2e@2018-10-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
+<p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44988">#44988</a></p>
+<h3 id="compliance-search-evidence">Guidance fetched</h3>
+<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/">ARM long-running operations</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/">Azure.ResourceManager interface reference</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://typespec.io/docs/language-basics/directives/">Directives</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li><li><a href="https://typespec.io/docs/language-basics/enums/">Enums</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/">Azure Core `no-openapi` rule</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li></ul>
+<h3>Changed files</h3><ul><li><code>specification/network/resource-manager/Microsoft.Network/Network/client.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/back-compatible.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicy.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/main.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp</code> (committed)</li><li><code>specification/network/resource-manager/Microsoft.Network/Network/Vmss/main.tsp</code> (committed)</li></ul>
+<h3>Timing and model input</h3><pre>{
+  &quot;timings&quot;: {
+    &quot;totalMs&quot;: 332157,
+    &quot;semanticAnalysisMs&quot;: 131156,
+    &quot;restAnalysisMs&quot;: 80888,
+    &quot;downstreamAnalysisMs&quot;: 103976
+  },
+  &quot;inputAccounting&quot;: {
+    &quot;budgetTier&quot;: &quot;medium&quot;,
+    &quot;budgetBytes&quot;: 262144,
+    &quot;bytes&quot;: 134860,
+    &quot;estimatedTokens&quot;: 33715,
+    &quot;retained&quot;: {
+      &quot;evidenceSets&quot;: 25,
+      &quot;facts&quot;: 12,
+      &quot;semanticReviewUnits&quot;: 11,
+      &quot;restCandidates&quot;: 0,
+      &quot;downstreamCandidates&quot;: 10,
+      &quot;downstreamRootCauses&quot;: 3,
+      &quot;complianceSearchRequests&quot;: 11,
+      &quot;inferenceRequests&quot;: 0
+    },
+    &quot;omittedRedundant&quot;: {
+      &quot;rawEmitterArtifacts&quot;: true,
+      &quot;compilerLogs&quot;: true,
+      &quot;unchangedInventories&quot;: true,
+      &quot;unreferencedFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
+    },
+    &quot;compliance&quot;: {
+      &quot;catalogEntriesScored&quot;: 352,
+      &quot;documentsFetched&quot;: 44,
+      &quot;documentBytesFetched&quot;: 22718609,
+      &quot;guidanceExcerptsRetained&quot;: 44,
+      &quot;guidanceExcerptBytesRetained&quot;: 6437
+    }
+  }
+}</pre>
+<p><strong>Provenance:</strong> model-input.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
+</main>
+<script>
+function revealHashTarget() {
+  const target = document.getElementById(location.hash.slice(1));
+  if (!target) return;
+  for (let element = target; element; element = element.parentElement) {
+    if (element.tagName === "DETAILS") element.open = true;
+  }
+  target.scrollIntoView({ block: "start" });
+}
+window.addEventListener("hashchange", revealHashTarget);
+document.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.closest('a[href^="#"]')) {
+    window.setTimeout(revealHashTarget);
+  }
+});
+revealHashTarget();
+</script>
+</body></html>

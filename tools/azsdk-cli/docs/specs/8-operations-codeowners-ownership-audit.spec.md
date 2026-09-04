@@ -7,26 +7,32 @@
 >
 > What still applies from this document:
 >
-> - the cache-backed audit architecture, the six-hour freshness policy, and the fail-fast behavior
+> - the cache-backed validation architecture, the six-hour freshness policy, and the fail-fast
+>   behavior on a stale or empty cache
 > - the `update-cache` refresh workflow (pipeline definition `5112`)
 > - the legacy-linter rule mapping, as the historical record of why each rule exists
 >
 > What changed:
 >
-> - audit reads YAML files instead of `Owner` / `Label` / `Label Owner` work items
-> - `AUD-STR-001` and `AUD-STR-002` are retired; a label-owner entry with zero owners or zero labels
->   is now a schema violation that fails at load, before rendering
+> - the `audit` command is replaced by `lint`, which reads YAML files instead of
+>   `Owner` / `Label` / `Label Owner` work items
+> - `lint` has no `--fix`. It reports and exits non-zero; it never edits the repository, so there is
+>   no safety threshold and no `--force`. The `Generator Interaction` section below describes the
+>   retired fix behavior and is retained for history.
+> - the rule engine and its five rule classes are deleted rather than ported. `AUD-STR-001` /
+>   `AUD-STR-002` become schema violations that fail at load; `AUD-LBL-002` is subsumed by
+>   `LNT-LBL-001`; `AUD-PATH-001` and `AUD-ORD-001` are dropped.
 > - `AUD-OWN-001` / `AUD-OWN-003` no longer record state anywhere. There is no `Custom.InvalidSince`
->   field, no replacement ledger, and no `--invalid-owner-lookback-days` grace period; an owner the
->   cache reports as invalid is ejected immediately. `--fix` rewrites the owners YAML. The
->   `Generator Interaction` section below describes the retired behavior and is retained for history.
-> - `AUD-OWN-004`, `AUD-OWN-005`, and `AUD-PATH-001` are added; `PATH-001` /
->   `PATH-003` become implementable because generation now runs inside a repo checkout
-> - the rendered `CODEOWNERS.cache` blob is removed; `check-package` reads the in-repo
->   `.github/CODEOWNERS`
+>   field, no replacement ledger, and no `--invalid-owner-lookback-days` grace period.
+> - labels are validated against the common label set (`tools/github/data/common-labels.csv`) rather
+>   than a per-repo label blob, and only in `owners.yaml` fragments
+> - `check-package` also validates owners against the caches, and does not count a rejected owner
+>   toward the configured minimums
+> - the rendered `CODEOWNERS.cache` blob is removed; `check-package` resolves ownership from the
+>   YAML sources
 >
-> The current audit rule set is the table in
-> [Component 10 of the management spec](./8-operations-codeowners-management.spec.md#component-10-audit-rules).
+> The current rule set is the table in
+> [Component 10 of the management spec](./8-operations-codeowners-management.spec.md#component-10-lint-rules).
 
 ## Table of Contents
 

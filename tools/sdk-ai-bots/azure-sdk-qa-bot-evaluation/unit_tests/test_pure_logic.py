@@ -29,6 +29,8 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    COMPLETION_ITEM_SCHEMA,
+    _completion_item,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -336,6 +338,30 @@ def test_output_items_to_rows_completion_item_response():
     assert rows[0]["inputs.response"] == "collected answer"
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
+
+
+def test_chat_latency_is_preserved_and_summarized():
+    from _evals_result import EvalsResult
+
+    collected = {
+        "testcase": "slow chat",
+        "query": "q",
+        "response": "answer",
+        "latency": 1.25,
+    }
+    assert COMPLETION_ITEM_SCHEMA["properties"]["latency"] == {"type": "number"}
+    item = _completion_item(collected)
+    assert item["latency"] == 1.25
+
+    rows = output_items_to_rows(
+        [{"datasource_item": item, "results": []}],
+        [],
+    )
+    assert rows["rows"][0]["inputs.latency"] == 1.25
+
+    recorded = EvalsResult(metrics={}, suppressions=None).record_run_result(rows)
+    assert recorded[0]["latency"] == 1.25
+    assert recorded[-1]["average_latency_seconds"] == 1.25
 
 
 def test_failed_row_counts_as_failure_in_gate():

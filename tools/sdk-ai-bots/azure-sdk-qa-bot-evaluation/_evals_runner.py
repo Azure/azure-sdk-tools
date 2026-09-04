@@ -61,6 +61,7 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "ground_truth": {"type": "string"},
         "response": {"type": "string"},
         "context": {"type": "string"},
+        "latency": {"type": "number"},
         "expected_references": {"type": "array", "items": {"type": "object"}},
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
@@ -78,6 +79,7 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "ground_truth": it.get("ground_truth", ""),
         "response": it.get("response", ""),
         "context": it.get("context", "") or "",
+        "latency": it.get("latency", 0.0),
         "expected_references": it.get("expected_references", []),
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
@@ -318,6 +320,7 @@ def output_items_to_rows(
             "inputs.expected_references": item.get("expected_references", []),
             "inputs.expected_knowledges": item.get("expected_knowledges", []),
             "inputs.response": item.get("response", ""),
+            "inputs.latency": item.get("latency"),
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
         }

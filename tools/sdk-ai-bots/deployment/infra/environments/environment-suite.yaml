@@ -37,7 +37,7 @@ environments:
         # pipelines/templates/service-connection.yml, which must resolve the
         # endpoint at template-expansion time.
         subscription: 'azure-sdk-tests-playground'
-        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
+        subscriptionId: 'faa080af-c1d8-40ad-9cce-e1a450ca5b57'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         serviceManagementReference: 'c29c71f8-2db7-4d9e-bf8b-e6b0965ecde4'
         serverApplicationClientId: 'f9b6590e-3710-402a-a17a-d6b99de129a3'

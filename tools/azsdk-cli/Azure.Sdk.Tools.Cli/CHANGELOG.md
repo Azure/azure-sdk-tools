@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.42 (Unreleased)
+## 0.6.44 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,23 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.43 (2026-09-03)
+
+### Breaking Changes
+
+- Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
+## 0.6.42 (2026-09-01)
+
+### Bugs Fixed
+
+- `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.
+
+### Other Changes
+
+- Skip SDK generation if an SDK generation pipeline is already in progress for the release plan.
+- Do not run SDK generation if another release plan is in progress for the same package.
 
 ## 0.6.41 (2026-08-31)
 

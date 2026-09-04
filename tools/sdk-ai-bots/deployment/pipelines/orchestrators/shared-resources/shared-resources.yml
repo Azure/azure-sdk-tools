@@ -35,6 +35,7 @@ extends:
                   environment: ${{ parameters.environment }}
                   stageName: ApproveLayer
                   dependsOn: PreflightLayer
+                  preflightJobName: AzdProvisionLayer
                   scope: resource-group and shared-resources layers
             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
               parameters:

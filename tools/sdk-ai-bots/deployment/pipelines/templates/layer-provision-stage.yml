@@ -42,6 +42,11 @@ stages:
                   parameters:
                       environment: ${{ parameters.environment }}
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                - ${{ if eq(parameters.operation, 'preview') }}:
+                      - bash: |
+                            set -euo pipefail
+                            : > "$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md"
+                        displayName: 'Initialize preflight result'
                 - ${{ if parameters.provisionResourceGroup }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
                         parameters:
@@ -58,6 +63,8 @@ stages:
                       operation: ${{ parameters.operation }}
                       layer: ${{ parameters.layer }}
                       dependencyLayers: ${{ parameters.dependencyLayers }}
+                - ${{ if eq(parameters.operation, 'preview') }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/publish-preview-summary.yml
 
           - ${{ if and(eq(parameters.operation, 'apply'), eq(parameters.layer, 'logic-app')) }}:
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/logic-app-consent-jobs.yml

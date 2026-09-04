@@ -4,9 +4,10 @@ import { readFileSync } from "node:fs";
 
 const inputPath = process.argv[2];
 if (!inputPath) {
-    console.error("Usage: node list-risky-preview-operations.mjs <azd-preview.json>");
+    console.error("Usage: node list-risky-preview-operations.mjs <azd-preview.json> [--all]");
     process.exit(1);
 }
+const includeCreates = process.argv.includes("--all");
 
 const input = readFileSync(inputPath, "utf8");
 
@@ -75,7 +76,7 @@ function visit(value) {
     }
 
     const operation = value.Operation ?? value.operation;
-    if (operation === "Delete" || operation === "Modify") {
+    if (operation === "Delete" || operation === "Modify" || (includeCreates && operation === "Create")) {
         const resourceType = value.Type ?? value.type ?? "resource";
         const name = value.Name ?? value.name ?? "unknown";
         riskyOperations.add(`${operation}: ${resourceType}/${name}`);

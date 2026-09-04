@@ -26,7 +26,10 @@ Dev, preview, and production all require a successful infrastructure preview
 and manual approval before apply. The approval task rejects after 24 hours; the
 approval stage itself remains available for three days. When no explicit
 approver list is configured, any user with permission to queue the pipeline can
-approve or reject the run.
+approve or reject the run. The approval dialog includes a concise preflight
+summary and links to the full logs. Azure DevOps fixes the action labels as
+`Resume` and `Reject`; the pipeline labels the task **Approve or reject** and
+documents `Resume` as the approval action.
 
 After an apply that includes the Logic App layer, the provision stage checks the
 Teams API connection. Connected environments continue automatically; otherwise

@@ -54,6 +54,23 @@ steps:
               fi
               azd env select "$AZURE_ENV_NAME" --no-prompt
 
+              PREVIEW_SUMMARY_FILE="$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md"
+              append_preview_summary() {
+                local layer_name="$1"
+                local preview_output="$2"
+                local changes
+                changes=$(node scripts/list-risky-preview-operations.mjs "$preview_output" --all)
+                {
+                  printf '### `%s`\n\n' "$layer_name"
+                  if [ -n "$changes" ]; then
+                    sed 's/^/- /' <<< "$changes"
+                    printf '\n'
+                  else
+                    printf 'No Create, Modify, or Delete operations.\n\n'
+                  fi
+                } >> "$PREVIEW_SUMMARY_FILE"
+              }
+
               restore_desired_values() {
                 DESIRED_KEYS=(
                   AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID AZURE_RESOURCE_GROUP
@@ -129,6 +146,7 @@ steps:
                   --no-prompt \
                   --output json > "$PREVIEW_OUTPUT"
                 cat "$PREVIEW_OUTPUT"
+                append_preview_summary "$TARGET_LAYER" "$PREVIEW_OUTPUT"
 
                 RISKY_OPERATIONS=$(node scripts/list-risky-preview-operations.mjs "$PREVIEW_OUTPUT")
                 if [ -n "$RISKY_OPERATIONS" ]; then
@@ -173,6 +191,7 @@ steps:
                   --no-prompt \
                   --output json > "$PREVIEW_OUTPUT"
                 cat "$PREVIEW_OUTPUT"
+                append_preview_summary "$LAYER" "$PREVIEW_OUTPUT"
 
                 LAYER_RISK=$(node scripts/list-risky-preview-operations.mjs "$PREVIEW_OUTPUT")
                 if [ -n "$LAYER_RISK" ]; then

@@ -75,6 +75,10 @@ stages:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 
                 - ${{ if parameters.runValidateAndPreview }}:
+                      - bash: |
+                            set -euo pipefail
+                            : > "$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md"
+                        displayName: 'Initialize preflight result'
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
                         parameters:
                             layer: ${{ parameters.layer }}
@@ -84,6 +88,7 @@ stages:
                             layer: ${{ parameters.layer }}
                             dependencyLayers: ${{ parameters.dependencyLayers }}
                             workingDirectory: ${{ parameters.workingDirectory }}
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/publish-preview-summary.yml
 
                 - ${{ if parameters.runProvision }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml

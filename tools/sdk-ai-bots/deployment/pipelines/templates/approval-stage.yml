@@ -11,26 +11,40 @@ parameters:
     - name: scope
       type: string
       default: complete environment
+    - name: preflightJobName
+      type: string
+      default: AzdProvision
     - name: approvers
       type: string
       default: ''
 
 stages:
     - stage: ${{ parameters.stageName }}
-      displayName: 'Approve provisioning (${{ parameters.environment }})'
+      displayName: 'Approve or reject provisioning (${{ parameters.environment }})'
       dependsOn: ${{ parameters.dependsOn }}
       condition: succeeded()
+      variables:
+          preflightResult: $[ stageDependencies.${{ parameters.dependsOn }}.${{ parameters.preflightJobName }}.outputs['PublishPreflightResult.previewResult'] ]
       jobs:
           - job: WaitForApproval
-            displayName: 'Review preview and approve apply'
+            displayName: 'Approve or reject infrastructure apply'
             pool: server
             timeoutInMinutes: 4320
             steps:
                 - task: ManualValidation@1
+                  displayName: 'Approve or reject'
                   timeoutInMinutes: 1440
                   inputs:
                       notifyUsers: ''
                       approvers: ${{ parameters.approvers }}
                       allowApproversToApproveTheirOwnRuns: true
-                      instructions: 'Review the ${{ parameters.scope }} preview for ${{ parameters.environment }}, then approve to apply it.'
+                      instructions: |
+                          Review the ${{ parameters.scope }} preview for ${{ parameters.environment }}:
+
+                          $(preflightResult)
+
+                          Full preview: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)&view=logs
+
+                          Select Resume to Approve, or Reject to reject this infrastructure apply.
+                          Azure DevOps ManualValidation button labels cannot be customized.
                       onTimeout: reject

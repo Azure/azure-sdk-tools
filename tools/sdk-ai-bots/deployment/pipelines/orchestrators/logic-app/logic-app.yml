@@ -33,6 +33,7 @@ extends:
                   environment: ${{ parameters.environment }}
                   stageName: ApproveLayer
                   dependsOn: PreflightLayer
+                  preflightJobName: AzdProvisionLayer
                   scope: logic-app layer
             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
               parameters:

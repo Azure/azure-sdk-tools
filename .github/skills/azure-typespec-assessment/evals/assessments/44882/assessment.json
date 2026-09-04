@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:39:18.858Z",
+  "generatedAt": "2026-09-04T02:04:17.181Z",
   "title": "TypeSpec assessment: specification/newrelic/NewRelicObservability.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44882\\head",
@@ -18567,15 +18567,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 26913,
+            "durationMs": 9232,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-baseline-autorest.log",
@@ -18599,16 +18599,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 13163,
+            "durationMs": 7615,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-baseline-tcgc.log",
@@ -18636,15 +18636,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 16828,
+            "durationMs": 7148,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-target-autorest.log",
@@ -18668,16 +18668,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44882\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 19152,
+            "durationMs": 7144,
             "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
             "logPath": "logs\\project-7270f17ca191-target-tcgc.log",
@@ -18756,24 +18756,26 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 13455,
-    "estimatedTokens": 3364,
+    "bytes": 7437,
+    "estimatedTokens": 1860,
     "retained": {
-      "sourceChanges": 2,
+      "evidenceSets": 2,
       "facts": 0,
       "semanticReviewUnits": 1,
       "restCandidates": 0,
       "downstreamCandidates": 0,
       "downstreamRootCauses": 0,
       "complianceSearchRequests": 1,
-      "inferenceRequests": 0,
-      "complianceSearchSourceBytes": 8291
+      "inferenceRequests": 0
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "compliance": {
       "catalogEntriesScored": 32,
@@ -18784,10 +18786,10 @@
     }
   },
   "timings": {
-    "totalMs": 166936,
-    "semanticAnalysisMs": 206,
-    "restAnalysisMs": 99,
-    "downstreamAnalysisMs": 2898
+    "totalMs": 51871,
+    "semanticAnalysisMs": 136,
+    "restAnalysisMs": 57,
+    "downstreamAnalysisMs": 1536
   },
   "pr": 44882,
   "pullRequest": {

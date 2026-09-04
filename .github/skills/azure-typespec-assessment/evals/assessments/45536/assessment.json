@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:51:41.207Z",
+  "generatedAt": "2026-09-04T02:04:23.325Z",
   "title": "TypeSpec assessment: specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45536\\head",
@@ -789,15 +789,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 15276,
+            "durationMs": 8064,
             "configPath": "worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
             "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
             "logPath": "logs\\project-49e7a00359db-baseline-autorest.log",
@@ -821,16 +821,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10625,
+            "durationMs": 7062,
             "configPath": "worktrees\\base\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
             "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
             "logPath": "logs\\project-49e7a00359db-baseline-tcgc.log",
@@ -858,15 +858,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9829,
+            "durationMs": 7047,
             "configPath": "worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
             "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
             "logPath": "logs\\project-49e7a00359db-target-autorest.log",
@@ -890,16 +890,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\projects\\project-49e7a00359db\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45536\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45536\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8524,
+            "durationMs": 6947,
             "configPath": "worktrees\\current\\specification\\consumption\\resource-manager\\Microsoft.Consumption\\Consumption\\tspconfig.yaml",
             "configHash": "443e4b3e6eb841de73d9a31a54c30a4a643d58aecd0eb9bbabf7092d27fb19ed",
             "logPath": "logs\\project-49e7a00359db-target-tcgc.log",
@@ -977,24 +977,26 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 6295,
-    "estimatedTokens": 1574,
+    "bytes": 5576,
+    "estimatedTokens": 1394,
     "retained": {
-      "sourceChanges": 1,
+      "evidenceSets": 1,
       "facts": 0,
       "semanticReviewUnits": 1,
       "restCandidates": 0,
       "downstreamCandidates": 0,
       "downstreamRootCauses": 0,
       "complianceSearchRequests": 1,
-      "inferenceRequests": 1,
-      "complianceSearchSourceBytes": 2328
+      "inferenceRequests": 1
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "inference": {
       "requestCount": 1,
@@ -1011,10 +1013,10 @@
     }
   },
   "timings": {
-    "totalMs": 81163,
-    "semanticAnalysisMs": 57,
-    "restAnalysisMs": 41,
-    "downstreamAnalysisMs": 2301
+    "totalMs": 49294,
+    "semanticAnalysisMs": 41,
+    "restAnalysisMs": 35,
+    "downstreamAnalysisMs": 1594
   },
   "pr": 45536,
   "pullRequest": {

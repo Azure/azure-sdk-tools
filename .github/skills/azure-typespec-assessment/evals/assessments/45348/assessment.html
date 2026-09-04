@@ -69,32 +69,35 @@
 <h3>Changed files</h3><ul><li><code>specification/deviceregistry/DeviceRegistry.Management/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 148251,
-    &quot;semanticAnalysisMs&quot;: 418,
-    &quot;restAnalysisMs&quot;: 197,
-    &quot;downstreamAnalysisMs&quot;: 7434
+    &quot;totalMs&quot;: 71641,
+    &quot;semanticAnalysisMs&quot;: 376,
+    &quot;restAnalysisMs&quot;: 174,
+    &quot;downstreamAnalysisMs&quot;: 5727
   },
   &quot;inputAccounting&quot;: {
-    &quot;budgetTier&quot;: &quot;configured-maximum&quot;,
-    &quot;budgetBytes&quot;: 1048576,
-    &quot;bytes&quot;: 680619,
-    &quot;estimatedTokens&quot;: 170155,
+    &quot;budgetTier&quot;: &quot;medium&quot;,
+    &quot;budgetBytes&quot;: 262144,
+    &quot;bytes&quot;: 179097,
+    &quot;estimatedTokens&quot;: 44775,
     &quot;retained&quot;: {
-      &quot;sourceChanges&quot;: 1,
-      &quot;facts&quot;: 218,
+      &quot;evidenceSets&quot;: 111,
+      &quot;facts&quot;: 0,
       &quot;semanticReviewUnits&quot;: 1,
       &quot;restCandidates&quot;: 237,
       &quot;downstreamCandidates&quot;: 0,
       &quot;downstreamRootCauses&quot;: 0,
       &quot;complianceSearchRequests&quot;: 1,
-      &quot;inferenceRequests&quot;: 0,
-      &quot;complianceSearchSourceBytes&quot;: 2946
+      &quot;inferenceRequests&quot;: 0
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
-      &quot;unreferencedFacts&quot;: true
+      &quot;unreferencedFacts&quot;: true,
+      &quot;deterministicCandidateFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 32,

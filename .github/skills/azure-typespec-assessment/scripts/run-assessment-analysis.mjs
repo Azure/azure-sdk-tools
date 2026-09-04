@@ -16,6 +16,16 @@ const BUDGET_TIERS = [
   ["large", 512 * 1024],
   ["maximum", 1024 * 1024],
 ];
+const ARTIFACT_REFERENCES = {
+  sourceIndex: "source/source-index.json",
+  semanticReviewUnits: "dimensions/semantic-intents-input.json",
+  restCandidates: "dimensions/rest-breaking-input.json",
+  downstreamCandidates: "dimensions/downstream-breaking-input.json",
+  complianceSearchRequests: "dimensions/compliance-search-requests.json",
+};
+const QUALIFIED_NAME_LIMIT = 24;
+const CHANGED_CONSTRUCT_LIMIT = 40;
+const QUERY_TERM_LIMIT = 40;
 
 function typeSummary(value, depth = 0) {
   if (value === undefined || value === null) return value;
@@ -287,12 +297,8 @@ function inferenceRelevantFactIds({
   return ids;
 }
 
-function referencedFacts(semantic, rest, downstream, additionalIds) {
-  const ids = new Set();
-  for (const candidate of [...rest.candidates, ...downstream.candidates]) {
-    for (const id of candidate.evidenceFactIds) ids.add(id);
-  }
-  for (const id of additionalIds) ids.add(id);
+function referencedFacts(semantic, rest, downstream, retainedIds) {
+  const ids = new Set(retainedIds);
   const available = { ...semantic.facts, ...rest.facts, ...downstream.facts };
   return Object.fromEntries(
     [...ids]
@@ -337,7 +343,39 @@ function semanticSourceExcerpts(unit, sourceChanges) {
     .slice(0, 3);
 }
 
-function compactSemanticReviewUnit(unit, sourceChanges, deterministicCoverage) {
+function bounded(values, limit) {
+  const unique = [...new Set(values.filter(Boolean))].sort();
+  return {
+    values: unique.slice(0, limit),
+    count: unique.length,
+    omitted: Math.max(0, unique.length - limit),
+  };
+}
+
+function evidenceSet(registry, evidence, artifact, entityId) {
+  const normalized = {
+    sourceChangeIds: [...new Set(evidence.sourceChangeIds ?? [])].sort(),
+    hunkIds: [...new Set(evidence.hunkIds ?? [])].sort(),
+    declarationIds: [...new Set(evidence.declarationIds ?? [])].sort(),
+    evidenceFactIds: [...new Set(evidence.evidenceFactIds ?? [])].sort(),
+  };
+  const id = stableId("evidence-set", normalized);
+  registry[id] ??= {
+    sourceChangeIds: normalized.sourceChangeIds,
+    hunkIds: normalized.hunkIds,
+    declarationCount: normalized.declarationIds.length,
+    evidenceFactIds: normalized.evidenceFactIds,
+    evidenceRef: { artifact, id: entityId },
+  };
+  return id;
+}
+
+function compactSemanticReviewUnit(
+  unit,
+  sourceChanges,
+  deterministicCoverage,
+  evidenceSets,
+) {
   const declarations = unit.sourceChangeIds.flatMap((sourceId) => {
     const source = sourceChanges[sourceId];
     const allowed = new Set(unit.hunkIds ?? []);
@@ -351,30 +389,30 @@ function compactSemanticReviewUnit(unit, sourceChanges, deterministicCoverage) {
         operationId: id,
       }))),
   ].sort((left, right) => left.operationId.localeCompare(right.operationId));
+  const qualifiedNames = bounded(
+    declarations.map((item) => item.qualifiedName),
+    QUALIFIED_NAME_LIMIT,
+  );
+  const changedConstructs = bounded(
+    declarations.flatMap((item) => [
+      ...(item.decorators ?? []).map((decorator) =>
+        typeof decorator === "string" ? decorator : decorator?.name,
+      ),
+      item.baseType,
+      ...(item.compilerEvidence?.referencedNames ?? []),
+    ]),
+    CHANGED_CONSTRUCT_LIMIT,
+  );
   return {
     reviewUnitId: unit.id,
     action: unit.action ?? unit.changeKind ?? "modify",
     declarationKinds: [
       ...new Set(declarations.map((item) => item.kind).filter(Boolean)),
     ].sort(),
-    qualifiedNames: [
-      ...new Set(
-        declarations.map((item) => item.qualifiedName).filter(Boolean),
-      ),
-    ].sort(),
-    changedConstructs: [
-      ...new Set(
-        declarations
-          .flatMap((item) => [
-            ...(item.decorators ?? []).map((decorator) =>
-              typeof decorator === "string" ? decorator : decorator?.name,
-            ),
-            item.baseType,
-            ...(item.compilerEvidence?.referencedNames ?? []),
-          ])
-          .filter(Boolean),
-      ),
-    ].sort(),
+    qualifiedNames: qualifiedNames.values,
+    qualifiedNameCount: qualifiedNames.count,
+    changedConstructs: changedConstructs.values,
+    changedConstructCount: changedConstructs.count,
     representativeSourceExcerpts: semanticSourceExcerpts(unit, sourceChanges),
     affectedOperationCount: operations.length,
     representativeOperationIds: operations
@@ -386,6 +424,12 @@ function compactSemanticReviewUnit(unit, sourceChanges, deterministicCoverage) {
       .map((item) => item.summary)
       .filter(Boolean)
       .slice(0, 3),
+    evidenceSetId: evidenceSet(
+      evidenceSets,
+      unit,
+      ARTIFACT_REFERENCES.semanticReviewUnits,
+      unit.id,
+    ),
     deterministicCoverage,
     inferenceRequired: deterministicCoverage.uncoveredHunkIds.length > 0,
   };
@@ -1008,6 +1052,11 @@ function buildInferenceRequests(semanticUnits, sourceChanges, coverages) {
       return {
         requestId: stableId("inference-request", request),
         ...request,
+        evidenceRef: {
+          artifact: ARTIFACT_REFERENCES.sourceIndex,
+          sourceChangeId: source.id,
+          hunkId,
+        },
       };
     });
   });
@@ -1056,7 +1105,7 @@ function accountInput(input, maximumBytes) {
       bytes,
       estimatedTokens: Math.ceil(bytes / 4),
       retained: {
-        sourceChanges: Object.keys(input.sourceChanges).length,
+        evidenceSets: Object.keys(input.evidenceSets).length,
         facts: Object.keys(input.facts).length,
         semanticReviewUnits: input.semanticReviewUnits.length,
         restCandidates: input.restCandidates.length,
@@ -1064,18 +1113,16 @@ function accountInput(input, maximumBytes) {
         downstreamRootCauses: input.downstreamRootCauses.length,
         complianceSearchRequests: input.complianceSearchRequests.length,
         inferenceRequests: input.inferenceRequests.length,
-        complianceSearchSourceBytes: Buffer.byteLength(
-          JSON.stringify({
-            sourceChanges: input.sourceChanges,
-            complianceSearchRequests: input.complianceSearchRequests,
-          }),
-        ),
       },
       omittedRedundant: {
         rawEmitterArtifacts: true,
         compilerLogs: true,
         unchangedInventories: true,
         unreferencedFacts: true,
+        deterministicCandidateFacts: true,
+        sourceChanges: true,
+        repeatedDeclarationIds: true,
+        repeatedReviewUnitEvidence: true,
       },
     };
     bytes = Buffer.byteLength(JSON.stringify(input));
@@ -1105,12 +1152,15 @@ export function buildModelInput({
 }) {
   const sourceChanges = compactSources(sourceIndex, semantic, rest, downstream);
   const semanticUnits = semantic.status === "ready" ? semantic.reviewUnits : [];
-  const complianceSearchRequests = buildComplianceSearchRequests({
+  const fullComplianceSearchRequests = buildComplianceSearchRequests({
     semanticReviewUnits: semanticUnits,
     sourceChanges,
   });
   const complianceRequestsByUnit = new Map(
-    complianceSearchRequests.map((request) => [request.reviewUnitId, request]),
+    fullComplianceSearchRequests.map((request) => [
+      request.reviewUnitId,
+      request,
+    ]),
   );
   const coverages = new Map(
     semanticUnits.map((unit) => [
@@ -1125,8 +1175,14 @@ export function buildModelInput({
       }),
     ]),
   );
+  const evidenceSets = {};
   const semanticReviewUnits = semanticUnits.map((unit) =>
-    compactSemanticReviewUnit(unit, sourceChanges, coverages.get(unit.id)),
+    compactSemanticReviewUnit(
+      unit,
+      sourceChanges,
+      coverages.get(unit.id),
+      evidenceSets,
+    ),
   );
   const inferenceRequests = buildInferenceRequests(
     semanticUnits,
@@ -1141,6 +1197,54 @@ export function buildModelInput({
     downstream,
     coverages,
   });
+  const compactCandidate = (candidate, artifact) => {
+    const {
+      sourceChangeIds,
+      hunkIds,
+      declarationIds,
+      ...judgmentInput
+    } = candidate;
+    return {
+      ...judgmentInput,
+      evidenceSetId: evidenceSet(
+        evidenceSets,
+        {
+          sourceChangeIds,
+          hunkIds,
+          declarationIds,
+          evidenceFactIds: candidate.evidenceFactIds,
+        },
+        artifact,
+        candidate.id,
+      ),
+    };
+  };
+  const compactQuerySummary = (profile) => ({
+    servicePlane: profile.servicePlane,
+    action: profile.action,
+    declarationKinds: profile.declarationKinds,
+    qualifiedNames: profile.qualifiedNames.slice(0, QUALIFIED_NAME_LIMIT),
+    qualifiedNameCount: profile.qualifiedNames.length,
+    symbols: profile.symbols.slice(0, QUERY_TERM_LIMIT),
+    symbolCount: profile.symbols.length,
+    categories: profile.categories,
+    changedTokens: profile.changedTokens.slice(0, QUERY_TERM_LIMIT),
+    changedTokenCount: profile.changedTokens.length,
+    affectedOperationCount: profile.affectedOperationCount,
+  });
+  const complianceSearchRequests = fullComplianceSearchRequests.map(
+    (request) => ({
+      requestId: request.requestId,
+      reviewUnitId: request.reviewUnitId,
+      evidenceSetId: evidenceSet(
+        evidenceSets,
+        request,
+        ARTIFACT_REFERENCES.complianceSearchRequests,
+        request.requestId,
+      ),
+      querySummary: compactQuerySummary(request.queryProfile),
+    }),
+  );
   const input = {
     schemaVersion: 1,
     context: {
@@ -1172,7 +1276,8 @@ export function buildModelInput({
         }),
       ),
     },
-    sourceChanges,
+    artifactReferences: ARTIFACT_REFERENCES,
+    evidenceSets,
     facts: referencedFacts(
       semantic,
       rest,
@@ -1180,9 +1285,21 @@ export function buildModelInput({
       retainedInferenceFactIds,
     ),
     semanticReviewUnits,
-    restCandidates: rest.status === "ready" ? rest.candidates : [],
+    restCandidates:
+      rest.status === "ready"
+        ? rest.candidates.map((candidate) =>
+            compactCandidate(candidate, ARTIFACT_REFERENCES.restCandidates),
+          )
+        : [],
     downstreamCandidates:
-      downstream.status === "ready" ? downstream.candidates : [],
+      downstream.status === "ready"
+        ? downstream.candidates.map((candidate) =>
+            compactCandidate(
+              candidate,
+              ARTIFACT_REFERENCES.downstreamCandidates,
+            ),
+          )
+        : [],
     downstreamRootCauses:
       downstream.status === "ready" ? (downstream.rootCauses ?? []) : [],
     complianceSearchRequests,
@@ -1358,6 +1475,17 @@ export async function runAssessmentAnalysis(options) {
     downstream,
     maximumBytes: configuredMaximum,
   });
+  writeJson(
+    path.join(output, "dimensions", "compliance-search-requests.json"),
+    {
+      schemaVersion: 1,
+      requests: buildComplianceSearchRequests({
+        semanticReviewUnits:
+          semantic.status === "ready" ? semantic.reviewUnits : [],
+        sourceChanges: compactSources(sourceIndex, semantic, rest, downstream),
+      }),
+    },
+  );
   writeJson(path.join(output, "model-input.json"), modelInput);
   return { status: "awaiting-agent-judgment", modelInput };
 }

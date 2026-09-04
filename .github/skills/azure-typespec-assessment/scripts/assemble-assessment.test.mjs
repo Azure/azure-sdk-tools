@@ -251,18 +251,8 @@ function addComplianceInput(work) {
 
 function inferenceModelInput() {
   return {
-    sourceChanges: {
-      "source-1": {
-        id: "source-1",
-        path: "specification/a/main.tsp",
-        hunks: [
-          {
-            id: "hunk-1",
-            lines: ['+@@clientLocation(Widgets.get, Contoso, "!go");'],
-          },
-        ],
-        declarations: [],
-      },
+    artifactReferences: {
+      sourceIndex: "source/source-index.json",
     },
     facts: {
       "sdk-fact-inferred": {
@@ -291,6 +281,11 @@ function inferenceModelInput() {
         sourceExcerpt: '+@@clientLocation(Widgets.get, Contoso, "!go");',
         relatedOperationIds: [],
         allowedDimensions: ["rest", "downstream"],
+        evidenceRef: {
+          artifact: "source/source-index.json",
+          sourceChangeId: "source-1",
+          hunkId: "hunk-1",
+        },
       },
     ],
     inputAccounting: {},

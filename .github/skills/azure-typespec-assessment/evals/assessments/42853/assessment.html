@@ -25,11 +25,11 @@
 <main class="container">
 <section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
 <section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. They passed for the other intents, and no applicable guideline was found for intent <a href="#intent-semantic-c0919f0627e34fc7">Exclude Go from four Recovery Services client-location overrides</a>.</p>
+<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. They passed for the other intents, and no applicable guideline was found for intent <a href="#intent-semantic-c0919f0627e34fc7">Exclude Go from selected client-location customizations</a>.</p>
 </section>
 <section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (3)</h2><details class="intent" id="intent-semantic-04c7f68046c190b6"><summary><strong><span class="action">modify</span> Exclude the preview recovery-point PATCH from the 2026-02-01 stable API</strong></summary><div class="intent-body">
-<p>The recovery-point update operation is marked removed at Versions.v2026_02_01, so the preview-only PATCH is not propagated into the new stable API while the compared stable wire contract remains unchanged.</p>
+<section id="semantic-intents"><h2>Semantic intents (3)</h2><details class="intent" id="intent-semantic-04c7f68046c190b6"><summary><strong><span class="action">modify</span> Remove the recovery-point update operation in 2026-02-01</strong></summary><div class="intent-body">
+<p>The RecoveryPoints.update operation is marked @removed for Versions.v2026_02_01; deterministic comparison found no changed REST operation or language-neutral SDK contract in the selected version pair.</p>
 <p><strong>Deterministic coverage:</strong> 1 of 1 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp</div><pre><span class="context">    */</span>
@@ -45,8 +45,8 @@
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-04c7f68046c190b6"><strong>Related findings:</strong> None</p>
 </div></details>
-<details class="intent" id="intent-semantic-c0919f0627e34fc7"><summary><strong><span class="action">modify</span> Exclude Go from four Recovery Services client-location overrides</strong></summary><div class="intent-body">
-<p>Four @@clientLocation augmentations add Go to their language exclusion scopes, changing only language-specific client placement metadata without changing the REST contract or establishing a language-neutral SDK surface change.</p>
+<details class="intent" id="intent-semantic-c0919f0627e34fc7"><summary><strong><span class="action">modify</span> Exclude Go from selected client-location customizations</strong></summary><div class="intent-body">
+<p>Four @@clientLocation language selectors are expanded from !csharp to !csharp,!go, changing language-specific customization eligibility without bounded evidence of a REST or language-neutral downstream contract change.</p>
 <p><strong>Deterministic coverage:</strong> 0 of 2 changed hunks classified. AI inference used for 2 requests.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</div><pre><span class="context"> </span>
@@ -72,8 +72,8 @@
 <p class="empty">No directly affected REST operation.</p>
 <p id="related-findings-semantic-c0919f0627e34fc7"><strong>Related findings:</strong> None</p>
 </div></details>
-<details class="intent" id="intent-semantic-cd350080220f105c"><summary><strong><span class="action">modify</span> Add the 2026-02-01 stable Recovery Services API version</strong></summary><div class="intent-body">
-<p>Both Recovery Services projects add Versions.v2026_02_01 and use versioning removals to keep selected 2026-01-31-preview backup operations, models, properties, and enum or union members out of the stable projection; 24 operations are represented with no detected REST contract change.</p>
+<details class="intent" id="intent-semantic-cd350080220f105c"><summary><strong><span class="action">modify</span> Introduce the 2026-02-01 stable API version</strong></summary><div class="intent-body">
+<p>Both Recovery Services projects add the 2026-02-01 stable version and propagate versioned model, enum, union, and property additions or removals across 24 represented operations; deterministic comparisons found their REST and language-neutral SDK contracts compatible with 2026-01-01.</p>
 <p><strong>Deterministic coverage:</strong> 28 of 28 changed hunks classified. AI inference skipped.</p>
 <details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
 <div class="diff"><div class="diff-path">specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp</div><pre><span class="context">    * The 2026-01-01 API version.</span>
@@ -106,36 +106,38 @@
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr><tr><td><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup</code></td><td>new-api-version</td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-01-01</code><br><small>current · previous-latest-stable</small></td><td><code>efe76fb07ac03d9c54e2c64de15ef3ff90fc4030@2026-02-01</code><br><small>current · newest-added-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/42853">#42853</a></p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/">ARM resource types and modeling</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li><li><a href="https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/">Azure.ResourceManager interface reference</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/">Specific extension resource sample</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/">Agent base type</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/">Private endpoints</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/">ARM common types</a></li></ul>
+<ul class="guidance-document-list"><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/">Add stable after stable</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/">ARM resource operations</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/">Versioning overview</a></li><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/language-basics/models/">Models</a></li></ul>
 <h3>Changed files</h3><ul><li><code>specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices/main.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/back-compatible.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/main.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp</code> (committed)</li><li><code>specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 1098598,
-    &quot;semanticAnalysisMs&quot;: 250,
-    &quot;restAnalysisMs&quot;: 103,
-    &quot;downstreamAnalysisMs&quot;: 5946
+    &quot;totalMs&quot;: 173919,
+    &quot;semanticAnalysisMs&quot;: 284,
+    &quot;restAnalysisMs&quot;: 151,
+    &quot;downstreamAnalysisMs&quot;: 6372
   },
   &quot;inputAccounting&quot;: {
-    &quot;budgetTier&quot;: &quot;medium&quot;,
-    &quot;budgetBytes&quot;: 262144,
-    &quot;bytes&quot;: 144156,
-    &quot;estimatedTokens&quot;: 36039,
+    &quot;budgetTier&quot;: &quot;small&quot;,
+    &quot;budgetBytes&quot;: 131072,
+    &quot;bytes&quot;: 26526,
+    &quot;estimatedTokens&quot;: 6632,
     &quot;retained&quot;: {
-      &quot;sourceChanges&quot;: 5,
+      &quot;evidenceSets&quot;: 5,
       &quot;facts&quot;: 0,
       &quot;semanticReviewUnits&quot;: 3,
       &quot;restCandidates&quot;: 0,
       &quot;downstreamCandidates&quot;: 0,
       &quot;downstreamRootCauses&quot;: 0,
       &quot;complianceSearchRequests&quot;: 3,
-      &quot;inferenceRequests&quot;: 2,
-      &quot;complianceSearchSourceBytes&quot;: 118445
+      &quot;inferenceRequests&quot;: 2
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
-      &quot;unreferencedFacts&quot;: true
+      &quot;unreferencedFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;inference&quot;: {
       &quot;requestCount&quot;: 2,
@@ -146,9 +148,9 @@
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 96,
       &quot;documentsFetched&quot;: 12,
-      &quot;documentBytesFetched&quot;: 6291667,
-      &quot;guidanceExcerptsRetained&quot;: 4,
-      &quot;guidanceExcerptBytesRetained&quot;: 726
+      &quot;documentBytesFetched&quot;: 4270425,
+      &quot;guidanceExcerptsRetained&quot;: 7,
+      &quot;guidanceExcerptBytesRetained&quot;: 1170
     }
   }
 }</pre>

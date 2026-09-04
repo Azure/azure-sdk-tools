@@ -4,8 +4,9 @@
 
 Write `compliance-search-evidence.json` conforming to
 `scripts\compliance-search-evidence.schema.json`. There must be one entry per
-`complianceSearchRequests` item. Each entry preserves the unchanged query
-profile, the complete scored catalog ranking, four fetched catalog documents
+`complianceSearchRequests` item. Resolve the complete request from the
+referenced compliance request artifact. Each entry preserves its unchanged
+query profile, the complete scored catalog ranking, four fetched catalog documents
 or an explicit catalog-exhaustion blocker, score components, retrieval
 provenance, declaration applicability, relevant guidance, and failed
 replacement attempts. Catalog descriptions select documents but never serve

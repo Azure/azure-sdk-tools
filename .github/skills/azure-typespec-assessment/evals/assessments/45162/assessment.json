@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:39:56.301Z",
+  "generatedAt": "2026-09-04T02:04:19.341Z",
   "title": "TypeSpec assessment: specification/confidentialledger/data-plane/ConfidentialLedger",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\head",
@@ -17958,15 +17958,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-23"
               ]
             },
             "exitCode": 0,
-            "durationMs": 11452,
+            "durationMs": 8029,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-baseline-autorest.log",
@@ -17990,16 +17990,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-23"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10906,
+            "durationMs": 4590,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-baseline-tcgc.log",
@@ -18027,15 +18027,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-07-31-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 11927,
+            "durationMs": 4938,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-target-autorest.log",
@@ -18059,16 +18059,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\45162\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-07-31-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12387,
+            "durationMs": 4818,
             "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
             "logPath": "logs\\project-819de5ecc40e-target-tcgc.log",
@@ -18150,26 +18150,28 @@
     "preparationManifest": "preparation-manifest.json"
   },
   "inputAccounting": {
-    "budgetTier": "medium",
-    "budgetBytes": 262144,
-    "bytes": 145705,
-    "estimatedTokens": 36427,
+    "budgetTier": "small",
+    "budgetBytes": 131072,
+    "bytes": 111505,
+    "estimatedTokens": 27877,
     "retained": {
-      "sourceChanges": 3,
+      "evidenceSets": 6,
       "facts": 70,
       "semanticReviewUnits": 2,
       "restCandidates": 0,
       "downstreamCandidates": 3,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 2,
-      "inferenceRequests": 3,
-      "complianceSearchSourceBytes": 37502
+      "inferenceRequests": 3
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "inference": {
       "requestCount": 3,
@@ -18186,10 +18188,10 @@
     }
   },
   "timings": {
-    "totalMs": 73007,
-    "semanticAnalysisMs": 208,
-    "restAnalysisMs": 64,
-    "downstreamAnalysisMs": 1483
+    "totalMs": 39005,
+    "semanticAnalysisMs": 92,
+    "restAnalysisMs": 33,
+    "downstreamAnalysisMs": 773
   },
   "pr": 45162,
   "pullRequest": {

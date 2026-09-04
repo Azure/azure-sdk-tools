@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildModelInput } from "./run-assessment-analysis.mjs";
 
-test("model input keeps only transitively referenced facts and sources", () => {
+test("model input references canonical evidence without embedding sources", () => {
   const input = buildModelInput({
     manifest: {
       comparison: {
@@ -64,7 +64,15 @@ test("model input keeps only transitively referenced facts and sources", () => {
       blockers: [],
     },
   });
-  assert.deepEqual(Object.keys(input.sourceChanges), ["source-1"]);
+  assert.equal(input.sourceChanges, undefined);
+  assert.deepEqual(input.artifactReferences, {
+    sourceIndex: "source/source-index.json",
+    semanticReviewUnits: "dimensions/semantic-intents-input.json",
+    restCandidates: "dimensions/rest-breaking-input.json",
+    downstreamCandidates: "dimensions/downstream-breaking-input.json",
+    complianceSearchRequests: "dimensions/compliance-search-requests.json",
+  });
+  assert.equal(Object.keys(input.evidenceSets).length, 1);
   assert.deepEqual(Object.keys(input.facts), []);
   assert.equal(input.semanticReviewUnits[0].affectedOperationCount, 1);
   assert.deepEqual(input.semanticReviewUnits[0].representativeOperationIds, [
@@ -72,6 +80,16 @@ test("model input keeps only transitively referenced facts and sources", () => {
   ]);
   assert.equal(input.complianceSearchRequests.length, 1);
   assert.equal(input.complianceSearchRequests[0].reviewUnitId, "semantic-1");
+  assert.equal(
+    input.complianceSearchRequests[0].evidenceSetId,
+    input.semanticReviewUnits[0].evidenceSetId,
+  );
+  assert.equal(input.complianceSearchRequests[0].declarationIds, undefined);
+  assert.equal(input.complianceSearchRequests[0].queryProfile, undefined);
+  assert.equal(
+    input.complianceSearchRequests[0].querySummary.qualifiedNameCount,
+    1,
+  );
   assert.match(
     input.complianceSearchRequests[0].requestId,
     /^compliance-search-/,
@@ -94,6 +112,7 @@ test("model input keeps only transitively referenced facts and sources", () => {
     input.inputAccounting.omittedRedundant.rawEmitterArtifacts,
     true,
   );
+  assert.equal(input.inputAccounting.omittedRedundant.sourceChanges, true);
 });
 
 test("model input requests inference only for unknown hunks", () => {
@@ -190,10 +209,108 @@ test("model input requests inference only for unknown hunks", () => {
   assert.equal(input.inferenceRequests.length, 1);
   assert.match(input.inferenceRequests[0].requestId, /^inference-request-/);
   assert.equal(input.inferenceRequests[0].hunkId, "hunk-1");
+  assert.deepEqual(input.inferenceRequests[0].evidenceRef, {
+    artifact: "source/source-index.json",
+    sourceChangeId: "source-1",
+    hunkId: "hunk-1",
+  });
   assert.deepEqual(input.inferenceRequests[0].allowedDimensions, [
     "rest",
     "downstream",
   ]);
+});
+
+test("model input bounds repeated review evidence and candidate declarations", () => {
+  const declarationIds = Array.from(
+    { length: 100 },
+    (_, index) => `declaration-${index}`,
+  );
+  const declarations = declarationIds.map((id, index) => ({
+    id,
+    kind: "model",
+    qualifiedName: `Contoso.Model${index}`,
+    hunkIds: ["hunk-1"],
+    compilerEvidence: {
+      referencedNames: [`Contoso.Reference${index}`],
+    },
+  }));
+  const input = buildModelInput({
+    manifest: {
+      comparison: {
+        mergeBaseCommit: "base",
+        headCommit: "head",
+        baseRef: "origin/main",
+        workingTree: {},
+      },
+      projects: [{ id: "p", path: "specification/widget" }],
+      blockers: [],
+    },
+    sourceIndex: {
+      sourceChanges: [
+        {
+          id: "source-1",
+          path: "main.tsp",
+          hunks: [{ id: "hunk-1", lines: ["+model Widget {}"] }],
+          declarations,
+        },
+      ],
+    },
+    semantic: {
+      status: "ready",
+      facts: {},
+      reviewUnits: [
+        {
+          id: "semantic-1",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+          declarationIds,
+          operations: [],
+        },
+      ],
+      blockers: [],
+    },
+    rest: { status: "ready", facts: {}, candidates: [], blockers: [] },
+    downstream: {
+      status: "ready",
+      facts: {
+        "sdk-fact-1": {
+          id: "sdk-fact-1",
+          projectId: "p",
+          comparisonRole: "target",
+          factKind: "model",
+          identity: "Contoso.Widget",
+        },
+      },
+      candidates: [
+        {
+          id: "downstream-1",
+          rule: "type-changed",
+          actual: "Changed",
+          expected: "Stable",
+          sourceChangeIds: ["source-1"],
+          hunkIds: ["hunk-1"],
+          declarationIds,
+          evidenceFactIds: ["sdk-fact-1"],
+          reviewRequired: true,
+        },
+      ],
+      rootCauses: [],
+      blockers: [],
+    },
+  });
+
+  assert.equal(input.semanticReviewUnits[0].qualifiedNames.length, 24);
+  assert.equal(input.semanticReviewUnits[0].qualifiedNameCount, 100);
+  assert.equal(input.semanticReviewUnits[0].changedConstructs.length, 40);
+  assert.equal(input.semanticReviewUnits[0].changedConstructCount, 100);
+  assert.equal(input.downstreamCandidates[0].declarationIds, undefined);
+  assert.deepEqual(Object.keys(input.facts), []);
+  assert.ok(input.downstreamCandidates[0].evidenceSetId);
+  assert.equal(
+    input.evidenceSets[input.downstreamCandidates[0].evidenceSetId]
+      .declarationCount,
+    100,
+  );
 });
 
 test("model input keeps unsupported unmapped decorators unknown", () => {

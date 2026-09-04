@@ -57,32 +57,34 @@
 <h3>Changed files</h3><ul><li><code>specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 81163,
-    &quot;semanticAnalysisMs&quot;: 57,
-    &quot;restAnalysisMs&quot;: 41,
-    &quot;downstreamAnalysisMs&quot;: 2301
+    &quot;totalMs&quot;: 49294,
+    &quot;semanticAnalysisMs&quot;: 41,
+    &quot;restAnalysisMs&quot;: 35,
+    &quot;downstreamAnalysisMs&quot;: 1594
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 6295,
-    &quot;estimatedTokens&quot;: 1574,
+    &quot;bytes&quot;: 5576,
+    &quot;estimatedTokens&quot;: 1394,
     &quot;retained&quot;: {
-      &quot;sourceChanges&quot;: 1,
+      &quot;evidenceSets&quot;: 1,
       &quot;facts&quot;: 0,
       &quot;semanticReviewUnits&quot;: 1,
       &quot;restCandidates&quot;: 0,
       &quot;downstreamCandidates&quot;: 0,
       &quot;downstreamRootCauses&quot;: 0,
       &quot;complianceSearchRequests&quot;: 1,
-      &quot;inferenceRequests&quot;: 1,
-      &quot;complianceSearchSourceBytes&quot;: 2328
+      &quot;inferenceRequests&quot;: 1
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
-      &quot;unreferencedFacts&quot;: true
+      &quot;unreferencedFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;inference&quot;: {
       &quot;requestCount&quot;: 1,

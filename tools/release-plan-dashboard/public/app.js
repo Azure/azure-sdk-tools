@@ -524,12 +524,12 @@
       (langs[k].releaseStatus || "").toLowerCase(),
     );
     const allReleased = releaseStatuses.every(
-      (s) => s.includes("completed") || s.includes("released"),
+      (s) => s === "completed" || s === "released",
     );
     const allReleasedOrInProgress = releaseStatuses.every(
       (s) =>
-        s.includes("completed") ||
-        s.includes("released") ||
+        s === "completed" ||
+        s === "released" ||
         isStatusInProgress(s),
     );
     const anyReleaseInProgress = releaseStatuses.some(isStatusInProgress);

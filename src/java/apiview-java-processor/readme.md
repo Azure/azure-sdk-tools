@@ -8,8 +8,8 @@ Compile to a fatjar using the following command: </br>`mvn clean package`
 
 ## Releasing
 
-The Azure DevOps pipeline in `ci.yml` validates pull requests and builds on `main`. To publish
-`com.azure:apiview-java-processor` to the Java dev feed, manually run the pipeline from `main`
+The existing APIView CI pipeline validates changes to this project. To publish
+`com.azure:apiview-java-processor` to the Java dev feed, manually run `release.yml` from `main`
 with **Publish to the Java dev feed** enabled.
 
 Publishing a version is immutable. Update the version in `pom.xml` before releasing a new package.

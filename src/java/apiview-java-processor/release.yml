@@ -1,18 +1,5 @@
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - /src/java/apiview-java-processor/
-
-pr:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - /src/java/apiview-java-processor/
+trigger: none
+pr: none
 
 parameters:
   - name: publishDevFeed

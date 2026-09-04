@@ -6,9 +6,6 @@ parameters:
     - name: environment
       type: string
       values: [dev, preview, prod]
-    - name: enabled
-      type: boolean
-      default: true
     - name: dependsOn
       type: string
     - name: approvers
@@ -22,7 +19,7 @@ jobs:
     - job: CheckTeamsConsent
       displayName: 'Check Teams API connection'
       dependsOn: ${{ parameters.dependsOn }}
-      condition: and(succeeded(), ${{ parameters.enabled }})
+      condition: succeeded()
       pool:
           name: $(LINUXPOOL)
           image: $(LINUXVMIMAGE)
@@ -63,7 +60,7 @@ jobs:
     - job: AwaitTeamsConsent
       displayName: 'Authorize Teams API connection'
       dependsOn: CheckTeamsConsent
-      condition: and(succeeded(), ${{ parameters.enabled }}, eq(dependencies.CheckTeamsConsent.outputs['CheckConsent.consentRequired'], 'true'))
+      condition: and(succeeded(), eq(dependencies.CheckTeamsConsent.outputs['CheckConsent.consentRequired'], 'true'))
       variables:
           teamsConnectionName: $[ dependencies.CheckTeamsConsent.outputs['CheckConsent.connectionName'] ]
           teamsConnectionPortalUrl: $[ dependencies.CheckTeamsConsent.outputs['CheckConsent.portalUrl'] ]

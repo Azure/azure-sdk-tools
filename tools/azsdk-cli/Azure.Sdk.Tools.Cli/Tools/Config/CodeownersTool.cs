@@ -63,27 +63,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = true,
         };
 
-        // Audit command options
-        private readonly Option<bool> fixOption = new("--fix")
-        {
-            Description = "Apply fixes for violations that support automated repair",
-            Required = false,
-            DefaultValueFactory = _ => false,
-        };
-
-        private readonly Option<bool> forceOption = new("--force")
-        {
-            Description = "Override safety thresholds (e.g., allow removing more than 5 invalid owners)",
-            Required = false,
-            DefaultValueFactory = _ => false,
-        };
-
         // Command names
         private const string generateCodeownersCommandName = "generate";
         private const string exportSectionCommandName = "export-section";
         private const string checkPackageCommandName = "check-package";
         private const string updateCacheCommandName = "update-cache";
-        private const string auditCommandName = "audit";
+        private const string lintCommandName = "lint";
 
         // MCP Tool Names
         private const string CodeownerCheckPackageToolName = "azsdk_engsys_codeowner_check_package";
@@ -92,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
         private readonly ICheckPackageHelper checkPackageHelper;
-        private readonly ICodeownersAuditHelper codeownersAuditHelper;
+        private readonly ICodeownersLintHelper codeownersLintHelper;
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
 
@@ -101,7 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ILoggerFactory? loggerFactory,
             ICodeownersGenerateHelper codeownersGenerateHelper,
             ICheckPackageHelper checkPackageHelper,
-            ICodeownersAuditHelper codeownersAuditHelper,
+            ICodeownersLintHelper codeownersLintHelper,
             IGitHelper gitHelper,
             IDevOpsService devOpsService
         )
@@ -109,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.logger = logger;
             this.codeownersGenerateHelper = codeownersGenerateHelper;
             this.checkPackageHelper = checkPackageHelper;
-            this.codeownersAuditHelper = codeownersAuditHelper;
+            this.codeownersLintHelper = codeownersLintHelper;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
 
@@ -131,9 +116,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 directoryPathOption, repoRootOption, repoOption,
             },
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
-            new(auditCommandName, "Audit the repository's ownership YAML for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command.")
+            new(lintCommandName, "Check the repository's ownership YAML for invalid owners, insufficient owners, and unknown labels. You MUST update the CODEOWNERS cache before running this command.")
             {
-                repoRootOption, repoOption, fixOption, forceOption,
+                repoRootOption,
             },
         ];
 
@@ -165,18 +150,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 case updateCacheCommandName:
                     return await UpdateCache(ct);
 
-                case auditCommandName:
-                {
-                    var repoRoot = await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct);
-
-                    return await Audit(
-                        repoRoot,
-                        parseResult.GetValue(repoOption)
-                            ?? await gitHelper.GetRepoFullNameAsync(repoRoot, findUpstreamParent: true, ct),
-                        parseResult.GetValue(fixOption),
-                        parseResult.GetValue(forceOption),
+                case lintCommandName:
+                    return await Lint(
+                        await gitHelper.DiscoverRepoRootAsync(parseResult.GetValue(repoRootOption), ct),
                         ct);
-                }
 
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -303,19 +280,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         }
 
         /// <summary>
-        /// Audits the repository's ownership YAML for violations.
-        /// The CODEOWNERS cache MUST be updated before running audit.
+        /// Checks the repository's ownership YAML for violations.
+        /// The CODEOWNERS cache MUST be updated before running lint.
         /// </summary>
-        public async Task<CommandResponse> Audit(string repoRoot, string repo, bool fix = false, bool force = false, CancellationToken ct = default)
+        public async Task<CommandResponse> Lint(string repoRoot, CancellationToken ct = default)
         {
             try
             {
-                return await codeownersAuditHelper.RunAudit(repoRoot, repo, fix, force, ct);
+                return await codeownersLintHelper.RunLint(repoRoot, ct);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Audit failed");
-                return new DefaultCommandResponse { ResponseError = $"Audit failed: {ex.Message}" };
+                logger.LogError(ex, "Lint failed");
+                return new DefaultCommandResponse { ResponseError = $"Lint failed: {ex.Message}" };
             }
         }
 

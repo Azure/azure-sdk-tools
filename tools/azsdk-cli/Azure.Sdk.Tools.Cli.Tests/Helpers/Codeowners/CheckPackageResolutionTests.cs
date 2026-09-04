@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners;
 internal class CheckPackageResolutionTests
 {
     private static async Task<CheckPackageResponse> Check(OwnersTestRepo repo, string directoryPath) =>
-        await new CheckPackageHelper().CheckPackage(directoryPath, repo.Root, "Azure/azure-sdk-for-net", CancellationToken.None);
+        await new CheckPackageHelper(OwnerValidatorFake.AcceptAll()).CheckPackage(directoryPath, repo.Root, "Azure/azure-sdk-for-net", CancellationToken.None);
 
     [Test]
     public async Task ExcludedSectionsDoNotSatisfyOwnership()

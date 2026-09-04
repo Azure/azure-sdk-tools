@@ -90,7 +90,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
-|  | `azsdk config codeowners audit` | Audit the repository's ownership YAML for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
+|  | `azsdk config codeowners lint` | Check the repository's ownership YAML for invalid owners, insufficient owners, and unknown labels. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners |
 |  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners generate` | Render .github/CODEOWNERS from the repository's ownership YAML |

@@ -145,8 +145,7 @@ primary sorts at or after the catch-all's primary label moves the entry below th
 specific entry wins instead.
 
 `verify` reports the difference as a resolution change either way, so the choice is made
-deliberately rather than discovered later. `azsdk config codeowners audit` reports the unresolved
-case as `AUD-ORD-001`.
+deliberately rather than discovered later.
 
 ### Refusing to introduce a shadowing duplicate
 

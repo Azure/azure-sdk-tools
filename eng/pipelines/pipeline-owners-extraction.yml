@@ -4,11 +4,6 @@ trigger: none
 pr: none
 
 parameters:
-  - name: AuditCodeowners
-    displayName: 'Audit CODEOWNERS'
-    type: boolean
-    default: false
-
   - name: CodeownerTargetRepos
     type: object
     default:
@@ -76,19 +71,6 @@ stages:
           ArtifactName: 'github-team-user-store-cache'
           ArtifactPath: '$(CacheOutputDirectory)'
           CustomCondition: succeededOrFailed()
-
-      - ${{ if or(parameters.AuditCodeowners, eq(variables['Build.Reason'], 'Schedule')) }}:
-        - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
-
-        - task: AzureCLI@2
-          displayName: Audit CODEOWNERS
-          inputs:
-            azureSubscription: 'opensource-api-connection'
-            scriptType: pscore
-            scriptLocation: inlineScript
-            inlineScript: |
-              & $env:AZSDK config codeowners audit --fix
-            workingDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
 
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'

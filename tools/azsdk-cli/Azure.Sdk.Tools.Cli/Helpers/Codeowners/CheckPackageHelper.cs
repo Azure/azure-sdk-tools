@@ -26,7 +26,7 @@ public interface ICheckPackageHelper
         CancellationToken ct);
 }
 
-public class CheckPackageHelper : ICheckPackageHelper
+public class CheckPackageHelper(IOwnerValidator ownerValidator) : ICheckPackageHelper
 {
     public const string CurrentGitHubUserPlaceholder = "<github-aliases-to-add>";
 
@@ -48,12 +48,14 @@ public class CheckPackageHelper : ICheckPackageHelper
     /// nothing about whether the package declared owners of its own.
     /// </para>
     /// </summary>
-    public Task<CheckPackageResponse> CheckPackage(
+    public async Task<CheckPackageResponse> CheckPackage(
         string directoryPath,
         string repoRoot,
         string? repo,
         CancellationToken ct)
     {
+        await ownerValidator.EnsureUsableAsync(ct);
+
         var repository = OwnersRepositoryLoader.Load(repoRoot, []);
         var rendered = CodeownersRenderer.Render(repository);
 
@@ -67,12 +69,12 @@ public class CheckPackageHelper : ICheckPackageHelper
             .Select(entry => entry.Entry)
             .ToList();
 
-        return Task.FromResult(Evaluate(
+        return Evaluate(
             directoryPath,
             repo,
             entries,
             repository.Config.Configs,
-            FindGoverningFragmentPath(directoryPath, repoRoot)));
+            FindGoverningFragmentPath(directoryPath, repoRoot));
     }
 
     /// <summary>
@@ -164,7 +166,13 @@ public class CheckPackageHelper : ICheckPackageHelper
         var (resolvedTargetType, resolvedTarget) = ResolveMatchedTarget(directoryPath, matchedEntry.PathExpression);
         response.ResolvedTargetType = resolvedTargetType;
         response.ResolvedTarget = resolvedTarget;
-        var owners = GetUniqueIndividualOwners(matchedEntry.SourceOwners);
+        var owners = RejectInvalidOwners(
+            GetUniqueIndividualOwners(matchedEntry.SourceOwners),
+            $"the {FormatPromptValue(resolvedTarget)} path entry",
+            ownersFilePath,
+            directoryPath,
+            response.Issues);
+
         response.Owners = owners;
         response.PRLabels = matchedEntry.PRLabels ?? [];
 
@@ -219,8 +227,16 @@ public class CheckPackageHelper : ICheckPackageHelper
         }
 
         response.ServiceLabels = matchingServiceEntry.ServiceLabels ?? [];
-        response.ServiceOwners = serviceOwners;
         serviceOwnerLabels = GetServiceOwnerPromptLabels(response.ServiceLabels);
+
+        serviceOwners = RejectInvalidOwners(
+            serviceOwners,
+            $"the {FormatPromptValue(string.Join(", ", serviceOwnerLabels))} label owners entry",
+            ownersFilePath,
+            directoryPath,
+            response.Issues);
+
+        response.ServiceOwners = serviceOwners;
 
         if (serviceOwners.Count < settings.MinimumLabelOwners)
         {
@@ -311,6 +327,49 @@ public class CheckPackageHelper : ICheckPackageHelper
         }
 
         return (null, []);
+    }
+
+    /// <summary>
+    /// Drops owners who are not code owners and records why, returning only those left.
+    /// <para>
+    /// Invalid owners are removed before counting rather than reported alongside the count, because
+    /// an owner GitHub will not route a review to does not own the package in any sense that matters.
+    /// Counting them would let a package with one real owner and one departed one look adequately
+    /// owned right up until the review request goes nowhere.
+    /// </para>
+    /// </summary>
+    private List<string> RejectInvalidOwners(
+        List<string> owners,
+        string location,
+        string? ownersFilePath,
+        string directoryPath,
+        List<CheckPackageIssue> issues)
+    {
+        var valid = new List<string>();
+
+        foreach (var owner in owners)
+        {
+            var violation = ownerValidator.Validate(owner, where: null);
+            if (violation == null)
+            {
+                valid.Add(owner);
+                continue;
+            }
+
+            issues.Add(new CheckPackageIssue
+            {
+                Code = CheckPackageIssue.Codes.InvalidOwner,
+                Message =
+                    $"check-package failed for path '{directoryPath}': {violation.Description} " +
+                    violation.Detail,
+                NextStep =
+                    $"Remove {FormatPromptValue(owner)} from {location} in " +
+                    $"{FormatOwnersFile(ownersFilePath, directoryPath)}, or have them meet the requirements above",
+                CurrentValues = [owner],
+            });
+        }
+
+        return valid;
     }
 
     /// <summary>

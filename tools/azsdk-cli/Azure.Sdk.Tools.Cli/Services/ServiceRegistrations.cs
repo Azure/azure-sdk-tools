@@ -79,7 +79,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<UserOrgVisibilityCache>();
             services.AddSingleton<ICacheValidator, CacheValidator>();
             services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
-            services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
+            services.AddSingleton<ICodeownersLintHelper, CodeownersLintHelper>();
+            services.AddSingleton<IOwnerValidator, OwnerValidator>();
+            services.AddSingleton<ICommonLabelSource, CommonLabelSource>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();

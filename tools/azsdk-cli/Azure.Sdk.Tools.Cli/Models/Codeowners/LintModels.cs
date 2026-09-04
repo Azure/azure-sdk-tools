@@ -6,9 +6,9 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 /// <summary>
-/// A single violation detected by an audit rule.
+/// A single problem found by a lint rule.
 /// </summary>
-public class AuditViolation
+public class LintViolation
 {
     [JsonPropertyName("rule_id")]
     public required string RuleId { get; set; }
@@ -17,7 +17,8 @@ public class AuditViolation
     public required string Description { get; set; }
 
     /// <summary>
-    /// Repo-relative path of the owners YAML file that declares the offending entry.
+    /// Repo-relative path, usually with a line number, of the ownership YAML that declares the
+    /// offending entry.
     /// </summary>
     [JsonPropertyName("source_file")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -26,23 +27,4 @@ public class AuditViolation
     [JsonPropertyName("detail")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Detail { get; set; }
-}
-
-/// <summary>
-/// Result of applying a single fix action.
-/// </summary>
-public class AuditFixResult
-{
-    [JsonPropertyName("rule_id")]
-    public required string RuleId { get; set; }
-
-    [JsonPropertyName("description")]
-    public required string Description { get; set; }
-
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
-    [JsonPropertyName("error_message")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ErrorMessage { get; set; }
 }

@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
+using Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
@@ -35,7 +36,7 @@ public class CheckPackageHelperTests
     [SetUp]
     public void SetUp()
     {
-        helper = new CheckPackageHelper();
+        helper = new CheckPackageHelper(OwnerValidatorFake.AcceptAll());
     }
 
     [Test]
@@ -391,6 +392,51 @@ public class CheckPackageHelperTests
         Assert.That(response.Issues.Any(issue => issue.Code == issueCode && issue.Message.Contains(messageFragment, StringComparison.Ordinal)),
             Is.True,
             $"Expected issue '{issueCode}' containing '{messageFragment}', but got: {string.Join("; ", response.Issues.Select(issue => $"[{issue.Code}] {issue.Message}"))}");
+    }
+
+    [Test]
+    public void CheckPackage_OwnerNotInTheCache_IsReportedAndDoesNotCount()
+    {
+        var result = new CheckPackageHelper(OwnerValidatorFake.Rejecting("ownerBob")).Evaluate(
+            "sdk/two-owners/Azure.TwoOwners",
+            "Azure/azure-sdk-for-net",
+            entries,
+            settings: DefaultSettings, ownersFilePath: null);
+
+        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InvalidOwner));
+
+        // Removing the invalid owner leaves one, which is below the minimum, so the count fails too.
+        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InsufficientOwners));
+        Assert.That(result.Owners, Is.EqualTo(new[] { "ownerAlice" }));
+    }
+
+    [Test]
+    public void CheckPackage_InvalidServiceOwner_IsReportedAndDoesNotCount()
+    {
+        var result = new CheckPackageHelper(OwnerValidatorFake.Rejecting("serviceOwnerBob")).Evaluate(
+            "sdk/two-owners/Azure.TwoOwners",
+            "Azure/azure-sdk-for-net",
+            entries,
+            settings: DefaultSettings, ownersFilePath: null);
+
+        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InvalidOwner));
+        Assert.That(result.Issues.Select(i => i.Code), Does.Contain(CheckPackageIssue.Codes.InsufficientServiceOwners));
+        Assert.That(result.ServiceOwners, Does.Not.Contain("serviceOwnerBob"));
+    }
+
+    [Test]
+    public void CheckPackage_InvalidOwnerIssue_NamesTheOwnerToRemove()
+    {
+        var result = new CheckPackageHelper(OwnerValidatorFake.Rejecting("ownerBob")).Evaluate(
+            "sdk/two-owners/Azure.TwoOwners",
+            "Azure/azure-sdk-for-net",
+            entries,
+            settings: DefaultSettings, ownersFilePath: "sdk/two-owners/owners.yaml");
+
+        var issue = result.Issues.First(i => i.Code == CheckPackageIssue.Codes.InvalidOwner);
+
+        Assert.That(issue.CurrentValues, Is.EqualTo(new[] { "ownerBob" }));
+        Assert.That(issue.NextStep, Does.Contain("sdk/two-owners/owners.yaml"));
     }
 
     private static List<CodeownersEntry> CreateEntries(

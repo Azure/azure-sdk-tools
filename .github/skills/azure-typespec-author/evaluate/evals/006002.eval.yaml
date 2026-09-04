@@ -4,7 +4,7 @@ version: '1.0'
 type: capability
 area: "dataplane"
 environment: azsdk-mcp
-config:
+defaults:
   runs: 1
   timeout: 660s
   model: gpt-5.6-sol
@@ -49,6 +49,10 @@ stimuli:
     mode: forced
   prompt: '@azure-typespec-author Add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.'
   environment: *id001
+  rubric: &shared_rubric
+  - The Widgets interface includes a get/read operation for WidgetSuite using the Azure.Core ResourceRead<WidgetSuite> template.
+  - The operation supports fetching a WidgetSuite resource by name and has a descriptive @doc decorator.
+  - Changes are limited to the requested operation and contain no unrelated edits.
   graders:
   - *id002
   - type: run-command
@@ -82,6 +86,7 @@ stimuli:
     mode: no-skill
   prompt: Add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.
   environment: *id001
+  rubric: *shared_rubric
   graders:
   - type: tool-calls
     config:

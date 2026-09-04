@@ -45,29 +45,29 @@ jobs:
             Branch: main
             TargetBranches:
               RPSaaSMaster:
-                Theirs: '@("**")'
-                Ours: '@("specification")'
-                Merge: '@("specification/common-types")'
+                Theirs: '"**"'
+                Ours: '"specification"'
+                Merge: '"specification/common-types"'
                 AcceptTheirsForFinalMerge: true
               RPSaaSCanary:
-                Theirs: '@("**")'
-                Ours: '@("specification")'
-                Merge: '@("specification/common-types")'
+                Theirs: '"**"'
+                Ours: '"specification"'
+                Merge: '"specification/common-types"'
                 AcceptTheirsForFinalMerge: true
               RPSaaSDev:
-                Theirs: '@("**")'
-                Ours: '@("specification")'
-                Merge: '@("specification/common-types")'
+                Theirs: '"**"'
+                Ours: '"specification"'
+                Merge: '"specification/common-types"'
                 AcceptTheirsForFinalMerge: true
               ARMCoreRPDev:
-                Theirs: '@("**")'
-                Ours: '@("specification")'
-                Merge: '@("specification/common-types")'
+                Theirs: '"**"'
+                Ours: '"specification"'
+                Merge: '"specification/common-types"'
                 AcceptTheirsForFinalMerge: true
               InternalARMContracts:
-                Theirs: '@("**")'
-                Ours: '@("specification")'
-                Merge: '@("specification/common-types")'
+                Theirs: '"**"'
+                Ours: '"specification"'
+                Merge: '"specification/common-types"'
                 AcceptTheirsForFinalMerge: true
 
     - template: ./templates/steps/sync-repo-branch.yml

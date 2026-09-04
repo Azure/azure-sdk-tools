@@ -34,6 +34,13 @@ param(
 #       /**/ == all subdirectories, recursive
 #   - exclude: after processing other pathspecs, remove any path matching this pathspec from the results
 
+# Callers pass an empty string (rather than an empty array literal, which requires parentheses that
+# the Azure Pipelines PowerShell@2 argument sanitizer disallows) to represent "no paths". Normalize
+# that here so $Theirs/$Ours/$Merge behave as empty arrays in either case.
+$Theirs = @($Theirs | Where-Object { $_ })
+$Ours = @($Ours | Where-Object { $_ })
+$Merge = @($Merge | Where-Object { $_ })
+
 # Apply git pathspec magic to the paths
 $theirIncludes = @($Theirs | ForEach-Object { ":(top,glob)$_" })
 $ourIncludes = @($Ours | ForEach-Object { ":(top,glob)$_" })

@@ -2039,6 +2039,80 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
     }
 
+    [Test]
+    public async Task SpecInputsScope_InvalidPackageProjectPath_NotReturnInvalidInput()
+    {
+        // SpecInputs scope, package path is optional. The tool should not fail fast with InvalidInput if the package path is invalid.
+        var (tool, _) = CreateTool();
+        var pkg = "invalid-path";
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            tspProjectPath: tspDir,
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+    }
+
+    [Test]
+    public async Task CustomCodeScope_InvalidPackageProjectPath_ReturnInvalidInput()
+    {
+        // CustomCode scope edits local custom code, which requires a package path to locate the customization files.
+        // Invalid package path must fail fast with InvalidInput.
+        var (tool, _) = CreateTool();
+        var pkg = "invalid-path";
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
+    }
+
+    [Test]
+    public async Task AllScope_InvalidPackageProjectPath_ReturnInvalidInput()
+    {
+        // All scope edits both spec inputs and local custom code, which requires a package path to locate the customization files.
+        // Invalid package path must fail fast with InvalidInput.
+        var (tool, _) = CreateTool();
+        var pkg = "invalid-path";
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.All,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
+    }
+
+    [Test]
+    public async Task SpecInputsScope_InvalidPackageProjectPath_ReturnSuccess()
+    {
+        // SpecInputs scope edits local spec inputs, package path is optional.
+        // invalid package path will not cause failure. and the typespec customization will resolve the request.
+        var (tool, _) = CreateTool();
+        var pkg = "invalid-path";
+        var tspDir = CreateTempDir();
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            tspProjectPath: tspDir,
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.TypeSpecChangesSummary, Is.Not.Null);
+        Assert.That(result.TypeSpecChangesSummary.Count, Is.GreaterThan(0));
+    }
     // ========================================================================
     // Mock helpers
     // ========================================================================

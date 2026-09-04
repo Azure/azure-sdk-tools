@@ -222,6 +222,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             try
             {
                 repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+                if (string.IsNullOrWhiteSpace(repoRoot))
+                {
+                    logger.LogError("Package path is not within a Git repository: {PackagePath}", packagePath);
+                    validSdkRepoPackagePath = false;
+                }
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -575,7 +580,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 return CreateResponse(new CustomizedCodeUpdateResponse
                 {
                     Success = true,
-                    Message = "No additional changes are required for the specInput-only scope; however, custom code modifications may still be necessary."
+                    Message = "No additional changes are required for the specInput-only scope; however, custom code modifications may still be necessary.",
+                    TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
+                    NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
                 });
             }
         }
@@ -603,7 +610,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
 
             logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
-            await languageService.PreGenerateAsync(repoRoot, ct);
+            if (repoRoot != null)
+            {
+                await languageService.PreGenerateAsync(repoRoot, ct);
+            }
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {

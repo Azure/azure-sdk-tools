@@ -20,6 +20,7 @@ load_dotenv(override=False)
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
+from models.bot_config import ChannelConfigResponse
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
@@ -31,6 +32,7 @@ from models.qa_dashboard import (
     QARecordPage,
 )
 from models.qa_record import QAStatus
+from services.bot_config_service import BotConfigService
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
@@ -143,6 +145,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 _chat_service = ChatService()
+_bot_config_service = BotConfigService()
 _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
 _intention_service = IntentionService()
@@ -312,6 +315,13 @@ async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
             exc_info=True,
         )
         raise
+
+
+@app.get("/config/channel", response_model=ChannelConfigResponse)
+async def get_channel_config(channel_id: str):
+    """Return bot configuration for a Teams channel."""
+    logger.info("Channel config request: channel=%s", channel_id)
+    return await _bot_config_service.get_channel_config(channel_id)
 
 
 async def _update_thread_memory(message: ConversationMessage) -> None:

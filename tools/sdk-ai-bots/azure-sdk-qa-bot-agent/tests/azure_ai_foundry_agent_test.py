@@ -194,6 +194,27 @@ async def test_invoke_retries_when_stream_ends_without_completion() -> None:
 
 
 @pytest.mark.asyncio
+async def test_invoke_retries_when_stream_event_contains_malformed_json() -> None:
+    """A malformed SSE event is abandoned and retried with a fresh stream."""
+
+    async def _malformed_stream():
+        raise JSONDecodeError("Extra data", "{}\n{}", 3)
+        yield
+
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+    malformed = _malformed_stream()
+    client = _mock_client([malformed, _completed_stream(good)])
+
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert out is good
+    assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_invoke_retries_on_stream_completion_timeout() -> None:
     """A stream that stalls past ``stream_timeout`` is abandoned and retried."""
     good = _FakeResponse(output_text="answer", status="completed", id="r2")
@@ -311,14 +332,14 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
     ) as mock_set:
         _, out = await HostedAgentClient(client, retry_delay=0).invoke(
             conversation_items=[],
-            agent_ref={},
+            agent_ref={"name": "azure-mcp-agent"},
             agent_session_id="stale-session",
         )
 
     assert out is good
     assert client.responses.create.await_count == 2
     # The rejected session is cleared so a fresh one is created next time.
-    mock_set.assert_called_once_with(None)
+    mock_set.assert_called_once_with("azure-mcp-agent", None)
     # First attempt carried the stale session; the retry dropped it.
     assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
     assert "agent_session_id" not in captured_extra_bodies[1]

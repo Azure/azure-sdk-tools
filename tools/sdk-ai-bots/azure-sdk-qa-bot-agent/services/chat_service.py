@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 
 from config.app_config import Settings, get as cfg
 from config.tenant_config import (
+    TenantConfig,
+    get_tenant_config,
     get_tenant_scope_description,
 )
 from models.chat import (
@@ -84,38 +86,43 @@ class ChatService:
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
-        self._stateless_session_id: str | None = None
+        self._stateless_session_ids: dict[str, str] = {}
 
     def _get_project_client(self) -> AIProjectClient:
         return self._project_client or get_project_client()
 
-    def _get_openai_client(self) -> AsyncOpenAI:
-        return self._openai_client or get_openai_client()
+    def _get_openai_client(self, agent_name: str | None = None) -> AsyncOpenAI:
+        return self._openai_client or get_openai_client(agent_name)
 
-    def _get_stateless_session_id(self) -> str | None:
+    def _get_stateless_session_id(self, agent_name: str) -> str | None:
         if self._project_client is None and self._openai_client is None:
-            return get_stateless_session_id()
-        return self._stateless_session_id
+            return get_stateless_session_id(agent_name)
+        return self._stateless_session_ids.get(agent_name)
 
-    def _set_stateless_session_id(self, session_id: str | None) -> None:
+    def _set_stateless_session_id(
+        self, agent_name: str, session_id: str | None
+    ) -> None:
         if self._project_client is None and self._openai_client is None:
-            set_stateless_session_id(session_id)
+            set_stateless_session_id(agent_name, session_id)
+        elif session_id is None:
+            self._stateless_session_ids.pop(agent_name, None)
         else:
-            self._stateless_session_id = session_id
+            self._stateless_session_ids[agent_name] = session_id
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
         project_client = self._get_project_client()
-
-        agent = await self._get_agent(project_client)
-        openai_client = self._get_openai_client()
+        tenant_config = get_tenant_config(req.tenant_id)
+        agent_name, agent_version = self._resolve_agent_configuration(tenant_config)
+        agent = await self._get_agent(project_client, agent_name, agent_version)
+        openai_client = self._get_openai_client(agent_name)
 
         # Stateless calls (no customer conversation_id) skip conversation
         # threading and reuse a warm sandbox; threaded calls resolve history.
         stateless = not req.conversation_id
         if stateless:
             agent_conversation_id, is_new = None, True
-            agent_session_id = self._get_stateless_session_id()
+            agent_session_id = self._get_stateless_session_id(agent_name)
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
         else:
             agent_conversation_id, is_new = await self._resolve_conversation(
@@ -196,6 +203,7 @@ class ChatService:
                 await self._rebuild_conversation_after_failure(
                     req.conversation_id,
                     req.conversation_type,
+                    openai_client,
                 )
             )
             # The replacement conversation has no tenant context of its own.
@@ -214,10 +222,10 @@ class ChatService:
                 agent_ref=agent_ref,
             )
         # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless and not self._get_stateless_session_id():
+        if stateless and not self._get_stateless_session_id(agent_name):
             extra = getattr(response, "model_extra", None) or {}
             captured = extra.get("agent_session_id")
-            self._set_stateless_session_id(captured)
+            self._set_stateless_session_id(agent_name, captured)
             logger.info("Stateless request: captured warm session=%s", captured)
 
         logger.info(
@@ -296,10 +304,29 @@ class ChatService:
                 exc_info=True,
             )
 
-    async def _get_agent(self, project_client: AIProjectClient) -> AgentVersionDetails:
+    def _resolve_agent_configuration(
+        self,
+        tenant_config: TenantConfig | None,
+    ) -> tuple[str, str | None]:
+        """Resolve the hosted agent assigned to a tenant."""
+        if tenant_config is not None:
+            agent_config = tenant_config.agent
+            return (
+                self._settings(agent_config.name_config_key, agent_config.name),
+                self._settings(agent_config.version_config_key),
+            )
+        return (
+            self._settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent"),
+            self._settings("AI_FOUNDRY_AGENT_VERSION"),
+        )
+
+    async def _get_agent(
+        self,
+        project_client: AIProjectClient,
+        agent_name: str,
+        agent_version: str | None,
+    ) -> AgentVersionDetails:
         """Load hosted-agent version definition from Foundry."""
-        agent_name = self._settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
-        agent_version = self._settings("AI_FOUNDRY_AGENT_VERSION", None)
         if agent_version:
             agent = await project_client.agents.get_version(agent_name, agent_version)
         else:
@@ -355,9 +382,9 @@ class ChatService:
         self,
         conversation_id: str | None,
         conversation_type: ConversationType | None,
+        openai_client: AsyncOpenAI,
     ) -> tuple[str, list[ResponseInputItemParam]]:
         """Replace corrupted history and replay only safe message items."""
-        openai_client = self._get_openai_client()
         replay_items = await self._list_message_items(
             conversation_id,
             conversation_type,

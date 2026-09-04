@@ -7,6 +7,13 @@ trigger: none
 pr: none
 
 parameters:
+  - name: team
+    displayName: 'Teams Team'
+    type: string
+    default: azure_sdk
+    values:
+      - azure_sdk
+      - azure_mcp_server
   - name: environment
     displayName: 'Target Environment'
     type: string
@@ -34,7 +41,7 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: DeployLogicApp
-        displayName: 'Deploy Logic App (${{ parameters.environment }})'
+        displayName: 'Deploy ${{ parameters.team }} Logic App (${{ parameters.environment }})'
         jobs:
           - job: Deploy
             displayName: 'ARM Template Deployment'
@@ -57,7 +64,7 @@ extends:
                     set -euo pipefail
 
                     TEMPLATE_FILE="pipelines/logicapp/template.json"
-                    PARAMS_FILE="pipelines/logicapp/parameters.${{ parameters.environment }}.json"
+                    PARAMS_FILE="pipelines/logicapp/parameters.${{ parameters.team }}.${{ parameters.environment }}.json"
 
                     echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
                     echo "Template: $TEMPLATE_FILE"
@@ -67,7 +74,7 @@ extends:
                       --resource-group "$(RESOURCE_GROUP)" \
                       --template-file "$TEMPLATE_FILE" \
                       --parameters "@$PARAMS_FILE" \
-                      --name "logicapp-$(Build.BuildId)" \
+                      --name "logicapp-${{ parameters.team }}-$(Build.BuildId)" \
                       --verbose
 
                     echo "Logic App deployment completed successfully."

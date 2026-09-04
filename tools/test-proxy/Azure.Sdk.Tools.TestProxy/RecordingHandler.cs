@@ -1199,10 +1199,26 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        /// <summary>
+        /// Whether <paramref name="candidate"/> resolves to <paramref name="directory"/> or somewhere beneath it.
+        /// </summary>
+        /// <remarks>
+        /// The comparison is on resolved paths, so a value that walks upwards is
+        /// caught, and it is case sensitive so that a mismatch fails closed. The
+        /// candidate is always built by joining onto the directory, so the shared
+        /// prefix has the same casing either way.
+        /// </remarks>
+        private static bool IsContainedWithin(string directory, string candidate)
+        {
+            var resolvedDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+            var resolvedCandidate = Path.TrimEndingDirectorySeparator(Path.GetFullPath(candidate));
+
+            return resolvedCandidate.Equals(resolvedDirectory, StringComparison.Ordinal)
+                || resolvedCandidate.StartsWith(resolvedDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+        }
+
         public async Task<string> GetRecordingPath(string file, string assetsPath = null)
         {
-            var normalizedFileName = file.Replace('\\', '/');
-
             if (String.IsNullOrWhiteSpace(file))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"Recording file value of {file} is invalid. Try again with a populated filename.");
@@ -1222,6 +1238,19 @@ namespace Azure.Sdk.Tools.TestProxy
                     );
                 }
                 path = Path.Join(contextDirectory, file);
+
+                // Rejecting a fully qualified value says the recording belongs under
+                // the assets context. Path.Join does not resolve `..`, so a relative
+                // value can still land outside it once the filesystem reads the path;
+                // compare the resolved locations to hold the boundary the check above
+                // is there to draw.
+                if (!IsContainedWithin(contextDirectory, path))
+                {
+                    throw new HttpException(
+                        HttpStatusCode.BadRequest,
+                        $"The path provided in the recording file value {file} resolves outside the assets directory. This is not allowed when an assets.json is provided."
+                    );
+                }
             }
             // otherwise, it's a basic restore like we're used to
             else

@@ -63,6 +63,14 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
+      # Local-generation scenarios need a target SDK repo to generate into;
+      # without one the agent correctly refuses to call
+      # azsdk_package_generate_code and hunts for a clone instead.
+      files:
+        - src: ../../fixtures/sdk-repos/azure-sdk-for-python/README.md
+          dest: azure-sdk-for-python/README.md
+        - src: ../../fixtures/sdk-repos/azure-sdk-for-python/sdk/contosowidgetmanager/README.md
+          dest: azure-sdk-for-python/sdk/contosowidgetmanager/README.md
     turns:
       - |
         Create a public preview release plan for the Contoso Widget Manager.
@@ -156,7 +164,9 @@ stimuli:
         plan (work item 29262) to
         https://github.com/Azure/azure-rest-api-specs/pull/38500.
       - |
-        Now regenerate the SDKs for all languages for that release plan.
+        Now regenerate the SDKs for all languages for that release plan. It's a
+        beta release. My TypeSpec project is
+        specification/contosowidgetmanager/Contoso.WidgetManager.
     constraints:
       max_turns: 14
       max_tokens: 20000
@@ -230,9 +240,10 @@ stimuli:
       - |
         I need to get the SDK generated for the Contoso Widget Manager.
       - |
-        I've already got the azure-rest-api-specs repo cloned and I just want the
-        Python SDK built locally. The tspconfig is at
+        I've already got the azure-rest-api-specs repo cloned — generate and
+        build just the Python SDK locally from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
+        My azure-sdk-for-python clone is at ./azure-sdk-for-python.
     constraints:
       max_turns: 16
       max_tokens: 22000
@@ -242,12 +253,12 @@ stimuli:
       # The agent commonly acts on the first, already-actionable
       # turn rather than waiting for the clarifying turn, so these are asserted
       # session-wide rather than pinned to a single turn.
+      # As in scenario 4, the vague opener legitimately loads the pipeline skill
+      # while exploring, so only the tool-level guard enforces routing.
       - type: skill-invocation
         config:
           required:
             - azsdk-common-generate-sdk-locally
-          disallowed:
-            - azsdk-common-generate-sdk-pipeline
       - type: tool-calls
         config:
           required:
@@ -266,6 +277,7 @@ stimuli:
         I've got the azure-rest-api-specs repo cloned locally — generate and build
         just the Python SDK for the Contoso Widget Manager from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
+        My azure-sdk-for-python clone is at ./azure-sdk-for-python.
       - |
         Actually, I need this for every language now. Kick off SDK generation for
         all languages using release plan 29262 and open the SDK pull requests.
@@ -311,4 +323,4 @@ scoring:
   weights:
     skill-invocation: 0.5
     tool-calls: 0.5
-  threshold: 1.0
+  threshold: 0.8

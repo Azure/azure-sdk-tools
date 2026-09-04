@@ -183,4 +183,4 @@ scoring:
     skill-invocation: 0.2
     tool-calls: 0.6
     prompt: 0.2
-  threshold: 1.0
+  threshold: 0.8

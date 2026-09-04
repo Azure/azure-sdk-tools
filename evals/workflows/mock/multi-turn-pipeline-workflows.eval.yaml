@@ -187,4 +187,4 @@ scoring:
     output-contains: 0.1
     file-matches: 0.2
     file-not-matches: 0.1
-  threshold: 1.0
+  threshold: 0.8

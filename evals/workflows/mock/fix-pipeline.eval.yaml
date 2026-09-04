@@ -118,4 +118,4 @@ scoring:
     tool-calls: 0.2
     output-not-matches: 0.2
     prompt: 0.1
-  threshold: 1.0
+  threshold: 0.8

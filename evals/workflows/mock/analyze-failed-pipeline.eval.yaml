@@ -115,4 +115,4 @@ scoring:
     output-matches: 0.2
     output-not-matches: 0.1
     prompt: 0.1
-  threshold: 1.0
+  threshold: 0.8

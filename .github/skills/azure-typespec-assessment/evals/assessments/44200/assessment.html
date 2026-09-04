@@ -122,32 +122,34 @@
 <h3>Changed files</h3><ul><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp</code> (committed)</li><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp</code> (committed)</li><li><code>specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 66543,
-    &quot;semanticAnalysisMs&quot;: 115,
-    &quot;restAnalysisMs&quot;: 30,
-    &quot;downstreamAnalysisMs&quot;: 1110
+    &quot;totalMs&quot;: 48911,
+    &quot;semanticAnalysisMs&quot;: 147,
+    &quot;restAnalysisMs&quot;: 33,
+    &quot;downstreamAnalysisMs&quot;: 1065
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 115264,
-    &quot;estimatedTokens&quot;: 28816,
+    &quot;bytes&quot;: 29607,
+    &quot;estimatedTokens&quot;: 7402,
     &quot;retained&quot;: {
-      &quot;sourceChanges&quot;: 3,
+      &quot;evidenceSets&quot;: 5,
       &quot;facts&quot;: 4,
       &quot;semanticReviewUnits&quot;: 2,
       &quot;restCandidates&quot;: 0,
       &quot;downstreamCandidates&quot;: 1,
       &quot;downstreamRootCauses&quot;: 1,
       &quot;complianceSearchRequests&quot;: 2,
-      &quot;inferenceRequests&quot;: 4,
-      &quot;complianceSearchSourceBytes&quot;: 86231
+      &quot;inferenceRequests&quot;: 4
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
-      &quot;unreferencedFacts&quot;: true
+      &quot;unreferencedFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;inference&quot;: {
       &quot;requestCount&quot;: 4,

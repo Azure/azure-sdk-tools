@@ -89,32 +89,34 @@
 <h3>Changed files</h3><ul><li><code>specification/newrelic/NewRelicObservability.Management/client.tsp</code> (committed)</li><li><code>specification/newrelic/NewRelicObservability.Management/main.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 166936,
-    &quot;semanticAnalysisMs&quot;: 206,
-    &quot;restAnalysisMs&quot;: 99,
-    &quot;downstreamAnalysisMs&quot;: 2898
+    &quot;totalMs&quot;: 51871,
+    &quot;semanticAnalysisMs&quot;: 136,
+    &quot;restAnalysisMs&quot;: 57,
+    &quot;downstreamAnalysisMs&quot;: 1536
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 13455,
-    &quot;estimatedTokens&quot;: 3364,
+    &quot;bytes&quot;: 7437,
+    &quot;estimatedTokens&quot;: 1860,
     &quot;retained&quot;: {
-      &quot;sourceChanges&quot;: 2,
+      &quot;evidenceSets&quot;: 2,
       &quot;facts&quot;: 0,
       &quot;semanticReviewUnits&quot;: 1,
       &quot;restCandidates&quot;: 0,
       &quot;downstreamCandidates&quot;: 0,
       &quot;downstreamRootCauses&quot;: 0,
       &quot;complianceSearchRequests&quot;: 1,
-      &quot;inferenceRequests&quot;: 0,
-      &quot;complianceSearchSourceBytes&quot;: 8291
+      &quot;inferenceRequests&quot;: 0
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
-      &quot;unreferencedFacts&quot;: true
+      &quot;unreferencedFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;compliance&quot;: {
       &quot;catalogEntriesScored&quot;: 32,

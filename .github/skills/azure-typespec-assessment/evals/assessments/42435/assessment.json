@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:08:19.342Z",
+  "generatedAt": "2026-09-04T02:04:06.935Z",
   "title": "TypeSpec assessment: specification/cognitiveservices/CognitiveServices.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\42435\\head",
@@ -7123,15 +7123,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\worktrees\\base\\specification\\cognitiveservices\\CognitiveServices.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\worktrees\\base\\specification\\cognitiveservices\\CognitiveServices.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-03-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 23650,
+            "durationMs": 15524,
             "configPath": "worktrees\\base\\specification\\cognitiveservices\\CognitiveServices.Management\\tspconfig.yaml",
             "configHash": "1752b7e4b9efc2cd197fa63c6e8fca8f628331f8ad843aba59dcd88f0452b257",
             "logPath": "logs\\project-37d12681d7d3-baseline-autorest.log",
@@ -7155,16 +7155,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\worktrees\\base\\specification\\cognitiveservices\\CognitiveServices.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\worktrees\\base\\specification\\cognitiveservices\\CognitiveServices.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-03-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 17099,
+            "durationMs": 13151,
             "configPath": "worktrees\\base\\specification\\cognitiveservices\\CognitiveServices.Management\\tspconfig.yaml",
             "configHash": "1752b7e4b9efc2cd197fa63c6e8fca8f628331f8ad843aba59dcd88f0452b257",
             "logPath": "logs\\project-37d12681d7d3-baseline-tcgc.log",
@@ -7192,15 +7192,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\worktrees\\current\\specification\\cognitiveservices\\CognitiveServices.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\worktrees\\current\\specification\\cognitiveservices\\CognitiveServices.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-03-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 13587,
+            "durationMs": 12780,
             "configPath": "worktrees\\current\\specification\\cognitiveservices\\CognitiveServices.Management\\tspconfig.yaml",
             "configHash": "1752b7e4b9efc2cd197fa63c6e8fca8f628331f8ad843aba59dcd88f0452b257",
             "logPath": "logs\\project-37d12681d7d3-target-autorest.log",
@@ -7224,16 +7224,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\worktrees\\current\\specification\\cognitiveservices\\CognitiveServices.Management",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\worktrees\\current\\specification\\cognitiveservices\\CognitiveServices.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\projects\\project-37d12681d7d3\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42435\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42435\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-03-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 25753,
+            "durationMs": 12710,
             "configPath": "worktrees\\current\\specification\\cognitiveservices\\CognitiveServices.Management\\tspconfig.yaml",
             "configHash": "1752b7e4b9efc2cd197fa63c6e8fca8f628331f8ad843aba59dcd88f0452b257",
             "logPath": "logs\\project-37d12681d7d3-target-tcgc.log",
@@ -7318,24 +7318,26 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 27059,
-    "estimatedTokens": 6765,
+    "bytes": 19940,
+    "estimatedTokens": 4985,
     "retained": {
-      "sourceChanges": 1,
+      "evidenceSets": 4,
       "facts": 4,
       "semanticReviewUnits": 1,
       "restCandidates": 1,
       "downstreamCandidates": 3,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 1,
-      "inferenceRequests": 0,
-      "complianceSearchSourceBytes": 8868
+      "inferenceRequests": 0
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "compliance": {
       "catalogEntriesScored": 32,
@@ -7346,10 +7348,10 @@
     }
   },
   "timings": {
-    "totalMs": 165340,
-    "semanticAnalysisMs": 435,
-    "restAnalysisMs": 649,
-    "downstreamAnalysisMs": 15082
+    "totalMs": 158145,
+    "semanticAnalysisMs": 139,
+    "restAnalysisMs": 135,
+    "downstreamAnalysisMs": 6794
   },
   "pr": 42435,
   "pullRequest": {

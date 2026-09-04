@@ -93,32 +93,34 @@
 <h3>Changed files</h3><ul><li><code>specification/elastic/Elastic.Management/back-compatible.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 61731,
-    &quot;semanticAnalysisMs&quot;: 53,
-    &quot;restAnalysisMs&quot;: 66,
-    &quot;downstreamAnalysisMs&quot;: 2909
+    &quot;totalMs&quot;: 54778,
+    &quot;semanticAnalysisMs&quot;: 44,
+    &quot;restAnalysisMs&quot;: 46,
+    &quot;downstreamAnalysisMs&quot;: 1726
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 9507,
-    &quot;estimatedTokens&quot;: 2377,
+    &quot;bytes&quot;: 8344,
+    &quot;estimatedTokens&quot;: 2086,
     &quot;retained&quot;: {
-      &quot;sourceChanges&quot;: 1,
+      &quot;evidenceSets&quot;: 2,
       &quot;facts&quot;: 0,
       &quot;semanticReviewUnits&quot;: 2,
       &quot;restCandidates&quot;: 0,
       &quot;downstreamCandidates&quot;: 0,
       &quot;downstreamRootCauses&quot;: 0,
       &quot;complianceSearchRequests&quot;: 2,
-      &quot;inferenceRequests&quot;: 2,
-      &quot;complianceSearchSourceBytes&quot;: 3688
+      &quot;inferenceRequests&quot;: 2
     },
     &quot;omittedRedundant&quot;: {
       &quot;rawEmitterArtifacts&quot;: true,
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
-      &quot;unreferencedFacts&quot;: true
+      &quot;unreferencedFacts&quot;: true,
+      &quot;sourceChanges&quot;: true,
+      &quot;repeatedDeclarationIds&quot;: true,
+      &quot;repeatedReviewUnitEvidence&quot;: true
     },
     &quot;inference&quot;: {
       &quot;requestCount&quot;: 2,

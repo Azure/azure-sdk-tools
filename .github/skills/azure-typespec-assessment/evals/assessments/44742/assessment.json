@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:21:56.849Z",
+  "generatedAt": "2026-09-04T02:14:08.964Z",
   "title": "TypeSpec assessment: specification/storage/data-plane/FileStorage",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44742\\head",
@@ -17528,7 +17528,7 @@
             "location": "response 200.segment.fileItems[].fileType"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -23142,7 +23142,7 @@
             "location": "response 200.segment.fileItems[].linkCount"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -28756,7 +28756,7 @@
             "location": "response 200.segment.fifoItems"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -34370,7 +34370,7 @@
             "location": "response 200.segment.fileItems[].properties.group"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -39984,7 +39984,7 @@
             "location": "response 200.segment.charDeviceItems"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -45598,7 +45598,7 @@
             "location": "response 200.segment.socketItems"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -51212,7 +51212,7 @@
             "location": "response 200.segment.symLinkItems"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -56826,7 +56826,7 @@
             "location": "response 200.segment.directoryItems[].properties.group"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -62440,7 +62440,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current response header no longer permits previously documented file-type values, invalidating consumers that handle those existing values.",
+          "rationale": "The target narrows the documented string-enum values of this existing response header, removing response behavior represented by the baseline contract.",
           "evidence": [
             {
               "id": "rest-fact-d3697487f75b80e8",
@@ -66370,7 +66370,7 @@
             "location": "response 200.segment.fileItems[].properties.owner"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -71984,7 +71984,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current contract removes previously accepted enum values from an existing request parameter, so existing callers using those values can fail.",
+          "rationale": "The target narrows the accepted string-enum values for this existing parameter, so requests using a previously valid value can become invalid.",
           "evidence": [
             {
               "id": "rest-fact-e4c1a245ecd15dbc",
@@ -76496,7 +76496,7 @@
             "location": "response 200.segment.fileItems[].properties.fileMode"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -82110,7 +82110,7 @@
             "location": "include"
           },
           "severity": "high",
-          "rationale": "The current contract removes previously accepted enum values from an existing request parameter, so existing callers using those values can fail.",
+          "rationale": "The target narrows the accepted string-enum values for this existing parameter, so requests using a previously valid value can become invalid.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -87724,7 +87724,7 @@
             "location": "response 200.segment.directoryItems[].properties.owner"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -93338,7 +93338,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current response header no longer permits previously documented file-type values, invalidating consumers that handle those existing values.",
+          "rationale": "The target narrows the documented string-enum values of this existing response header, removing response behavior represented by the baseline contract.",
           "evidence": [
             {
               "id": "rest-fact-76e8662cffb47237",
@@ -97490,7 +97490,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current response header no longer permits previously documented file-type values, invalidating consumers that handle those existing values.",
+          "rationale": "The target narrows the documented string-enum values of this existing response header, removing response behavior represented by the baseline contract.",
           "evidence": [
             {
               "id": "rest-fact-ed274d8a8ce4d8b3",
@@ -101410,7 +101410,7 @@
             "location": "response 200.segment.directoryItems[].properties.fileMode"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -107024,7 +107024,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current response header no longer permits previously documented file-type values, invalidating consumers that handle those existing values.",
+          "rationale": "The target narrows the documented string-enum values of this existing response header, removing response behavior represented by the baseline contract.",
           "evidence": [
             {
               "id": "rest-fact-a2ca574cf90166c6",
@@ -111264,7 +111264,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current response header no longer permits previously documented file-type values, invalidating consumers that handle those existing values.",
+          "rationale": "The target narrows the documented string-enum values of this existing response header, removing response behavior represented by the baseline contract.",
           "evidence": [
             {
               "id": "rest-fact-e4c1a245ecd15dbc",
@@ -115776,7 +115776,7 @@
             "location": "x-ms-file-file-type"
           },
           "severity": "high",
-          "rationale": "The current response header no longer permits previously documented file-type values, invalidating consumers that handle those existing values.",
+          "rationale": "The target narrows the documented string-enum values of this existing response header, removing response behavior represented by the baseline contract.",
           "evidence": [
             {
               "id": "rest-fact-61c1ec0dc26c06cf",
@@ -119744,7 +119744,7 @@
             "location": "response 200.segment.blockDeviceItems"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -125358,7 +125358,7 @@
             "location": "response 200.segment.directoryItems[].linkCount"
           },
           "severity": "high",
-          "rationale": "The current response omits a previously serialized member from the same existing API version, so response consumers depending on that member can break.",
+          "rationale": "The response member existed in the baseline 2026-12-06 wire schema and is absent from the target schema, so existing response consumers can lose a documented value.",
           "evidence": [
             {
               "id": "rest-fact-37799534be22cb90",
@@ -130976,7 +130976,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -134425,7 +134425,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -137871,7 +137871,7 @@
           "reviewRequired": true,
           "rootCauseIds": [],
           "severity": "high",
-          "rationale": "The public reachable SDK model is removed from the generated surface, breaking callers that reference the type.",
+          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -141167,7 +141167,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK enum loses existing members, so source-compatible callers using those members must migrate.",
+          "rationale": "Previously generated public enum values are removed, so source code that references those values no longer compiles or behaves equivalently.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -144361,7 +144361,7 @@
           "reviewRequired": true,
           "rootCauseIds": [],
           "severity": "high",
-          "rationale": "The public reachable SDK model is removed from the generated surface, breaking callers that reference the type.",
+          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -147631,7 +147631,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -151086,7 +151086,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model is removed from the generated surface, breaking callers that reference the type.",
+          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -154283,7 +154283,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK enum loses existing members, so source-compatible callers using those members must migrate.",
+          "rationale": "Previously generated public enum values are removed, so source code that references those values no longer compiles or behaves equivalently.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -157488,7 +157488,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -160937,7 +160937,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -164386,7 +164386,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -168029,7 +168029,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -171510,7 +171510,7 @@
           "reviewRequired": true,
           "rootCauseIds": [],
           "severity": "high",
-          "rationale": "The public reachable SDK model is removed from the generated surface, breaking callers that reference the type.",
+          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -174751,7 +174751,7 @@
           "reviewRequired": true,
           "rootCauseIds": [],
           "severity": "high",
-          "rationale": "The public reachable SDK model is removed from the generated surface, breaking callers that reference the type.",
+          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -177995,7 +177995,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -181444,7 +181444,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -184928,7 +184928,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -188568,7 +188568,7 @@
           "reviewRequired": true,
           "rootCauseIds": [],
           "severity": "high",
-          "rationale": "The public reachable SDK model is removed from the generated surface, breaking callers that reference the type.",
+          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -191864,7 +191864,7 @@
             "downstream-root-cause-6c5f1116663ef2ce"
           ],
           "severity": "high",
-          "rationale": "The public reachable SDK model loses an existing property; this is an actual removed member, not a response-wrapper reshaping that preserves the property.",
+          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -195554,7 +195554,7 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types"
+              "guidanceSection": "Adding and removing API elements"
             }
           ],
           "sourceChangeIds": [
@@ -195806,21 +195806,34 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API."
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 1
             },
             {
-              "rank": 2,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 2
+            },
+            {
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -195831,24 +195844,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3
             },
             {
-              "rank": 3,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed model and model-property declarations."
-            },
-            {
-              "rank": 4,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -195859,10 +195858,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4
             },
             {
-              "rank": 5,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -195873,24 +195872,66 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the changed-decorator category, but not the Azure versioning behavior directly."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 5
             },
             {
-              "rank": 6,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 2
+                "total": 5
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 6
             },
             {
-              "rank": 7,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 7
+            },
+            {
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 8
+            },
+            {
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 9
+            },
+            {
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -195901,10 +195942,66 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 10
             },
             {
-              "rank": 8,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 11
+            },
+            {
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 12
+            },
+            {
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 13
+            },
+            {
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 14
+            },
+            {
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -195915,10 +196012,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 15
             },
             {
-              "rank": 9,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -195929,10 +196026,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 16
             },
             {
-              "rank": 10,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -195943,10 +196040,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 17
             },
             {
-              "rank": 11,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -195957,38 +196054,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 18
             },
             {
-              "rank": 12,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 14,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -195999,10 +196068,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 19
             },
             {
-              "rank": 15,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
@@ -196013,10 +196082,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 20
             },
             {
-              "rank": 16,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -196027,10 +196096,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 21
             },
             {
-              "rank": 17,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -196041,10 +196110,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 22
             },
             {
-              "rank": 18,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -196055,10 +196124,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 23
             },
             {
-              "rank": 19,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -196069,10 +196138,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 24
             },
             {
-              "rank": 20,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -196083,10 +196152,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 25
             },
             {
-              "rank": 21,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -196097,10 +196166,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 26
             },
             {
-              "rank": 22,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -196111,10 +196180,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 27
             },
             {
-              "rank": 23,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -196125,13 +196194,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 28
             },
             {
-              "rank": 24,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
@@ -196139,52 +196208,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 29
             },
             {
-              "rank": 25,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 27,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 28,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -196195,10 +196222,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 30
             },
             {
-              "rank": 29,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -196209,10 +196236,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 31
             },
             {
-              "rank": 30,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -196223,59 +196250,31 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 31,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 32
             }
           ],
           "documents": [
             {
-              "rank": 1,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API.",
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 1,
               "guidance": [
                 {
-                  "section": "Removing types",
-                  "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions.",
+                  "section": "Adding and removing API elements",
+                  "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator.",
                   "queryTerms": [
-                    "@removed",
                     "@added",
-                    "Versions.v2026_12_06"
+                    "@removed"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -196318,11 +196317,75 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:19:52.4249441Z",
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
               "rank": 2,
+              "guidance": [
+                {
+                  "section": "Models and properties",
+                  "excerpt": "Models in TypeSpec define the structure or schema of data as named properties. Properties can be designated as optional by using the `?` symbol.",
+                  "queryTerms": [
+                    "model",
+                    "property"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-11d9bfb5a9417330",
+                    "declaration-1308395af552c920",
+                    "declaration-1d8f77f5a0706041",
+                    "declaration-28faabea28d25a09",
+                    "declaration-2d8838f499c8d2a7",
+                    "declaration-3468c062204a2ec9",
+                    "declaration-388d5fab74ac6367",
+                    "declaration-4d422ac6bbb746c1",
+                    "declaration-4ebf21e442725dae",
+                    "declaration-5ad589dd342edf51",
+                    "declaration-5d5c269c56d15244",
+                    "declaration-60ca7e1d8534d963",
+                    "declaration-66f903520fea680f",
+                    "declaration-7579ab049368eba2",
+                    "declaration-784023ca786802e3",
+                    "declaration-7ab7e776a4a12af5",
+                    "declaration-7e1538dc0206b9c0",
+                    "declaration-81ae245a471237ca",
+                    "declaration-8850dcb62d17992d",
+                    "declaration-8c10fa4d4b94e0e6",
+                    "declaration-8dbd598f86e39880",
+                    "declaration-913b93a15794ef2f",
+                    "declaration-a9ae57b209f780dc",
+                    "declaration-abd4fe560343919a",
+                    "declaration-be5a596dbd04dd32",
+                    "declaration-c00ed6ec653d2f38",
+                    "declaration-c15318f2c3c92a7f",
+                    "declaration-cca86a1e4127e661",
+                    "declaration-d73fb1ed7844d619",
+                    "declaration-dcc651a6c2451245",
+                    "declaration-e55304f8e1921660",
+                    "declaration-e69435f544489f6a",
+                    "declaration-f4e8baf2553ff927",
+                    "declaration-fa33e601ec2821cf",
+                    "declaration-fd7b6d11babaca4d"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
+            },
+            {
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -196333,32 +196396,61 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.6511742Z",
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3,
+              "guidance": [
+                {
+                  "section": "About versioning",
+                  "excerpt": "TypeSpec models the changes in each new API version, rather than using a separate API description for each api-version, and changes should be marked with appropriate versioning decorators.",
+                  "queryTerms": [
+                    "versioning",
+                    "Versions"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-11d9bfb5a9417330",
+                    "declaration-1308395af552c920",
+                    "declaration-1d8f77f5a0706041",
+                    "declaration-28faabea28d25a09",
+                    "declaration-2d8838f499c8d2a7",
+                    "declaration-3468c062204a2ec9",
+                    "declaration-388d5fab74ac6367",
+                    "declaration-4d422ac6bbb746c1",
+                    "declaration-4ebf21e442725dae",
+                    "declaration-5ad589dd342edf51",
+                    "declaration-5d5c269c56d15244",
+                    "declaration-60ca7e1d8534d963",
+                    "declaration-66f903520fea680f",
+                    "declaration-7579ab049368eba2",
+                    "declaration-784023ca786802e3",
+                    "declaration-7ab7e776a4a12af5",
+                    "declaration-7e1538dc0206b9c0",
+                    "declaration-81ae245a471237ca",
+                    "declaration-8850dcb62d17992d",
+                    "declaration-8c10fa4d4b94e0e6",
+                    "declaration-8dbd598f86e39880",
+                    "declaration-913b93a15794ef2f",
+                    "declaration-a9ae57b209f780dc",
+                    "declaration-abd4fe560343919a",
+                    "declaration-be5a596dbd04dd32",
+                    "declaration-c00ed6ec653d2f38",
+                    "declaration-c15318f2c3c92a7f",
+                    "declaration-cca86a1e4127e661",
+                    "declaration-d73fb1ed7844d619",
+                    "declaration-dcc651a6c2451245",
+                    "declaration-e55304f8e1921660",
+                    "declaration-e69435f544489f6a",
+                    "declaration-f4e8baf2553ff927",
+                    "declaration-fa33e601ec2821cf",
+                    "declaration-fd7b6d11babaca4d"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             },
             {
-              "rank": 3,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed model and model-property declarations.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.5804085Z",
-              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
-            },
-            {
-              "rank": 4,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -196369,10 +196461,58 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:20:18.6867973Z",
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4,
+              "guidance": [
+                {
+                  "section": "Decorators",
+                  "excerpt": "Decorators attach metadata to TypeSpec declarations, including models and their members, and are referenced with the `@` prefix before the decorated entity.",
+                  "queryTerms": [
+                    "decorator",
+                    "@added"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-11d9bfb5a9417330",
+                    "declaration-1308395af552c920",
+                    "declaration-1d8f77f5a0706041",
+                    "declaration-28faabea28d25a09",
+                    "declaration-2d8838f499c8d2a7",
+                    "declaration-3468c062204a2ec9",
+                    "declaration-388d5fab74ac6367",
+                    "declaration-4d422ac6bbb746c1",
+                    "declaration-4ebf21e442725dae",
+                    "declaration-5ad589dd342edf51",
+                    "declaration-5d5c269c56d15244",
+                    "declaration-60ca7e1d8534d963",
+                    "declaration-66f903520fea680f",
+                    "declaration-7579ab049368eba2",
+                    "declaration-784023ca786802e3",
+                    "declaration-7ab7e776a4a12af5",
+                    "declaration-7e1538dc0206b9c0",
+                    "declaration-81ae245a471237ca",
+                    "declaration-8850dcb62d17992d",
+                    "declaration-8c10fa4d4b94e0e6",
+                    "declaration-8dbd598f86e39880",
+                    "declaration-913b93a15794ef2f",
+                    "declaration-a9ae57b209f780dc",
+                    "declaration-abd4fe560343919a",
+                    "declaration-be5a596dbd04dd32",
+                    "declaration-c00ed6ec653d2f38",
+                    "declaration-c15318f2c3c92a7f",
+                    "declaration-cca86a1e4127e661",
+                    "declaration-d73fb1ed7844d619",
+                    "declaration-dcc651a6c2451245",
+                    "declaration-e55304f8e1921660",
+                    "declaration-e69435f544489f6a",
+                    "declaration-f4e8baf2553ff927",
+                    "declaration-fa33e601ec2821cf",
+                    "declaration-fd7b6d11babaca4d"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             }
           ],
@@ -196384,7 +196524,7 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types"
+              "guidanceSection": "Adding and removing API elements"
             }
           ],
           "sourceChangeIds": [
@@ -196535,21 +196675,48 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API."
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 1
             },
             {
-              "rank": 2,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 2
+            },
+            {
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3
+            },
+            {
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -196560,38 +196727,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4
             },
             {
-              "rank": 3,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed model and model-property declarations."
-            },
-            {
-              "rank": 4,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed union or enum-like service values."
-            },
-            {
-              "rank": 5,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -196602,10 +196741,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 5
             },
             {
-              "rank": 6,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -196616,24 +196755,66 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the changed-decorator category, but not the Azure versioning behavior directly."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 6
             },
             {
-              "rank": 7,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 2
+                "total": 5
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 7
             },
             {
-              "rank": 8,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 8
+            },
+            {
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 9
+            },
+            {
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 10
+            },
+            {
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -196644,10 +196825,66 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 11
             },
             {
-              "rank": 9,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 12
+            },
+            {
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 13
+            },
+            {
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 14
+            },
+            {
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 15
+            },
+            {
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -196658,10 +196895,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 16
             },
             {
-              "rank": 10,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -196672,10 +196909,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 17
             },
             {
-              "rank": 11,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -196686,38 +196923,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 18
             },
             {
-              "rank": 12,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 14,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -196728,10 +196937,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 19
             },
             {
-              "rank": 15,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
@@ -196742,10 +196951,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 20
             },
             {
-              "rank": 16,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -196756,10 +196965,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 21
             },
             {
-              "rank": 17,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -196770,10 +196979,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 22
             },
             {
-              "rank": 18,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -196784,10 +196993,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 23
             },
             {
-              "rank": 19,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -196798,10 +197007,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 24
             },
             {
-              "rank": 20,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -196812,10 +197021,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 25
             },
             {
-              "rank": 21,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -196826,10 +197035,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 26
             },
             {
-              "rank": 22,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -196840,10 +197049,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 27
             },
             {
-              "rank": 23,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -196854,13 +197063,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 28
             },
             {
-              "rank": 24,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
@@ -196868,52 +197077,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 29
             },
             {
-              "rank": 25,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 27,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 28,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -196924,10 +197091,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 30
             },
             {
-              "rank": 29,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -196938,10 +197105,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 31
             },
             {
-              "rank": 30,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -196952,59 +197119,31 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 31,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 32
             }
           ],
           "documents": [
             {
-              "rank": 1,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API.",
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 1,
               "guidance": [
                 {
-                  "section": "Removing types",
-                  "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions.",
+                  "section": "Adding and removing API elements",
+                  "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator.",
                   "queryTerms": [
-                    "@removed",
                     "@added",
-                    "Versions.v2026_12_06"
+                    "@removed"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -197025,11 +197164,96 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:19:52.4249441Z",
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
               "rank": 2,
+              "guidance": [
+                {
+                  "section": "Models and properties",
+                  "excerpt": "Models in TypeSpec define the structure or schema of data as named properties. Properties can be designated as optional by using the `?` symbol.",
+                  "queryTerms": [
+                    "model",
+                    "property"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-34d0b16f9d82eb3e",
+                    "declaration-3ccbed40d5b5a580",
+                    "declaration-5305fbe5eab84bb2",
+                    "declaration-5444d21d5571ca6d",
+                    "declaration-548fd097e257bd20",
+                    "declaration-5e71c571d67a1a90",
+                    "declaration-6ebc648b9bc4929b",
+                    "declaration-85501d96c1415c4d",
+                    "declaration-95b0cdda43d146f0",
+                    "declaration-af95a6a0e5930f05",
+                    "declaration-cb7ef84ffdccd6df",
+                    "declaration-cbad4278443fcc57",
+                    "declaration-eb0a1fe2bd4b57f5"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
+            },
+            {
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3,
+              "guidance": [
+                {
+                  "section": "Enums",
+                  "excerpt": "Enums define a collection of named constants. Members can be identifiers or string literals, and custom values can be assigned with the `:` operator.",
+                  "queryTerms": [
+                    "enum",
+                    "member"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-34d0b16f9d82eb3e",
+                    "declaration-3ccbed40d5b5a580",
+                    "declaration-5305fbe5eab84bb2",
+                    "declaration-5444d21d5571ca6d",
+                    "declaration-548fd097e257bd20",
+                    "declaration-5e71c571d67a1a90",
+                    "declaration-6ebc648b9bc4929b",
+                    "declaration-85501d96c1415c4d",
+                    "declaration-95b0cdda43d146f0",
+                    "declaration-af95a6a0e5930f05",
+                    "declaration-cb7ef84ffdccd6df",
+                    "declaration-cbad4278443fcc57",
+                    "declaration-eb0a1fe2bd4b57f5"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
+              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
+            },
+            {
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -197040,47 +197264,37 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.6511742Z",
-              "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed model and model-property declarations.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.5804085Z",
-              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
-            },
-            {
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
               "rank": 4,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed union or enum-like service values.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.6173858Z",
-              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
+              "guidance": [
+                {
+                  "section": "About versioning",
+                  "excerpt": "TypeSpec models the changes in each new API version, rather than using a separate API description for each api-version, and changes should be marked with appropriate versioning decorators.",
+                  "queryTerms": [
+                    "versioning",
+                    "Versions"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-34d0b16f9d82eb3e",
+                    "declaration-3ccbed40d5b5a580",
+                    "declaration-5305fbe5eab84bb2",
+                    "declaration-5444d21d5571ca6d",
+                    "declaration-548fd097e257bd20",
+                    "declaration-5e71c571d67a1a90",
+                    "declaration-6ebc648b9bc4929b",
+                    "declaration-85501d96c1415c4d",
+                    "declaration-95b0cdda43d146f0",
+                    "declaration-af95a6a0e5930f05",
+                    "declaration-cb7ef84ffdccd6df",
+                    "declaration-cbad4278443fcc57",
+                    "declaration-eb0a1fe2bd4b57f5"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
+              "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             }
           ],
           "blockers": []
@@ -197091,7 +197305,7 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types"
+              "guidanceSection": "Adding and removing API elements"
             }
           ],
           "sourceChangeIds": [
@@ -197169,21 +197383,34 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API."
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 1
             },
             {
-              "rank": 2,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 2
+            },
+            {
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -197194,24 +197421,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3
             },
             {
-              "rank": 3,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed model and model-property declarations."
-            },
-            {
-              "rank": 4,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -197222,10 +197435,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4
             },
             {
-              "rank": 5,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -197236,24 +197449,66 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the changed-decorator category, but not the Azure versioning behavior directly."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 5
             },
             {
-              "rank": 6,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 2
+                "total": 5
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 6
             },
             {
-              "rank": 7,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 7
+            },
+            {
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 8
+            },
+            {
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 9
+            },
+            {
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -197264,10 +197519,66 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 10
             },
             {
-              "rank": 8,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 11
+            },
+            {
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 12
+            },
+            {
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 13
+            },
+            {
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 14
+            },
+            {
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -197278,10 +197589,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 15
             },
             {
-              "rank": 9,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -197292,10 +197603,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 16
             },
             {
-              "rank": 10,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -197306,10 +197617,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 17
             },
             {
-              "rank": 11,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -197320,38 +197631,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 18
             },
             {
-              "rank": 12,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 14,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -197362,10 +197645,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 19
             },
             {
-              "rank": 15,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
@@ -197376,10 +197659,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 20
             },
             {
-              "rank": 16,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -197390,10 +197673,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 21
             },
             {
-              "rank": 17,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -197404,10 +197687,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 22
             },
             {
-              "rank": 18,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -197418,10 +197701,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 23
             },
             {
-              "rank": 19,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -197432,10 +197715,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 24
             },
             {
-              "rank": 20,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -197446,10 +197729,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 25
             },
             {
-              "rank": 21,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -197460,10 +197743,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 26
             },
             {
-              "rank": 22,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -197474,10 +197757,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 27
             },
             {
-              "rank": 23,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -197488,13 +197771,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 28
             },
             {
-              "rank": 24,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
@@ -197502,52 +197785,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 29
             },
             {
-              "rank": 25,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 27,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 28,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -197558,10 +197799,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 30
             },
             {
-              "rank": 29,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -197572,10 +197813,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 31
             },
             {
-              "rank": 30,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -197586,59 +197827,31 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 31,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 32
             }
           ],
           "documents": [
             {
-              "rank": 1,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 1,
-                "total": 6
+                "total": 10
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API.",
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 1,
               "guidance": [
                 {
-                  "section": "Removing types",
-                  "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions.",
+                  "section": "Adding and removing API elements",
+                  "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator.",
                   "queryTerms": [
-                    "@removed",
                     "@added",
-                    "Versions.v2026_12_06"
+                    "@removed"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -197652,11 +197865,46 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:19:52.4249441Z",
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
               "rank": 2,
+              "guidance": [
+                {
+                  "section": "Models and properties",
+                  "excerpt": "Models in TypeSpec define the structure or schema of data as named properties. Properties can be designated as optional by using the `?` symbol.",
+                  "queryTerms": [
+                    "model",
+                    "property"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-0cefdc758ab8f2ba",
+                    "declaration-2d3a2b7aab17dfb3",
+                    "declaration-3243b40112836aaa",
+                    "declaration-d73fb1ed7844d619",
+                    "declaration-f645a014c6b8c231",
+                    "declaration-f84d7b1313863775"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
+            },
+            {
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -197667,32 +197915,32 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.6511742Z",
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3,
+              "guidance": [
+                {
+                  "section": "About versioning",
+                  "excerpt": "TypeSpec models the changes in each new API version, rather than using a separate API description for each api-version, and changes should be marked with appropriate versioning decorators.",
+                  "queryTerms": [
+                    "versioning",
+                    "Versions"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-0cefdc758ab8f2ba",
+                    "declaration-2d3a2b7aab17dfb3",
+                    "declaration-3243b40112836aaa",
+                    "declaration-d73fb1ed7844d619",
+                    "declaration-f645a014c6b8c231",
+                    "declaration-f84d7b1313863775"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             },
             {
-              "rank": 3,
-              "catalogOrder": 23,
-              "title": "Models",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed model and model-property declarations.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.5804085Z",
-              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
-            },
-            {
-              "rank": 4,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -197703,10 +197951,29 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:20:18.6867973Z",
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4,
+              "guidance": [
+                {
+                  "section": "Decorators",
+                  "excerpt": "Decorators attach metadata to TypeSpec declarations, including models and their members, and are referenced with the `@` prefix before the decorated entity.",
+                  "queryTerms": [
+                    "decorator",
+                    "@added"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-0cefdc758ab8f2ba",
+                    "declaration-2d3a2b7aab17dfb3",
+                    "declaration-3243b40112836aaa",
+                    "declaration-d73fb1ed7844d619",
+                    "declaration-f645a014c6b8c231",
+                    "declaration-f84d7b1313863775"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             }
           ],
@@ -197718,7 +197985,7 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types"
+              "guidanceSection": "Adding and removing API elements"
             }
           ],
           "sourceChangeIds": [
@@ -197802,7 +198069,20 @@
           ],
           "catalogRanking": [
             {
-              "rank": 1,
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 9
+              },
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 1
+            },
+            {
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
@@ -197813,10 +198093,10 @@
                 "changeContext": 1,
                 "total": 6
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 2
             },
             {
-              "rank": 2,
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -197827,24 +198107,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3
             },
             {
-              "rank": 3,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed union or enum-like service values."
-            },
-            {
-              "rank": 4,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -197855,10 +198121,10 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4
             },
             {
-              "rank": 5,
               "catalogOrder": 27,
               "title": "Built-in decorators",
               "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
@@ -197869,24 +198135,66 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the changed-decorator category, but not the Azure versioning behavior directly."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 5
             },
             {
-              "rank": 6,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 2
+                "total": 5
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 6
             },
             {
-              "rank": 7,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 7
+            },
+            {
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 8
+            },
+            {
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 3
+              },
+              "selectionRationale": "matches the intent category.",
+              "rank": 9
+            },
+            {
               "catalogOrder": 10,
               "title": "Azure.Core interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
@@ -197897,10 +198205,66 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 10
             },
             {
-              "rank": 8,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 11
+            },
+            {
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 12
+            },
+            {
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 13
+            },
+            {
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 14
+            },
+            {
               "catalogOrder": 18,
               "title": "Azure.Core long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
@@ -197911,10 +198275,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 15
             },
             {
-              "rank": 9,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -197925,10 +198289,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 16
             },
             {
-              "rank": 10,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -197939,10 +198303,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 17
             },
             {
-              "rank": 11,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -197953,38 +198317,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 18
             },
             {
-              "rank": 12,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 13,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
-            },
-            {
-              "rank": 14,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -197995,10 +198331,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 19
             },
             {
-              "rank": 15,
               "catalogOrder": 33,
               "title": "Azure Core `no-openapi` rule",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
@@ -198009,10 +198345,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "Applies to data-plane TypeSpec, but does not directly govern this change pattern."
+              "selectionRationale": "applies to data-plane TypeSpec.",
+              "rank": 20
             },
             {
-              "rank": 16,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -198023,10 +198359,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 21
             },
             {
-              "rank": 17,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -198037,10 +198373,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 22
             },
             {
-              "rank": 18,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -198051,10 +198387,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 23
             },
             {
-              "rank": 19,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -198065,10 +198401,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 24
             },
             {
-              "rank": 20,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -198079,10 +198415,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 25
             },
             {
-              "rank": 21,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -198093,10 +198429,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 26
             },
             {
-              "rank": 22,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -198107,10 +198443,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 27
             },
             {
-              "rank": 23,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -198121,13 +198457,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 28
             },
             {
-              "rank": 24,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
@@ -198135,52 +198471,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 29
             },
             {
-              "rank": 25,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 26,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 27,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 28,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -198191,10 +198485,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 30
             },
             {
-              "rank": 29,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -198205,10 +198499,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 31
             },
             {
-              "rank": 30,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -198219,59 +198513,31 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 31,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "Official catalog entry does not match the changed data-plane model/versioning pattern."
+              "selectionRationale": "Cataloged official guidance has no direct signal for this intent.",
+              "rank": 32
             }
           ],
           "documents": [
             {
-              "rank": 1,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "catalogOrder": 24,
+              "title": "Enums",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 1,
-                "total": 6
+                "changeContext": 0,
+                "total": 9
               },
-              "selectionRationale": "Directly matches removal or modification of versioned TypeSpec declarations in a data-plane API.",
+              "selectionRationale": "names changed TypeSpec constructs; matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 1,
               "guidance": [
                 {
-                  "section": "Removing types",
-                  "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions.",
+                  "section": "Enums",
+                  "excerpt": "Enums define a collection of named constants. Members can be identifiers or string literals, and custom values can be assigned with the `:` operator.",
                   "queryTerms": [
-                    "@removed",
-                    "@added",
-                    "Versions.v2026_12_06"
+                    "enum",
+                    "member"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -198286,11 +198552,47 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:19:52.4249441Z",
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
+              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
+            },
+            {
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec; covers modification/removal across versions.",
+              "rank": 2,
+              "guidance": [
+                {
+                  "section": "Adding and removing API elements",
+                  "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator.",
+                  "queryTerms": [
+                    "@added",
+                    "@removed"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-1b231085bb2fd0fb",
+                    "declaration-2fc5ef444759f4a7",
+                    "declaration-4fb604ae8d7e498c",
+                    "declaration-51c6e236781c718e",
+                    "declaration-a44641dd872bd2fb",
+                    "declaration-cadeadcca3e5df99",
+                    "declaration-dd60ed751f286d8b"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
-              "rank": 2,
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
@@ -198301,32 +198603,33 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches the use of Azure versioning decorators on declarations in the changed stable API version.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.6511742Z",
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 3,
+              "guidance": [
+                {
+                  "section": "About versioning",
+                  "excerpt": "TypeSpec models the changes in each new API version, rather than using a separate API description for each api-version, and changes should be marked with appropriate versioning decorators.",
+                  "queryTerms": [
+                    "versioning",
+                    "Versions"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-1b231085bb2fd0fb",
+                    "declaration-2fc5ef444759f4a7",
+                    "declaration-4fb604ae8d7e498c",
+                    "declaration-51c6e236781c718e",
+                    "declaration-a44641dd872bd2fb",
+                    "declaration-cadeadcca3e5df99",
+                    "declaration-dd60ed751f286d8b"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             },
             {
-              "rank": 3,
-              "catalogOrder": 24,
-              "title": "Enums",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "Matches changed union or enum-like service values.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:19:52.6173858Z",
-              "contentHash": "sha256:b6a44601f8c00b52f6063daae907d3384d60ef3a4721af342b802be9ab2a7d31"
-            },
-            {
-              "rank": 4,
               "catalogOrder": 26,
               "title": "Decorators",
               "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
@@ -198337,10 +198640,30 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "Matches changed @added and @Xml.name decorator usage.",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:20:18.6867973Z",
+              "selectionRationale": "matches the intent category; applies to data-plane TypeSpec.",
+              "rank": 4,
+              "guidance": [
+                {
+                  "section": "Decorators",
+                  "excerpt": "Decorators attach metadata to TypeSpec declarations, including models and their members, and are referenced with the `@` prefix before the decorated entity.",
+                  "queryTerms": [
+                    "decorator",
+                    "@added"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-1b231085bb2fd0fb",
+                    "declaration-2fc5ef444759f4a7",
+                    "declaration-4fb604ae8d7e498c",
+                    "declaration-51c6e236781c718e",
+                    "declaration-a44641dd872bd2fb",
+                    "declaration-cadeadcca3e5df99",
+                    "declaration-dd60ed751f286d8b"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:24:03.369396Z",
               "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             }
           ],
@@ -198356,8 +198679,8 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types",
-              "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions."
+              "guidanceSection": "Adding and removing API elements",
+              "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator."
             }
           ],
           "declarationIds": [
@@ -198612,8 +198935,8 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types",
-              "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions."
+              "guidanceSection": "Adding and removing API elements",
+              "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator."
             }
           ],
           "declarationIds": [
@@ -198767,8 +199090,8 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types",
-              "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions."
+              "guidanceSection": "Adding and removing API elements",
+              "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator."
             }
           ],
           "declarationIds": [
@@ -198849,8 +199172,8 @@
           "applicableGuidance": [
             {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "guidanceSection": "Removing types",
-              "excerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. The `version` argument is the version where the element is removed; the element is absent in that version and later versions."
+              "guidanceSection": "Adding and removing API elements",
+              "excerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. To remove models, properties, or operations starting from a specific version, use the `@removed` decorator."
             }
           ],
           "declarationIds": [
@@ -198967,15 +199290,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8167,
+            "durationMs": 7107,
             "configPath": "worktrees\\base\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
             "logPath": "logs\\project-11ca76782d2e-baseline-autorest.log",
@@ -198999,16 +199322,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 6695,
+            "durationMs": 5966,
             "configPath": "worktrees\\base\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
             "logPath": "logs\\project-11ca76782d2e-baseline-tcgc.log",
@@ -199036,15 +199359,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 6297,
+            "durationMs": 5707,
             "configPath": "worktrees\\current\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
             "logPath": "logs\\project-11ca76782d2e-target-autorest.log",
@@ -199068,16 +199391,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\44742\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 6366,
+            "durationMs": 6390,
             "configPath": "worktrees\\current\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
             "logPath": "logs\\project-11ca76782d2e-target-tcgc.log",
@@ -199156,40 +199479,42 @@
     "preparationManifest": "preparation-manifest.json"
   },
   "inputAccounting": {
-    "budgetTier": "configured-maximum",
-    "budgetBytes": 307200,
-    "bytes": 282122,
-    "estimatedTokens": 70531,
+    "budgetTier": "medium",
+    "budgetBytes": 262144,
+    "bytes": 132312,
+    "estimatedTokens": 33078,
     "retained": {
-      "sourceChanges": 1,
+      "evidenceSets": 26,
       "facts": 31,
       "semanticReviewUnits": 4,
       "restCandidates": 22,
       "downstreamCandidates": 19,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 4,
-      "inferenceRequests": 0,
-      "complianceSearchSourceBytes": 66306
+      "inferenceRequests": 0
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "compliance": {
       "catalogEntriesScored": 128,
       "documentsFetched": 16,
       "documentBytesFetched": 5359449,
-      "guidanceExcerptsRetained": 4,
-      "guidanceExcerptBytesRetained": 932
+      "guidanceExcerptsRetained": 16,
+      "guidanceExcerptBytesRetained": 2898
     }
   },
   "timings": {
-    "totalMs": 56833,
-    "semanticAnalysisMs": 102,
-    "restAnalysisMs": 66,
-    "downstreamAnalysisMs": 2723
+    "totalMs": 42829,
+    "semanticAnalysisMs": 136,
+    "restAnalysisMs": 88,
+    "downstreamAnalysisMs": 3015
   },
   "pr": 44742,
   "pullRequest": {

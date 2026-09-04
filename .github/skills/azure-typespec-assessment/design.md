@@ -50,9 +50,9 @@ is present but not assessed.
  deterministic     deterministic      deterministic     deterministic
  review units       candidates         candidates      search requests
        |                 |                 |                 |
- dimensions/        dimensions/       dimensions/       complianceSearchRequests
- semantic-intents-  rest-breaking-    downstream-       embedded below
- input.json          input.json         breaking-input.json
+ dimensions/        dimensions/       dimensions/       dimensions/
+ semantic-intents-  rest-breaking-    downstream-       compliance-search-
+ input.json          input.json         breaking-input.json requests.json
        |                 |                 |                 |
        +-----------------+-----------------+-----------------+
                          |
@@ -1394,14 +1394,23 @@ File: `model-input.json`
       }
     ]
   },
-  "sourceChanges": {
-    "source-<hash>": {
-      "id": "source-<hash>",
-      "path": "main.tsp",
-      "status": "modified",
-      "origins": ["committed"],
-      "hunks": [],
-      "declarations": []
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "semanticReviewUnits": "dimensions/semantic-intents-input.json",
+    "restCandidates": "dimensions/rest-breaking-input.json",
+    "downstreamCandidates": "dimensions/downstream-breaking-input.json",
+    "complianceSearchRequests": "dimensions/compliance-search-requests.json"
+  },
+  "evidenceSets": {
+    "evidence-set-<hash>": {
+      "sourceChangeIds": ["source-<hash>"],
+      "hunkIds": ["hunk-<hash>"],
+      "declarationCount": 1,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/semantic-intents-input.json",
+        "id": "semantic-<hash>"
+      }
     }
   },
   "facts": {
@@ -1415,7 +1424,9 @@ File: `model-input.json`
       "action": "add",
       "declarationKinds": ["model"],
       "qualifiedNames": ["Contoso.AddressPrefixSet"],
+      "qualifiedNameCount": 1,
       "changedConstructs": ["TrackedResource"],
+      "changedConstructCount": 1,
       "representativeSourceExcerpts": [
         {
           "hunkId": "hunk-<hash>",
@@ -1433,6 +1444,7 @@ File: `model-input.json`
       "groupingSummaries": [
         "The resource model and lifecycle operations form one child-resource change."
       ],
+      "evidenceSetId": "evidence-set-<hash>",
       "deterministicCoverage": {
         "restCandidateIds": [],
         "downstreamCandidateIds": [],
@@ -1461,24 +1473,20 @@ File: `model-input.json`
   "downstreamCandidates": [],
   "complianceSearchRequests": [
     {
+      "requestId": "compliance-search-<hash>",
       "reviewUnitId": "semantic-<hash>",
-      "sourceChangeIds": ["source-<hash>"],
-      "hunkIds": ["hunk-<hash>"],
-      "declarationIds": ["declaration-<hash>"],
-      "queryProfile": {
+      "evidenceSetId": "evidence-set-<hash>",
+      "querySummary": {
         "servicePlane": "resource-manager",
         "action": "add",
         "declarationKinds": ["model"],
         "qualifiedNames": ["Contoso.AddressPrefixSet"],
+        "qualifiedNameCount": 1,
         "symbols": ["TrackedResource"],
+        "symbolCount": 1,
         "categories": ["resource", "operations", "versioning"],
         "changedTokens": ["AddressPrefixSet", "TrackedResource"],
-        "representativeSourceExcerpts": [
-          {
-            "hunkId": "hunk-<hash>",
-            "text": "model AddressPrefixSet is TrackedResource<...>;"
-          }
-        ],
+        "changedTokenCount": 2,
         "affectedOperationCount": 4
       }
     }
@@ -1494,27 +1502,36 @@ File: `model-input.json`
     "bytes": 0,
     "estimatedTokens": 0,
     "retained": {
-      "sourceChanges": 0,
+      "evidenceSets": 0,
       "facts": 0,
       "semanticReviewUnits": 0,
       "restCandidates": 0,
       "downstreamRootCauses": 0,
       "downstreamCandidates": 0,
-      "complianceSearchRequests": 0,
-      "complianceSearchSourceBytes": 0
+      "complianceSearchRequests": 0
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "deterministicCandidateFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     }
   }
 }
 ```
 
-Only transitively referenced compact facts enter model input. Required evidence
-is never silently dropped to fit the budget.
+Only inference-relevant compact facts enter model input. Full source,
+declaration, deterministic candidate, candidate fact, and Compliance request
+evidence remains in the canonical artifacts named by `artifactReferences`.
+`evidenceSets` connects bounded judgment items to exact canonical entries
+without repeating large declaration lists or operation facts. Qualified names,
+changed constructs, and query terms are bounded summaries with total counts;
+the Agent resolves the canonical entry when omitted members are material to a
+decision. Required evidence is never silently dropped to fit the budget.
 
 ### 7.1 Deterministic coverage and optional inference
 
@@ -1544,7 +1561,12 @@ Each unknown hunk produces one bounded `inferenceRequests` entry:
   "reason": "source-change-not-represented-in-language-neutral-artifacts",
   "sourceExcerpt": "@@clientLocation(..., \"!csharp,!go\");",
   "relatedOperationIds": [],
-  "allowedDimensions": ["rest", "downstream"]
+  "allowedDimensions": ["rest", "downstream"],
+  "evidenceRef": {
+    "artifact": "source/source-index.json",
+    "sourceChangeId": "source-<hash>",
+    "hunkId": "hunk-<hash>"
+  }
 }
 ```
 

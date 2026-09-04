@@ -33,6 +33,10 @@ Do not replace this with a full checkout or run the dimension analyzers against 
 Read only:
 
 - `<work-directory>\model-input.json`;
+- evidence artifacts explicitly listed in
+  `model-input.json.artifactReferences`, resolving paths relative to the work
+  directory and reading only entries named by `evidenceSetId` or
+  `evidenceRef`;
 - [classification guidance](classification.md), including [downstream cases](downstream-breaking-cases.md);
 - the [agentic search procedure](agentic-search.md);
 - the [official document catalog](reference-document-links.md);
@@ -47,7 +51,8 @@ to `<work-directory>\inference.json`. Each result is `candidates`,
 source, hunk, operations, facts, and allowed dimensions. Never modify
 `model-input.json`.
 
-For every `complianceSearchRequests` entry, score the complete catalog, fetch
+For every `complianceSearchRequests` entry, resolve its full request through
+the referenced `dimensions/compliance-search-requests.json`, score the complete catalog, fetch
 the four highest-ranked retrievable documents with `web_fetch`, and write
 `<work-directory>\compliance-search-evidence.json`. Preserve failed retrievals
 and use the next-ranked catalog entry as specified by the search procedure.
@@ -60,7 +65,9 @@ per supplied Semantic review unit, exact deterministic and inferred
 REST/downstream candidate coverage, and one Compliance decision per Semantic
 intent. Do not read raw
 AutoRest/TCGC output, compiler logs, unchanged source, prior answers, or use
-catalog descriptions as guidance.
+catalog descriptions as guidance. Candidate and review-unit evidence omitted
+from the bounded file remains available only through the declared canonical
+artifact references; do not scan unrelated artifact entries.
 
 ## Assemble, validate, and render
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:23:56.532Z",
+  "generatedAt": "2026-09-04T02:04:08.805Z",
   "title": "TypeSpec assessment: specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices, specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\42853\\head",
@@ -143,8 +143,8 @@
               "hunk-b926ce37a948add4"
             ]
           },
-          "title": "Exclude the preview recovery-point PATCH from the 2026-02-01 stable API",
-          "summary": "The recovery-point update operation is marked removed at Versions.v2026_02_01, so the preview-only PATCH is not propagated into the new stable API while the compared stable wire contract remains unchanged.",
+          "title": "Remove the recovery-point update operation in 2026-02-01",
+          "summary": "The RecoveryPoints.update operation is marked @removed for Versions.v2026_02_01; deterministic comparison found no changed REST operation or language-neutral SDK contract in the selected version pair.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -441,8 +441,8 @@
               "hunk-fa8ad8500ba9a540"
             ]
           },
-          "title": "Exclude Go from four Recovery Services client-location overrides",
-          "summary": "Four @@clientLocation augmentations add Go to their language exclusion scopes, changing only language-specific client placement metadata without changing the REST contract or establishing a language-neutral SDK surface change.",
+          "title": "Exclude Go from selected client-location customizations",
+          "summary": "Four @@clientLocation language selectors are expanded from !csharp to !csharp,!go, changing language-specific customization eligibility without bounded evidence of a REST or language-neutral downstream contract change.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -488,14 +488,14 @@
               "requestId": "inference-request-09851fb5dc65c05e",
               "hunkId": "hunk-72e7fabac23c4145",
               "decision": "no-impact",
-              "rationale": "The source only changes the Go-specific exclusion scope for @@clientLocation. The bounded request supplies no language-neutral operation or TCGC public-surface facts, so it does not establish a REST wire change or a language-neutral downstream SDK incompatibility.",
+              "rationale": "The change only expands a language selector from !csharp to !csharp,!go for @@clientLocation. It does not alter the REST contract, and the bounded request supplies no related operation, cross-language definition, or normalized language-neutral SDK fact from which a downstream candidate can be established.",
               "candidateIds": []
             },
             {
               "requestId": "inference-request-8291a5a3b641e457",
               "hunkId": "hunk-fa8ad8500ba9a540",
               "decision": "no-impact",
-              "rationale": "The source only changes the Go-specific exclusion scope for @@clientLocation. The bounded request supplies no language-neutral operation or TCGC public-surface facts, so it does not establish a REST wire change or a language-neutral downstream SDK incompatibility.",
+              "rationale": "The change only expands a language selector from !csharp to !csharp,!go for @@clientLocation. It does not alter the REST contract, and the bounded request supplies no related operation, cross-language definition, or normalized language-neutral SDK fact from which a downstream candidate can be established.",
               "candidateIds": []
             }
           ],
@@ -17061,8 +17061,8 @@
               "hunk-f88d9109f37a662f"
             ]
           },
-          "title": "Add the 2026-02-01 stable Recovery Services API version",
-          "summary": "Both Recovery Services projects add Versions.v2026_02_01 and use versioning removals to keep selected 2026-01-31-preview backup operations, models, properties, and enum or union members out of the stable projection; 24 operations are represented with no detected REST contract change.",
+          "title": "Introduce the 2026-02-01 stable API version",
+          "summary": "Both Recovery Services projects add the 2026-02-01 stable version and propagate versioned model, enum, union, and property additions or removals across 24 represented operations; deterministic comparisons found their REST and language-neutral SDK contracts compatible with 2026-01-01.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [],
@@ -22012,8 +22012,12 @@
           "reviewUnitId": "semantic-04c7f68046c190b6",
           "applicableGuidance": [
             {
-              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "guidanceSection": "Azure API versioning"
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "guidanceSection": "Removing types and operations"
+            },
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "guidanceSection": "Add another stable API version"
             }
           ],
           "sourceChangeIds": [
@@ -22027,10 +22031,10 @@
             "declaration-f2de9808ed873d0d"
           ],
           "decision": "applicable-pass",
-          "expected": "TypeSpec models changes in each API version with versioning metadata rather than separate API descriptions.",
-          "actual": "RecoveryPoints.update is retained for its preview introduction and marked removed at Versions.v2026_02_01, excluding it from the new stable projection.",
-          "rationale": "The change uses the versioning model to bound the preview-only operation and deterministic comparison found no REST contract change between the selected stable versions.",
-          "gap": "The change uses the versioning model to bound the preview-only operation and deterministic comparison found no REST contract change between the selected stable versions.",
+          "expected": "Operations removed in a new stable version are marked with @removed referencing that new version.",
+          "actual": "RecoveryPoints.update is marked @removed(Versions.v2026_02_01).",
+          "rationale": "The changed operation follows the documented stable-version evolution pattern.",
+          "gap": "The changed operation follows the documented stable-version evolution pattern.",
           "sourceLinks": [
             {
               "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/RecoveryPointResource.tsp",
@@ -22055,20 +22059,34 @@
           "catalogRanking": [
             {
               "rank": 1,
-              "catalogOrder": 1,
-              "title": "ARM resource types and modeling",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
                 "exactSymbol": 4,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 6
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "catalog text names the changed ProxyResource construct; document applies to ARM services"
+              "selectionRationale": "Directly covers versioned additions and removals, including @removed."
             },
             {
               "rank": 2,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly covers introducing a stable API version after a stable version."
+            },
+            {
+              "rank": 3,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -22079,21 +22097,7 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document applies to ARM services"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document applies to ARM services"
+              "selectionRationale": "Covers ARM operation templates and response contracts relevant to the changed operation."
             },
             {
               "rank": 4,
@@ -22103,126 +22107,28 @@
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
               },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document matches the stable-version modification context"
+              "selectionRationale": "Provides Azure version-enum and version-progression guidance."
             },
             {
               "rank": 5,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
               },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document matches the stable-version modification context"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 6,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document matches the stable-version modification context"
-            },
-            {
-              "rank": 7,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes"
-            },
-            {
-              "rank": 8,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes"
-            },
-            {
-              "rank": 9,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes"
-            },
-            {
-              "rank": 10,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes"
-            },
-            {
-              "rank": 11,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes"
-            },
-            {
-              "rank": 12,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes"
-            },
-            {
-              "rank": 13,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -22233,10 +22139,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 14,
+              "rank": 7,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -22247,10 +22153,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 15,
+              "rank": 8,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -22261,10 +22167,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 16,
+              "rank": 9,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -22275,10 +22181,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 17,
+              "rank": 10,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -22289,10 +22195,94 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 18,
+              "rank": 11,
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 12,
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 14,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 15,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 16,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 17,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -22303,7 +22293,21 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 18,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 19,
@@ -22317,7 +22321,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 20,
@@ -22331,7 +22335,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 21,
@@ -22345,7 +22349,7 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 22,
@@ -22359,52 +22363,38 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 23,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 24,
-              "catalogOrder": 10,
-              "title": "Azure.Core interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 25,
-              "catalogOrder": 18,
-              "title": "Azure.Core long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 26,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -22415,10 +22405,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 27,
+              "rank": 26,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -22429,10 +22419,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 28,
+              "rank": 27,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -22443,10 +22433,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 29,
+              "rank": 28,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -22457,13 +22447,13 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 30,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "rank": 29,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
@@ -22471,10 +22461,38 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
               "rank": 31,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
+            },
+            {
+              "rank": 32,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -22485,44 +22503,80 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             }
           ],
           "documents": [
             {
               "rank": 1,
-              "catalogOrder": 1,
-              "title": "ARM resource types and modeling",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
                 "exactSymbol": 4,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 6
+                "changeContext": 1,
+                "total": 10
               },
-              "selectionRationale": "catalog text names the changed ProxyResource construct; document applies to ARM services",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:9a74d8c101cfd66866012f26509120f5839c0581c831f2417cd7480c6d0554af"
+              "selectionRationale": "Directly covers versioned additions and removals, including @removed.",
+              "guidance": [
+                {
+                  "section": "Removing types and operations",
+                  "excerpt": "To remove models, properties, or operations starting from a specific version, use the @removed decorator. The version argument is the version where the element is removed, and the element will not be present in that version or any later versions.",
+                  "queryTerms": [
+                    "@removed",
+                    "Versions.v2026_02_01",
+                    "operation"
+                  ],
+                  "examples": [
+                    "@removed(Versions.v2)\nop get is ArmResourceRead<Employee>;"
+                  ],
+                  "applicableDeclarationIds": [
+                    "declaration-5e32102d56ca757f",
+                    "declaration-f2de9808ed873d0d"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:23:56.272Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
             },
             {
               "rank": 2,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 6
+              },
+              "selectionRationale": "Directly covers introducing a stable API version after a stable version.",
+              "guidance": [
+                {
+                  "section": "Add another stable API version",
+                  "excerpt": "Add a new version to the Versions enum. If any types are removed in this stable, mark these with an @removed decorator referencing the new version.",
+                  "queryTerms": [
+                    "stable",
+                    "@removed",
+                    "Versions"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-5e32102d56ca757f",
+                    "declaration-f2de9808ed873d0d"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:23:56.556Z",
+              "contentHash": "sha256:b8afa3ac71989546cd38bd71e2ad60dc6e4370101158536d0fbc1aa441152ddd"
+            },
+            {
+              "rank": 3,
               "catalogOrder": 7,
               "title": "ARM resource operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
@@ -22533,43 +22587,11 @@
                 "changeContext": 0,
                 "total": 5
               },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document applies to ARM services",
-              "guidance": [
-                {
-                  "section": "Update (PATCH)",
-                  "excerpt": "The `ArmCustomPatch*` templates are the recommended choice for PATCH operations. They take the resource type and your custom PATCH request type as parameters, giving you full control over the PATCH schema.",
-                  "queryTerms": [
-                    "ArmCustomPatchSync",
-                    "update"
-                  ],
-                  "examples": [],
-                  "applicableDeclarationIds": [
-                    "declaration-5e32102d56ca757f",
-                    "declaration-f2de9808ed873d0d"
-                  ]
-                }
-              ],
-              "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:e0a4343c26fe361fb7f857636c7d11a80d51ac68a525369f6caafba9e461c790"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document applies to ARM services",
+              "selectionRationale": "Covers ARM operation templates and response contracts relevant to the changed operation.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:ad72469f78d5cf5151c78921f2075677630402d767ad0bd5f214da0b290dc933"
+              "retrievedAt": "2026-09-03T08:23:56.808Z",
+              "contentHash": "sha256:e0a4343c26fe361fb7f857636c7d11a80d51ac68a525369f6caafba9e461c790"
             },
             {
               "rank": 4,
@@ -22579,18 +22601,18 @@
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
               },
-              "selectionRationale": "document category matches operation, versioning, or decorator changes; document matches the stable-version modification context",
+              "selectionRationale": "Provides Azure version-enum and version-progression guidance.",
               "guidance": [
                 {
-                  "section": "Azure API versioning",
-                  "excerpt": "TypeSpec uses a versioning library that models the changes in each new version of the API, rather than having a separate API description for each api-version.",
+                  "section": "Versioning overview",
+                  "excerpt": "The version-progression linter enforces that every api-version uses a unique YYYY-MM-DD date and that versions are declared in strictly increasing chronological order.",
                   "queryTerms": [
-                    "Versions",
-                    "versioning"
+                    "versioning",
+                    "Versions"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -22600,7 +22622,7 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:23:01.028278Z",
+              "retrievedAt": "2026-09-03T08:23:56.823Z",
               "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             }
           ],
@@ -22619,9 +22641,9 @@
           ],
           "declarationIds": [],
           "decision": "no-applicable-guidance",
-          "actual": "The @@clientLocation scope strings change from !csharp to !csharp,!go for four operations.",
-          "rationale": "The four highest-ranked retrievable catalog documents discuss ARM resource modeling rather than language-scoped client-location customization. The completed search found no official catalog guidance governing this change.",
-          "gap": "The four highest-ranked retrievable catalog documents discuss ARM resource modeling rather than language-scoped client-location customization. The completed search found no official catalog guidance governing this change.",
+          "actual": "The @@clientLocation language selector changes from !csharp to !csharp,!go for four operation customizations.",
+          "rationale": "The four fetched official documents explain decorator syntax and ARM/versioning patterns but do not govern language-filter expressions for @@clientLocation.",
+          "gap": "The four fetched official documents explain decorator syntax and ARM/versioning patterns but do not govern language-filter expressions for @@clientLocation.",
           "sourceLinks": [],
           "codeSnippets": [
             {
@@ -22648,6 +22670,62 @@
           "catalogRanking": [
             {
               "rank": 1,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 8
+              },
+              "selectionRationale": "Covers augment decorators, the syntax used by @@clientLocation."
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
+              },
+              "selectionRationale": "Covers ARM operation templates and response contracts relevant to the changed operation."
+            },
+            {
+              "rank": 3,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
+              },
+              "selectionRationale": "Provides official decorator reference for comparison with the customization decorator."
+            },
+            {
+              "rank": 4,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 3
+              },
+              "selectionRationale": "Provides Azure version-enum and version-progression guidance."
+            },
+            {
+              "rank": 5,
               "catalogOrder": 1,
               "title": "ARM resource types and modeling",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
@@ -22658,10 +22736,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 2,
+              "rank": 6,
               "catalogOrder": 2,
               "title": "Specific extension resource sample",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
@@ -22672,10 +22750,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 3,
+              "rank": 7,
               "catalogOrder": 3,
               "title": "Agent base type",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
@@ -22686,10 +22764,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 4,
+              "rank": 8,
               "catalogOrder": 4,
               "title": "Private endpoints",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
@@ -22700,10 +22778,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 5,
+              "rank": 9,
               "catalogOrder": 5,
               "title": "Private links",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
@@ -22714,10 +22792,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 6,
+              "rank": 10,
               "catalogOrder": 6,
               "title": "Network security perimeter",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
@@ -22728,24 +22806,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 7,
-              "catalogOrder": 7,
-              "title": "ARM resource operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
-              },
-              "selectionRationale": "document applies to ARM services"
-            },
-            {
-              "rank": 8,
+              "rank": 11,
               "catalogOrder": 8,
               "title": "Azure.ResourceManager interface reference",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
@@ -22756,10 +22820,108 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 9,
+              "rank": 12,
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 14,
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 15,
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 16,
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 17,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 18,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 19,
               "catalogOrder": 17,
               "title": "ARM long-running operations",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
@@ -22770,10 +22932,24 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 10,
+              "rank": 20,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 21,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -22784,10 +22960,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 11,
+              "rank": 22,
               "catalogOrder": 22,
               "title": "ARM common types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
@@ -22798,10 +22974,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 12,
+              "rank": 23,
               "catalogOrder": 29,
               "title": "Change provider namespace",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
@@ -22812,10 +22988,10 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 13,
+              "rank": 24,
               "catalogOrder": 30,
               "title": "Azure Portal default experiences",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
@@ -22826,136 +23002,38 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 14,
-              "catalogOrder": 16,
-              "title": "Evolving APIs",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "rank": 25,
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 1
-              },
-              "selectionRationale": "document matches the stable-version or modification context"
-            },
-            {
-              "rank": 15,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 16,
-              "catalogOrder": 10,
-              "title": "Azure.Core interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
+              "rank": 26,
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 17,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 18,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 19,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 20,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 21,
-              "catalogOrder": 15,
-              "title": "Add stable after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 22,
-              "catalogOrder": 18,
-              "title": "Azure.Core long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 23,
+              "rank": 27,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -22966,10 +23044,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 24,
+              "rank": 28,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -22980,10 +23058,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 25,
+              "rank": 29,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -22994,10 +23072,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 26,
+              "rank": 30,
               "catalogOrder": 25,
               "title": "Scalars",
               "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
@@ -23008,38 +23086,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
-              "rank": 27,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 28,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 29,
+              "rank": 31,
               "catalogOrder": 28,
               "title": "OpenAPI decorators",
               "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
@@ -23050,24 +23100,10 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
-              "rank": 30,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 31,
+              "rank": 32,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -23078,95 +23114,81 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             }
           ],
           "documents": [
             {
               "rank": 1,
-              "catalogOrder": 1,
-              "title": "ARM resource types and modeling",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
               "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 8
               },
-              "selectionRationale": "document applies to ARM services",
+              "selectionRationale": "Covers augment decorators, the syntax used by @@clientLocation.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:9a74d8c101cfd66866012f26509120f5839c0581c831f2417cd7480c6d0554af"
+              "retrievedAt": "2026-09-03T08:23:56.876Z",
+              "contentHash": "sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2"
             },
             {
               "rank": 2,
-              "catalogOrder": 2,
-              "title": "Specific extension resource sample",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
+                "patternCategory": 3,
                 "servicePlane": 2,
                 "changeContext": 0,
-                "total": 2
+                "total": 5
               },
-              "selectionRationale": "document applies to ARM services",
+              "selectionRationale": "Covers ARM operation templates and response contracts relevant to the changed operation.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:6e7ef0974c14606ca8ad0d803257b904218e8cea65f2f51c2eb6dd1c1bf09239"
+              "retrievedAt": "2026-09-03T08:23:56.808Z",
+              "contentHash": "sha256:e0a4343c26fe361fb7f857636c7d11a80d51ac68a525369f6caafba9e461c790"
             },
             {
               "rank": 3,
-              "catalogOrder": 3,
-              "title": "Agent base type",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "patternCategory": 3,
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "document applies to ARM services",
+              "selectionRationale": "Provides official decorator reference for comparison with the customization decorator.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:8eef0152a962296675438efb8ce263f586aa6123856e218e8799ef4650e7e480"
+              "retrievedAt": "2026-09-03T08:23:56.901Z",
+              "contentHash": "sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad"
             },
             {
               "rank": 4,
-              "catalogOrder": 4,
-              "title": "Private endpoints",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
                 "servicePlane": 2,
-                "changeContext": 0,
-                "total": 2
+                "changeContext": 1,
+                "total": 3
               },
-              "selectionRationale": "document applies to ARM services",
+              "selectionRationale": "Provides Azure version-enum and version-progression guidance.",
               "guidance": [],
               "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:63d1bb3f44ee008facb48f4a752d47971f10291984add0635fe497515ca45a88"
+              "retrievedAt": "2026-09-03T08:23:56.823Z",
+              "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             }
           ],
           "blockers": []
@@ -23176,8 +23198,16 @@
           "reviewUnitId": "semantic-cd350080220f105c",
           "applicableGuidance": [
             {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "guidanceSection": "Add another stable API version"
+            },
+            {
+              "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "guidanceSection": "Evolving APIs with versioning decorators"
+            },
+            {
               "canonicalDocumentUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "guidanceSection": "Azure API versioning"
+              "guidanceSection": "Versioning overview"
             }
           ],
           "sourceChangeIds": [
@@ -23266,10 +23296,10 @@
             "declaration-ff21668df4d7d94f"
           ],
           "decision": "applicable-pass",
-          "expected": "Define API evolution through the Versions enum and appropriate versioning metadata so each projected API version represents its intended contract.",
-          "actual": "Both projects add Versions.v2026_02_01; RecoveryServicesBackup applies @removed(Versions.v2026_02_01) to preview-only declarations while preserving the selected stable contract.",
-          "rationale": "Both projects add the new Versions member and explicitly bound preview-only declarations away from the stable projection. Deterministic stable-to-stable comparison found no REST change; the other ranked fetched documents did not add governing guidance for this version-propagation intent.",
-          "gap": "Both projects add the new Versions member and explicitly bound preview-only declarations away from the stable projection. Deterministic stable-to-stable comparison found no REST change; the other ranked fetched documents did not add governing guidance for this version-propagation intent.",
+          "expected": "A stable version added after a stable version is appended to Versions and its additions, removals, and modifications are expressed with versioning decorators.",
+          "actual": "The projects append v2026_02_01 and apply versioned additions/removals to the changed models, properties, enums, unions, and operation surface.",
+          "rationale": "The stable version and propagated changes follow the fetched Azure TypeSpec versioning guidance.",
+          "gap": "The stable version and propagated changes follow the fetched Azure TypeSpec versioning guidance.",
           "sourceLinks": [
             {
               "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup/models.tsp",
@@ -23724,160 +23754,48 @@
           "catalogRanking": [
             {
               "rank": 1,
-              "catalogOrder": 11,
-              "title": "Versioning overview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-              "score": {
-                "exactSymbol": 4,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 8
-              },
-              "selectionRationale": "catalog text names an exact changed TypeSpec construct; document category matches the bounded change pattern; document matches the stable-version or modification context"
-            },
-            {
-              "rank": 2,
-              "catalogOrder": 7,
-              "title": "ARM resource operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services"
-            },
-            {
-              "rank": 4,
-              "catalogOrder": 22,
-              "title": "ARM common types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services"
-            },
-            {
-              "rank": 5,
-              "catalogOrder": 29,
-              "title": "Change provider namespace",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services"
-            },
-            {
-              "rank": 6,
-              "catalogOrder": 30,
-              "title": "Azure Portal default experiences",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services"
-            },
-            {
-              "rank": 7,
-              "catalogOrder": 13,
-              "title": "Add stable after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 4
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document matches the stable-version or modification context"
-            },
-            {
-              "rank": 8,
               "catalogOrder": 15,
               "title": "Add stable after stable",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 1,
-                "total": 4
+                "total": 10
               },
-              "selectionRationale": "document category matches the bounded change pattern; document matches the stable-version or modification context"
+              "selectionRationale": "Directly covers introducing a stable API version after a stable version."
             },
             {
-              "rank": 9,
+              "rank": 2,
               "catalogOrder": 16,
               "title": "Evolving APIs",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
               "score": {
-                "exactSymbol": 0,
+                "exactSymbol": 4,
                 "patternCategory": 3,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 1,
-                "total": 4
+                "total": 10
               },
-              "selectionRationale": "document category matches the bounded change pattern; document matches the stable-version or modification context"
+              "selectionRationale": "Directly covers versioned additions and removals, including @removed."
             },
             {
-              "rank": 10,
-              "catalogOrder": 12,
-              "title": "Add preview after preview",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
+              "rank": 3,
+              "catalogOrder": 11,
+              "title": "Versioning overview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 3
+                "total": 5
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Provides Azure version-enum and version-progression guidance."
             },
             {
-              "rank": 11,
-              "catalogOrder": 14,
-              "title": "Add preview after stable",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
-              },
-              "selectionRationale": "document category matches the bounded change pattern"
-            },
-            {
-              "rank": 12,
+              "rank": 4,
               "catalogOrder": 23,
               "title": "Models",
               "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
@@ -23885,13 +23803,13 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Covers model properties and composition used by the versioned model changes."
             },
             {
-              "rank": 13,
+              "rank": 5,
               "catalogOrder": 24,
               "title": "Enums",
               "canonicalUrl": "https://typespec.io/docs/language-basics/enums/",
@@ -23899,80 +23817,192 @@
                 "exactSymbol": 0,
                 "patternCategory": 3,
                 "servicePlane": 0,
-                "changeContext": 0,
-                "total": 3
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 6,
+              "catalogOrder": 1,
+              "title": "ARM resource types and modeling",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 7,
+              "catalogOrder": 2,
+              "title": "Specific extension resource sample",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 8,
+              "catalogOrder": 3,
+              "title": "Agent base type",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 9,
+              "catalogOrder": 4,
+              "title": "Private endpoints",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 10,
+              "catalogOrder": 5,
+              "title": "Private links",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 11,
+              "catalogOrder": 6,
+              "title": "Network security perimeter",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 12,
+              "catalogOrder": 7,
+              "title": "ARM resource operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 13,
+              "catalogOrder": 8,
+              "title": "Azure.ResourceManager interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 14,
-              "catalogOrder": 25,
-              "title": "Scalars",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "catalogOrder": 9,
+              "title": "Azure.Core operation interfaces",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 3
+                "total": 2
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 15,
-              "catalogOrder": 26,
-              "title": "Decorators",
-              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "catalogOrder": 10,
+              "title": "Azure.Core interface reference",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 3
+                "total": 2
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 16,
-              "catalogOrder": 27,
-              "title": "Built-in decorators",
-              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "catalogOrder": 12,
+              "title": "Add preview after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 3
+                "total": 2
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 17,
-              "catalogOrder": 28,
-              "title": "OpenAPI decorators",
-              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "catalogOrder": 13,
+              "title": "Add stable after preview",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 3
+                "total": 2
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 18,
-              "catalogOrder": 31,
-              "title": "Content negotiation",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
+              "catalogOrder": 14,
+              "title": "Add preview after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/",
               "score": {
                 "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 3
+                "total": 2
               },
-              "selectionRationale": "document category matches the bounded change pattern"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 19,
@@ -23986,10 +24016,24 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 20,
+              "catalogOrder": 18,
+              "title": "Azure.Core long-running operations",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 2
+              },
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
+            },
+            {
+              "rank": 21,
               "catalogOrder": 20,
               "title": "Azure.ResourceManager data types",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/",
@@ -24000,136 +24044,80 @@
                 "changeContext": 0,
                 "total": 2
               },
-              "selectionRationale": "document applies to ARM services"
-            },
-            {
-              "rank": 21,
-              "catalogOrder": 1,
-              "title": "ARM resource types and modeling",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 22,
-              "catalogOrder": 2,
-              "title": "Specific extension resource sample",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/",
+              "catalogOrder": 22,
+              "title": "ARM common types",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 23,
-              "catalogOrder": 3,
-              "title": "Agent base type",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/",
+              "catalogOrder": 29,
+              "title": "Change provider namespace",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 24,
-              "catalogOrder": 4,
-              "title": "Private endpoints",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+              "catalogOrder": 30,
+              "title": "Azure Portal default experiences",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 25,
-              "catalogOrder": 5,
-              "title": "Private links",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+              "catalogOrder": 31,
+              "title": "Content negotiation",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 26,
-              "catalogOrder": 6,
-              "title": "Network security perimeter",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/",
+              "catalogOrder": 33,
+              "title": "Azure Core `no-openapi` rule",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 0,
-                "servicePlane": 0,
+                "servicePlane": 2,
                 "changeContext": 0,
-                "total": 0
+                "total": 2
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "Catalog entry partially matches the intent profile but ranks below more direct guidance."
             },
             {
               "rank": 27,
-              "catalogOrder": 9,
-              "title": "Azure.Core operation interfaces",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 28,
-              "catalogOrder": 10,
-              "title": "Azure.Core interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 29,
-              "catalogOrder": 18,
-              "title": "Azure.Core long-running operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 30,
               "catalogOrder": 19,
               "title": "TypeSpec pagination",
               "canonicalUrl": "https://typespec.io/docs/standard-library/pagination/",
@@ -24140,10 +24128,66 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
+            },
+            {
+              "rank": 28,
+              "catalogOrder": 25,
+              "title": "Scalars",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/scalars/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
+            },
+            {
+              "rank": 29,
+              "catalogOrder": 26,
+              "title": "Decorators",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
+            },
+            {
+              "rank": 30,
+              "catalogOrder": 27,
+              "title": "Built-in decorators",
+              "canonicalUrl": "https://typespec.io/docs/standard-library/built-in-decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             },
             {
               "rank": 31,
+              "catalogOrder": 28,
+              "title": "OpenAPI decorators",
+              "canonicalUrl": "https://typespec.io/docs/libraries/openapi/reference/decorators/",
+              "score": {
+                "exactSymbol": 0,
+                "patternCategory": 0,
+                "servicePlane": 0,
+                "changeContext": 0,
+                "total": 0
+              },
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
+            },
+            {
+              "rank": 32,
               "catalogOrder": 32,
               "title": "Directives",
               "canonicalUrl": "https://typespec.io/docs/language-basics/directives/",
@@ -24154,44 +24198,189 @@
                 "changeContext": 0,
                 "total": 0
               },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
-            },
-            {
-              "rank": 32,
-              "catalogOrder": 33,
-              "title": "Azure Core `no-openapi` rule",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 0,
-                "servicePlane": 0,
-                "changeContext": 0,
-                "total": 0
-              },
-              "selectionRationale": "No direct query-profile match; retained in the complete catalog ranking."
+              "selectionRationale": "No direct symbol, pattern, service-plane, or change-context match."
             }
           ],
           "documents": [
             {
               "rank": 1,
+              "catalogOrder": 15,
+              "title": "Add stable after stable",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Directly covers introducing a stable API version after a stable version.",
+              "guidance": [
+                {
+                  "section": "Add another stable API version",
+                  "excerpt": "Add a new version to the Versions enum, make the API-description changes, and mark removed, added, renamed, or otherwise modified types with the appropriate versioning decorator.",
+                  "queryTerms": [
+                    "stable",
+                    "Versions",
+                    "@removed"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-0238449e59b9ef56",
+                    "declaration-0bff0a1edd67ff85",
+                    "declaration-0cfac18804918532",
+                    "declaration-13fe611b10e65b33",
+                    "declaration-193e450727ee3d03",
+                    "declaration-355ebe34368b455b",
+                    "declaration-376adff438c5195e",
+                    "declaration-3835f59ea3495be2",
+                    "declaration-38deeecd26ccc5e9",
+                    "declaration-39cff6b642e0971c",
+                    "declaration-4160eb48a39f2cae",
+                    "declaration-45463702d0c8011b",
+                    "declaration-4fb0a1aea520b58e",
+                    "declaration-5ad444f724ff9dcf",
+                    "declaration-63d929cbf3da354c",
+                    "declaration-6cb8867d02e95291",
+                    "declaration-70cef6aee063a676",
+                    "declaration-748043149181b113",
+                    "declaration-766cafb63e8490d3",
+                    "declaration-859db9d00af43c3f",
+                    "declaration-8f9bcc6df9fa07a7",
+                    "declaration-924b69918108f95a",
+                    "declaration-935876dadac2bb87",
+                    "declaration-974649881cded459",
+                    "declaration-a26bc649986823e9",
+                    "declaration-a488397fdfa8f738",
+                    "declaration-aa1a30163b30a5da",
+                    "declaration-aa73911ab6d63955",
+                    "declaration-ace3a0d113034571",
+                    "declaration-b52b05222a5644f3",
+                    "declaration-c3f7f42ec2d92251",
+                    "declaration-c7eb0eef0023e9d5",
+                    "declaration-cc830ca68e41fb20",
+                    "declaration-cec5a5f4999a4c1c",
+                    "declaration-cfbea1dc0d280352",
+                    "declaration-d1c27222e6bb9579",
+                    "declaration-d64e31dc901ead18",
+                    "declaration-e23417b2ba30be38",
+                    "declaration-e4b7ece0abf03042",
+                    "declaration-e8446338af185a45",
+                    "declaration-eab847f463bd475c",
+                    "declaration-ecc0e62153590ec1",
+                    "declaration-f1aabf6e269a5ff1",
+                    "declaration-f2f40946b64329c3",
+                    "declaration-f326cce371a0a6c7",
+                    "declaration-f557ec0704b28832",
+                    "declaration-fd8e42e36d969b2e",
+                    "declaration-ff21668df4d7d94f"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:23:56.556Z",
+              "contentHash": "sha256:b8afa3ac71989546cd38bd71e2ad60dc6e4370101158536d0fbc1aa441152ddd"
+            },
+            {
+              "rank": 2,
+              "catalogOrder": 16,
+              "title": "Evolving APIs",
+              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+              "score": {
+                "exactSymbol": 4,
+                "patternCategory": 3,
+                "servicePlane": 2,
+                "changeContext": 1,
+                "total": 10
+              },
+              "selectionRationale": "Directly covers versioned additions and removals, including @removed.",
+              "guidance": [
+                {
+                  "section": "Evolving APIs with versioning decorators",
+                  "excerpt": "Versioning allows an API to evolve without breaking existing clients by specifying when resources, operations, or properties are added, removed, or changed.",
+                  "queryTerms": [
+                    "@removed",
+                    "models",
+                    "properties",
+                    "Versions.v2026_02_01"
+                  ],
+                  "examples": [],
+                  "applicableDeclarationIds": [
+                    "declaration-0238449e59b9ef56",
+                    "declaration-0bff0a1edd67ff85",
+                    "declaration-0cfac18804918532",
+                    "declaration-13fe611b10e65b33",
+                    "declaration-193e450727ee3d03",
+                    "declaration-355ebe34368b455b",
+                    "declaration-376adff438c5195e",
+                    "declaration-3835f59ea3495be2",
+                    "declaration-38deeecd26ccc5e9",
+                    "declaration-39cff6b642e0971c",
+                    "declaration-4160eb48a39f2cae",
+                    "declaration-45463702d0c8011b",
+                    "declaration-4fb0a1aea520b58e",
+                    "declaration-5ad444f724ff9dcf",
+                    "declaration-63d929cbf3da354c",
+                    "declaration-6cb8867d02e95291",
+                    "declaration-70cef6aee063a676",
+                    "declaration-748043149181b113",
+                    "declaration-766cafb63e8490d3",
+                    "declaration-859db9d00af43c3f",
+                    "declaration-8f9bcc6df9fa07a7",
+                    "declaration-924b69918108f95a",
+                    "declaration-935876dadac2bb87",
+                    "declaration-974649881cded459",
+                    "declaration-a26bc649986823e9",
+                    "declaration-a488397fdfa8f738",
+                    "declaration-aa1a30163b30a5da",
+                    "declaration-aa73911ab6d63955",
+                    "declaration-ace3a0d113034571",
+                    "declaration-b52b05222a5644f3",
+                    "declaration-c3f7f42ec2d92251",
+                    "declaration-c7eb0eef0023e9d5",
+                    "declaration-cc830ca68e41fb20",
+                    "declaration-cec5a5f4999a4c1c",
+                    "declaration-cfbea1dc0d280352",
+                    "declaration-d1c27222e6bb9579",
+                    "declaration-d64e31dc901ead18",
+                    "declaration-e23417b2ba30be38",
+                    "declaration-e4b7ece0abf03042",
+                    "declaration-e8446338af185a45",
+                    "declaration-eab847f463bd475c",
+                    "declaration-ecc0e62153590ec1",
+                    "declaration-f1aabf6e269a5ff1",
+                    "declaration-f2f40946b64329c3",
+                    "declaration-f326cce371a0a6c7",
+                    "declaration-f557ec0704b28832",
+                    "declaration-fd8e42e36d969b2e",
+                    "declaration-ff21668df4d7d94f"
+                  ]
+                }
+              ],
+              "noRelevantGuidance": false,
+              "retrievedAt": "2026-09-03T08:23:56.272Z",
+              "contentHash": "sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83"
+            },
+            {
+              "rank": 3,
               "catalogOrder": 11,
               "title": "Versioning overview",
               "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
               "score": {
-                "exactSymbol": 4,
+                "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 0,
-                "changeContext": 1,
-                "total": 8
+                "servicePlane": 2,
+                "changeContext": 0,
+                "total": 5
               },
-              "selectionRationale": "catalog text names an exact changed TypeSpec construct; document category matches the bounded change pattern; document matches the stable-version or modification context",
+              "selectionRationale": "Provides Azure version-enum and version-progression guidance.",
               "guidance": [
                 {
-                  "section": "Azure API versioning",
-                  "excerpt": "TypeSpec uses a versioning library that models the changes in each new version of the API, rather than having a separate API description for each api-version.",
+                  "section": "Versioning overview",
+                  "excerpt": "API versions must use unique YYYY-MM-DD dates and be declared in strictly increasing chronological order in the Versions enum.",
                   "queryTerms": [
                     "Versions",
-                    "versioning"
+                    "2026-02-01"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -24247,29 +24436,29 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
+              "retrievedAt": "2026-09-03T08:23:56.823Z",
               "contentHash": "sha256:ac91410ce0256fbf6720ff84b0f10a3fe78a4b58de77747082f65856add141f2"
             },
             {
-              "rank": 2,
-              "catalogOrder": 7,
-              "title": "ARM resource operations",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+              "rank": 4,
+              "catalogOrder": 23,
+              "title": "Models",
+              "canonicalUrl": "https://typespec.io/docs/language-basics/models/",
               "score": {
                 "exactSymbol": 0,
                 "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
+                "servicePlane": 0,
+                "changeContext": 1,
+                "total": 4
               },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services",
+              "selectionRationale": "Covers model properties and composition used by the versioned model changes.",
               "guidance": [
                 {
-                  "section": "Update (PATCH)",
-                  "excerpt": "The `ArmCustomPatch*` templates are the recommended choice for PATCH operations. They take the resource type and your custom PATCH request type as parameters, giving you full control over the PATCH schema.",
+                  "section": "Model properties",
+                  "excerpt": "Models define data structures as named fields called properties; properties can be optional with the ? symbol and can use composition and inheritance.",
                   "queryTerms": [
-                    "ArmCustomPatchSync",
-                    "update"
+                    "model",
+                    "property"
                   ],
                   "examples": [],
                   "applicableDeclarationIds": [
@@ -24325,44 +24514,8 @@
                 }
               ],
               "noRelevantGuidance": false,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:e0a4343c26fe361fb7f857636c7d11a80d51ac68a525369f6caafba9e461c790"
-            },
-            {
-              "rank": 3,
-              "catalogOrder": 8,
-              "title": "Azure.ResourceManager interface reference",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:ad72469f78d5cf5151c78921f2075677630402d767ad0bd5f214da0b290dc933"
-            },
-            {
-              "rank": 4,
-              "catalogOrder": 22,
-              "title": "ARM common types",
-              "canonicalUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/",
-              "score": {
-                "exactSymbol": 0,
-                "patternCategory": 3,
-                "servicePlane": 2,
-                "changeContext": 0,
-                "total": 5
-              },
-              "selectionRationale": "document category matches the bounded change pattern; document applies to ARM services",
-              "guidance": [],
-              "noRelevantGuidance": true,
-              "retrievedAt": "2026-09-03T08:22:29.233968Z",
-              "contentHash": "sha256:18a5c6374d552b964058717b07178681036191e9489da3fa4089d9f9509ed229"
+              "retrievedAt": "2026-09-03T08:23:56.919Z",
+              "contentHash": "sha256:d4cf376cb3444e72b89e054e0676c409d636e15be40ab30e71fb12d08e92b6be"
             }
           ],
           "blockers": []
@@ -24438,15 +24591,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12431,
+            "durationMs": 10681,
             "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
             "logPath": "logs\\project-551502b046ca-baseline-autorest.log",
@@ -24470,16 +24623,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9780,
+            "durationMs": 8461,
             "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
             "logPath": "logs\\project-551502b046ca-baseline-tcgc.log",
@@ -24507,15 +24660,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8413,
+            "durationMs": 8370,
             "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
             "logPath": "logs\\project-551502b046ca-target-autorest.log",
@@ -24539,16 +24692,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10206,
+            "durationMs": 7795,
             "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
             "logPath": "logs\\project-551502b046ca-target-tcgc.log",
@@ -24645,15 +24798,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10680,
+            "durationMs": 9976,
             "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
             "logPath": "logs\\project-05203fab0aa5-baseline-autorest.log",
@@ -24677,16 +24830,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 11223,
+            "durationMs": 10238,
             "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
             "logPath": "logs\\project-05203fab0aa5-baseline-tcgc.log",
@@ -24714,15 +24867,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10065,
+            "durationMs": 9857,
             "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
             "logPath": "logs\\project-05203fab0aa5-target-autorest.log",
@@ -24746,16 +24899,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8321,
+            "durationMs": 10108,
             "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
             "logPath": "logs\\project-05203fab0aa5-target-tcgc.log",
@@ -24845,26 +24998,28 @@
     "preparationManifest": "preparation-manifest.json"
   },
   "inputAccounting": {
-    "budgetTier": "medium",
-    "budgetBytes": 262144,
-    "bytes": 144156,
-    "estimatedTokens": 36039,
+    "budgetTier": "small",
+    "budgetBytes": 131072,
+    "bytes": 26526,
+    "estimatedTokens": 6632,
     "retained": {
-      "sourceChanges": 5,
+      "evidenceSets": 5,
       "facts": 0,
       "semanticReviewUnits": 3,
       "restCandidates": 0,
       "downstreamCandidates": 0,
       "downstreamRootCauses": 0,
       "complianceSearchRequests": 3,
-      "inferenceRequests": 2,
-      "complianceSearchSourceBytes": 118445
+      "inferenceRequests": 2
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "inference": {
       "requestCount": 2,
@@ -24875,16 +25030,16 @@
     "compliance": {
       "catalogEntriesScored": 96,
       "documentsFetched": 12,
-      "documentBytesFetched": 6291667,
-      "guidanceExcerptsRetained": 4,
-      "guidanceExcerptBytesRetained": 726
+      "documentBytesFetched": 4270425,
+      "guidanceExcerptsRetained": 7,
+      "guidanceExcerptBytesRetained": 1170
     }
   },
   "timings": {
-    "totalMs": 1098598,
-    "semanticAnalysisMs": 250,
-    "restAnalysisMs": 103,
-    "downstreamAnalysisMs": 5946
+    "totalMs": 173919,
+    "semanticAnalysisMs": 284,
+    "restAnalysisMs": 151,
+    "downstreamAnalysisMs": 6372
   },
   "pr": 42853,
   "pullRequest": {

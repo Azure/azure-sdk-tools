@@ -431,6 +431,10 @@ function prepareAgentWorkItem(
     },
     inputs: {
       modelInput: paths.modelInput,
+      evidenceArtifacts: loadJson(
+        paths.modelInput,
+        "Deterministic model input",
+      ).artifactReferences,
       materializationManifest: materialization.layout.manifest,
       baseWorkspace: materialization.layout.base,
       headWorkspace: materialization.layout.head,
@@ -446,6 +450,7 @@ function prepareAgentWorkItem(
     },
     instructions: [
       "Review every bounded item in model-input.json using the azure-typespec-assessment classification rules.",
+      "Resolve evidenceSetId and evidenceRef values through model-input.json artifactReferences; paths are relative to the deterministic-analysis directory.",
       "As the first Agent action, run the start-agent phase for this pilot.",
       "Run the bounded Compliance search and write compliance-search-evidence.json in the deterministic-analysis directory.",
       "Write assessment-judgment.json with exact Compliance tuple coverage and materialization-assessment.json using the skill schemas and output contract.",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T08:09:04.006Z",
+  "generatedAt": "2026-09-04T02:04:12.304Z",
   "title": "TypeSpec assessment: specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43745\\head",
@@ -4203,15 +4203,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8171,
+            "durationMs": 8390,
             "configPath": "worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-baseline-autorest.log",
@@ -4235,16 +4235,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9882,
+            "durationMs": 7223,
             "configPath": "worktrees\\base\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-baseline-tcgc.log",
@@ -4272,15 +4272,15 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8537,
+            "durationMs": 7185,
             "configPath": "worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-target-autorest.log",
@@ -4304,16 +4304,16 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
+                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\projects\\project-14b3babacb1d\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-20260903\\43745\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43745\\deterministic-analysis\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-03-31"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9732,
+            "durationMs": 7411,
             "configPath": "worktrees\\current\\specification\\hardwaresecuritymodules\\resource-manager\\Microsoft.HardwareSecurityModules\\HardwareSecurityModules\\tspconfig.yaml",
             "configHash": "5addf99a032b4e545e25e381e61d3d2088ee74c082d2be2a5ada4fdcc4d3ef25",
             "logPath": "logs\\project-14b3babacb1d-target-tcgc.log",
@@ -4386,24 +4386,26 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 18368,
-    "estimatedTokens": 4592,
+    "bytes": 10606,
+    "estimatedTokens": 2652,
     "retained": {
-      "sourceChanges": 1,
+      "evidenceSets": 3,
       "facts": 2,
       "semanticReviewUnits": 1,
       "restCandidates": 0,
       "downstreamCandidates": 2,
       "downstreamRootCauses": 1,
       "complianceSearchRequests": 1,
-      "inferenceRequests": 0,
-      "complianceSearchSourceBytes": 10182
+      "inferenceRequests": 0
     },
     "omittedRedundant": {
       "rawEmitterArtifacts": true,
       "compilerLogs": true,
       "unchangedInventories": true,
-      "unreferencedFacts": true
+      "unreferencedFacts": true,
+      "sourceChanges": true,
+      "repeatedDeclarationIds": true,
+      "repeatedReviewUnitEvidence": true
     },
     "compliance": {
       "catalogEntriesScored": 32,
@@ -4414,10 +4416,10 @@
     }
   },
   "timings": {
-    "totalMs": 55272,
-    "semanticAnalysisMs": 58,
-    "restAnalysisMs": 51,
-    "downstreamAnalysisMs": 1251
+    "totalMs": 48764,
+    "semanticAnalysisMs": 49,
+    "restAnalysisMs": 45,
+    "downstreamAnalysisMs": 1166
   },
   "pr": 43745,
   "pullRequest": {

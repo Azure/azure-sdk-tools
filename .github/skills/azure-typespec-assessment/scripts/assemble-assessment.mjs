@@ -320,15 +320,15 @@ function validateInferenceRequests(modelInput) {
   const unitsById = new Map(units.map((unit) => [unit.reviewUnitId, unit]));
   for (const request of requests) {
     const unit = unitsById.get(request.reviewUnitId);
-    const source = modelInput.sourceChanges?.[request.sourceChangeId];
-    if (!unit || !source) {
+    const evidenceRef = request.evidenceRef;
+    if (
+      !unit ||
+      evidenceRef?.artifact !== "source/source-index.json" ||
+      evidenceRef.sourceChangeId !== request.sourceChangeId ||
+      evidenceRef.hunkId !== request.hunkId
+    ) {
       throw new Error(
         `Inference request ${request.requestId} has unknown source evidence.`,
-      );
-    }
-    if (!source.hunks?.some((hunk) => hunk.id === request.hunkId)) {
-      throw new Error(
-        `Inference request ${request.requestId} has an unknown hunk.`,
       );
     }
     if (!request.sourceExcerpt?.trim()) {
@@ -974,6 +974,19 @@ export function assembleAssessment({ work, judgment }) {
     "compliance-search-evidence.json",
   );
   const hasComplianceInput = Array.isArray(modelInput.complianceSearchRequests);
+  const complianceRequestArtifact =
+    modelInput.artifactReferences?.complianceSearchRequests;
+  const complianceRequests =
+    hasComplianceInput && complianceRequestArtifact
+      ? readJson(path.join(work, complianceRequestArtifact)).requests
+      : modelInput.complianceSearchRequests;
+  if (hasComplianceInput && complianceRequestArtifact) {
+    exactCoverage(
+      modelInput.complianceSearchRequests.map((item) => item.requestId),
+      complianceRequests.map((item) => item.requestId),
+      "Compliance search request",
+    );
+  }
   if (hasComplianceInput && !fs.existsSync(complianceEvidencePath)) {
     throw new Error("Missing compliance-search-evidence.json.");
   }
@@ -1154,7 +1167,7 @@ export function assembleAssessment({ work, judgment }) {
   };
   const complianceDimension = hasComplianceInput
     ? assembleCompliance({
-        requests: modelInput.complianceSearchRequests,
+        requests: complianceRequests,
         evidence: complianceEvidence,
         decisions: answer.complianceDecisions,
         sourceChanges: sourceIndex.sourceChanges,

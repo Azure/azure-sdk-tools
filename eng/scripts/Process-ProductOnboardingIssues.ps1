@@ -49,8 +49,8 @@ foreach ($issue_number in $issues) {
   $product_lifecycle = ""
   $service_id = ""
   $service_name = ""
-  $data_plane = "N/A"
-  $mgmt_plane = "N/A"
+  $data_plane = ""
+  $mgmt_plane = ""
   $submitter = ""
 
   if ($issue -match "\#\#\#\sProduct\sID.*\n.*\n(?<ProductID>[^\n]+)") {
@@ -86,17 +86,11 @@ foreach ($issue_number in $issues) {
   if ($issue -match "\#\#\#\s.*[Dd]ata\s[Pp]lane.*\n.*\n(?<DataPlane>[^\n]+)") {
     $data_plane = $matches["DataPlane"]
     $data_plane = $data_plane.Trim()
-    if ($data_plane -eq "None") {
-      $data_plane = ""
-    }
   }
 
   if ($issue -match "\#\#\#\s.*[Mm]anagement\s[Pp]lane.*\n.*\n(?<MgmtPlane>[^\n]+)") {
     $mgmt_plane = $matches["MgmtPlane"]
     $mgmt_plane = $mgmt_plane.Trim()
-    if ($mgmt_plane -eq "None") {
-      $mgmt_plane = ""
-    }
   }
 
   if ($issue -match "\#\#\#\sSubmitter.*\n.*\n(?<Submitter>[^\n]+)") {

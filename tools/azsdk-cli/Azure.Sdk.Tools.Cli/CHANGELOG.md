@@ -1,10 +1,22 @@
 # Release History
 
-## 0.6.42 (2026-09-01)
+## 0.6.44 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.43 (2026-09-03)
 
 ### Breaking Changes
 
 - Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
+## 0.6.42 (2026-09-01)
 
 ### Bugs Fixed
 

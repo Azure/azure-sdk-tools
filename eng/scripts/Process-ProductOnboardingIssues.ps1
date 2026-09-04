@@ -49,9 +49,8 @@ foreach ($issue_number in $issues) {
   $product_lifecycle = ""
   $service_id = ""
   $service_name = ""
-  $needs_sdk_str = ""
-  $data_plane = "N/A"
-  $mgmt_plane = "N/A"
+  $data_plane = ""
+  $mgmt_plane = ""
   $submitter = ""
 
   if ($issue -match "\#\#\#\sProduct\sID.*\n.*\n(?<ProductID>[^\n]+)") {
@@ -84,25 +83,14 @@ foreach ($issue_number in $issues) {
     $service_name = $service_name.Trim()
   }
 
-  if ($issue -match "\#\#\#\s.*Azure\sSDK.*\n.*\n(?<NeedsSDK>[^\n]+)") {
-    $needs_sdk_str = $matches["NeedsSDK"]
-    $needs_sdk_str = $needs_sdk_str.Trim()
-  }
-
   if ($issue -match "\#\#\#\s.*[Dd]ata\s[Pp]lane.*\n.*\n(?<DataPlane>[^\n]+)") {
     $data_plane = $matches["DataPlane"]
     $data_plane = $data_plane.Trim()
-    if ($data_plane -eq "None") {
-      $data_plane = ""
-    }
   }
 
   if ($issue -match "\#\#\#\s.*[Mm]anagement\s[Pp]lane.*\n.*\n(?<MgmtPlane>[^\n]+)") {
     $mgmt_plane = $matches["MgmtPlane"]
     $mgmt_plane = $mgmt_plane.Trim()
-    if ($mgmt_plane -eq "None") {
-      $mgmt_plane = ""
-    }
   }
 
   if ($issue -match "\#\#\#\sSubmitter.*\n.*\n(?<Submitter>[^\n]+)") {
@@ -117,12 +105,10 @@ foreach ($issue_number in $issues) {
     -and ($product_lifecycle -ne "") `
     -and ($service_id        -ne "") `
     -and ($service_name      -ne "") `
-    -and ($needs_sdk_str     -ne "") `
     -and ($data_plane        -ne "") `
     -and ($mgmt_plane        -ne "") `
     -and ($submitter         -ne "") `
   ) {
-    $needs_sdk_bool = ($needs_sdk_str -ieq "Yes")
     Write-Host "Processing issue #$issue_number."
 
     $sync_success = $false
@@ -134,7 +120,6 @@ foreach ($issue_number in $issues) {
         -ProductLifecycle "$product_lifecycle" `
         -ServiceID        "$service_id" `
         -ServiceName      "$service_name" `
-        -NeedsSDK          $needs_sdk_bool `
         -DataPlane        "$data_plane" `
         -MgmtPlane        "$mgmt_plane" `
         -Submitter        "$submitter" `

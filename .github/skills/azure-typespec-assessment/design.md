@@ -16,7 +16,7 @@ Included:
 - semantic understanding from changed TypeSpec and AutoRest;
 - REST breaking candidates from AutoRest;
 - downstream SDK breaking candidates from TCGC;
-- documentation-grounded Azure compliance from the four highest-ranked
+- documentation-grounded Azure Guidelines assessment from the four highest-ranked
   retrievable official documents for each Semantic intent;
 - optional bounded AI inference for source hunks that deterministic analysis
   cannot classify;
@@ -46,7 +46,7 @@ is present but not assessed.
        +-----------------+-----------------+-----------------+
        |                 |                 |                 |
        v                 v                 v                 v
-   Semantic            REST            Downstream        Compliance
+   Semantic            REST            Downstream      Azure Guidelines
  deterministic     deterministic      deterministic     deterministic
  review units       candidates         candidates      search requests
        |                 |                 |                 |
@@ -109,7 +109,7 @@ writes both `compliance-search-evidence.json` and
 `assessment-judgment.json`. `compliance-assessment.mjs`, called during
 assembly, consumes and validates the search evidence; it does not produce it.
 
-Compliance is parallel to Semantic, REST, and Downstream as an assessment
+Azure Guidelines is parallel to Semantic, REST, and Downstream as an assessment
 dimension, but not as an initial deterministic analyzer. Its search requires
 the deterministic Semantic review units and their TypeSpec evidence, so it
 branches from `model-input.json`. It does not consume REST or Downstream
@@ -932,17 +932,34 @@ normalized TCGC method-to-type and type-to-type reference edges. Candidates
 carry their deterministic `rootCauseIds`. The Agent approves or rejects
 candidates but cannot create, merge, split, or assign root causes.
 
-Compared SDK cases:
+### Deterministic candidate rules
 
-- client/operation-group ownership and method location;
-- complete ordered parameters;
-- response type;
-- all four method kinds;
-- access, paging, and LRO metadata;
-- public model properties;
-- enum values/extensibility;
-- public reachability/usage;
-- SDK customization decorators.
+The downstream analyzer emits these candidate rules:
+
+| Category       | Rule                            | Detected change                                                       |
+| -------------- | ------------------------------- | --------------------------------------------------------------------- |
+| Method         | `method-removed`                | An existing SDK method is no longer generated.                        |
+| Method         | `method-location-changed`       | A method moves to another client or operation group.                   |
+| Method         | `method-kind-changed`           | `basic`, `paging`, `lro`, or `lropaging` changes.                      |
+| Method         | `method-parameters-changed`     | The ordered public parameter contract changes.                        |
+| Method         | `method-response-changed`       | The public response type changes.                                     |
+| Method         | `method-access-changed`         | A previously public method is no longer public.                        |
+| Method         | `method-paging-changed`         | Language-neutral paging metadata or behavior changes.                  |
+| Method         | `method-lro-changed`            | Language-neutral long-running-operation behavior changes.              |
+| Model          | `model-property-removed`        | A public model property is removed.                                   |
+| Model          | `model-property-changed`        | Property type, optionality, flattening, or access changes.             |
+| Model          | `model-property-added-required` | A required property is added.                                         |
+| Enum           | `enum-values-removed`           | An enum value is removed or its SDK-facing identity changes.           |
+| Enum           | `enum-extensibility-changed`    | A public enum changes between fixed and extensible representations.    |
+| Public surface | `public-surface-changed`        | A model, enum, or union changes access, usage, reachability, or is removed. |
+| Client         | `client-location-changed`       | Client name, owner, or parent changes.                                 |
+| Customization  | `customization-changed`         | SDK customization decorators change.                                  |
+
+Candidates are deterministic review inputs, not final findings. The Agent
+approves or rejects each candidate according to
+`references/downstream-breaking-cases.md`; only approved candidates become
+findings. Root causes are separate deterministic aggregation records that
+connect related candidates and facts but are not candidate rules.
 
 For `model-property-added-required` candidates, Agent judgment must use the
 model's effective direction:
@@ -1104,9 +1121,9 @@ Validation requires:
 - rejected findings are never linked;
 - ambiguous or unsupported relationships remain absent.
 
-## 6. Documentation-grounded Azure compliance
+## 6. Documentation-grounded Azure Guidelines
 
-Compliance is an independent assessment dimension. It consumes Semantic
+Azure Guidelines is an independent assessment dimension. It consumes Semantic
 intents and their bounded TypeSpec query profiles while retaining links to the
 complete deterministic source evidence. It does not consume or derive
 conclusions from downstream SDK breaking input. Document Quality and Agent
@@ -1114,7 +1131,7 @@ Friendliness remains a separate `not-assessed` dimension.
 
 ### Goal and evidence boundary
 
-Compliance assesses each Semantic intent once against applicable first-party
+Azure Guidelines assesses each Semantic intent once against applicable first-party
 TypeSpec and Azure TypeSpec documentation. The decision uses the intent's
 changed TypeSpec constructs and source evidence, but it does not assess each
 affected REST operation or generate a document-by-declaration decision matrix.
@@ -1125,7 +1142,7 @@ The search uses the local [agentic search
 procedure](references/agentic-search.md) and its [official document
 catalog](references/reference-document-links.md). The copied catalog is
 navigation metadata. Only successfully fetched page content can establish an
-expected compliance pattern.
+expected Azure Guidelines pattern.
 
 ### Query profile
 
@@ -1143,8 +1160,8 @@ Build one query profile per Semantic intent from deterministic evidence:
 - affected-operation counts, without operation-by-operation contracts.
 
 The deterministic request retains the complete source/hunk inventory for
-traceability, but the compliance prompt is bounded to the compact intent
-profile above. Operation facts are excluded because compliance evaluates the
+traceability, but the Azure Guidelines prompt is bounded to the compact intent
+profile above. Operation facts are excluded because Azure Guidelines evaluates the
 TypeSpec design intent, not each compiled operation.
 
 ### Select the four highest-scoring documents
@@ -1173,7 +1190,7 @@ catalog ranking is:
 
 The first three match the new ARM child-resource and lifecycle-operation
 patterns; the fourth covers introducing that surface in a new API version.
-This is a ranking example, not compliance evidence: the fetched sections must
+This is a ranking example, not Azure Guidelines evidence: the fetched sections must
 still prove applicability.
 
 Fetch the initial four URLs concurrently with `web_fetch`. Cache fetched
@@ -1200,7 +1217,7 @@ catalog during this phase.
 
 ### Assess the Semantic intent once
 
-After guidance extraction, produce exactly one Compliance decision for the
+After guidance extraction, produce exactly one Azure Guidelines decision for the
 Semantic intent. The selected documents are evidence sources, not independent
 assessment units. The decision records:
 
@@ -1223,8 +1240,8 @@ retrieval, evidence, or execution is incomplete.
 
 One failing intent produces one intent-level finding. The finding may cite
 multiple source declarations and guidance sections, but it must describe one
-coherent compliance gap for the intent. Affected operations never receive
-separate Compliance decisions or findings.
+coherent Azure Guidelines gap for the intent. Affected operations never receive
+separate Azure Guidelines decisions or findings.
 
 HTML may group several intent-level findings into one visual guideline issue
 when they cite the same set of canonical guidance document sections and state
@@ -1251,7 +1268,7 @@ the same expected behavior. This is a presentation-only projection:
 Documents with `no-relevant-guidance` support a
 `no-applicable-guidance` decision but do not support a pass against a specific
 rule.
-Compliance status is reported independently and does not change
+Azure Guidelines status is reported independently and does not change
 REST/downstream scoped code safety.
 
 ### Bounded Agent behavior
@@ -1260,7 +1277,7 @@ The Agent performs catalog scoring, document search, excerpt selection, and
 one intent-level evidence comparison in the existing bounded judgment phase.
 It may not change Semantic intent membership, invent source IDs, invent URLs,
 or use unfetched knowledge. The judgment schema requires exactly one
-Compliance decision per Semantic intent, and deterministic assembly rejects
+Azure Guidelines decision per Semantic intent, and deterministic assembly rejects
 unknown, duplicate, or missing intent decisions.
 
 The same Agent phase records retrieval and extracted evidence separately from
@@ -1349,7 +1366,7 @@ that ranking unless catalog exhaustion is recorded as a blocker.
 `retrievalAttempts` retains failed top-ranked URLs and their replacement
 history.
 
-The HTML report will show compliance by Semantic intent:
+The HTML report will show Azure Guidelines by Semantic intent:
 
 - overall status and coverage;
 - the four ranked documents and selection scores;
@@ -1525,7 +1542,7 @@ File: `model-input.json`
 ```
 
 Only inference-relevant compact facts enter model input. Full source,
-declaration, deterministic candidate, candidate fact, and Compliance request
+declaration, deterministic candidate, candidate fact, and Azure Guidelines request
 evidence remains in the canonical artifacts named by `artifactReferences`.
 `evidenceSets` connects bounded judgment items to exact canonical entries
 without repeating large declaration lists or operation facts. Qualified names,
@@ -1547,7 +1564,7 @@ review unit, every member hunk receives exactly one deterministic status:
 - `blocked`: required deterministic artifacts or analysis are unavailable.
 
 Only `unknown` hunks set `inferenceRequired: true`. An empty candidate list
-alone does not trigger inference. Compliance retrieval failure also does not
+alone does not trigger inference. Azure Guidelines retrieval failure also does not
 trigger inference.
 
 Each unknown hunk produces one bounded `inferenceRequests` entry:
@@ -1665,7 +1682,7 @@ File: `assessment-judgment.json`
       "hunkIds": ["hunk-<hash>"],
       "declarationIds": ["declaration-<hash>"],
       "decision": "applicable-pass|applicable-fail|no-applicable-guidance|not-assessed",
-      "title": "Required for applicable-fail: concise compliance gap title",
+      "title": "Required for applicable-fail: concise Azure Guidelines gap title",
       "severity": "Required for applicable-fail: high|medium|low",
       "expected": "Concise synthesis of applicable fetched guidance.",
       "actual": "Concise description of the intent's changed TypeSpec pattern.",
@@ -1690,7 +1707,7 @@ root-cause decision rejects every propagated candidate and omits severity.
 Every downstream candidate must be covered exactly once by either a direct
 candidate decision or one canonical root-cause decision.
 
-Every Semantic intent must have exactly one Compliance decision. Every
+Every Semantic intent must have exactly one Azure Guidelines decision. Every
 applicable guidance URL must identify a successfully fetched
 `rankedDocuments` entry, and all source, hunk, and declaration IDs must already
 exist in `model-input.json`. Decisions may quote only guidance recorded in
@@ -1887,7 +1904,7 @@ File: `assessment.json`
     },
     "compliance": {
       "status": "passed|failed|not-assessed",
-      "summary": "Documentation-grounded compliance result.",
+      "summary": "Documentation-grounded Azure Guidelines result.",
       "coverage": {
         "semanticIntentCount": 1,
         "assessedIntentCount": 1,
@@ -2126,12 +2143,12 @@ evidence. Final validation independently checks:
     their deterministic requests;
 12. canonical URL, retrieval timestamp, content hash, section, excerpt, and
     matched-term provenance for every guidance item;
-13. exact one-time Compliance decision coverage for every Semantic intent;
-14. intent-level Compliance findings with complete source IDs, applicable
+13. exact one-time Azure Guidelines decision coverage for every Semantic intent;
+14. intent-level Azure Guidelines findings with complete source IDs, applicable
     guidance links, expected guidance, actual TypeSpec pattern, gap, and
     changed-code snippets;
 15. catalog descriptions and unfetched content are never used as guidance;
-16. Compliance status follows evidence and coverage, while Document Quality
+16. Azure Guidelines status follows evidence and coverage, while Document Quality
     and Agent Friendliness remains explicitly `not-assessed`.
 
 ## 11. HTML requirements
@@ -2172,14 +2189,14 @@ The report must show:
    appear only in the appendix;
 7. source-first Semantic intents;
 8. expandable REST operations with before/after impact;
-9. Compliance finding cards without a separate TypeSpec source-link list;
+9. Azure Guidelines finding cards without a separate TypeSpec source-link list;
    under **Actual**, show at most two changed-code snippets ranked by relevance
    to the actual behavior, while retaining complete evidence in JSON and the
    appendix;
 10. appendix with a **Potential limits** subsection for retained assessment
     blockers, followed by a clickable pull-request link when PR identity is
     available, files, projects, compiler artifacts, timings, model input
-    accounting, ranked Compliance documents, retrieval attempts, and
+    accounting, ranked Azure Guidelines documents, retrieval attempts, and
     provenance. Derive the link from the repository remote and PR number when
     the current schema does not carry a dedicated pull-request object.
     Potential limits are supporting caveats rather than a standalone
@@ -2264,7 +2281,7 @@ Presentation rules:
 15. The visible REST count is the number of distinct contract cards plus
     unmapped cards, not the raw finding-row count.
 
-Compliance rendering is source-first:
+Azure Guidelines rendering is source-first:
 
 - show status, assessed-intent coverage, distinct guideline-issue count, and
   affected-intent count;
@@ -2292,7 +2309,7 @@ Semantic operation rendering is bounded:
 Each operation card shows the operation ID, selected API version, HTTP
 method/path, concise mapping reason, REST before/after delta or explicit
 unchanged statement, and downstream outcome. It is deterministic supporting
-evidence, not a separate Semantic or Compliance assessment, and it does not
+evidence, not a separate Semantic or Azure Guidelines assessment, and it does not
 repeat TypeSpec code.
 
 Semantic operation cards and REST breaking cards use the same contract-delta
@@ -2430,7 +2447,7 @@ Each summary card is a full-card link to its report section:
 
 - REST breaking changes → `#rest-breaking`;
 - downstream breaking changes → `#downstream-breaking`;
-- Azure compliance → `#azure-compliance`;
+- Azure Guidelines → `#azure-compliance`;
 - Document Quality and Agent Friendliness → `#document-quality`;
 - Semantic intents → `#semantic-intents`;
 - overall code quality → the failed or incomplete code-quality dimension.
@@ -2537,7 +2554,7 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 - Semantic analysis covers changed TypeSpec source before calculating REST
   impact.
 - REST and downstream analyzers follow emitter boundaries.
-- Every Semantic intent produces one bounded Compliance query profile from its
+- Every Semantic intent produces one bounded Azure Guidelines query profile from its
   changed constructs, representative source evidence, and aggregate operation
   counts.
 - Catalog scoring deterministically selects the four highest-ranked
@@ -2551,11 +2568,11 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
   runs only for explicit `unknown` hunk requests.
 - When inference runs, `inference.json` has exact request coverage and only
   bounded, source-linked inferred candidates.
-- Agent judgment has one concise Semantic result and one Compliance decision
+- Agent judgment has one concise Semantic result and one Azure Guidelines decision
   per intent, plus exact deterministic and inferred REST/downstream candidate
   coverage.
 - Final JSON rejects unsupported or incomplete results.
-- HTML presents ranked documentation and intent-level Compliance results
+- HTML presents ranked documentation and intent-level Azure Guidelines results
   without conflating them with scoped REST/downstream code safety.
 - Focused tests, 12 retained report replays, strict skill lint, and real PR
   43308, 44882, and 44988 smoke tests pass.
@@ -2614,7 +2631,7 @@ The main challenges are:
 8. **Bounded Agent validation.** Agent output must use only supplied evidence
    and identifiers. Assembly rejects invented symbols, unknown sources,
    duplicate coverage, unsupported findings, and success-shaped fallbacks.
-9. **Compliance retrieval quality.** Search must identify governing official
+9. **Azure Guidelines retrieval quality.** Search must identify governing official
    guidance for each narrow intent. A completed search with only generic or
    irrelevant guidance produces `no-applicable-guidance`; incomplete execution
    produces `not-assessed`.

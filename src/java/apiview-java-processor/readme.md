@@ -6,6 +6,15 @@ This application tokenises a Java project into a format useful for Java API revi
 
 Compile to a fatjar using the following command: </br>`mvn clean package`
 
+## Releasing
+
+The Azure DevOps pipeline in `ci.yml` validates pull requests and builds on `main`. To publish
+`com.azure:apiview-java-processor` to the Java dev feed, manually run the pipeline from `main`
+with **Publish to the Java dev feed** enabled.
+
+Publishing a version is immutable. Update the version in `pom.xml` before releasing a new package.
+The pipeline publishes only to the Azure Artifacts Java dev feed, not Maven Central.
+
 ## How To Use
 
 Compile your source code using Maven `mvn clean package`. This will create a `target` directory containing

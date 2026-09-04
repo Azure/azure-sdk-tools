@@ -78,3 +78,30 @@ async def test_get_channel_config_uses_default_when_channel_tenant_missing(
 
     assert response.channel_id == "typespec-channel"
     assert response.tenant_id == "typespec_channel_qa_bot"
+
+
+@pytest.mark.asyncio
+async def test_get_channel_config_reuses_cached_config(monkeypatch) -> None:
+    downloads = 0
+
+    async def fake_download_blob(container: str, blob: str) -> bytes:
+        nonlocal downloads
+        downloads += 1
+        return _CHANNEL_CONFIG
+
+    monkeypatch.setattr("services.bot_config_service.download_blob", fake_download_blob)
+    monkeypatch.setattr(
+        "services.bot_config_service.cfg",
+        lambda key, default=None: (
+            "60" if key == "CHANNEL_CONFIG_CACHE_TTL_SECONDS" else default
+        ),
+    )
+
+    service = BotConfigService()
+
+    first_response = await service.get_channel_config("python-channel")
+    second_response = await service.get_channel_config("typespec-channel")
+
+    assert downloads == 1
+    assert first_response.tenant_id == "python_channel_qa_bot"
+    assert second_response.tenant_id == "typespec_channel_qa_bot"

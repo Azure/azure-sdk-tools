@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
         protected override List<Command> GetCommands() =>
         [
-            new McpCommand(TypeSpecAuthoringToolCommandName, "\"Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.", GenerateAuthoringPlanToolName)
+            new McpCommand(TypeSpecAuthoringToolCommandName, "Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.", GenerateAuthoringPlanToolName)
             {
                 _requestOption,
                 _additionalInformationOption,

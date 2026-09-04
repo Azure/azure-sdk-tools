@@ -186,19 +186,20 @@ It cannot authorize the Teams connector. Authorization belongs to a Microsoft
 - [ ] Verify tenant policy permits the account to use the Teams Workflows app
       and requested connector operations.
 - [ ] Provision the Teams connection shell with the workflow disabled.
-- [ ] Complete Teams delegated OAuth as the selected service account.
+- [ ] In the pipeline's **Authorize Teams API connection** validation, open the
+      supplied portal link and complete Teams delegated OAuth as the selected
+      service account, then resume the run.
 - [ ] Do not store its password, OAuth code, refresh token, or connector token
       in pipeline variables or logs.
-- [ ] Verify `properties.statuses[0].status` is `Connected`.
-- [ ] Re-run the Logic App layer with `environment=dev` and `operation=apply`.
-      Its preprovision hook must preserve the connected API resource.
+- [ ] Confirm the pipeline's verification job reports
+      `properties.statuses[0].status` as `Connected`.
+- [ ] On future provisions, verify the preprovision hook preserves the
+      connected API resource.
 - [ ] Verify the workflow definition is complete and its state is `Enabled`.
 
-For a portal-free user experience, a pipeline may generate a consent link and
-pause in an agentless `ManualValidation@1` job. The Teams service account must
-still sign in interactively. Completing the OAuth callback without the portal
-requires a secured callback endpoint that validates short-lived state and calls
-`confirmConsentCode`; the callback must never log the returned code.
+The pipeline pause does not handle credentials, OAuth codes, refresh tokens, or
+connector tokens. The Teams service account always signs in through the Azure
+portal.
 
 ## Teams application
 

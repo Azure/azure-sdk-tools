@@ -97,3 +97,10 @@ stages:
                       - bash: |
                             echo "Verify operational-readiness-checklist.md is signed off before continuing."
                         displayName: 'Operational readiness reminder'
+
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/logic-app-consent-jobs.yml
+            parameters:
+                environment: ${{ parameters.environment }}
+                enabled: ${{ and(parameters.runProvision, or(eq(parameters.layer, ''), eq(parameters.layer, 'logic-app'))) }}
+                dependsOn: AzdProvision
+                workingDirectory: ${{ parameters.workingDirectory }}

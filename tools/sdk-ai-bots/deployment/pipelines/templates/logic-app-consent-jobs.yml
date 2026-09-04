@@ -1,0 +1,115 @@
+# Postprovision gate for delegated Teams OAuth. The pipeline never handles user
+# credentials or OAuth callback codes: an operator authorizes in the Azure
+# portal, resumes the manual validation, and the final job verifies Connected.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: enabled
+      type: boolean
+      default: true
+    - name: dependsOn
+      type: string
+    - name: approvers
+      type: string
+      default: ''
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+jobs:
+    - job: CheckTeamsConsent
+      displayName: 'Check Teams API connection'
+      dependsOn: ${{ parameters.dependsOn }}
+      condition: and(succeeded(), ${{ parameters.enabled }})
+      pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+      steps:
+          - checkout: self
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+            parameters:
+                environment: ${{ parameters.environment }}
+          - task: AzureCLI@2
+            name: CheckConsent
+            displayName: 'Prepare Teams consent'
+            inputs:
+                azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                scriptType: bash
+                scriptLocation: inlineScript
+                workingDirectory: '${{ parameters.workingDirectory }}'
+                inlineScript: |
+                    set -euo pipefail
+                    result=$(bash scripts/teams-connection-consent.sh check)
+                    connection_name=$(jq -r '.connectionName' <<< "$result")
+                    consent_required=$(jq -r '.consentRequired' <<< "$result")
+                    portal_url=$(jq -r '.portalUrl' <<< "$result")
+
+                    escape_output() {
+                      local value="$1"
+                      value="${value//'%'/'%AZP25'}"
+                      value="${value//$'\n'/'%0A'}"
+                      value="${value//$'\r'/'%0D'}"
+                      printf '%s' "$value"
+                    }
+
+                    echo "Teams API connection '$connection_name' requires consent: $consent_required"
+                    echo "##vso[task.setvariable variable=connectionName;isOutput=true;isReadOnly=true]$(escape_output "$connection_name")"
+                    echo "##vso[task.setvariable variable=consentRequired;isOutput=true;isReadOnly=true]$consent_required"
+                    echo "##vso[task.setvariable variable=portalUrl;isOutput=true;isReadOnly=true]$(escape_output "$portal_url")"
+
+    - job: AwaitTeamsConsent
+      displayName: 'Authorize Teams API connection'
+      dependsOn: CheckTeamsConsent
+      condition: and(succeeded(), ${{ parameters.enabled }}, eq(dependencies.CheckTeamsConsent.outputs['CheckConsent.consentRequired'], 'true'))
+      variables:
+          teamsConnectionName: $[ dependencies.CheckTeamsConsent.outputs['CheckConsent.connectionName'] ]
+          teamsConnectionPortalUrl: $[ dependencies.CheckTeamsConsent.outputs['CheckConsent.portalUrl'] ]
+      pool: server
+      timeoutInMinutes: 4320
+      steps:
+          - task: ManualValidation@1
+            timeoutInMinutes: 1440
+            inputs:
+                notifyUsers: '$(Build.RequestedForEmail)'
+                approvers: ${{ parameters.approvers }}
+                allowApproversToApproveTheirOwnRuns: true
+                instructions: |
+                    Authorize Teams API connection '$(teamsConnectionName)' for ${{ parameters.environment }}:
+                    1. Open $(teamsConnectionPortalUrl)
+                    2. Select Edit API connection, then Authorize.
+                    3. Sign in as the Teams service account and save the connection.
+                    4. Return here and resume this validation.
+                onTimeout: reject
+
+    - job: VerifyTeamsConsent
+      displayName: 'Verify Teams API connection'
+      dependsOn:
+          - CheckTeamsConsent
+          - AwaitTeamsConsent
+      condition: and(eq(dependencies.CheckTeamsConsent.result, 'Succeeded'), in(dependencies.AwaitTeamsConsent.result, 'Succeeded', 'Skipped'))
+      variables:
+          teamsConnectionName: $[ dependencies.CheckTeamsConsent.outputs['CheckConsent.connectionName'] ]
+      pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+      steps:
+          - checkout: self
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+            parameters:
+                environment: ${{ parameters.environment }}
+          - task: AzureCLI@2
+            displayName: 'Verify Teams consent'
+            env:
+                TEAMS_CONNECTION_NAME: $(teamsConnectionName)
+            inputs:
+                azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                scriptType: bash
+                scriptLocation: inlineScript
+                workingDirectory: '${{ parameters.workingDirectory }}'
+                inlineScript: |
+                    set -euo pipefail
+                    bash scripts/teams-connection-consent.sh verify "$TEAMS_CONNECTION_NAME"

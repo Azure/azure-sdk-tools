@@ -292,9 +292,14 @@ under `seedKeyVaultSecrets()`.
 
 ## 10. Logic App — OAuth consent
 
-The Logic App uses three managed-API connections that **cannot** be
-authorized via Bicep. After provisioning, an operator with the relevant
-tenant rights must complete OAuth consent:
+The Logic App uses managed-API connections that **cannot** be authorized via
+Bicep. After Logic App provisioning, Azure DevOps checks the Teams connection.
+If it is not connected, the provision stage pauses at **Authorize Teams API
+connection** and provides an Azure portal link. An operator with the relevant
+tenant rights must open that link, authorize and save the connection, then
+resume the validation. The next job verifies that its status is `Connected`.
+In a full-stack run, the subsequent Function App postdeploy hook installs the
+complete workflow definition and enables it.
 
 - [ ] **Microsoft Teams** connection — sign in as the service account that
   will post on behalf of the bot
@@ -303,13 +308,10 @@ tenant rights must complete OAuth consent:
 - [ ] **Azure Cosmos DB** connection — already uses managed identity; verify
   in the portal that the connection shows "Connected"
 
-After consent:
+For local provisioning, authorize in the portal and then apply the workflow:
 
 ```bash
-az logic workflow update \
-  --name azuresdkqabot-logicapp \
-  --resource-group rg-azuresdkqabot-<env> \
-  --state Enabled
+npm run deploy:logic-app -- --env <env>
 ```
 
 ---

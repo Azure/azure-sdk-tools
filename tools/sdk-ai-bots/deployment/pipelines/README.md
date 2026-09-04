@@ -28,6 +28,12 @@ approval stage itself remains available for three days. When no explicit
 approver list is configured, any user with permission to queue the pipeline can
 approve or reject the run.
 
+After an apply that includes the Logic App layer, the provision stage checks the
+Teams API connection. Connected environments continue automatically; otherwise
+the pipeline pauses with an Azure portal link for delegated consent and verifies
+the connection before completing the stage. The later Function App postdeploy
+hook installs the complete workflow definition and enables it.
+
 ## Component → pipeline map
 
 Each component deployment refreshes its dependency layers, previews and applies

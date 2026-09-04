@@ -61,9 +61,10 @@ Preview / Prod Variables`) and environment list. There is no shared
    retire `teamsapp.yml`'s `arm/deploy` step and let the unified Bicep
   layer own those resources; keep `teamsapp.yml` only for manifest
    creation + Teams app publish.
-4. **Logic App connections need OAuth consent.** `postprovision.ts` has
-   `TODO` stubs for the Teams / Blob managed-API consent flow. This must
-   be documented as a one-time manual step per environment.
+4. **Logic App connections need OAuth consent.** After Logic App
+  postprovision, the pipeline checks Teams connection status. When consent is
+  missing, an agentless manual validation provides the portal link and blocks
+  continuation until the connection is verified as `Connected`.
 5. **Key Vault soft-delete name collision.** `azuresdkqabot-keyvalut` (typo
    in original Bicep) is shared. Recommend renaming with environment
    suffix, but flag as breaking change requiring app-side config update.

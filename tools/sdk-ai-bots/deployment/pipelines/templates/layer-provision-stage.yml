@@ -58,3 +58,9 @@ stages:
                       operation: ${{ parameters.operation }}
                       layer: ${{ parameters.layer }}
                       dependencyLayers: ${{ parameters.dependencyLayers }}
+
+          - ${{ if and(eq(parameters.operation, 'apply'), eq(parameters.layer, 'logic-app')) }}:
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/logic-app-consent-jobs.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                      dependsOn: AzdProvisionLayer

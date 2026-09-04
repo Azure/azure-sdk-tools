@@ -46,9 +46,10 @@ These cannot be automated via Bicep and must be done once per environment by
 an operator with appropriate permissions:
 
 1. **Teams + Azure Blob OAuth consent** (Logic App). After the `logic-app`
-   layer is deployed, sign in to the portal and complete OAuth consent for
-   each managed-API connection. Connection names are printed by
-   `hooks/postprovision.ts`.
+   layer is deployed, the pipeline pauses when Teams consent is missing. Open
+   the supplied portal link, authorize with the Teams service account, save,
+   and resume. The pipeline verifies `Connected` before continuing. Complete
+   any other managed-API consent in the portal as required.
 2. **Teams App publish.** The Teams app manifest is built in CI; first-time
    publish into the tenant catalog is still done via Teams Toolkit
    (`teamsapp publish`). Subsequent updates flow through `teamsapp/update`.

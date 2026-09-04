@@ -61,14 +61,14 @@ stimuli:
 
   # ==== azsdk_check_api_spec_ready_for_sdk triggers ====
   - name: invoke-azsdk-check-api-spec-ready-for-sdk-1
-    prompt: "Check whether the API spec for TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager is ready to generate an SDK. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Check whether the API spec in pull request 38387 for TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager is approved and ready to generate an SDK. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_check_api_spec_ready_for_sdk"
   - name: invoke-azsdk-check-api-spec-ready-for-sdk-2
-    prompt: "Is the TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager ready for SDK generation? Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Is the API spec in pull request 38387 for TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager ready for SDK generation? Check API spec readiness rather than running TypeSpec configuration validation. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -100,7 +100,7 @@ stimuli:
           required:
             - name: "azsdk_get_release_plan"
   - name: invoke-azsdk-get-release-plan-2
-    prompt: "Show me the release plan details. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Show me the release plan details for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -175,7 +175,7 @@ stimuli:
           required:
             - name: "azsdk_get_service_details_by_typespec_path"
   - name: invoke-azsdk-get-service-details-by-typespec-path-5
-    prompt: "What service does this TypeSpec project belong to? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "What service does the TypeSpec project at specification/contosowidgetmanager/Contoso.WidgetManager belong to? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -223,14 +223,14 @@ stimuli:
 
   # ==== azsdk_run_generate_sdk triggers ====
   - name: invoke-azsdk-run-generate-sdk-1
-    prompt: "Generate the SDK from my TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager using the generation pipeline. Start the generation directly — do not first retrieve the release plan or check spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Generate the Python SDK from TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager using the generation pipeline for release plan work item 12345 and SDK release type beta. Start generation directly without retrieving the release plan or checking spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_run_generate_sdk"
   - name: invoke-azsdk-run-generate-sdk-2
-    prompt: "Generate the SDK for my TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager using the generation pipeline. Start the generation directly — do not first retrieve the release plan or check spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Run generation pipeline work item 12345 for the .NET SDK from TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager with SDK release type beta. Start generation directly without retrieving the release plan or checking spec readiness. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:

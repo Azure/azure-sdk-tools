@@ -55,7 +55,7 @@ The purpose of `azure-typespec-assessment` skill is to:
 
 **User:** Use `origin/main`.
 
-**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, TypeSpec Azure guidelines, semantic intents, and document quality and agent friendliness. It includes source-linked findings and impact explanations. Here is the report: `assessment.html`.
+**Agent:** I assessed the specification against the merge base with `origin/main`. The report covers REST breaking changes, downstream breaking changes, TypeSpec Azure guidelines, semantic intents, and document quality and agent friendliness. It includes source-linked findings and impact explanations.
 
 **User:** Fix the breaking changes and TypeSpec Azure guideline issues.
 

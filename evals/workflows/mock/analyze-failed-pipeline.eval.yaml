@@ -41,7 +41,7 @@ stimuli:
             - azsdk_analyze_pipeline
       - type: output-contains
         config:
-          substring: QueueClientOptions
+          substring: WidgetClientLiveTests.GetWidget
 
   - name: analyze-version-parser-bug
     environment:

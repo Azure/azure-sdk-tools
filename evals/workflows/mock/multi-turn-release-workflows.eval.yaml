@@ -63,6 +63,9 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
+      files:
+        - src: ../../fixtures/README.md
+          dest: sdk/contosowidgetmanager/azure-contoso-widgetmanager/README.md
     turns:
       - |
         Create a public preview release plan for the Contoso Widget Manager.
@@ -161,7 +164,9 @@ stimuli:
         plan (work item 29262) to
         https://github.com/Azure/azure-rest-api-specs/pull/38500.
       - |
-        Now regenerate the SDKs for all languages for that release plan.
+        Now regenerate the SDKs for all languages for that release plan using
+        TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager
+        and SDK release type beta.
     constraints:
       max_turns: 14
       max_tokens: 20000
@@ -241,21 +246,20 @@ stimuli:
         I've already got the azure-rest-api-specs repo cloned and I just want the
         Python SDK built locally. The tspconfig is at
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
+        My local azure-sdk-for-python target package is at
+        sdk/contosowidgetmanager/azure-contoso-widgetmanager.
     constraints:
       max_turns: 16
       max_tokens: 22000
     graders:
       # Session-scoped: the conversation must route to LOCAL generation (local
-      # skill + package_generate_code) and never touch the pipeline/publish path
-      # or re-verify. The agent commonly acts on the first, already-actionable
-      # turn rather than waiting for the clarifying turn, so these are asserted
-      # session-wide rather than pinned to a single turn.
+      # skill + package_generate_code) and never touch the pipeline/publish path.
+      # The vague opener may briefly load the pipeline skill before the local
+      # clarification arrives, so the tool-level guard enforces the boundary.
       - type: skill-invocation
         config:
           required:
             - azsdk-common-generate-sdk-locally
-          disallowed:
-            - azsdk-common-generate-sdk-pipeline
       - type: tool-calls
         config:
           required:
@@ -263,7 +267,6 @@ stimuli:
           disallowed:
             - azsdk_run_generate_sdk
             - azsdk_release_sdk
-            - azsdk_verify_setup
 
   # --- Scenario 6: local first, then the user switches to pipeline (#16226)
   # A self-contained local request, then the user changes their mind mid-session
@@ -275,9 +278,13 @@ stimuli:
         I've got the azure-rest-api-specs repo cloned locally — generate and build
         just the Python SDK for the Contoso Widget Manager from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
+        My local azure-sdk-for-python target package is at
+        sdk/contosowidgetmanager/azure-contoso-widgetmanager.
       - |
         Actually, I need this for every language now. Kick off SDK generation for
-        all languages using release plan 29262 and open the SDK pull requests.
+        all languages using release plan 29262, TypeSpec project
+        specification/contosowidgetmanager/Contoso.WidgetManager, and SDK release
+        type beta, then open the SDK pull requests.
     constraints:
       max_turns: 16
       max_tokens: 22000

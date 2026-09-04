@@ -1,24 +1,26 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Live end-to-end demo for the full release-planner -> generate-SDK flow.
+  Live multi-turn smoke test for the release-plan -> generate-SDK flow.
 
   Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
   real git worktree of azure-rest-api-specs. The MCP server runs with
   AZSDKTOOLS_AGENT_TESTING=true (set globally in .vally.yaml), so work items
   route to the DevOps test area path and are safe to leave around / re-run.
 
-  This scenario walks the agent through a multi-step chain that exercises
-  multiple skills back-to-back in a single conversation:
+  The stimulus sends three prompts to the SAME resumed agent session so each
+  turn must build on the confirmed release-plan context from the prior turn:
 
-    1. Release-plan skill   -> azsdk_create_release_plan, azsdk_get_release_plan
-    2. Generate-SDK skill   -> azsdk_run_generate_sdk
-    3. Release-plan skill   -> azsdk_link_sdk_pull_request_to_release_plan
+    1. Confirm plan  -> azsdk_get_release_plan
+    2. Generate SDK -> azsdk_run_generate_sdk
+    3. Link PR      -> azsdk_get_sdk_pull_request_link,
+                       azsdk_link_sdk_pull_request_to_release_plan
 
   The goal is to verify Vally end-to-end (live agent + live MCP + live DevOps)
   can:
-    - route each turn to the correct skill,
-    - call the correct tool on that skill,
-    - and do so in the expected order across multiple steps.
+    - switch from release-plan guidance to pipeline-generation guidance,
+    - call the correct live tools with valid inputs,
+    - reject failed generation responses,
+    - and report the resulting work item and linked SDK pull request.
 
   Demonstrates Vally's environment.git fixture hook + live MCP + Copilot SDK
   executor + real DevOps in one shot.
@@ -53,12 +55,14 @@ defaults:
 stimuli:
   - name: release-planner-e2e
     environment:
-      # Load the real release-planning skill so the executor can route to it
-      # (matches the mock suite). Without this the live executor reports
-      # "Skills used 0" and the skill-invocation grader can never pass.
+      # Mount both skills from turn 0 so release-plan and pipeline-generation
+      # guidance remain available throughout the resumed conversation. The
+      # fully concrete turns may validly call MCP tools directly, so tool
+      # results and the reported outcome are authoritative.
       # Path is relative to this eval file (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
       # Repo-relative azure-rest-api-specs worktree. Vally resolves a
       # non-absolute source relative to THIS eval file's directory (no
       # repo-root/env token yet — microsoft/vally#562), so the ../ depth is
@@ -70,71 +74,102 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
-    prompt: |
-      Walk me through the full
-      release-plan + SDK-generation flow for the Contoso Widget Manager
-      end-to-end. Do every step below, in order, and use real tools (no
-      dry-run, no simulation):
+    turns:
+      - |
+        Confirm the existing Contoso Widget Manager test release plan with
+        work-item ID 29262. Fetch it from DevOps and tell me its release-plan ID
+        and TypeSpec project. Do not start SDK generation or link a pull request
+        yet.
+      - |
+        Now start Python SDK generation for that confirmed release plan. Resolve
+        specification/contosowidgetmanager/Contoso.WidgetManager to its absolute
+        path in the current git worktree and use that absolute path with API
+        version 2022-11-01-preview and SDK release type beta. Confirm generation
+        was initiated successfully or is already in progress; do not treat a
+        failed response as success. Do not retrieve or link the SDK pull request
+        yet.
+      - |
+        Now get the Python SDK pull request recorded on that release plan and
+        link it back to the same plan. Finish with a concise summary containing
+        work-item ID 29262, the successful generation status, and the exact
+        linked SDK pull request URL.
 
-        1. Create a release plan using:
-             - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
-             - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
-             - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-             - target release timeline: "December 2026"
-             - API version: "2022-11-01-preview"
-             - SDK release type: "beta"
-             - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-
-        2. Fetch the release plan you just created back from DevOps to confirm
-           it was saved, and tell me its work-item ID.
-
-        3. Kick off SDK generation for that same TypeSpec project via the
-           generation pipeline (Python SDK is fine). Use the work-item ID
-           from step 2.
-
-        4. Once the generation pipeline reports a pull request URL, link
-           that SDK pull request back to the release plan from step 2.
-
-      My setup has already been verified, do not run azsdk_verify_setup.
+        My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 20
       max_tokens: 30000
     rubric:
-      - The final assistant message states a numeric DevOps work-item ID for the created or confirmed release plan.
+      - The final assistant message states work-item ID 29262 for the confirmed release plan.
+      - The final assistant message confirms SDK generation was initiated successfully or was already in progress, without reporting a generation failure.
       - The final assistant message states a GitHub pull request URL under github.com/Azure/azure-sdk-for-* that was linked to that release plan.
-    # TODO: assert strict ordering create -> get -> generate -> link
-    #   — blocked on https://github.com/microsoft/vally/issues/453 (tool-calls grader sequence:).
-    # TODO: assert args (serviceTreeId / productTreeId / typeSpecProjectPath / workItemId)
-    #   — blocked on https://github.com/microsoft/vally/issues/454 (tool-calls grader generic args:).
     graders:
-      # 1. Skill-routing check (FIRST — fast, deterministic, free): did the
-      #    agent dispatch to the right skill at all? If this fails, the
-      #    tool-calls grader below is meaningless.
+      # Turn 0 uses release-plan guidance to confirm the reusable test plan and
+      # does not jump ahead to pipeline generation.
       - type: skill-invocation
+        turn: 0
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # azsdk_run_generate_sdk is a release-planner pipeline kickoff, not
-          # a local TypeSpec build. azsdk-common-generate-sdk-locally over-
-          # matches on the word "generate" and pulls in the wrong workflow.
-          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
-            - azsdk-common-generate-sdk-locally
-      # 2. Tool-call check: given the right skill was loaded, did it call
-      #    the right MCP tools?
+            - azsdk-common-generate-sdk-pipeline
       - type: tool-calls
+        turn: 0
         config:
           required:
-            - azsdk_create_release_plan
+            - name: azsdk_get_release_plan
+              pattern: '"(?:workItemId|releasePlanId)":29262'
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_get_sdk_pull_request_link
+            - azsdk_link_sdk_pull_request_to_release_plan
+      # Turn 1 must initiate generation successfully with a path the live MCP
+      # can resolve, switching to pipeline-generation guidance. PR retrieval
+      # belongs to the next user turn.
+      - type: skill-invocation
+        turn: 1
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - name: azsdk_run_generate_sdk
+              args:
+                typespecProjectRoot: '(?i)(?:^/|^[A-Z]:[\\/]).*specification[\\/]contosowidgetmanager[\\/]Contoso\.WidgetManager$'
+              pattern: '"workItemId":29262'
+              result: '(?is)(?=.*operation_status.{0,20}Succeeded)(?=.*(?:has been initiated|already.{0,80}(?:In progress|Pending)))'
+          disallowed:
+            - azsdk_get_sdk_pull_request_link
+            - azsdk_link_sdk_pull_request_to_release_plan
+            - azsdk_release_sdk
+      # Turn 2 retrieves and relinks the existing generated PR; both live
+      # operations must complete successfully.
+      - type: tool-calls
+        turn: 2
+        config:
+          required:
+            - name: azsdk_get_sdk_pull_request_link
+              pattern: '"workItemId":29262'
+            - name: azsdk_link_sdk_pull_request_to_release_plan
+              pattern: '"workItemId":29262'
+              result: '(?is)(?=.*operation_status.{0,20}Succeeded)(?=.*Successfully linked pull request)'
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+      # Session-wide ordering and safety guard across all three turns.
+      - type: tool-calls
+        config:
+          sequence:
             - azsdk_get_release_plan
             - azsdk_run_generate_sdk
+            - azsdk_get_sdk_pull_request_link
             - azsdk_link_sdk_pull_request_to_release_plan
           disallowed:
             - azsdk_verify_setup
-      # 3. Final-answer correctness (LLM-judged): the deterministic graders
-      #    above only verify the agent *did* the right things, not that it
-      #    *reported* them back to the user correctly. Tools can fire
-      #    successfully while the final message hallucinates IDs / URLs.
+      # Final-answer correctness stays session-wide. Text-grader turn scoping
+      # is less reliable than skill/tool scoping (microsoft/vally#481), and the
+      # final user turn explicitly asks for the complete summary.
       #    This grader uses gpt-5.4 as judge against a free-form rubric so
       #    minor wording variants (`WI 29262`, `work-item #29262`) all pass.
       - type: prompt
@@ -143,23 +178,26 @@ stimuli:
           scoring: binary
           threshold: 1.0
           prompt: |
-            Did the final assistant message clearly state BOTH of the
+            Did the final assistant message clearly state ALL THREE of the
             following, consistent with the tools that were actually called?
 
-              1. A numeric DevOps work-item ID for the release plan that was
-                 created (or confirmed). Any unambiguous format is fine
-                 (e.g. "work item 29262", "WI #29262", "/_workitems/edit/29262").
+            1. The confirmed release-plan work-item ID 29262. Any unambiguous
+              format is fine (e.g. "work item 29262", "WI #29262",
+              "/_workitems/edit/29262").
 
-              2. A GitHub pull request URL on
-                 github.com/Azure/azure-sdk-for-* that was linked back to
-                 that release plan.
+            2. A clear statement that SDK generation was initiated successfully
+              or was already in progress. Fail this criterion if the response
+              says generation was blocked, rejected, or failed.
 
-            Answer "pass" only if BOTH are present. Otherwise answer "fail"
+            3. A GitHub pull request URL on github.com/Azure/azure-sdk-for-*
+              that was linked back to that release plan.
+
+            Answer "pass" only if ALL THREE are present. Otherwise answer "fail"
             and briefly say which one is missing.
 
 scoring:
   weights:
-    skill-invocation: 0.34
-    tool-calls: 0.33
-    prompt: 0.33
+    skill-invocation: 0.3
+    tool-calls: 0.4
+    prompt: 0.3
   threshold: 1.0

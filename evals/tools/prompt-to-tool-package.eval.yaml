@@ -56,13 +56,18 @@ stimuli:
 
   # ==== azsdk_package_generate_samples triggers ====
   - name: invoke-azsdk-package-generate-samples-1
-    prompt: "Generate sample code for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    environment: &sdkPackageFixture
+      files:
+        - src: ../fixtures/README.md
+          dest: sdk/contosowidgetmanager/Azure.Template.Contoso/README.md
+    prompt: "Generate sample code for the existing SDK package at sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_generate_samples"
   - name: invoke-azsdk-package-generate-samples-2
+    environment: *sdkPackageFixture
     prompt: "Create sample code for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso based on the scenarios in ./samples/scenarios.md. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
@@ -70,6 +75,7 @@ stimuli:
           required:
             - name: "azsdk_package_generate_samples"
   - name: invoke-azsdk-package-generate-samples-3
+    environment: *sdkPackageFixture
     prompt: "Generate samples for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso using the sample prompt file ./samples/prompt.md. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls

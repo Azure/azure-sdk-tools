@@ -21,6 +21,9 @@ stimuli:
   # Should trigger
   - name: trigger-create-a-new-skill
     prompt: "create a new skill"
+    environment: &targetSkill
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -28,6 +31,7 @@ stimuli:
 
   - name: trigger-write-a-skill-for-api-review
     prompt: "write a skill for API review"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -35,6 +39,7 @@ stimuli:
 
   - name: trigger-what-is-the-skill-md-format
     prompt: "what is the SKILL.md format"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -42,6 +47,7 @@ stimuli:
 
   - name: trigger-skill-template-structure
     prompt: "skill template structure"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -49,6 +55,7 @@ stimuli:
 
   - name: trigger-review-my-skill-pr-for-compliance
     prompt: "review my skill PR for compliance"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -56,6 +63,7 @@ stimuli:
 
   - name: trigger-skill-best-practices-and-token-budgets
     prompt: "skill best practices and token budgets"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -64,6 +72,7 @@ stimuli:
   # Should NOT trigger
   - name: anti-trigger-deploy-my-azure-function
     prompt: "deploy my Azure Function"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
@@ -71,27 +80,39 @@ stimuli:
 
   - name: anti-trigger-fix-my-pipeline-build-error
     prompt: "fix my pipeline build error"
+    environment:
+      skills:
+        - ..
+        - ../../azsdk-common-pipeline-fixer
     graders:
       - type: skill-invocation
         config:
+          required: ["azsdk-common-pipeline-fixer"]
           disallowed: ["skill-authoring"]
 
   - name: anti-trigger-authenticate-with-azure-ad
     prompt: "authenticate with Azure AD"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:
           disallowed: ["skill-authoring"]
 
   - name: anti-trigger-how-do-i-release-an-sdk-package
-    prompt: "how do I release an SDK package"
+    prompt: "Check release readiness and trigger the SDK release pipeline for release plan 12345."
+    environment:
+      skills:
+        - ..
+        - ../../azsdk-common-sdk-release
     graders:
       - type: skill-invocation
         config:
+          required: ["azsdk-common-sdk-release"]
           disallowed: ["skill-authoring"]
 
   - name: anti-trigger-configure-azure-storage-geo-redundancy
     prompt: "configure Azure Storage geo-redundancy"
+    environment: *targetSkill
     graders:
       - type: skill-invocation
         config:

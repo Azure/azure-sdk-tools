@@ -65,15 +65,86 @@ Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
 pipelines, runs nightly).
 
-| Scenario                                                                                      | Area         | Mode     | Shape                                                                                                                |
-| --------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------------------------------------------------------------------------------------- |
-| [`check-public-repo-then-validate`](workflows/mock/check-public-repo-then-validate.eval.yaml) | typespec     | mock     | Validate, then check public-repo presence                                                                            |
-| [`typespec-generation-step02`](workflows/mock/typespec-generation-step02.eval.yaml)           | typespec     | mock     | Step in the spec-PR generation flow                                                                                  |
-| [`rename-client-property`](workflows/mock/rename-client-property.eval.yaml)                   | typespec     | mock     | Stub — needs `expected-diff` grader + sparse clone                                                                   |
-| [`release-planner-workflows`](workflows/mock/release-planner-workflows.eval.yaml)             | release-plan | mock     | Create / re-fetch / link / update release-plan flows (5 stimuli)                                                     |
-| [`analyze-failed-pipeline`](workflows/mock/analyze-failed-pipeline.eval.yaml)                 | pipeline     | mock     | Two-tool path — pull pipeline status, then analyze the run to surface the failing test                               |
-| [`fix-pipeline`](workflows/mock/fix-pipeline.eval.yaml)                                       | pipeline     | mock     | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
-| [`release-planner`](workflows/live/release-planner.eval.yaml)                                 | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes                      |
+| Scenario                                                                                      | Area         | Mode     | Shape                                                                                                                                                             |
+| --------------------------------------------------------------------------------------------- | ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`check-public-repo-then-validate`](workflows/mock/check-public-repo-then-validate.eval.yaml) | typespec     | mock     | Validate, then check public-repo presence                                                                                                                         |
+| [`typespec-generation-step02`](workflows/mock/typespec-generation-step02.eval.yaml)           | typespec     | mock     | Step in the spec-PR generation flow                                                                                                                               |
+| [`rename-client-property`](workflows/mock/rename-client-property.eval.yaml)                   | typespec     | mock     | Stub — needs `expected-diff` grader + sparse clone                                                                                                                |
+| [`release-planner-workflows`](workflows/mock/release-planner-workflows.eval.yaml)             | release-plan | mock     | Create / re-fetch / link / update release-plan flows (5 stimuli)                                                                                                  |
+| [`multi-turn-release-workflows`](workflows/mock/multi-turn-release-workflows.eval.yaml)       | release-plan | mock     | Multi-turn `turns:` conversations — create→generate, generate→get-PR-link, relink→regenerate, vague-then-clarify, vague-then-local, local-then-switch (6 stimuli)  |
+| [`analyze-failed-pipeline`](workflows/mock/analyze-failed-pipeline.eval.yaml)                 | pipeline     | mock     | Two-tool path — pull pipeline status, then analyze the run to surface the failing test                                                                            |
+| [`fix-pipeline`](workflows/mock/fix-pipeline.eval.yaml)                                       | pipeline     | mock     | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools                                              |
+| [`multi-turn-pipeline-workflows`](workflows/mock/multi-turn-pipeline-workflows.eval.yaml)     | pipeline     | mock     | Multi-turn `turns:` conversations — diagnose→confirm→fix, and diagnose→decline (fixer must not fire; 2 stimuli)                                                   |
+| [`release-planner`](workflows/live/release-planner.eval.yaml)                                 | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes                                                                   |
+
+### Multi-turn conversation coverage
+
+Tracks [#16404](https://github.com/Azure/azure-sdk-tools/issues/16404) (parent
+epic [#16344](https://github.com/Azure/azure-sdk-tools/issues/16344); earlier
+investigation [#13015](https://github.com/Azure/azure-sdk-tools/issues/13015)).
+Every stimulus below is bound to the mock MCP, so clarification/confirmation
+turns never trigger real destructive side effects.
+
+**Covered today** — 8 conversation stimuli across the 2 files dedicated to
+multi-turn routing; the scenarios retrofitted below are multi-turn as well,
+but their primary assertion is still the underlying workflow:
+
+| Domain | File | Stimuli |
+|---|---|---|
+| Release plan / SDK generation | [`multi-turn-release-workflows`](workflows/mock/multi-turn-release-workflows.eval.yaml) | create→generate; generate→get-PR-link; relink→regenerate; vague→clarify (pipeline); vague→clarify (local); local→switch-to-pipeline |
+| Pipeline diagnosis / fixing | [`multi-turn-pipeline-workflows`](workflows/mock/multi-turn-pipeline-workflows.eval.yaml) | diagnose→confirm→fix (skill switch + real file fix verified); diagnose→decline (fixer must not fire, guards against incorrect early/eager tool-order) |
+
+Every scenario above pins `skill-invocation`/`tool-calls` graders to the
+specific `turn:` that owns the assertion. Per-turn grader scoping is designed
+to be generic across every built-in grader, 0-based to match the `turns:`
+array index ([microsoft/vally#481](https://github.com/microsoft/vally/issues/481));
+routing/tool-use graders turn-scope correctly here. `output-contains`/
+`output-matches` graders are asserted session-wide instead — in local testing
+they did not reliably isolate a single turn's content (see the comment in
+`multi-turn-pipeline-workflows.eval.yaml`), so re-verify turn-scoping for text
+graders before relying on it in a new scenario.
+
+**Remaining gaps** (not yet covered; tracked in [#16403](https://github.com/Azure/azure-sdk-tools/issues/16403)):
+
+- TypeSpec authoring multi-turn (e.g., validate → clarify a breaking-change question → apply the authoring plan).
+- APIView feedback resolution multi-turn (fetch comments → clarify scope → apply + re-request review).
+- SDK release readiness multi-turn (check readiness → clarify a blocking issue → trigger release).
+- Cross-skill handoff beyond release-plan/pipeline (e.g., pipeline fix → release readiness in the same session).
+
+### Retrofitting older single-turn scenarios
+
+Before Vally supported `turns:`, a genuinely multi-step workflow could only be
+tested by cramming every step's context into one giant initial prompt (e.g.
+"do X, then do Y, then do Z" or a raw tool-output block pasted into the
+prompt). Now that multi-turn is supported, those compound single-turn
+prompts have been retrofitted into natural conversations — one turn per
+real decision point, mirroring how a user would actually follow up after
+seeing each step's result:
+
+- `workflows/live/release-planner.eval.yaml` — the single "do every step
+  below, in order" prompt is now 4 turns (create → fetch back → generate →
+  link), each with its own `turn:`-scoped graders.
+- `workflows/mock/analyze-failed-pipeline.eval.yaml`'s `status-then-analyze`
+  — "first pull status, then analyze" is now 2 turns.
+- `workflows/mock/release-planner-workflows.eval.yaml`'s
+  `create-release-plan-and-generate-sdk` — "create, then generate" is now 2
+  turns instead of one compound ask.
+- `workflows/mock/check-public-repo-then-validate.eval.yaml` and
+  `workflows/mock/typespec-generation-step02.eval.yaml` — "edit, validate,
+  then check public-repo status" is now 2 turns; the public-repo check is a
+  natural follow-up decision, not part of the original ask.
+- `workflows/mock/fix-pipeline.eval.yaml` — the prompt used to embed a raw,
+  synthetic `"azsdk-analyze-pipeline" Analyzed Output:` block; reworded to
+  read as an authentic message a teammate would actually relay, since this
+  scenario's premise (a diagnosis from *outside* this session) is distinct
+  from the in-session diagnose-then-fix flow already covered by
+  `multi-turn-pipeline-workflows.eval.yaml`.
+
+Regression-pinned stimuli reproducing an exact reported prompt (e.g. the
+`#16072` / `#16226` scenarios in `release-planner-workflows.eval.yaml`) were
+deliberately left as single-turn — their value is reproducing the literal
+wording that triggered a real bug, so restructuring them would weaken the
+regression.
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`sync-eval-git-repo.ts`](../eng/common/scripts/eval/sync-eval-git-repo.ts)

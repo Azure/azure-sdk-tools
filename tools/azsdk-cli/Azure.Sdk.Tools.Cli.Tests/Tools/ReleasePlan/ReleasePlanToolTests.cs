@@ -1443,6 +1443,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_FindProduct_with_valid_typespec_path_and_no_product()
+        {
+            // Arrange
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps
+                .Setup(x => x.GetProductInfoByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((ProductInfo?)null);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var typeSpecProjectPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+
+            // Act
+            var result = await tool.GetProductByTypeSpecPath(typeSpecProjectPath);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.ProductInfo);
+            Assert.That(result.Message, Does.Contain("https://aka.ms/servicetree"));
+            Assert.That(result.Message, Does.Not.Contain("servicetree.msftcloudes.com"));
+        }
+
+        [Test]
         public async Task Test_FindProduct_with_nonexistent_typespec_path()
         {
             // Arrange

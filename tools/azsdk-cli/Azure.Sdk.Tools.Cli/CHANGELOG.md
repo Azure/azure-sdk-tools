@@ -21,6 +21,7 @@
 ### Bugs Fixed
 
 - `azsdk_run_generate_sdk` now blocks stable SDK generation for preview API versions.
+- Direct users to `https://aka.ms/servicetree` when automatic Service Tree ID lookup fails.
 
 ### Other Changes
 

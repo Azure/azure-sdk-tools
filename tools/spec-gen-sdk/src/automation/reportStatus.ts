@@ -44,6 +44,7 @@ export const generateReport = (context: WorkflowContext) => {
     const packageReport: PackageReport = {
       serviceName: pkg.serviceName,
       packageName: pkg.name,
+      packageRootPath: pkg.relativeFolderPath,
       result: pkg.status,
       artifactPaths: pkg.artifactPaths,
       readmeMd: pkg.readmeMd,

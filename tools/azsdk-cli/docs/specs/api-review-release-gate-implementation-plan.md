@@ -30,7 +30,7 @@ Each break-glass variable must use the same authorized-requester pattern as `Ski
 
 `Detect-Api-Changes.ps1` and `detect-api-changes.yml` are also unchanged by this proposal. They remain the PR-only APIView revision path during the transition. Once ARH owns PR revision creation and APIView is retired, they can be retired alongside `Create-APIReview.ps1` and `create-apireview.yml`.
 
-**NOTE:** This proposal does not change `eng/common/pipelines/templates/steps/validate-all-packages.yml`, `Validate-All-Packages.ps1`, or the Azure DevOps Package work-item update flow. Those pipelines may continue recording their existing APIView-derived validation fields independently; the unified release gate introduced here does not depend on or replace that behavior. Any changes to `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or their Package work-item behavior must be coordinated with Praveen, who owns that pipeline area.
+**NOTE:** This proposal does not change `eng/common/pipelines/templates/steps/validate-all-packages.yml`, `Update-Package-WorkItems.ps1`, or the Azure DevOps Package work-item update flow. Those pipelines may continue recording their existing APIView-derived validation fields independently; the unified release gate introduced here does not depend on or replace that behavior. Any changes to `validate-all-packages.yml`, `Update-Package-WorkItems.ps1`, or their Package work-item behavior must be coordinated with Praveen, who owns that pipeline area.
 
 ## Proposed Scripts and Step Templates
 
@@ -182,7 +182,7 @@ Non-responsibilities:
 - Wire mark-released into the release stage only, after publishing.
 - Migrate callers incrementally from `create-apireview.yml` to the three focused step templates.
 - Keep the legacy script and template available until all callers have migrated.
-- Do not modify `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or Package work-item update pipelines as part of this migration.
+- Do not modify `validate-all-packages.yml`, `Update-Package-WorkItems.ps1`, or Package work-item update pipelines as part of this migration.
 - Coordinate with Praveen before proposing any follow-up changes to those validation or work-item flows.
 
 ## Script Design Requirements

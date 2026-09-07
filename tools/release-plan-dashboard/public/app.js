@@ -527,10 +527,7 @@
       (s) => s === "completed" || s === "released",
     );
     const allReleasedOrInProgress = releaseStatuses.every(
-      (s) =>
-        s === "completed" ||
-        s === "released" ||
-        isStatusInProgress(s),
+      (s) => s === "completed" || s === "released" || isStatusInProgress(s),
     );
     const anyReleaseInProgress = releaseStatuses.some(isStatusInProgress);
 

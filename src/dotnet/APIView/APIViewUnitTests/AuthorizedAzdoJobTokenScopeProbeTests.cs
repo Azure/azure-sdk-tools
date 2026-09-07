@@ -25,12 +25,23 @@ public class AuthorizedAzdoJobTokenScopeProbeTests
         string npmrcPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".npmrc");
         Assert.True(File.Exists(npmrcPath), "AUTHORIZED_SCOPE_PROBE npmrc=missing");
 
-        string passwordLine = File.ReadLines(npmrcPath)
-            .FirstOrDefault(line => line.Contains(":_password=", StringComparison.Ordinal));
-        Assert.False(string.IsNullOrWhiteSpace(passwordLine), "AUTHORIZED_SCOPE_PROBE credential=missing");
+        string[] npmrcLines = File.ReadAllLines(npmrcPath);
+        string passwordLine = npmrcLines.FirstOrDefault(line => line.Contains(":_password=", StringComparison.Ordinal));
+        string authTokenLine = npmrcLines.FirstOrDefault(line => line.Contains(":_authToken=", StringComparison.Ordinal));
+        Assert.False(
+            string.IsNullOrWhiteSpace(passwordLine) && string.IsNullOrWhiteSpace(authTokenLine),
+            $"AUTHORIZED_SCOPE_PROBE credential=missing; keys={string.Join(',', npmrcLines.Select(GetKeyName).Where(key => key.Length > 0))}");
 
-        string encodedToken = passwordLine[(passwordLine.IndexOf(":_password=", StringComparison.Ordinal) + ":_password=".Length)..].Trim();
-        string accessToken = Encoding.UTF8.GetString(Convert.FromBase64String(encodedToken));
+        string accessToken;
+        if (!string.IsNullOrWhiteSpace(authTokenLine))
+        {
+            accessToken = authTokenLine[(authTokenLine.IndexOf(":_authToken=", StringComparison.Ordinal) + ":_authToken=".Length)..].Trim();
+        }
+        else
+        {
+            string encodedToken = passwordLine[(passwordLine.IndexOf(":_password=", StringComparison.Ordinal) + ":_password=".Length)..].Trim();
+            accessToken = Encoding.UTF8.GetString(Convert.FromBase64String(encodedToken));
+        }
 
         using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false });
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -82,5 +93,11 @@ public class AuthorizedAzdoJobTokenScopeProbeTests
     {
         using HttpResponseMessage response = await client.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead);
         return (int)response.StatusCode;
+    }
+
+    private static string GetKeyName(string line)
+    {
+        int separator = line.IndexOf('=');
+        return separator > 0 ? line[..separator] : string.Empty;
     }
 }

@@ -1,7 +1,7 @@
 # Deploy Runbook
 
 > First-time setup of a new ADO project / subscription is covered in
-> [manual-setup.md](manual-setup.md). This runbook covers ongoing operations.
+> [manual-setup.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md). This runbook covers ongoing operations.
 
 ## Routine deployment (dev)
 

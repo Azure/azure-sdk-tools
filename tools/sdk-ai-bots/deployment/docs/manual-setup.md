@@ -90,7 +90,7 @@ connection:
 
 ## 4. Fill in environment-suite placeholders
 
-Edit [infra/environments/environment-suite.yaml](../infra/environments/environment-suite.yaml)
+Edit [infra/environments/environment-suite.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml)
 and replace every `REPLACE_WITH_*` value:
 
 - [ ] `subscriptionId` for `dev`, `preview`, `prod`
@@ -135,7 +135,7 @@ The script creates the home-tenant service principal, exposes
 `access_as_user` and `access_as_application`, and preauthorizes Azure CLI
 (`04b07795-8ddb-461a-bbee-02f9e1bf7b46`). It prints the fixed
 `serverApplicationClientId` and `serverApplicationIdUri` values to copy into
-[environment-suite.yaml](../infra/environments/environment-suite.yaml).
+[environment-suite.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml).
 
 Run with `--dry-run` to inspect the plan without Azure calls. To configure an
 existing application, add `--application-client-id <client-id>`. To assign the
@@ -157,34 +157,34 @@ convention (`tools - <tool-name> - <action>`).
 
 ### Component CI (4)
 
-- [ ] `tools - sdk-ai-bots-frontend - ci` → [frontend.ci.yml](../pipelines/orchestrators/frontend/frontend.ci.yml)
-- [ ] `tools - sdk-ai-bots-function-app - ci` → [function-app.ci.yml](../pipelines/orchestrators/function-app/function-app.ci.yml)
-- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](../pipelines/orchestrators/agent/agent.ci.yml) (also builds the agent-server image)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - ci` → [knowledge-sync.ci.yml](../pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml)
+- [ ] `tools - sdk-ai-bots-frontend - ci` → [frontend.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/frontend/frontend.ci.yml)
+- [ ] `tools - sdk-ai-bots-function-app - ci` → [function-app.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/function-app/function-app.ci.yml)
+- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/agent/agent.ci.yml) (also builds the agent-server image)
+- [ ] `tools - sdk-ai-bots-knowledge-sync - ci` → [knowledge-sync.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml)
 
 ### Component provision and deploy (5)
 
-- [ ] `tools - sdk-ai-bots-frontend - provision-and-deploy` → [frontend.yml](../pipelines/orchestrators/frontend/frontend.yml)
-- [ ] `tools - sdk-ai-bots-agent-server - provision-and-deploy` → [agent-server.yml](../pipelines/orchestrators/agent-server/agent-server.yml)
-- [ ] `tools - sdk-ai-bots-function-app - provision-and-deploy` → [function-app.yml](../pipelines/orchestrators/function-app/function-app.yml)
-- [ ] `tools - sdk-ai-bots-agent - provision-and-deploy` → [agent.yml](../pipelines/orchestrators/agent/agent.yml)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` → [knowledge-sync.yml](../pipelines/orchestrators/knowledge-sync/knowledge-sync.yml) (scheduled)
+- [ ] `tools - sdk-ai-bots-frontend - provision-and-deploy` → [frontend.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/frontend/frontend.yml)
+- [ ] `tools - sdk-ai-bots-agent-server - provision-and-deploy` → [agent-server.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/agent-server/agent-server.yml)
+- [ ] `tools - sdk-ai-bots-function-app - provision-and-deploy` → [function-app.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/function-app/function-app.yml)
+- [ ] `tools - sdk-ai-bots-agent - provision-and-deploy` → [agent.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/agent/agent.yml)
+- [ ] `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` → [knowledge-sync.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml) (scheduled)
 
 ### Provision-only layer diagnostics (2)
 
-- [ ] `tools - sdk-ai-bots-shared-resources - provision` → [shared-resources.yml](../pipelines/orchestrators/shared-resources/shared-resources.yml) (resource group + shared resources)
-- [ ] `tools - sdk-ai-bots-logic-app - provision` → [logic-app.yml](../pipelines/orchestrators/logic-app/logic-app.yml)
+- [ ] `tools - sdk-ai-bots-shared-resources - provision` → [shared-resources.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/shared-resources/shared-resources.yml) (resource group + shared resources)
+- [ ] `tools - sdk-ai-bots-logic-app - provision` → [logic-app.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/logic-app/logic-app.yml)
 
 ### Full-stack provision and deploy (1)
 
-- [ ] `tools - sdk-ai-bots - provision-and-deploy-all` → [qa-bot-all.yml](../pipelines/orchestrators/qa-bot-all.yml)
+- [ ] `tools - sdk-ai-bots - provision-and-deploy-all` → [qa-bot-all.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/qa-bot-all.yml)
 
 ### Specialized data and evolution workflows (4)
 
-- [ ] `tools - sdk-ai-bots-wiki-index - ci` → [ci.yml](../../azure-sdk-qa-bot-wiki-index/ci.yml)
-- [ ] `tools - sdk-ai-bots-wiki-index - build` → [build_wiki.yml](../../azure-sdk-qa-bot-wiki-index/build_wiki.yml) (scheduled)
-- [ ] `tools - sdk-ai-bots-hosted-agent - deploy` → [agent-cd.yml](../../azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) (use `chatbot_evolution_agent` only with `prod`)
-- [ ] `tools - sdk-ai-bots-feedback-jobs` → [feedback-job.yml](../../azure-sdk-qa-bot-agent/pipelines/feedback-job.yml) (scheduled, prod)
+- [ ] `tools - sdk-ai-bots-wiki-index - ci` → [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index/ci.yml)
+- [ ] `tools - sdk-ai-bots-wiki-index - build` → [build_wiki.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index/build_wiki.yml) (scheduled)
+- [ ] `tools - sdk-ai-bots-hosted-agent - deploy` → [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) (use `chatbot_evolution_agent` only with `prod`)
+- [ ] `tools - sdk-ai-bots-feedback-jobs` → [feedback-job.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/feedback-job.yml) (scheduled, prod)
 
 Grant the feedback pipeline's build identity **Queue builds** permission on the
 knowledge-sync definition. Candidate restoration resolves that definition by
@@ -193,7 +193,7 @@ queues it with `environment=dev` and `provisionInfrastructure=false`.
 
 ### Cross-repo authorization
 
-For [knowledge-sync.yml](../pipelines/orchestrators/knowledge-sync/knowledge-sync.yml),
+For [knowledge-sync.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml),
 authorize the pipeline to use the three resource repositories on first run:
 
 - [ ] `1ESPipelineTemplates/1ESPipelineTemplates`
@@ -204,15 +204,15 @@ authorize the pipeline to use the three resource repositories on first run:
 
 ## 7. Repository hygiene
 
-- [ ] Add owners to [.github/CODEOWNERS](../../../../.github/CODEOWNERS):
+- [ ] Add owners to [.github/CODEOWNERS](https://github.com/Azure/azure-sdk-tools/blob/main/.github/CODEOWNERS):
 
   ```text
   /tools/sdk-ai-bots/deployment/   @owner1 @owner2
   ```
 
-- [ ] Update root [README.md](../../../../README.md) index table to mention
+- [ ] Update root [README.md](https://github.com/Azure/azure-sdk-tools/blob/main/README.md) index table to mention
   `tools/sdk-ai-bots/deployment/` (per
-  [.github/copilot-instructions.md](../../../../.github/copilot-instructions.md)).
+  [.github/copilot-instructions.md](https://github.com/Azure/azure-sdk-tools/blob/main/.github/copilot-instructions.md)).
 - [ ] Configure **branch protection** on `main` for
   `tools/sdk-ai-bots/deployment/**`:
   - require CODEOWNER review
@@ -261,7 +261,7 @@ azd provision --environment dev --no-prompt
 ```
 
 The `postprovision` hook runs the infra-layer pipeline
-([hooks/postprovision.ts](../hooks/postprovision.ts)). On success you will
+([hooks/postprovision.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/postprovision.ts)). On success you will
 have:
 
 - Resource group `rg-azuresdkqabot-dev`
@@ -297,7 +297,7 @@ az keyvault secret set --vault-name "$KV" --name CosmosDbConnectionString \
               --query 'connectionStrings[0].connectionString' -o tsv)"
 ```
 
-Full inventory is referenced in [hooks/postprovision.ts](../hooks/postprovision.ts)
+Full inventory is referenced in [hooks/postprovision.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/postprovision.ts)
 under `seedKeyVaultSecrets()`.
 
 ---
@@ -332,8 +332,8 @@ npm run deploy:logic-app -- --env <env>
 
 **Automated.** The runtime config keys consumed by the agent / agent-server /
 function-app are seeded by the postprovision hook
-([hooks/postprovision.ts](../hooks/postprovision.ts) `updateAppConfiguration()`
-→ [hooks/lib/seed-app-config.ts](../hooks/lib/seed-app-config.ts)). It writes
+([hooks/postprovision.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/postprovision.ts) `updateAppConfiguration()`
+→ [hooks/lib/seed-app-config.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/seed-app-config.ts)). It writes
 two classes of values:
 
 - **Fixed** — model names, tuning params, feature flags, AI Search data-plane
@@ -378,7 +378,7 @@ on first setup:
 
 ## 13. Teams App — first-time publish
 
-The Teams app manifest is built by [frontend.ci.yml](../pipelines/orchestrators/frontend/frontend.ci.yml)
+The Teams app manifest is built by [frontend.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/frontend/frontend.ci.yml)
 as `appPackage.<env>.zip`. The first time it's installed in your tenant
 you must publish it manually:
 
@@ -393,7 +393,7 @@ Subsequent updates flow through CI via `teamsapp/update`.
 
 ## 14. Storage — blob versioning
 
-Required for knowledge-sync rollback ([runbook-rollback.md](runbook-rollback.md)).
+Required for knowledge-sync rollback ([runbook-rollback.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md)).
 
 - [ ] Portal → Storage account `azuresdkqabotstorage<env>` → Data protection
   → enable **Blob versioning** with 90-day retention.
@@ -403,7 +403,7 @@ Required for knowledge-sync rollback ([runbook-rollback.md](runbook-rollback.md)
 ## 15. Operational readiness
 
 Before the first prod rollout, sign off
-[operational-readiness-checklist.md](operational-readiness-checklist.md):
+[operational-readiness-checklist.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md):
 
 - [ ] DRI named per component
 - [ ] On-call rotation includes this system
@@ -418,9 +418,9 @@ Before the first prod rollout, sign off
 After the new pipelines are validated for at least one week in dev and
 preview:
 
-- [ ] Delete or disable [azure-sdk-qa-bot-agent/pipelines/server-ci.yml](../../azure-sdk-qa-bot-agent/pipelines/server-ci.yml), [server-cd.yml](../../azure-sdk-qa-bot-agent/pipelines/server-cd.yml), [agent-cd.yml](../../azure-sdk-qa-bot-agent/pipelines/agent-cd.yml), [logicapp-cd.yml](../../azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml)
-- [ ] Delete or disable [azure-sdk-qa-bot-knowledge-sync/ci.yml](../../azure-sdk-qa-bot-knowledge-sync/ci.yml) and [sync_knowledge.yml](../../azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml)
-- [ ] Edit [azure-sdk-qa-bot/teamsapp.yml](../../azure-sdk-qa-bot/teamsapp.yml) — remove the `arm/deploy` step (the unified Bicep now owns those resources); keep the manifest publish steps.
+- [ ] Delete or disable [azure-sdk-qa-bot-agent/pipelines/server-ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-ci.yml), [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml), [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml), [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml)
+- [ ] Delete or disable [azure-sdk-qa-bot-knowledge-sync/ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/ci.yml) and [sync_knowledge.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml)
+- [ ] Edit [azure-sdk-qa-bot/teamsapp.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml) — remove the `arm/deploy` step (the unified Bicep now owns those resources); keep the manifest publish steps.
 
 ---
 
@@ -469,9 +469,9 @@ them** — exactly like the Logic App workflow reverting to its empty shell.
 
 | Resource | Bicep provisions | Hook re-applies | Hook | Why Bicep can't own it | Recovery after re-provision |
 |---|---|---|---|---|---|
-| **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT; `Disabled` until Teams OAuth is connected, then `Enabled` | [hooks/lib/patch-workflow.ts](../hooks/lib/patch-workflow.ts) (fired by [hooks/function-postdeploy.ts](../hooks/function-postdeploy.ts); also [scripts/deploy-logic-app.ts](../scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy function-app`, or `npm run deploy:logic-app` |
-| **Frontend App Service** container image | Site pinned to mutable `:dev` tag | Repoints site to immutable `dev-N.0.0` via `az webapp config container set` | [hooks/frontend-predeploy.ts](../hooks/frontend-predeploy.ts) | azd doesn't re-provision on deploy, and the immutable tag is auto-incremented against ACR at **deploy** time (unknown at provision); the resolved tag is **not** persisted to a Bicep param | `azd deploy frontend` |
-| **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](../hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
+| **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT; `Disabled` until Teams OAuth is connected, then `Enabled` | [hooks/lib/patch-workflow.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/patch-workflow.ts) (fired by [hooks/function-postdeploy.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/function-postdeploy.ts); also [scripts/deploy-logic-app.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy function-app`, or `npm run deploy:logic-app` |
+| **Frontend App Service** container image | Site pinned to mutable `:dev` tag | Repoints site to immutable `dev-N.0.0` via `az webapp config container set` | [hooks/frontend-predeploy.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/frontend-predeploy.ts) | azd doesn't re-provision on deploy, and the immutable tag is auto-incremented against ACR at **deploy** time (unknown at provision); the resolved tag is **not** persisted to a Bicep param | `azd deploy frontend` |
+| **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
 | **Agent-server production site** container image | Site `linuxFxVersion` from `AGENT_SERVER_IMAGE_REPOSITORY` (defaults to `:dev`) | azd remotely builds `azure-sdk-qa-bot-agent-server`, records `SERVICE_AGENT_SERVER_IMAGE_NAME`, and deploys it directly to the site resolved by `resourceName: ${AGENT_SERVER_SITE_NAME}` | Native azd App Service container deployment | Every deployment creates a new remote build from the selected source revision | `azd deploy agent-server` |
 
 ### 17.2 State that survives a re-provision — no action needed
@@ -479,8 +479,8 @@ them** — exactly like the Logic App workflow reverting to its empty shell.
 These are either not declared in Bicep (so provision cannot remove them) or are
 re-seeded by the postprovision hook on **every** provision, so they are safe:
 
-- **Key Vault secrets** — [hooks/lib/seed-key-vault.ts](../hooks/lib/seed-key-vault.ts) (values not declared in Bicep; re-seeded each provision)
-- **App Configuration values** — [hooks/lib/seed-app-config.ts](../hooks/lib/seed-app-config.ts) (re-seeded each provision)
-- **Role assignments** (e.g. agent identity → "Azure AI User") — [hooks/lib/ensure-role-assignment.ts](../hooks/lib/ensure-role-assignment.ts) (created only if absent; not declared in Bicep, so provision won't delete them)
-- **Bot config blobs** — [hooks/lib/upload-bot-configs.ts](../hooks/lib/upload-bot-configs.ts) (blob content, not a Bicep-owned property)
+- **Key Vault secrets** — [hooks/lib/seed-key-vault.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/seed-key-vault.ts) (values not declared in Bicep; re-seeded each provision)
+- **App Configuration values** — [hooks/lib/seed-app-config.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/seed-app-config.ts) (re-seeded each provision)
+- **Role assignments** (e.g. agent identity → "Azure AI User") — [hooks/lib/ensure-role-assignment.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/ensure-role-assignment.ts) (created only if absent; not declared in Bicep, so provision won't delete them)
+- **Bot config blobs** — [hooks/lib/upload-bot-configs.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/upload-bot-configs.ts) (blob content, not a Bicep-owned property)
 - **Managed-API OAuth consent** (Teams / Blob / Cosmos connections) — see §10 (connection auth persists across provisions)

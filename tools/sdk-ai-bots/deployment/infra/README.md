@@ -49,7 +49,7 @@ pwsh ../scripts/detect-drift.ps1 -Environment prod
 
 Every pipeline reads `environments/environment-suite.yaml` rather than
 hard-coding subscription IDs, regions, or Teams routing. See
-[`../docs/environment-contract.md`](../docs/environment-contract.md).
+[`../docs/environment-contract.md`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md).
 Each layer's `main.bicepparam` resolves values from the same environment.
 
 ## Independent teardown

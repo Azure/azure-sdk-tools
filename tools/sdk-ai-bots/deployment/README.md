@@ -30,15 +30,15 @@ deployment/
 
 ## Quick links
 
-- [Master plan](DEPLOYMENT_TRANSFORMATION.md)
-- [Manual setup guide](docs/manual-setup.md) — **start here for a new ADO project / subscription**
-- [Dev deployment checklist](docs/dev-deployment-checklist.md)
-- [Recent merged-PR impact audit](docs/recent-pr-deployment-impact-2026-09.md)
-- [Environment-contract](docs/environment-contract.md)
-- [Deploy runbook](docs/runbook-deploy.md)
-- [Rollback runbook](docs/runbook-rollback.md)
-- [Component dependency graph](docs/component-dependency-graph.md)
-- [Operational readiness checklist](docs/operational-readiness-checklist.md)
+- [Master plan](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/DEPLOYMENT_TRANSFORMATION.md)
+- [Manual setup guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md) — **start here for a new ADO project / subscription**
+- [Dev deployment checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/dev-deployment-checklist.md)
+- [Recent merged-PR impact audit](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/recent-pr-deployment-impact-2026-09.md)
+- [Environment-contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md)
+- [Deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md)
+- [Rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md)
+- [Component dependency graph](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/component-dependency-graph.md)
+- [Operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md)
 
 ## Get started (dev)
 
@@ -77,7 +77,7 @@ infrastructure layer, then deploys the component. Configure approvals, branch
 controls, and pipeline permissions on the corresponding service connection.
 
 The generated-wiki build, chatbot-evolution deployment, and feedback scan are
-specialized pipelines listed in [pipelines/README.md](pipelines/README.md). They
+specialized pipelines listed in [pipelines/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md). They
 share the same environment suite and provisioned resources but run separately
 from the long-running application-service deployment.
 

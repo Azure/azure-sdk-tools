@@ -54,7 +54,7 @@ access remain unchecked.
 ## Configuration and validation
 
 - [x] The `dev` block in
-      [environment-suite.yaml](../infra/environments/environment-suite.yaml)
+      [environment-suite.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml)
       matches the active service connection, subscription, tenant, resource
       group, and regions.
 - [x] Use globally unique names for Key Vault, App Configuration, ACR, and all
@@ -129,7 +129,7 @@ The following live `GlobalStandard` deployments in
 
 - [x] The current user can create, edit, and queue YAML pipelines under
       `\tools\sdk-ai-bots`.
-- [x] Full-stack pipeline [qa-bot-all.yml](../pipelines/orchestrators/qa-bot-all.yml)
+- [x] Full-stack pipeline [qa-bot-all.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/qa-bot-all.yml)
       is enabled as definition `8265`.
 - [x] Shared-resources, Logic App, Function App, frontend, agent-server, and
       hosted-agent component pipelines are enabled as definitions `8367` through

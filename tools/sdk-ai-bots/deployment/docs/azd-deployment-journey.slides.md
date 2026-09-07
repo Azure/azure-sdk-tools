@@ -366,7 +366,7 @@ Idempotent RBAC, conditional OAuth resources, deferred/two-phase workflows, "ens
 
 ## Medium term
 
-- **Move infra from Bicep to TypeScript** using [`js-provisioning-lib`](https://github.com/Azure/js-provisioning-lib) — same declarative model as Bicep, but authored in the same language as the hooks, so types flow end-to-end. `azd` still consumes the emitted Bicep as usual.
+- **Move infra from Bicep to TypeScript** using `js-provisioning-lib` — same declarative model as Bicep, but authored in the same language as the hooks, so types flow end-to-end. `azd` still consumes the emitted Bicep as usual.
 - Split `main.bicep` explicitly into provision **layers** with parallel deploy in `postprovision` (the layer pipeline exists but is dormant).
 - Publish a `deployment` npm package so hooks are shared code, not per-repo copies.
 
@@ -403,7 +403,7 @@ Every hook we own is a **temporary bridge**. The end state is:
 
 ---
 
-# IaC via [`js-provisioning-lib`](https://github.com/Azure/js-provisioning-lib) — infra as _TypeScript_, compiled to Bicep, consumed by `azd`
+# IaC via `js-provisioning-lib` — infra as _TypeScript_, compiled to Bicep, consumed by `azd`
 
 Instead of authoring Bicep (a separate DSL) plus hooks (TypeScript), we author _both_ in TypeScript. `js-provisioning-lib` compiles our stacks to `.bicep`; `azd` reads those files exactly as it does today.
 
@@ -513,7 +513,7 @@ Every hook we keep is measured against that goal.
 | Bug | [azure-dev#9250](https://github.com/Azure/azure-dev/issues/9250) | Container-based Function App on `host: function` **hangs** |
 | Fixed in 1.29.0 | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | Preserve service-level hooks and `${ENV}` image templates |
 | Related work | [azure-sdk-tools#16357](https://github.com/Azure/azure-sdk-tools/pull/16357) | Chatbot deployment PoC |
-| Related work | [Azure/js-provisioning-lib](https://github.com/Azure/js-provisioning-lib) | JS provisioning libraries |
+| Related work | `Azure/js-provisioning-lib` | JS provisioning libraries |
 
 ---
 

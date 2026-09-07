@@ -434,7 +434,7 @@ If `azd` let us express **stages + inter-resource references** natively, the ord
 
 Bicep is a separate DSL that **can't express** idempotent RBAC, conditional OAuth resources, deferred workflows, or "ensure-if-not-exists" — so each leaks into a TypeScript hook. Two languages, two mental models, one gap between them.
 
-**Author infra in the same language as the hooks.** With [`js-provisioning-lib`](https://github.com/Azure/js-provisioning-lib), the stack is TypeScript, compiled to Bicep, consumed by `azd` unchanged:
+**Author infra in the same language as the hooks.** With `js-provisioning-lib`, the stack is TypeScript, compiled to Bicep, consumed by `azd` unchanged:
 
 ```ts
 const identity = new UserAssignedIdentity(rg, { name: 'qabot-identity' });
@@ -511,7 +511,7 @@ stack.outputs.add('AZURE_APPCONFIG_ENDPOINT', 'string', appCfg.properties.endpoi
 | Fixed in 1.29.0 | [azure-dev#9249](https://github.com/Azure/azure-dev/issues/9249) | Preserve unknown App Service settings during deploy |
 | Bug | [azure-dev#9250](https://github.com/Azure/azure-dev/issues/9250) | Container Function App on `host: function` hangs |
 | Fixed in 1.29.0 | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | Preserve service-level hooks during deploy |
-| Related | [Azure/js-provisioning-lib](https://github.com/Azure/js-provisioning-lib) | Infra as TypeScript, compiled to Bicep |
+| Related | `Azure/js-provisioning-lib` | Infra as TypeScript, compiled to Bicep |
 | Related | [azure-sdk-tools#16357](https://github.com/Azure/azure-sdk-tools/pull/16357) | Chatbot deployment PoC |
 
 ---

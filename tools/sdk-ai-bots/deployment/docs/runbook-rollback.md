@@ -1,51 +1,87 @@
 # Rollback Runbook
 
-> Deployments build remotely from source. Rollback restores a previous platform
-> revision or reruns the orchestrator from a known-good source commit.
+The deployment does not provide an automated slot or revision rollback. The
+supported code recovery is to rerun the matching orchestrator from a known-good
+source revision, producing a new remote build and reapplying its deployment
+hooks.
 
-## When to roll back
+## 1. Decide and Contain
 
-| Signal                                                          | Action                              |
-| --------------------------------------------------------------- | ----------------------------------- |
-| `/health` or `/ping` returns non-200 for > 5 min after a deploy | Roll back the deployed component    |
-| 5xx rate exceeds env-suite `minSuccessRate` budget over 5 min   | Roll back                           |
-| p95 latency exceeds env-suite `latencyP95Ms` over 5 min         | Investigate; roll back if causal    |
-| Cosmos / Search / Key Vault credential or schema error in logs  | Roll back; raise data-recovery flag |
-| Operator request                                                | Roll back                           |
+Rollback when a deployment causes sustained health, authentication, message
+delivery, data integrity, or latency regression.
 
-## Rollback paths per component
+1. Stop further promotion and record the failed source revision and pipeline
+   run.
+2. Identify the affected component and last verified source revision.
+3. For a dangerous Logic App path, disable the workflow while recovery is in
+   progress.
+4. Preserve logs, deployment output, App Insights traces, and relevant data-job
+   manifests before making another change.
 
-| Component      | Primary path                                                   | Manual fallback                                      |
-| -------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
-| frontend       | swap back to the previous App Service slot or revision         | rerun its orchestrator from a known-good commit      |
-| function-app   | swap back to the previous App Service slot or revision         | rerun its orchestrator from a known-good commit      |
-| agent-server   | restore the previous App Service container revision            | rerun its orchestrator from a known-good commit      |
-| hosted agent   | restore the previous Foundry hosted-agent revision             | open Foundry portal and revert the revision          |
-| logic-app      | re-apply the previous Bicep revision from source control       | disable the workflow while recovering               |
-| knowledge-sync | restore the previous Storage blob snapshot and rerun the sync  | rerun from the previous knowledge manifest           |
+## 2. Redeploy a Known-good Revision
 
-## Rollback procedure
+Queue the matching component orchestrator at the last verified source revision.
+Use the full-stack orchestrator only when the failure crosses component or
+infrastructure contracts.
 
-1. Identify the last healthy platform revision and source commit from deployment
-  history.
-2. Prefer restoring the previous App Service slot/revision or Foundry revision.
-3. If that revision is unavailable, check out the known-good commit and rerun
-  the matching orchestrator. This performs a new remote build from that source.
-4. Run smoke tests before restoring traffic.
+| Failure area | Recovery path |
+| --- | --- |
+| Frontend | Run the frontend orchestrator from the known-good revision. Reapply the prior Teams package if its manifest changed. |
+| Agent-server | Run the agent-server orchestrator from the known-good revision. It deploys directly to the production site. |
+| Function App | Run the Function App orchestrator from the known-good revision; its postdeploy hook reapplies the Logic App definition. |
+| Chat agent | Run the agent orchestrator or hosted-agent pipeline from the known-good revision and verify the new active Foundry version. |
+| Evolution agent | Run the production hosted-agent deployment from the known-good revision and verify primary/candidate RBAC. |
+| Logic App | Deploy the Function App from the known-good revision to reapply its workflow, or keep the workflow disabled during investigation. |
 
-## What blocks rollback
+Review and approve the infrastructure preview even during rollback. A prior
+source revision may also contain older Bicep; do not approve unintended
+infrastructure reversions merely to restore application code.
 
-| Blocker                             | Mitigation                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------- |
-| Breaking Cosmos schema change       | use expand/contract migrations; if irreversible, restore from latest backup before rollback |
-| Breaking Search index schema change | use index versioning (`azure-sdk-knowledge-v<n>`); switch alias instead of redefining       |
-| Foundry model deprecated            | redeploy with previous model deployment tag; this is a config-only revert                   |
-| Teams App manifest change           | manifest is auto-uploaded by CI; previous manifest can be re-applied via `teamsapp/update`  |
-| Logic App connection re-consented   | re-run OAuth consent flow (cannot be automated)                                             |
+For dev-only emergency testing, check out the known-good revision and run
+`azd deploy <service> --environment dev`. Production recovery remains
+pipeline-only.
 
-## Post-rollback
+## 3. Recover Data Jobs
 
-1. File an incident in the team's tracking system.
-2. Identify root cause; do not redeploy the failing source revision without a fix.
-3. Update `docs/operational-readiness-checklist.md` if a new gate would have
-   prevented the issue.
+Code redeployment does not automatically restore data.
+
+- **Knowledge sync:** rerun from the last known-good source/input snapshot. If
+   blob versioning was enabled before the incident, restore the affected blob
+   versions first, then start the primary Search indexer.
+- **Generated wiki:** clear only the generated wiki state when required, rebuild
+   from the known-good corpus, then start the wiki Search indexer.
+- **Search schema:** prefer creating a compatible replacement index and moving
+   consumers after validation. Do not delete a populated production index as an
+   emergency first step.
+- **Cosmos DB:** use the configured continuous-backup restore procedure. Restore
+   to a separate account and validate before redirecting consumers.
+- **Candidate evolution:** queue
+   `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` with
+   `environment=dev` and `provisionInfrastructure=false`, then verify it
+   completes before resuming feedback processing. The caller needs permission to
+   queue that definition.
+
+Blob versioning is disabled by the current Bicep configuration. Do not claim
+blob-version recovery unless it was enabled and tested before the incident.
+
+## 4. Verify Recovery
+
+Repeat every relevant check in the deploy runbook:
+
+1. service health endpoints;
+2. Teams message and Logic App activity path;
+3. hosted-agent active versions and RBAC;
+4. App Insights errors and dependencies;
+5. Search document availability and indexer status;
+6. source and deployed version recording.
+
+Keep traffic or the workflow disabled until verification passes. Do not
+redeploy the failed revision without a reviewed fix.
+
+## 5. Follow Up
+
+1. File an incident and identify the failure mechanism.
+2. Record the recovery source revision, pipeline runs, and data actions.
+3. Add a CI, readiness, or observability gate when it would have detected the
+    problem earlier.
+4. Update this runbook when the platform gains an automated rollback mechanism.

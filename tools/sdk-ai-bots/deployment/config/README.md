@@ -1,4 +1,4 @@
-# bot-configs source tree
+# Bot Configuration Source
 
 Per-env YAML/JSON files uploaded to the shared storage account's `bot-configs`
 blob container by `hooks/postprovision.ts` (via
@@ -12,9 +12,11 @@ config/
 │   ├── channel.yaml
 │   └── tenant.yaml
 ├── preview/
-│   └── (add per-env files here)
+│   ├── channel.yaml
+│   └── tenant.yaml
 └── prod/
-    └── (add per-env files here)
+    ├── channel.yaml
+    └── tenant.yaml
 ```
 
 Subdirectories are preserved as blob paths (e.g. `dev/labelingProjects/<id>/analyzer.json`
@@ -22,22 +24,25 @@ uploads to `bot-configs/labelingProjects/<id>/analyzer.json`).
 
 ## Why per-env
 
-`channel.yaml` embeds the backend/agent web-app `endpoint` URL and the Teams
-channel IDs the bot is registered against. Both differ per environment:
-
-- dev endpoint → `azuresdkqabot-dev-serve-agent-*.westus2-01.azurewebsites.net`
-- prod endpoint → the prod backend web app
-- channel IDs may also differ (dev registrations point at test channels only).
+`channel.yaml` contains Teams channel IDs and a `${SERVER_BASE_URL}` placeholder.
+The postprovision hook expands that placeholder from the selected environment's
+Bicep outputs before upload. Missing placeholders fail provisioning rather than
+uploading an invalid configuration.
 
 ## Adding a new env
 
-1. Create `config/<env>/` and drop the channel/tenant files (start from `config/dev/*.yaml`).
-2. Update `endpoint:` in `channel.yaml` to the target env's backend URL.
-3. Run `azd provision --environment <env>` (or `az deployment sub create` in CI)
-   — postprovision uploads the files after infra is in place.
+1. Add the environment to `infra/environments/environment-suite.yaml`.
+2. Create `config/<env>/channel.yaml` and `tenant.yaml` from an existing
+    environment.
+3. Keep `${SERVER_BASE_URL}` in `channel.yaml`; do not copy another
+    environment's resolved URL.
+4. Make channel and tenant IDs match the environment-suite values.
+5. Run `scripts/validate-env-suite.ps1 -Environment <env>`.
+6. Run the normal `azd provision` path; postprovision uploads the files after
+    infrastructure outputs are available.
 
 ## Bypass
 
-Set `BOT_CONFIGS_SOURCE_DIR=<abs-path>` before `azd provision` to load from a
-different directory, or leave `config/<env>/` empty to skip the upload step
-entirely (useful for provisions that only touch infra).
+Set `BOT_CONFIGS_SOURCE_DIR=<abs-path>` before `azd provision` to use a different
+source root for an operator-controlled run. Normal validated environments must
+contain both routing files; do not rely on a missing directory to skip upload.

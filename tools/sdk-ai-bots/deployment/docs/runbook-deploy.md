@@ -1,84 +1,125 @@
 # Deploy Runbook
 
-> First-time setup of a new ADO project / subscription is covered in
-> [manual-setup.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md). This runbook covers ongoing operations.
+Use this runbook for routine deployments after the one-time
+[manual setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md) is complete.
 
-## Routine deployment (dev)
+## 1. Select the Deployment Path
 
-1. Verify the env-suite is current:
-    ```pwsh
-    pwsh deployment/scripts/validate-env-suite.ps1
-    ```
-2. Run the dev CI pipeline for the changed component to validate the source.
-3. Trigger the matching component orchestrator, review its infrastructure
-   preview, and approve the apply stage.
-4. `azd deploy` remotely builds the component from the selected source revision
-   and deploys it.
+Use a component orchestrator for an isolated change and the full-stack
+orchestrator when infrastructure contracts or multiple services change.
 
-## Promotion to preview
+| Scope | Pipeline |
+| --- | --- |
+| Full environment | `deployment/pipelines/orchestrators/qa-bot-all.yml` |
+| Shared resources | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` |
+| Agent platform and chat agent | `deployment/pipelines/orchestrators/agent/agent.yml` |
+| Agent-server | `deployment/pipelines/orchestrators/agent-server/agent-server.yml` |
+| Frontend | `deployment/pipelines/orchestrators/frontend/frontend.yml` |
+| Function App | `deployment/pipelines/orchestrators/function-app/function-app.yml` |
+| Logic App | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` |
+| Knowledge sync | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` |
 
-1. Confirm dev has been stable for at least 1 hour with the candidate commit.
-2. Trigger `pipelines/orchestrators/<component>/<component>.yml` with
-   `environment=preview` from the candidate commit. Review the infrastructure
-   preview and approve the apply stage. The pipeline then performs a native ACR
-   remote build.
-3. The pipeline deploys to staging slot, smoke-tests, swaps to production slot,
-   smoke-tests again.
+Production evolution-agent deployment is included in the full-stack path. Wiki
+generation and feedback processing use their specialized scheduled pipelines.
 
-## Promotion to prod
+## 2. Pre-deployment Checks
 
-1. Operational readiness checklist (`docs/operational-readiness-checklist.md`)
-   must be signed off.
-2. Trigger `pipelines/orchestrators/qa-bot-all.yml` with `environment=prod`
-   from the approved commit. The orchestrator runs:
-    - Preflight (`bicep what-if` + readiness reminder).
-      - Manual approval.
-      - Provision (`azd provision`).
-      - Agent-server → 10-min watch → function-app → agent → frontend.
-   The prod service connection's configured approval and branch-control checks
-   protect Azure operations in these stages.
-3. Record the successful source revision and resulting App Service or Foundry
-   revision in the deployment record.
+1. Record the candidate source revision.
+2. Confirm the relevant component CI passed for that revision.
+3. Confirm the target environment contains no unresolved placeholders.
+4. Run `validate-env-suite.ps1 -Environment <env>` for local verification.
+5. For production, complete the
+   [operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md).
+6. Confirm the source revision is permitted by the target service connection's
+   branch-control policy.
 
-## One-time manual steps
+## 3. Preview, Approve, and Apply
 
-These cannot be automated via Bicep and must be done once per environment by
-an operator with appropriate permissions:
+Queue the selected orchestrator with `environment=dev`, `preview`, or `prod`.
+The pipeline performs these stages:
 
-1. **Teams + Azure Blob OAuth consent** (Logic App). After the `logic-app`
-   layer is deployed, the pipeline pauses when Teams consent is missing. Open
-   the supplied portal link, authorize with the Teams service account, save,
-   and resume. The pipeline verifies `Connected` before continuing. Complete
-   any other managed-API consent in the portal as required.
-2. **Teams App publish.** The Teams app manifest is built in CI; first-time
-   publish into the tenant catalog is still done via Teams Toolkit
-   (`teamsapp publish`). Subsequent updates flow through `teamsapp/update`.
-3. **Enable Storage blob versioning** on the shared storage account
-   (already in Bicep but verify after the first apply).
-4. **Bot Service channel registration.** Verify in the portal that the
-   Teams channel is bound to the bot resource (Bicep wires it, but the
-   portal flag for "Microsoft 365 channel" must be flipped on once).
+1. Load the environment suite and authenticate with WIF.
+2. Compile Bicep and validate the selected environment.
+3. Run `azd provision --preview` for the complete graph or selected layer.
+4. Publish the preview summary.
+5. Pause for manual approval.
+6. Apply with `azd provision` after approval.
+7. Pause for Teams connection consent when the Logic App layer requires it.
 
-## Seed Key Vault secrets
+Reject the run if the preview targets an unexpected subscription, resource
+group, region, identity, or resource name, or if a Delete/Modify operation is
+not understood.
 
-```bash
-az keyvault secret set --vault-name "$KEY_VAULT_NAME" --name GitHubAppPrivateKey      --file github-app.pem
-az keyvault secret set --vault-name "$KEY_VAULT_NAME" --name TeamsWebhookUrl          --value "<url>"
-az keyvault secret set --vault-name "$KEY_VAULT_NAME" --name CosmosDbConnectionString --value "<conn>"
-```
+A complete preview requires existing layer state. Use the bootstrap procedure
+in the manual setup guide for a brand-new dev environment. Do not queue a new
+preview or production environment until an approved first-state bootstrap path
+has been implemented.
 
-Refer to `hooks/postprovision.ts` `seedKeyVaultSecrets()` for the full
-inventory.
+## 4. Deploy Application Code
 
-## Local developer flow (dev only)
+After apply, component pipelines deploy their selected service. The full-stack
+pipeline runs:
+
+1. agent-server;
+2. a 10-minute agent-server stabilization wait in production;
+3. Function App;
+4. chat agent;
+5. production evolution agent and scoped RBAC;
+6. frontend.
+
+Each service uses an `azd` native remote build. The Function App postdeploy hook
+then installs the final Logic App workflow. The frontend postdeploy hook
+synchronizes Teams values and installs or upgrades an app version only when
+tenant catalog prerequisites are satisfied.
+
+The active orchestrators do not perform slot swaps or a blocking multi-service
+smoke stage. Frontend postdeploy performs a non-fatal `/health` probe. Pipeline
+success means remote build/deploy and hooks succeeded; complete the verification
+below before declaring the release healthy.
+
+## 5. Verify the Deployment
+
+1. Confirm the pipeline used the expected source revision and environment.
+2. Confirm frontend `/health` is healthy.
+3. Call agent-server `/ping` with an Easy Auth token for the backend
+   Application ID URI.
+4. Confirm Function App `/api/health` and recent trigger executions are healthy.
+5. Confirm the Logic App is enabled, its Teams connection is `Connected`, and a
+   test activity reaches the Function App.
+6. Send a test Teams message through each newly changed route.
+7. Confirm the hosted chat agent version is active. For production, also confirm
+   the evolution-agent version and its primary/candidate RBAC.
+8. Inspect Application Insights for new 4xx/5xx, authentication, dependency, or
+   startup errors.
+9. Record the source revision and resulting App Service or Foundry versions.
+
+For a knowledge or wiki run, also confirm the expected blobs were written and
+the corresponding Search indexer start request was accepted.
+
+## 6. Local Dev Deployment
+
+Local deployment is supported for dev only:
 
 ```bash
 cd tools/sdk-ai-bots/deployment
-npm install
 azd auth login
 azd env select dev
+pwsh ./scripts/sync-env-suite.ps1 -Environment dev
+pwsh ./scripts/validate-env-suite.ps1 -Environment dev
 azd provision --environment dev --no-prompt
+azd deploy agent-server --environment dev --no-prompt
+azd deploy function-app --environment dev --no-prompt
+azd deploy agent --environment dev --no-prompt
 azd deploy frontend --environment dev --no-prompt
 ```
 
-Local prod deploy is blocked by `hooks/preprovision.ts`.
+Production guards reject local provision and deploy.
+
+## 7. Re-provisioning
+
+Never stop after re-provisioning an existing environment. Bicep can restore
+placeholder image values and the empty Logic App shell. Run the corresponding
+application deploy stages and repeat post-deployment verification.
+
+If verification fails, stop promotion and follow the
+[rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).

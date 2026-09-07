@@ -1,8 +1,9 @@
 # `infra/` — sdk-ai-bots deployment infrastructure
 
-This folder owns the Bicep source of truth for every Azure resource in the
-sdk-ai-bots system. Pipelines and `azd` consume the entry points under
-`layers/`; nothing else should mutate these resources.
+This folder owns the Bicep source of truth for Azure resource creation and base
+configuration. Pipelines and `azd` consume the entry points under `layers/`.
+Lifecycle hooks separately reconcile data-plane objects, application images,
+Teams installation, hosted-agent settings, and the final Logic App workflow.
 
 ## Layout
 

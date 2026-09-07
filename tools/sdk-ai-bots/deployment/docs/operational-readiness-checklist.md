@@ -1,72 +1,89 @@
 # Operational Readiness Checklist
 
-Sign off all items below before promoting a release to **prod**. Anything
-unchecked must be filed as a follow-up issue with a date and owner.
+Complete this checklist before approving a production deployment. Record any
+exception with an owner and due date.
 
-## Per-component
+## Source and Configuration
 
-For each of `frontend`, `function-app`, `agent-server`,
-`hosted-agent`, `logic-app`, `knowledge-sync`:
+- [ ] The candidate source revision is recorded and all component CI is green.
+- [ ] `validate-env-suite.ps1 -Environment prod` passes.
+- [ ] No selected production value contains `REPLACE_WITH_*`.
+- [ ] Production tenant/channel YAML matches the environment suite.
+- [ ] Resource names and `bicepOverrides` identify the intended existing
+      production resources.
+- [ ] The production preview has been reviewed for Create, Modify, and Delete
+      operations by someone other than the requester.
 
-- [ ] DRI named (and a backup)
-- [ ] On-call rotation includes this component
-- [ ] CI pipeline is green on `main`
-- [ ] CD pipeline last deployed `preview` is healthy for > 24 hours
-- [ ] Candidate source commit and resulting platform revision are recorded
-- [ ] Rollback verified at least once in preview (revision restore or slot swap) within
-      the last 90 days
+## Pipeline Controls
 
-## Infrastructure
+- [ ] Production and candidate-dev service connections use workload identity
+      federation and are authorized only for the required definitions.
+- [ ] Production service-connection approval and branch-control checks are
+      active.
+- [ ] The pipeline manual preview-to-apply gate has designated approvers.
+- [ ] The feedback pipeline can queue the exact knowledge-sync definition.
+- [ ] Required cross-repository resources are authorized for knowledge sync.
 
-- [ ] `scripts/validate-env-suite.ps1` passes for prod
-- [ ] `scripts/detect-drift.ps1 -Environment prod` shows zero drift
-- [ ] The prod pipeline `azd provision --preview` output is reviewed by at
-      least one other engineer
-- [ ] Bicep changes merged via PR with at least one CODEOWNER approval
+## Identity and Access
 
-## Identity / RBAC
+- [ ] The deployment principal can provision resources and role assignments at
+      the intended scope; no human developer identity is used by automation.
+- [ ] Frontend Azure Bot authentication uses the declared user-assigned managed
+      identity and the same Entra tenant as Teams.
+- [ ] Agent-server Easy Auth uses the expected backend application client ID and
+      Application ID URI.
+- [ ] Runtime identities have only the required App Configuration, Key Vault,
+      Storage, Search, Cosmos DB, ACR, and AI Services roles.
+- [ ] The evolution-agent identity has production access plus only the required
+      candidate-dev access.
+- [ ] No client secrets or credentials appear in repository or pipeline YAML.
 
-- [ ] All app-to-app calls use managed identity (no client secrets)
-- [ ] Pipeline service-connection `azuresdkqabot-prod` has only
-      `Contributor` on the prod RG (no broader scope)
-- [ ] Developers have NO Contributor on prod RG
-- [ ] Bot Service production endpoint requires AAD (EasyAuth on the agent-server site)
+## Runtime Configuration and Integrations
 
-## Secrets
+- [ ] Postprovision completed App Configuration, Search reconciliation,
+      `AI-SEARCH-APIKEY`, and bot-config upload without skipped required values.
+- [ ] `WEB_FETCH_ALLOWED_DOMAINS` contains the approved production domains.
+- [ ] The configured GitHub App private-key secret exists and runtime identities
+      can read it.
+- [ ] The Teams managed-API connection reports `Connected`.
+- [ ] The Azure Bot `MsTeamsChannel` exists.
+- [ ] The approved Teams app version is published in the tenant catalog.
+- [ ] `TeamsWebhookUrl` exists when deployment notifications are required.
 
-- [ ] All Key Vault secrets seeded (see `runbook-deploy.md` §"Seed secrets")
-- [ ] No secrets present in any pipeline YAML or repo file
-- [ ] Key Vault soft-delete enabled (90-day retention)
+## Data and Recovery
 
-## Observability
+- [ ] Knowledge sync and wiki build definitions have completed successfully and
+      both Search indexer triggers were accepted.
+- [ ] The feedback/evolution workflow has completed a candidate restore before
+      and after analysis in a non-production validation run.
+- [ ] Cosmos DB continuous backup is enabled and its restore procedure is known.
+- [ ] Blob versioning is enabled if blob-version rollback is part of the
+      recovery plan; it is disabled by the current Bicep configuration.
+- [ ] A known-good source revision is recorded for each deployed component.
+- [ ] Operators understand that rollback is a redeployment; no automated
+      slot/revision rollback pipeline exists.
 
-- [ ] Application Insights connected for each App Service / Function App
-- [ ] Availability tests configured for `/health` and `/ping`
-- [ ] Alerts wired to the shared action group: - 5xx rate > 1 % over 5 min - p95 latency > 3000 ms over 5 min - Function App invocation failure > 5 % over 5 min
-- [ ] Dashboard (or saved KQL bookmark) link present in `docs/`
+## Observability and Verification
 
-## Resource locks
+- [ ] Application Insights and diagnostic settings are connected for each
+      service.
+- [ ] Frontend availability test and deployment alerts report healthy.
+- [ ] Alert destinations and on-call ownership have been exercised.
+- [ ] Operators can verify frontend `/health`, agent-server `/ping`, and
+      Function App `/api/health` after deployment.
+- [ ] The Teams message path and Logic App trigger have been tested in the
+      target tenant.
+- [ ] Dashboard or saved-query links are recorded in the team's operational
+      system.
 
-- [ ] `CanNotDelete` lock present on prod RG
-- [ ] Cosmos DB backup policy set to ≥ 7 days continuous
+## Ownership and Capacity
 
-## Cost / capacity
+- [ ] Every component and data job has a primary and backup DRI.
+- [ ] Model quota covers the capacities declared in the agent Bicep layer.
+- [ ] App Service, Functions, Search, Cosmos DB, and ACR capacity are reviewed
+      for expected production load.
+- [ ] The release owner and production approver sign off below.
 
-- [ ] Quota for AI Services models (`gpt-4.1`, `gpt-4.1-mini`,
-      `text-embedding`) confirmed for the prod region
-- [ ] Elastic Premium plan SKU sized for expected QPS
-- [ ] ACR retention policy in place (don't fill on every CI build)
-
-## Process
-
-- [ ] Required approval and branch-control checks active on the prod service connection
-- [ ] Approvers include both a senior engineer and the DRI
-- [ ] Operational readiness checklist itself is reviewed annually
-
----
-
-Sign-off block (one row per release):
-
-| Date | Release tag | Signed off by | Notes |
-| ---- | ----------- | ------------- | ----- |
-|      |             |               |       |
+| Date | Source revision | Release owner | Approver | Exceptions |
+| --- | --- | --- | --- | --- |
+| | | | | |

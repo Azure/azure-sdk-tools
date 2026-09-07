@@ -17,8 +17,8 @@ declared:
 - candidate environment used by the production evolution workflow
 - Teams group ID and channel IDs
 - fixed Bicep resource-name and identity overrides
-- rollout strategy (`direct`, `slot-swap`, `slot-swap-with-watch`)
-- per-component image names, slot names, and health paths
+- rollout and health metadata reserved for policy and future gates
+- per-component image names and health metadata
 
 Every pipeline reads this file via `pipelines/templates/load-environment-suite.yml`.
 Azure DevOps requires service connections during template expansion, so
@@ -61,16 +61,23 @@ environments:
             minSuccessRate: float # 0.0 .. 1.0
             latencyP95Ms: int
             stabilizationWindowMinutes: int? # prod only
-        rolloutStrategy: enum
+        rolloutStrategy: enum # descriptive; exported but not enforced
 
 components:
     <component>:
         imageName: string
         serviceName: string
         healthPath: string
-        slot: string
+        slot: string # reserved; active orchestrators do not swap slots
         easyAuthRequired: bool?
 ```
+
+    `subscription`, IDs, names, regions, routing, identity overrides, and feature
+    flags actively drive provisioning and deployment. `rolloutStrategy`, slot
+    names, and the success-rate/latency thresholds are currently descriptive
+    metadata. The loader exports `ROLLOUT_STRATEGY`, but no active stage consumes it
+    or enforces those thresholds. Do not treat those fields as an implemented
+    traffic-shifting or health gate.
 
 ## Validation
 
@@ -134,3 +141,7 @@ are unaffected — they read the suite directly via
 6. Restrict that connection to the intended pipelines and configure any
     required approvals or branch-control checks on the connection.
 7. Re-run `validate-env-suite.ps1`.
+8. For a new preview or production environment, implement an approved
+    first-state bootstrap pipeline. The normal full-stack preview requires
+    existing layer state, and local deployment is disabled for those
+    environments.

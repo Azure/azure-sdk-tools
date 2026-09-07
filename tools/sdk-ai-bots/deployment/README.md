@@ -1,85 +1,92 @@
-# sdk-ai-bots Deployment
+# SDK AI Bots Deployment
 
-This folder is the **single source of truth** for deploying the sdk-ai-bots
-chatbot system to Azure.
-
-> **Status:** provisioning uses seven ordered azd layers. Each layer has its own
-> Bicep entry point and receives the same environment values through
-> `sync-env-suite.ps1`.
+This directory is the source of truth for provisioning, deploying, and
+operating the SDK AI chatbot in Azure. The supported workflow uses `azd >=
+1.32.0`, seven ordered Bicep layers, Azure DevOps workload identity federation,
+and lifecycle hooks for state that cannot be expressed safely in Bicep.
 
 ## Layout
 
 ```text
 deployment/
-├─ DEPLOYMENT_TRANSFORMATION.md  ← master plan, inventory, ordering, rollout/rollback
-├─ azure.yaml                    ← top-level azd manifest
-├─ package.json                  ← devDeps for hook scripts (tsx, typescript)
+├─ config/                       ← source-controlled Teams tenant/channel routing
+├─ docs/                         ← setup, readiness, deploy, and rollback guides
+├─ hooks/                        ← azd lifecycle reconciliation
 ├─ infra/
-│  ├─ layers/                    ← seven azd provisioning entry points
-│  └─ environments/              ← single source of truth for env metadata
-│     └─ environment-suite.yaml
-├─ hooks/                        ← azd lifecycle hooks (ts)
+│  ├─ environments/              ← dev/preview/prod contract
+│  └─ layers/                    ← seven Bicep entry points
 ├─ pipelines/
-│  ├─ templates/                 ← reusable provision/CI/CD/rollout steps
-│  └─ orchestrators/
-│     ├─ qa-bot-all.yml          ← full-stack provision and deployment
-│     └─ <component>/            ← component CI + provision/deploy pipelines
-├─ scripts/                      ← validate / drift / smoke / rollback helpers
-└─ docs/                         ← runbooks + environment-contract + readiness checklist
+│  ├─ orchestrators/             ← full-stack and component entry points
+│  └─ templates/                 ← reusable authentication and deployment stages
+├─ scripts/                      ← validation and operator utilities
+└─ test/                         ← deployment contract tests
 ```
 
-## Quick links
+## Documentation Order
 
-- [Master plan](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/DEPLOYMENT_TRANSFORMATION.md)
-- [Manual setup guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md) — **start here for a new ADO project / subscription**
-- [Dev deployment checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/dev-deployment-checklist.md)
-- [Recent merged-PR impact audit](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/recent-pr-deployment-impact-2026-09.md)
-- [Environment-contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md)
-- [Deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md)
-- [Rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md)
-- [Component dependency graph](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/component-dependency-graph.md)
-- [Operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md)
+Follow these documents in order. Maintainer references can be read as needed.
 
-## Get started (dev)
+| Step | Document | Use it for |
+| --- | --- | --- |
+| 1 | [Deployment architecture](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/deployment-architecture.md) | Understand services, infrastructure dependencies, deployment order, and scheduled data flows. |
+| 2 | [Environment contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md) | Understand environment values before configuring a deployment. |
+| 3 | [Manual setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md) | Prepare subscriptions, identities, service connections, pipelines, consent, secrets, and the first environment. |
+| 4 | [Operational readiness](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md) | Verify production prerequisites before approval. |
+| 5 | [Deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md) | Run routine component or full-stack deployments. |
+| 6 | [Pipeline reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md) | Select and maintain CI, provisioning, deployment, and data-job pipelines. |
+| 7 | [Rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md) | Recover by redeploying a known-good source revision and restoring data when needed. |
+
+Maintainers should also use the [infrastructure reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/README.md) and [bot configuration reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/config/README.md).
+
+## Active Flow
+
+1. Component CI builds and tests the changed service.
+2. The pipeline loads `environment-suite.yaml` and authenticates with the
+	 environment's federated service connection.
+3. Preflight validates configuration and runs `azd provision --preview`.
+4. An operator reviews the preview and approves or rejects the apply stage.
+5. `azd provision` applies the complete graph or a selected layer and its
+	 dependencies.
+6. Full-stack deployment runs `agent-server`, `function-app`, `agent`, the
+	 production-only evolution agent, and `frontend` in that order.
+7. Hooks reconcile App Configuration, Key Vault data, Search resources, RBAC,
+	 Teams configuration, hosted-agent settings, and the Logic App workflow.
+8. Scheduled knowledge, wiki, and feedback jobs maintain the data plane.
+
+## Important Boundaries
+
+- Production deployment is pipeline-only. Local deployment is supported for
+	`dev`; preview and production require the mapped service connections.
+- Only dev currently has a supported first-state bootstrap. A brand-new preview
+	or production environment needs a dedicated approved bootstrap pipeline before
+	the normal layered preview can run; do not bypass this by enabling local
+	deployment.
+- Every pipeline provisioning path includes a preview and manual approval
+	before apply. The documented first-dev bootstrap is the exception.
+- The agent-server deploys directly to its production App Service. The active
+	orchestrators do not perform slot swaps or a blocking multi-service smoke
+	stage. The frontend postdeploy hook has a non-fatal `/health` probe; operators
+	must still complete deployment verification.
+- Re-provisioning can reset images and the Logic App shell. Run the matching
+	deploy stages after provisioning so postdeploy hooks restore runtime state.
+- Entra application bootstrap, Teams/managed-API delegated consent, first Teams
+	catalog publication, and pipeline registration remain operator actions.
+- Preview cannot be deployed until all `REPLACE_WITH_*` values are resolved.
+
+## Local Dev Entry Point
+
+After completing the one-time setup guide:
 
 ```bash
-# 1. Validate the target environment and its bot routing
-pwsh ./scripts/validate-env-suite.ps1 -Environment dev
-
-# 2. Create the azd env and sync it from environment-suite.yaml
-npm install
-azd env new dev --location westus2 --no-prompt
+cd tools/sdk-ai-bots/deployment
+npm ci
+azd auth login
+azd env select dev
 pwsh ./scripts/sync-env-suite.ps1 -Environment dev
-
-# 3. Provision dev
+pwsh ./scripts/validate-env-suite.ps1 -Environment dev
 azd provision --environment dev --no-prompt
-
-# Or update one layer independently
-azd provision agent-server --environment dev --no-prompt
-
-# 4. Remotely build and deploy the application services
-azd deploy frontend     --environment dev --no-prompt
+azd deploy agent-server --environment dev --no-prompt
 azd deploy function-app --environment dev --no-prompt
-azd deploy agent        --environment dev --no-prompt
-
-# Native remote build publishes the hosted agent image during deploy:
 azd deploy agent --environment dev --no-prompt
+azd deploy frontend --environment dev --no-prompt
 ```
-
-> `azd` 1.29.0 preserves and executes service-level hooks on `azure.ai.agent`.
-> The agent uses native ACR remote builds, and its postdeploy hook reconciles
-> runtime RBAC, environment variables, and Entra authorization.
-
-For preview / prod, use the component pipelines under
-`pipelines/orchestrators/<component>/<component>.yml`. Each pipeline refreshes
-the selected layer's dependencies, previews and applies only that component's
-infrastructure layer, then deploys the component. Configure approvals, branch
-controls, and pipeline permissions on the corresponding service connection.
-
-The generated-wiki build, chatbot-evolution deployment, and feedback scan are
-specialized pipelines listed in [pipelines/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md). They
-share the same environment suite and provisioned resources but run separately
-from the long-running application-service deployment.
-
-The full-stack prod pipeline also deploys the evolution agent after the chat
-agent and grants its runtime identity separate prod and candidate-dev access.

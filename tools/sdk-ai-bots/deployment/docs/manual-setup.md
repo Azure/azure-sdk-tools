@@ -1,486 +1,263 @@
 # Manual Setup Guide
 
-One-time setup steps to bring the `sdk-ai-bots` deployment environment from
-zero to ready-to-deploy. Run through each section in order; later steps
-assume earlier ones are complete.
+Use this guide once for each new deployment environment. Complete the sections
+in order. Routine deployments use the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
 
-> Anything that **can** be automated by Bicep / pipelines is already
-> automated. This document covers only the steps that cannot.
+## 1. Install Local Prerequisites
 
----
+Local tooling is needed only for dev bootstrap or maintenance from a
+workstation. Azure DevOps agents install their own dependencies.
 
-## 0. Prerequisites (local workstation)
+- Azure CLI 2.60 or later
+- Azure Developer CLI (`azd`) 1.32.0 or later
+- Bicep CLI 0.30 or later (`az bicep install`)
+- Node.js 20 or later and npm
+- PowerShell 7 or later
+- `yq` v4
+- Docker only for optional local image builds; pipelines build remotely in ACR
 
-Needed only if you plan to provision dev from your laptop. Pipelines have
-these pre-installed on Microsoft-hosted Linux agents.
-
-- [ ] **Azure CLI** ≥ 2.60 (`az --version`)
-- [ ] **Azure Developer CLI (azd)** ≥ 1.10 — `curl -fsSL https://aka.ms/install-azd.sh | bash`
-- [ ] **Bicep CLI** ≥ 0.30 — `az bicep install`
-- [ ] **Node.js** ≥ 20, with `npm`
-- [ ] **PowerShell 7+** (for `scripts/*.ps1`)
-- [ ] **Docker** (only required if you build images locally; pipelines use ACR build)
-- [ ] **`yq`** (used by the pipeline loader and local environment sync script)
-
-Install hook dev dependencies once:
+Install and validate the deployment tooling:
 
 ```bash
 cd tools/sdk-ai-bots/deployment
-npm install
+npm ci
+bash ./scripts/install-azd-extensions.sh
+az --version
+azd version
 ```
 
----
+## 2. Choose Azure Targets and Check Quota
 
-## 1. Azure subscriptions
+Choose the subscription, tenant, resource-group name, and regions for each of
+`dev`, `preview`, and `prod`. Environments may share a subscription, but they
+must have isolated resource groups and globally unique resource names.
 
-- [ ] Confirm you have **three subscriptions** (or three logically separated
-  RGs in one subscription if your org consolidates):
-  - `azuresdkqabot-dev`
-  - `azuresdkqabot-preview`
-  - `azuresdkqabot-prod`
-- [ ] Note each **subscription GUID** and the **tenant GUID** — you will paste
-  them into the environment-suite in step 4.
-- [ ] Verify regional **quota** for Cognitive Services in the deployment
-  region (default `westus2`):
+The agent layer deploys these models serially:
 
-  ```bash
-  az cognitiveservices usage list --location westus2 -o table
-  ```
+- `gpt-4.1` version `2025-04-14`, capacity 1
+- `gpt-5.6-sol` version `2026-07-09`, capacity 500
+- `gpt-5.1` version `2025-11-13`, capacity 1
+- `gpt-5-mini` version `2025-08-07`, capacity 1
+- `text-embedding-3-small` version `1`, capacity 1
 
-  Required model deployments: `gpt-4.1`, `gpt-4.1-mini`, `o4-mini`,
-  `text-embedding-3-large`. Request quota increase if needed.
-
----
-
-## 2. Azure DevOps — service connections
-
-Use the following **federated identity** service connections. Their names must
-match both `environment-suite.yaml` and `pipelines/templates/service-connection.yml`
-because Azure DevOps authorizes endpoints before pipeline steps run.
-
-- [ ] `azure-sdk-tests-playground` → dev subscription
-- [ ] `azuresdkqabot-preview` → preview subscription, scoped to `rg-azuresdkqabot-preview`
-- [ ] `Azure SDK Engineering System` → prod subscription
-
-For each connection:
-
-1. Grant `Contributor` on the target resource group only (not the
-   subscription).
-2. Grant `User Access Administrator` on the same RG (required by Bicep
-   role assignments).
-3. Under "Pipeline permissions", authorize only the intended pipeline
-  definitions to use the connection.
-
----
-
-## 3. Azure DevOps — service connection checks
-
-The pipelines use normal jobs and do not require Azure DevOps Environments.
-Every provisioning pipeline includes a manual approval between preview and
-apply. Configure additional deployment controls directly on each service
-connection:
-
-- [ ] Dev — restrict pipeline permissions to the dev pipelines.
-- [ ] Preview — optionally add a service-connection approval check with at
-  least one reviewer in addition to the pipeline's manual gate.
-- [ ] Prod — add at least two required reviewers and a branch-control check
-  that permits only `main`, in addition to the pipeline's manual gate.
-
----
-
-## 4. Fill in environment-suite placeholders
-
-Edit [infra/environments/environment-suite.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml)
-and replace every `REPLACE_WITH_*` value:
-
-- [ ] `subscriptionId` for `dev`, `preview`, `prod`
-- [ ] `tenantId` if your tenant is not the default Microsoft one
-- [ ] After step 5, return here and set `serverApplicationClientId` and
-  `serverApplicationIdUri` to the values printed by the bootstrap script
-- [ ] Any fixed existing-resource names under `bicepOverrides`
-
-Validate after completing step 5:
+Check availability and quota in each selected AI region before provisioning:
 
 ```bash
-pwsh ./scripts/validate-env-suite.ps1
+az cognitiveservices usage list \
+  --subscription <subscription-id> \
+  --location <ai-region> \
+  --output table
 ```
 
----
+Request quota or choose another supported region before proceeding. Model child
+deployments are intentionally serialized because concurrent writes to one AI
+Services account can return `RequestConflict`.
 
-## 5. Entra ID app registrations
+## 3. Bootstrap the Backend Entra Application
 
-The agent server uses an externally managed Entra application with App Service
-Easy Auth. Create it once from an administrator workstation; normal
-provision/deploy pipelines do not read or write Microsoft Graph.
-
-The Application (client) ID is generated by Entra. The Application ID URI is a
-separate value you choose and does not need to contain the generated client ID.
-For example:
+The agent-server Easy Auth application is external deployment input. Create one
+per environment from an identity authorized to create applications in the
+target tenant:
 
 ```bash
 cd tools/sdk-ai-bots/deployment
-TENANT_ID="<tenant-id>"
 npm run create-entra-app -- \
-  --display-name azuresdkqabot-server-dev \
-  --application-id-uri "api://${TENANT_ID}/azure-sdk-qa-bot-dev" \
-  --tenant-id "$TENANT_ID" \
-  --service-management-reference <service-management-reference>
+  --display-name azuresdkqabot-server-<env> \
+  --application-id-uri "api://<tenant-id>/azure-sdk-qa-bot-<env>" \
+  --tenant-id <tenant-id> \
+  --service-management-reference <reference>
 ```
 
-For a non-GUID custom URI, use the tenant's initial or verified domain, such as
-`api://contoso.onmicrosoft.com/azure-sdk-qa-bot-dev`. The URI must be unique in
-the tenant and must not end in `/`.
+The script exposes delegated and application permissions and preauthorizes
+Azure CLI. It prints `serverApplicationClientId` and
+`serverApplicationIdUri`; record both for the environment suite. Run with
+`--dry-run` first when modifying an existing registration.
 
-The script creates the home-tenant service principal, exposes
-`access_as_user` and `access_as_application`, and preauthorizes Azure CLI
-(`04b07795-8ddb-461a-bbee-02f9e1bf7b46`). It prints the fixed
-`serverApplicationClientId` and `serverApplicationIdUri` values to copy into
-[environment-suite.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml).
+This backend application is separate from the Azure Bot identity. Azure Bot
+uses the frontend user-assigned managed identity directly. The supported
+deployment keeps Azure resources and Teams in the same Entra tenant and does
+not create a multitenant bot or client secret.
 
-Run with `--dry-run` to inspect the plan without Azure calls. To configure an
-existing application, add `--application-client-id <client-id>`. To assign the
-application role after the deployment identities exist, repeat
-`--caller-client-id <managed-identity-client-id>` for each caller.
+## 4. Define the Environment and Bot Routing
 
-This one-time script uses Microsoft Graph through Azure CLI and must be run by
-an appropriately authorized interactive identity. The Azure DevOps service
-connection needs Azure RBAC only and must not be granted Graph application
-permissions for this deployment. No client secret is created.
+Edit `deployment/infra/environments/environment-suite.yaml`. For the selected
+environment, set:
 
----
+- service-connection alias, subscription ID, and tenant ID;
+- backend application client ID and Application ID URI from step 3;
+- resource group, region, AI region, and Cosmos DB region;
+- globally unique Key Vault, App Configuration, ACR, and site names;
+- Teams group and channel IDs;
+- approval, local-deploy, and production-pipeline policies;
+- existing resource names under `bicepOverrides` when adopting resources;
+- `candidateEnvironment` when chatbot evolution is enabled.
 
-## 6. Register the 16 pipelines
+Update `deployment/config/<env>/channel.yaml` and `tenant.yaml` for the same
+Teams routes. The postprovision hook substitutes resource placeholders and
+uploads these files to the `bot-configs` container. Do not hard-code a different
+environment's backend endpoint.
 
-In Azure DevOps → Pipelines → "New pipeline" → "Existing Azure Pipelines
-YAML file", create the following. **Name them exactly** per the repo
-convention (`tools - <tool-name> - <action>`).
+Read the [environment contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md), then validate:
 
-### Component CI (4)
+```pwsh
+pwsh ./scripts/validate-env-suite.ps1 -Environment <env>
+```
 
-- [ ] `tools - sdk-ai-bots-frontend - ci` → [frontend.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/frontend/frontend.ci.yml)
-- [ ] `tools - sdk-ai-bots-function-app - ci` → [function-app.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/function-app/function-app.ci.yml)
-- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/agent/agent.ci.yml) (also builds the agent-server image)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - ci` → [knowledge-sync.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml)
+All `REPLACE_WITH_*` values for the selected environment must be resolved.
 
-### Component provision and deploy (5)
+## 5. Create Federated Service Connections
 
-- [ ] `tools - sdk-ai-bots-frontend - provision-and-deploy` → [frontend.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/frontend/frontend.yml)
-- [ ] `tools - sdk-ai-bots-agent-server - provision-and-deploy` → [agent-server.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/agent-server/agent-server.yml)
-- [ ] `tools - sdk-ai-bots-function-app - provision-and-deploy` → [function-app.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/function-app/function-app.yml)
-- [ ] `tools - sdk-ai-bots-agent - provision-and-deploy` → [agent.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/agent/agent.yml)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` → [knowledge-sync.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml) (scheduled)
+Create an Azure Resource Manager workload-identity-federated service connection
+for each environment. Its name must match both the environment suite's
+`subscription` value and `pipelines/templates/service-connection.yml`.
 
-### Provision-only layer diagnostics (2)
+The provisioning identity must be able to:
 
-- [ ] `tools - sdk-ai-bots-shared-resources - provision` → [shared-resources.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/shared-resources/shared-resources.yml) (resource group + shared resources)
-- [ ] `tools - sdk-ai-bots-logic-app - provision` → [logic-app.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/logic-app/logic-app.yml)
+- create the target resource group for a new environment;
+- create and update the resources declared by all seven Bicep layers;
+- create role assignments for workload and deployment identities;
+- read/write the required App Configuration, Key Vault, Storage, Search, ACR,
+  Cosmos DB, and AI Services control/data planes.
 
-### Full-stack provision and deploy (1)
+For a new environment, resource-group creation requires subscription-scope
+permission during bootstrap. After the resource group exists, narrow the
+connection to the target scope where organizational policy permits. Role
+assignment creation requires `Microsoft.Authorization/roleAssignments/write`,
+typically supplied by User Access Administrator or Role Based Access Control
+Administrator at the assignment scope.
 
-- [ ] `tools - sdk-ai-bots - provision-and-deploy-all` → [qa-bot-all.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/qa-bot-all.yml)
+Authorize only the intended pipeline definitions. Add service-connection
+approval and branch-control checks for preview and production. The pipelines
+also include their own preview-to-apply manual gate.
 
-### Specialized data and evolution workflows (4)
+The production evolution and feedback workflows also need the configured
+candidate service connection. Grant the feedback pipeline's build identity
+**Queue builds** permission on the knowledge-sync definition.
 
-- [ ] `tools - sdk-ai-bots-wiki-index - ci` → [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index/ci.yml)
-- [ ] `tools - sdk-ai-bots-wiki-index - build` → [build_wiki.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index/build_wiki.yml) (scheduled)
-- [ ] `tools - sdk-ai-bots-hosted-agent - deploy` → [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) (use `chatbot_evolution_agent` only with `prod`)
-- [ ] `tools - sdk-ai-bots-feedback-jobs` → [feedback-job.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/feedback-job.yml) (scheduled, prod)
+## 6. Register the Pipeline Definitions
 
-Grant the feedback pipeline's build identity **Queue builds** permission on the
-knowledge-sync definition. Candidate restoration resolves that definition by
-the exact name `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` and
-queues it with `environment=dev` and `provisionInfrastructure=false`.
+Create these 16 definitions from their existing YAML paths and use the exact
+names shown.
 
-### Cross-repo authorization
+| Purpose | Pipeline name | YAML |
+| --- | --- | --- |
+| Frontend CI | `tools - sdk-ai-bots-frontend - ci` | `deployment/pipelines/orchestrators/frontend/frontend.ci.yml` |
+| Function CI | `tools - sdk-ai-bots-function-app - ci` | `deployment/pipelines/orchestrators/function-app/function-app.ci.yml` |
+| Agent and agent-server CI | `tools - sdk-ai-bots-agent - ci` | `deployment/pipelines/orchestrators/agent/agent.ci.yml` |
+| Knowledge-sync CI | `tools - sdk-ai-bots-knowledge-sync - ci` | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml` |
+| Frontend provision/deploy | `tools - sdk-ai-bots-frontend - provision-and-deploy` | `deployment/pipelines/orchestrators/frontend/frontend.yml` |
+| Agent-server provision/deploy | `tools - sdk-ai-bots-agent-server - provision-and-deploy` | `deployment/pipelines/orchestrators/agent-server/agent-server.yml` |
+| Function provision/deploy | `tools - sdk-ai-bots-function-app - provision-and-deploy` | `deployment/pipelines/orchestrators/function-app/function-app.yml` |
+| Agent provision/deploy | `tools - sdk-ai-bots-agent - provision-and-deploy` | `deployment/pipelines/orchestrators/agent/agent.yml` |
+| Knowledge provision/sync | `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` |
+| Shared resources | `tools - sdk-ai-bots-shared-resources - provision` | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` |
+| Logic App | `tools - sdk-ai-bots-logic-app - provision` | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` |
+| Full stack | `tools - sdk-ai-bots - provision-and-deploy-all` | `deployment/pipelines/orchestrators/qa-bot-all.yml` |
+| Wiki CI | `tools - sdk-ai-bots-wiki-index - ci` | `azure-sdk-qa-bot-wiki-index/ci.yml` |
+| Wiki build | `tools - sdk-ai-bots-wiki-index - build` | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
+| Hosted-agent deploy | `tools - sdk-ai-bots-hosted-agent - deploy` | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
+| Feedback jobs | `tools - sdk-ai-bots-feedback-jobs` | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
 
-For [knowledge-sync.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml),
-authorize the pipeline to use the three resource repositories on first run:
+Authorize the knowledge-sync pipeline to use its declared resource repositories
+on first run. Keep the exact knowledge-sync pipeline name because the feedback
+job resolves it by name when restoring candidate data.
 
-- [ ] `1ESPipelineTemplates/1ESPipelineTemplates`
-- [ ] `internal/azure-sdk-docs-eng.ms`
-- [ ] `internal/internal.wiki`
+See the [pipeline reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md) for composition and ownership.
 
----
+## 7. Bootstrap Dev Layer State
 
-## 7. Repository hygiene
+The normal full-stack preflight refreshes every layer before preview. A
+brand-new environment has no state to refresh, so bootstrap it once from an
+authorized workstation. This exception is supported for dev; production
+remains pipeline-only.
 
-- [ ] Add owners to [.github/CODEOWNERS](https://github.com/Azure/azure-sdk-tools/blob/main/.github/CODEOWNERS):
+Preview is also local-disabled. A brand-new preview or production environment
+therefore has no supported first-state path in the current pipelines: full
+preflight cannot refresh absent layers, while local bootstrap is prohibited.
+Treat that as a deployment blocker and add a separately reviewed bootstrap
+pipeline before creating either environment from scratch. Do not temporarily
+relax `localDeployAllowed` or `prodDeployOnlyFromPipeline` to work around it.
 
-  ```text
-  /tools/sdk-ai-bots/deployment/   @owner1 @owner2
-  ```
-
-- [ ] Update root [README.md](https://github.com/Azure/azure-sdk-tools/blob/main/README.md) index table to mention
-  `tools/sdk-ai-bots/deployment/` (per
-  [.github/copilot-instructions.md](https://github.com/Azure/azure-sdk-tools/blob/main/.github/copilot-instructions.md)).
-- [ ] Configure **branch protection** on `main` for
-  `tools/sdk-ai-bots/deployment/**`:
-  - require CODEOWNER review
-  - require ≥ 1 additional approver
-  - require linear history
-
----
-
-## 8. First provision (dev)
-
-### Bot identity and cross-tenant deployments
-
-The supported deployment assumes the Azure resources and Teams tenant are in
-the same Entra tenant. Azure Bot uses the frontend user-assigned managed
-identity directly: its client ID is `BOT_ID`/`msaAppId`, its resource ID is
-`msaAppMSIResourceId`, and `msaAppType` is `UserAssignedMSI`. No separate bot
-app registration, client secret, or federated credential is created.
-
-The backend Entra API described in step 5 is separate from the Azure Bot
-identity. Its generated client ID configures Easy Auth; its Application ID URI
-is the token resource used by the frontend and Logic App.
-
-A cross-tenant deployment is not supported by this template. Azure Bot stopped
-supporting creation of new multitenant bots after July 31, 2025; only existing
-legacy multitenant bots continue to work. Do not add `BOT_APP_ID` alone: mixing
-a separate application ID with the current `UserAssignedMSI` contract produces
-an invalid Bot Framework identity configuration. A legacy multitenant bot would
-need its existing Entra application, secret/certificate, tenant consent, and a
-matching `MultiTenant` runtime configuration. New cross-tenant requirements
-should be designed on a currently supported Microsoft 365 Agents or Teams SDK
-identity model rather than added to this Azure Bot template.
-
-Run from your workstation, signed in to the dev subscription:
+The command below is for dev only:
 
 ```bash
 cd tools/sdk-ai-bots/deployment
 azd auth login
-azd env new dev --location westus2 --subscription <dev-sub-guid> --no-prompt
-
-# Sync subscription / RG / region / ACR names from environment-suite.yaml
-# into the azd env (.azure/dev/.env). Run this any time the suite changes;
-# preprovision will fail fast if local azd vars drift from the suite.
+azd env new dev \
+  --subscription <dev-subscription-id> \
+  --location <dev-region> \
+  --no-prompt
 pwsh ./scripts/sync-env-suite.ps1 -Environment dev
-
+pwsh ./scripts/validate-env-suite.ps1 -Environment dev
 azd provision --environment dev --no-prompt
 ```
 
-The `postprovision` hook runs the infra-layer pipeline
-([hooks/postprovision.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/postprovision.ts)). On success you will
-have:
+Provisioning creates the seven-layer resource graph. The final postprovision
+hook also:
 
-- Resource group `rg-azuresdkqabot-dev`
-- ACR `azsdkqabotacrdev`
-- Cosmos DB, Key Vault, App Configuration, Search, Storage, Log Analytics
-- AI Services account + model deployments
-- Agent-server App Service production site (no deployment slots)
-- Function App (+ `staging` slot)
-- Logic App (workflow disabled until step 10)
+- uploads source-controlled bot routing;
+- retrieves and stores `AI-SEARCH-APIKEY` in the deployment Key Vault;
+- creates or updates Search indexes, data sources, skillsets, indexers,
+  knowledge source, and knowledge base;
+- seeds runtime App Configuration values, including the web-fetch allow-list.
 
----
+It does not deploy application images. Continue with the deploy runbook after
+the first provision.
 
-## 9. Seed Key Vault secrets
+## 8. Complete Interactive and External Setup
 
-The Bicep modules create the Key Vault but cannot supply runtime secrets.
-Seed them once per environment. Substitute `<env>` accordingly:
+### Teams managed-API consent
 
-```bash
-KV="azsdkqabot-kv-<env>"
+When the Logic App layer is provisioned through a pipeline, the run pauses if
+the Teams connection is not authorized. Open the supplied Azure portal URL,
+authorize as the Teams service account, save, and resume. The next job verifies
+that the connection is `Connected`.
 
-# GitHub App private key (for the GitHub integration in the agent server)
-az keyvault secret set --vault-name "$KV" --name GitHubAppPrivateKey \
-  --file <path>/github-app.pem
-
-# Teams webhook URL (used by notify.yml template)
-az keyvault secret set --vault-name "$KV" --name TeamsWebhookUrl \
-  --value "https://outlook.office.com/webhook/..."
-
-# Cosmos DB connection string (consumed by Logic App)
-az keyvault secret set --vault-name "$KV" --name CosmosDbConnectionString \
-  --value "$(az cosmosdb keys list --type connection-strings \
-              --name <cosmos-name> --resource-group rg-azuresdkqabot-<env> \
-              --query 'connectionStrings[0].connectionString' -o tsv)"
-```
-
-Full inventory is referenced in [hooks/postprovision.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/postprovision.ts)
-under `seedKeyVaultSecrets()`.
-
----
-
-## 10. Logic App — OAuth consent
-
-The Logic App uses managed-API connections that **cannot** be authorized via
-Bicep. After Logic App provisioning, Azure DevOps checks the Teams connection.
-If it is not connected, the provision stage pauses at **Authorize Teams API
-connection** and provides an Azure portal link. An operator with the relevant
-tenant rights must open that link, authorize and save the connection, then
-resume the validation. The next job verifies that its status is `Connected`.
-In a full-stack run, the subsequent Function App postdeploy hook installs the
-complete workflow definition and enables it.
-
-- [ ] **Microsoft Teams** connection — sign in as the service account that
-  will post on behalf of the bot
-- [ ] **Azure Blob Storage** connection — sign in with an identity that has
-  `Storage Blob Data Contributor` on the storage account
-- [ ] **Azure Cosmos DB** connection — already uses managed identity; verify
-  in the portal that the connection shows "Connected"
-
-For local provisioning, authorize in the portal and then apply the workflow:
+For local dev, authorize in the portal and apply the final workflow after the
+Function App is deployed:
 
 ```bash
-npm run deploy:logic-app -- --env <env>
+npm run deploy:logic-app -- --env dev
 ```
 
----
+### Teams app publication
 
-## 11. App Configuration seed values
+Bicep creates the Azure Bot and `MsTeamsChannel`. Verify both after the first
+apply. Publish the generated Teams package to the tenant catalog once; later
+approved versions can be installed or upgraded by the frontend postdeploy hook.
 
-**Automated.** The runtime config keys consumed by the agent / agent-server /
-function-app are seeded by the postprovision hook
-([hooks/postprovision.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/postprovision.ts) `updateAppConfiguration()`
-→ [hooks/lib/seed-app-config.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/seed-app-config.ts)). It writes
-two classes of values:
+### External credentials and notifications
 
-- **Fixed** — model names, tuning params, feature flags, AI Search data-plane
-  names, GitHub App references, and blob container names. Sourced from the
-  design notes; each can be overridden per environment by exporting a
-  same-named environment variable before `azd provision`.
-- **Auto-injected** — resource names / endpoints (ACR, AI Foundry, AI Search,
-  AOAI, Cosmos, Key Vault, Storage) derived from the provision outputs.
+- The GitHub App private key is expected in the vault configured by
+  `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`. Ensure the runtime
+  identities can read that existing secret; this deployment does not create it.
+- `TeamsWebhookUrl` in the deployment Key Vault is optional. Add it only when
+  Teams deployment notifications are required. A missing value skips
+  notification without failing deployment.
+- Do not create a Cosmos DB connection-string secret for the Logic App; its
+  connection uses managed identity.
 
-No manual `az appconfig kv set` calls are required. To override a fixed value
-for an environment, set it in the azd env (or shell) before provisioning, e.g.:
+Storage soft-delete and seven-day continuous Cosmos backup are provisioned.
+Blob versioning is currently disabled. Enable it manually before relying on
+blob-version restoration as a recovery procedure.
 
-```bash
-azd env set AI_SEARCH_INDEX my-custom-index
-azd provision --environment <env>
-```
+## 9. Validate Readiness and Deploy
 
-Postprovision also reconciles the Azure AI Search data-plane objects consumed
-by these settings. Preview the planned creates and updates without writing:
+Complete the [operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md), then follow the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
 
-```bash
-npm run setup-search -- --dry-run
-```
+## 10. Cut Over Existing Pipelines
 
-The postprovision hook applies the same plan after Bicep provisions the Search,
-Storage, and AI resources. It creates the synonym map, shared index, primary
-and wiki data sources, skillsets and indexers, knowledge source, and knowledge
-base in dependency order.
+Keep legacy component definitions during initial validation. After dev and
+preview have run successfully and operators accept the new runbooks, disable
+the superseded server, Logic App, knowledge-sync, and ARM deployment paths.
+Keep evaluation pipelines separate; they are not part of this deployment.
 
----
+## Re-provisioning Warning
 
-## 12. Bot Service — Teams channel
+Re-provisioning can reset application image settings and restore the Logic App
+to its empty Bicep shell. After any apply, run the normal application deployment
+stages so predeploy and postdeploy hooks restore the desired runtime state.
 
-The Bicep wires the Bot Service registration, but enabling the Microsoft
-Teams channel for production traffic still requires a one-time portal flip
-on first setup:
-
-- [ ] Azure portal → Bot Service `azsdkqabot-<env>` → Channels → "Microsoft
-  Teams" → Apply → set scope to **Commercial**
-
----
-
-## 13. Teams App — first-time publish
-
-The Teams app manifest is built by [frontend.ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/orchestrators/frontend/frontend.ci.yml)
-as `appPackage.<env>.zip`. The first time it's installed in your tenant
-you must publish it manually:
-
-- [ ] Teams admin center → "Manage apps" → "Upload new app" → upload
-  `appPackage.dev.zip` for dev tenant testing
-- [ ] For production, use Teams admin center → "Teams apps" → "Setup
-  policies" to push the app to the target user group
-
-Subsequent updates flow through CI via `teamsapp/update`.
-
----
-
-## 14. Storage — blob versioning
-
-Required for knowledge-sync rollback ([runbook-rollback.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md)).
-
-- [ ] Portal → Storage account `azuresdkqabotstorage<env>` → Data protection
-  → enable **Blob versioning** with 90-day retention.
-
----
-
-## 15. Operational readiness
-
-Before the first prod rollout, sign off
-[operational-readiness-checklist.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md):
-
-- [ ] DRI named per component
-- [ ] On-call rotation includes this system
-- [ ] Application Insights availability tests configured
-- [ ] Alerts wired to action group
-- [ ] Source commit and deployed platform revision recording is configured
-
----
-
-## 16. Retire old pipelines (phase 2 cutover)
-
-After the new pipelines are validated for at least one week in dev and
-preview:
-
-- [ ] Delete or disable [azure-sdk-qa-bot-agent/pipelines/server-ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-ci.yml), [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml), [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml), [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml)
-- [ ] Delete or disable [azure-sdk-qa-bot-knowledge-sync/ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/ci.yml) and [sync_knowledge.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml)
-- [ ] Edit [azure-sdk-qa-bot/teamsapp.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml) — remove the `arm/deploy` step (the unified Bicep now owns those resources); keep the manifest publish steps.
-
----
-
-## Quick checklist (1-line summary)
-
-| # | Step | One-time? |
-|---|---|---|
-| 0 | Install local CLIs | per-dev |
-| 1 | 3 Azure subscriptions + region quota | per ADO project |
-| 2 | 3 federated service connections | per ADO project |
-| 3 | Service connection approvals and branch controls | per ADO project |
-| 4 | Replace `REPLACE_WITH_*` placeholders | per fork |
-| 5 | 3 externally managed Entra API apps | per ADO project |
-| 6 | Register 22 pipelines + authorize cross-repo resources | per ADO project |
-| 7 | CODEOWNERS, root README, branch protection | per fork |
-| 8 | First `azd provision dev` | per env |
-| 9 | Seed Key Vault secrets | per env |
-| 10 | Logic App OAuth consent + enable workflow | per env |
-| 11 | App Configuration seed values | per env |
-| 12 | Bot Service Teams channel toggle | per env |
-| 13 | First Teams App publish | per env |
-| 14 | Storage blob versioning | per env |
-| 15 | Operational readiness sign-off | before prod |
-| 16 | Retire old pipelines | once after cutover |
-| 17 | Re-run deploy after any `azd provision` (re-provision caveats) | every re-provision |
-
----
-
-## 17. Re-provision caveats — imperative state `azd provision` resets
-
-Some resources are provisioned by Bicep as a **shell** (or pinned to a
-placeholder image) and then mutated imperatively by an azd **deploy** hook once
-the application code is live. This is deliberate: the final state depends on a
-runtime artifact (a deployed container / a runtime-discovered function) that does
-not exist at `azd provision` time, or on an ARM operation Bicep cannot express.
-
-The trade-off is that these mutations live **outside** Bicep's declarative model,
-so **re-running `azd provision` redeploys the Bicep declaration and overwrites
-them** — exactly like the Logic App workflow reverting to its empty shell.
-
-> **Rule of thumb:** after **any** `azd provision` on an existing environment,
-> run `azd deploy` (all services) to re-apply the state below. A bare re-provision
-> leaves the environment in a half-configured state.
-
-### 17.1 State that a re-provision resets (must re-run `azd deploy`)
-
-| Resource | Bicep provisions | Hook re-applies | Hook | Why Bicep can't own it | Recovery after re-provision |
-|---|---|---|---|---|---|
-| **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT; `Disabled` until Teams OAuth is connected, then `Enabled` | [hooks/lib/patch-workflow.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/patch-workflow.ts) (fired by [hooks/function-postdeploy.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/function-postdeploy.ts); also [scripts/deploy-logic-app.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy function-app`, or `npm run deploy:logic-app` |
-| **Frontend App Service** container image | Site pinned to mutable `:dev` tag | Repoints site to immutable `dev-N.0.0` via `az webapp config container set` | [hooks/frontend-predeploy.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/frontend-predeploy.ts) | azd doesn't re-provision on deploy, and the immutable tag is auto-incremented against ACR at **deploy** time (unknown at provision); the resolved tag is **not** persisted to a Bicep param | `azd deploy frontend` |
-| **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
-| **Agent-server production site** container image | Site `linuxFxVersion` from `AGENT_SERVER_IMAGE_REPOSITORY` (defaults to `:dev`) | azd remotely builds `azure-sdk-qa-bot-agent-server`, records `SERVICE_AGENT_SERVER_IMAGE_NAME`, and deploys it directly to the site resolved by `resourceName: ${AGENT_SERVER_SITE_NAME}` | Native azd App Service container deployment | Every deployment creates a new remote build from the selected source revision | `azd deploy agent-server` |
-
-### 17.2 State that survives a re-provision — no action needed
-
-These are either not declared in Bicep (so provision cannot remove them) or are
-re-seeded by the postprovision hook on **every** provision, so they are safe:
-
-- **Key Vault secrets** — [hooks/lib/seed-key-vault.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/seed-key-vault.ts) (values not declared in Bicep; re-seeded each provision)
-- **App Configuration values** — [hooks/lib/seed-app-config.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/seed-app-config.ts) (re-seeded each provision)
-- **Role assignments** (e.g. agent identity → "Azure AI User") — [hooks/lib/ensure-role-assignment.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/ensure-role-assignment.ts) (created only if absent; not declared in Bicep, so provision won't delete them)
-- **Bot config blobs** — [hooks/lib/upload-bot-configs.ts](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/upload-bot-configs.ts) (blob content, not a Bicep-owned property)
-- **Managed-API OAuth consent** (Teams / Blob / Cosmos connections) — see §10 (connection auth persists across provisions)
+State that is re-seeded on every complete provision includes App Configuration,
+Search objects, `AI-SEARCH-APIKEY`, and bot configuration blobs. Managed-API
+OAuth consent persists, but verify it whenever connection resources change.

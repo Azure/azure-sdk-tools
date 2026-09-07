@@ -9,14 +9,13 @@ description: |
 version: "1.0"
 type: capability
 
-
 tags:
   tier: unit
   area: typespec
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 1
   timeout: 30m
   model: gpt-5.4
@@ -58,4 +57,3 @@ scoring:
     file-contains: 0.5
     tool-calls: 0.5
   threshold: 1.0
-

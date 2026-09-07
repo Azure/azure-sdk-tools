@@ -12,14 +12,16 @@ tags:
   area: github
   priority: p0
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
   model: gpt-5.4
 
-stimuli:
+scoring:
+  threshold: 0.8
 
+stimuli:
   # ==== azsdk_create_pull_request triggers ====
   - name: invoke-azsdk-create-pull-request-1
     prompt: "Create a new pull request in the Azure/azure-rest-api-specs repo from branch feature/contoso-widget into main, titled 'Add Contoso Widget Manager', for my already-committed changes. Create it directly — do not look up any existing PR or the current-branch PR link first. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
@@ -99,4 +101,3 @@ stimuli:
   #           - name: "azsdk_get_pull_request_link_for_current_branch"
   #         disallowed:
   #           - name: "azsdk_verify_setup"
-

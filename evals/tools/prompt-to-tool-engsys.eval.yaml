@@ -7,7 +7,7 @@ type: capability
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
@@ -18,8 +18,10 @@ tags:
   area: engsys
   priority: p0
 
-stimuli:
+scoring:
+  threshold: 0.8
 
+stimuli:
   # ==== azsdk_analyze_log_file triggers ====
   - name: invoke-azsdk-analyze-log-file-1
     prompt: "Analyze the build log file at ./artifacts/logs/build.log for errors. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
@@ -97,4 +99,3 @@ stimuli:
         config:
           required:
             - name: "azsdk_get_failed_test_run_data"
-

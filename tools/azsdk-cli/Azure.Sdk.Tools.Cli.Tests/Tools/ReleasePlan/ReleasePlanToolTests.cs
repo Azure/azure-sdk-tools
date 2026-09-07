@@ -2005,6 +2005,83 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task Test_UpdateReleasePlan_filters_unsupported_emitter_languages(bool isManagementPlane)
+        {
+            var typeSpecPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 700,
+                ReleasePlanId = 70,
+                IsManagementPlane = isManagementPlane,
+                IsDataPlane = !isManagementPlane
+            };
+            var project = TypeSpecProject.ParseTypeSpecConfig(typeSpecPath);
+            project.Packages =
+            [
+                new PackageInfo { Language = SdkLanguage.Python, PackageName = "azure-contoso" },
+                new PackageInfo { Language = SdkLanguage.Go, PackageName = "sdk/contoso" },
+                new PackageInfo { Language = SdkLanguage.Rust, PackageName = "azure_contoso" },
+                new PackageInfo { Language = SdkLanguage.Cpp, PackageName = "azure-contoso-cpp" }
+            ];
+
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(700, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(700, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(700, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 700 });
+            mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(
+                    700,
+                    It.Is<List<SDKInfo>>(sdkInfos =>
+                        sdkInfos.Count == 2 &&
+                        sdkInfos.Any(sdk => sdk.Language == "Python" && sdk.PackageName == "azure-contoso") &&
+                        sdkInfos.Any(sdk => sdk.Language == "Go" && sdk.PackageName == "sdk/contoso") &&
+                        sdkInfos.All(sdk => sdk.Language != "Rust" && sdk.Language != "C++")),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            mockTypeSpecHelper.Setup(x => x.IsUrl(typeSpecPath)).Returns(false);
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(typeSpecPath))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsTypeSpecProjectForMgmtPlane(typeSpecPath))
+                .Returns(isManagementPlane);
+            mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(
+                    typeSpecPath,
+                    It.IsAny<INpxHelper>(),
+                    It.IsAny<ILogger>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+
+            var tool = new ReleasePlanTool(
+                mockDevOps.Object,
+                gitHelper,
+                mockTypeSpecHelper.Object,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(),
+                Mock.Of<INotificationService>());
+
+            var result = await tool.UpdateReleasePlan(
+                typeSpecProjectPath: typeSpecPath,
+                sdkReleaseType: "beta",
+                workItemId: 700);
+
+            Assert.That(result.ResponseError, Is.Null);
+            mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(
+                700,
+                It.IsAny<List<SDKInfo>>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
         // ==================== KPI Attestation Tests ====================
 
         [Test]

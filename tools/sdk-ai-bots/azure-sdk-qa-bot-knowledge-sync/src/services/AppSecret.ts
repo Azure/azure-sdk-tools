@@ -25,15 +25,6 @@ export async function initSecrets(): Promise<void> {
         // Establish a connection to the Key Vault client
         const client = new SecretClient(keyVaultEndpoint, credential);
 
-        // Get AOAI Chat Completions API Key
-        const aoaiSecretResponse = await client.getSecret('AOAI-CHAT-COMPLETIONS-API-KEY');
-        if (!aoaiSecretResponse.value) {
-            throw new Error('Failed to get AOAI-CHAT-COMPLETIONS-API-KEY secret value');
-        }
-
-        process.env.AOAI_CHAT_COMPLETIONS_API_KEY = aoaiSecretResponse.value;
-        console.log('Set AOAI_CHAT_COMPLETIONS_API_KEY from Key Vault');
-
         // Get SSH private key
         const sshPrivateKeySecret = await client.getSecret('SSH-PRIVATE-KEY');
         if (!sshPrivateKeySecret.value) {

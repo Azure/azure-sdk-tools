@@ -93,7 +93,6 @@ Follow conventions in `.editorconfig`:
 ### JavaScript/TypeScript
 
 - Use 4 spaces for indentation in TypeScript files
-- Follow existing patterns in `/tools/js-sdk-release-tools/`
 
 ## Building and Testing
 

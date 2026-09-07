@@ -152,6 +152,12 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     MEMORY_STORE_EMBEDDING_MODEL: "text-embedding-3-small",
     MEMORY_USER_STORE_NAME: "azure-sdk-qa-bot-user-memory-store",
 
+    // ── Web fetch security ────────────────────────────────────────────────
+    WEB_FETCH_ALLOWED_DOMAINS: or(
+      "WEB_FETCH_ALLOWED_DOMAINS",
+      "typespec.io,github.io,github.com,microsoft.com,nuget.org,repo.maven.apache.org,registry.npmjs.org,pypi.org,proxy.golang.org",
+    ),
+
     // ── GitHub App (external; not created by azd — override per env if the
     //    app registration / shared vault differ) ───────────────────────────
     GITHUB_APP_ID: or("GITHUB_APP_ID", "1086291"),

@@ -46,6 +46,19 @@ test("seeds the generated wiki defaults", () => {
   assert.equal(values.STORAGE_WIKI_OUTPUT_CONTAINER, "wiki");
 });
 
+test("seeds the web fetch domain allow-list and honors an override", () => {
+  assert.equal(
+    fixedAppConfigValues({}).WEB_FETCH_ALLOWED_DOMAINS,
+    "typespec.io,github.io,github.com,microsoft.com,nuget.org,repo.maven.apache.org,registry.npmjs.org,pypi.org,proxy.golang.org",
+  );
+  assert.equal(
+    fixedAppConfigValues({
+      WEB_FETCH_ALLOWED_DOMAINS: " learn.microsoft.com,aka.ms ",
+    }).WEB_FETCH_ALLOWED_DOMAINS,
+    "learn.microsoft.com,aka.ms",
+  );
+});
+
 test("injects the chat agent Application Insights resource ID", () => {
   const resourceId =
     "/subscriptions/sub/resourceGroups/rg/providers/microsoft.insights/components/agent-insights";

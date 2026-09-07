@@ -340,7 +340,7 @@ def test_output_items_to_rows_completion_item_response():
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
 
 
-def test_chat_latency_is_preserved_and_summarized():
+def test_chat_latency_and_trace_id_are_preserved_and_summarized():
     from _evals_result import EvalsResult
 
     collected = {
@@ -348,20 +348,27 @@ def test_chat_latency_is_preserved_and_summarized():
         "query": "q",
         "response": "answer",
         "latency": 1.25,
+        "trace_id": "trace-123",
     }
     assert COMPLETION_ITEM_SCHEMA["properties"]["latency"] == {"type": "number"}
+    assert COMPLETION_ITEM_SCHEMA["properties"]["trace_id"] == {"type": "string"}
     item = _completion_item(collected)
     assert item["latency"] == 1.25
+    assert item["trace_id"] == "trace-123"
 
     rows = output_items_to_rows(
         [{"datasource_item": item, "results": []}],
         [],
     )
     assert rows["rows"][0]["inputs.latency"] == 1.25
+    assert rows["rows"][0]["inputs.trace_id"] == "trace-123"
 
-    recorded = EvalsResult(metrics={}, suppressions=None).record_run_result(rows)
+    evals_result = EvalsResult(metrics={}, suppressions=None)
+    recorded = evals_result.record_run_result(rows)
     assert recorded[0]["latency"] == 1.25
+    assert recorded[0]["trace_id"] == "trace-123"
     assert recorded[-1]["average_latency_seconds"] == 1.25
+    assert "trace-123" in evals_result.build_output_table(recorded)
 
 
 def test_failed_row_counts_as_failure_in_gate():

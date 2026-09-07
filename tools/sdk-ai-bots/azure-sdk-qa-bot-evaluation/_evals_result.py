@@ -62,6 +62,7 @@ class EvalsResult:
             if isinstance(latency, (int, float)):
                 row_result["latency"] = float(latency)
                 latencies.append(float(latency))
+            row_result["trace_id"] = row.get("inputs.trace_id", "")
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
@@ -132,6 +133,7 @@ class EvalsResult:
         headers = [
             "Test Case",
             "Latency (s)",
+            "Trace ID",
         ]
         for metric in metrics:
             headers.append(metric)
@@ -150,7 +152,11 @@ class EvalsResult:
             testcase = result["testcase"]
 
             latency = result.get("latency")
-            terminal_row = [testcase, f"{latency:.2f}" if latency is not None else "N/A"]
+            terminal_row = [
+                testcase,
+                f"{latency:.2f}" if latency is not None else "N/A",
+                result.get("trace_id") or "N/A",
+            ]
             values = []
             if baseline_results is not None and testcase in baseline_results:
                 base = baseline_results[testcase]

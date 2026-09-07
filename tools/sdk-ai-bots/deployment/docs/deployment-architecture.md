@@ -11,13 +11,20 @@ graph LR
     PROV -->|applies| INFRA[azd Bicep layers]
     INFRA -->|creates| RG[(Resource Group)]
 
-    ORCH -->|stage 2..N| CD[Component deployment stages<br/>frontend / agent-server / function-app / agent]
+    ORCH -->|stage 2..N| CD[Component deployment stages<br/>agent-server / function-app / chat agent<br/>prod evolution agent / frontend]
     CD -->|reads| ES
     CD -->|remote build| ACR[(Azure Container Registry)]
     ACR -->|deploys generated image| TARGET[Production site or staging slot]
     TARGET -->|smoke ok| PROMOTE[Promote when applicable]
     CD -.->|on failure| RB[Restore previous platform revision or slot]
     RB -->|repoint| TARGET
+
+    GH -->|scheduled| KS[Knowledge sync]
+    KS -->|knowledge blobs| SEARCH[Search indexers]
+    KS -->|source corpus| WIKI[Wiki builder]
+    WIKI -->|generated wiki blobs| SEARCH
+    GH -->|scheduled prod| FB[Feedback jobs]
+    FB -->|restore dev before/after analysis| KS
 ```
 
 ## Layers
@@ -46,5 +53,8 @@ use the latter for both preview and apply.
 | function-app   | slot swap               | `staging` → `production` | `GET /api/health` 200            |
 | agent-server   | direct production deploy| n/a                      | `GET /ping` with EasyAuth bearer |
 | hosted agent   | revision swap (Foundry) | n/a                      | Responses `/ping`                |
+| evolution agent| prod hosted version     | n/a                      | active version + scoped RBAC     |
 | logic-app      | re-apply ARM            | n/a                      | trigger probe                    |
-| knowledge-sync | scheduled job           | n/a                      | Search doc-count regression      |
+| knowledge-sync | scheduled/sync-only job | n/a                      | primary indexer accepted         |
+| generated wiki | scheduled job           | n/a                      | wiki indexer accepted            |
+| feedback jobs  | scheduled prod job      | n/a                      | candidate restores succeeded     |

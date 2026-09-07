@@ -45,5 +45,7 @@ extends:
                           inputs: { versionSpec: '20.x' }
                         - script: npm ci
                           workingDirectory: $(workingDirectory)
+                        - script: npm test
+                          workingDirectory: $(workingDirectory)
                         - script: npm run build
                           workingDirectory: $(workingDirectory)

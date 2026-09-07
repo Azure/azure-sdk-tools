@@ -37,7 +37,9 @@ parameters:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
-  - group: 'Azure SDK QA Bot Prod Variables'
+  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+    parameters:
+      environment: prod
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: PythonIndexUrl
@@ -53,7 +55,7 @@ extends:
         jobs:
           - job: RunFeedbackJobs
             displayName: 'Run Feedback Jobs'
-            timeoutInMinutes: 120
+            timeoutInMinutes: 360
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -61,6 +63,10 @@ extends:
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
+
+              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                parameters:
+                  environment: prod
 
               - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
@@ -72,7 +78,8 @@ extends:
               - task: AzureCLI@2
                 displayName: 'Run Feedback Job Scan'
                 inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
+                  azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                  addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript
                   workingDirectory: $(workingDirectory)
@@ -109,7 +116,12 @@ extends:
 
                     python scripts/run_feedback_jobs.py "${JOB_ARGS[@]}"
                 env:
+                  ADO_COLLECTION_URI: $(System.CollectionUri)
+                  ADO_PROJECT: $(System.TeamProject)
+                  ADO_SOURCE_BRANCH: $(Build.SourceBranch)
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
                   GITHUB_TOKEN: $(GH_TOKEN)
+                  KNOWLEDGE_SYNC_ENVIRONMENT: $(CANDIDATE_ENVIRONMENT)
+                  KNOWLEDGE_SYNC_PIPELINE_NAME: tools - sdk-ai-bots-knowledge-sync - provision-and-sync
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

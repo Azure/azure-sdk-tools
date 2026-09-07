@@ -59,8 +59,10 @@ access remain unchecked.
       group, and regions.
 - [x] Use globally unique names for Key Vault, App Configuration, ACR, and all
       three web apps.
-- [ ] Replace the remaining `REPLACE_WITH_*` values for other environments, or
-      update validation so a dev-only run does not fail on preview placeholders.
+- [x] Dev-only validation uses `validate-env-suite.ps1 -Environment dev`; the
+      unresolved preview placeholders no longer block dev checks.
+- [ ] Replace the remaining preview `REPLACE_WITH_*` values before preview
+      provisioning.
 - [ ] Before local provisioning, create or select `dev` in the live subscription
       and run the suite sync script:
 

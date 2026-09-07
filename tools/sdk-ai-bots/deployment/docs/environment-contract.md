@@ -14,6 +14,7 @@ declared:
 - whether prod is pipeline-only
 - whether local deploy is allowed
 - whether the chatbot evolution workflow is enabled
+- candidate environment used by the production evolution workflow
 - Teams group ID and channel IDs
 - fixed Bicep resource-name and identity overrides
 - rollout strategy (`direct`, `slot-swap`, `slot-swap-with-watch`)
@@ -45,6 +46,7 @@ environments:
         aiLocation: string
         cosmosDbLocation: string
         chatbotEvolutionAgentEnabled: bool
+        candidateEnvironment: string? # required when evolution is enabled
         bicepOverrides: Record<string, string>?
         teamsGroupId: string
         teamsChannelIds: string[]
@@ -72,9 +74,11 @@ components:
 
 ## Validation
 
-Run `scripts/validate-env-suite.ps1` to confirm no placeholder values remain
-and all required keys are populated. CI runs this on every PR that touches
-`infra/environments/**`.
+Run `scripts/validate-env-suite.ps1` to validate all environments, or pass
+`-Environment dev` for an environment-scoped check. In addition to required
+values and placeholders, the validator checks that `config/<env>/channel.yaml`
+exactly matches `teamsChannelIds`, every route tenant is defined, and tenant
+links target the configured Teams group.
 
 ## Local azd sync
 
@@ -89,6 +93,7 @@ This script reads the per-env block from `environment-suite.yaml` and calls
 `azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
 `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
 `CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`,
+`AZURE_APPCONFIG_ENDPOINT`, `CANDIDATE_APPCONFIG_ENDPOINT`,
 `CHATBOT_EVOLUTION_AGENT_ENABLED`, `SERVER_AUDIENCE`,
 `SERVER_APPLICATION_ID_URI`, `RAG_SERVICE_SCOPE`) plus every entry in
 `bicepOverrides`.
@@ -101,6 +106,11 @@ Auth. `serverApplicationIdUri` becomes `SERVER_APPLICATION_ID_URI`, and the
 frontend scope is derived as `<serverApplicationIdUri>/.default`. The Entra
 application is created separately with `scripts/create-entra-app.ts`; azd and
 the pipelines never manage it through Microsoft Graph.
+
+The preprovision hook detects the active login as
+`DEPLOYMENT_PRINCIPAL_ID` independently of `DEVELOPER_PRINCIPAL_ID`. This keeps
+pipeline WIF data-plane grants intact when production deliberately assigns the
+developer role set to an Entra group.
 
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.

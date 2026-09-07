@@ -122,6 +122,25 @@ foreach ($entry in $Mapping) {
     Write-Host "  $($entry.Key) = $value"
 }
 
+$appConfigName = (& yq -r ".environments.$Environment.appConfigName" $SuitePath).Trim()
+if (-not [string]::IsNullOrWhiteSpace($appConfigName) -and $appConfigName -notmatch '^REPLACE_WITH_') {
+    $appConfigEndpoint = "https://$appConfigName.azconfig.io"
+    & azd env set AZURE_APPCONFIG_ENDPOINT $appConfigEndpoint | Out-Null
+    Write-Host "  AZURE_APPCONFIG_ENDPOINT = $appConfigEndpoint"
+}
+
+$candidateEnvironment = (& yq -r ".environments.$Environment.candidateEnvironment // `"`"" $SuitePath).Trim()
+if (-not [string]::IsNullOrWhiteSpace($candidateEnvironment)) {
+    $candidateAppConfigName = (& yq -r ".environments.$candidateEnvironment.appConfigName" $SuitePath).Trim()
+    if ([string]::IsNullOrWhiteSpace($candidateAppConfigName) -or $candidateAppConfigName -match '^REPLACE_WITH_') {
+        $failed += "candidateEnvironment '$candidateEnvironment' has no deployable appConfigName."
+    } else {
+        $candidateAppConfigEndpoint = "https://$candidateAppConfigName.azconfig.io"
+        & azd env set CANDIDATE_APPCONFIG_ENDPOINT $candidateAppConfigEndpoint | Out-Null
+        Write-Host "  CANDIDATE_APPCONFIG_ENDPOINT = $candidateAppConfigEndpoint"
+    }
+}
+
 # Teams routing is suite-owned and flows into the local azd environment.
 $teamsGroupId = (& yq -r ".environments.$Environment.teamsGroupId" $SuitePath).Trim()
 $teamsChannelIds = @(& yq -r ".environments.$Environment.teamsChannelIds[]" $SuitePath | ForEach-Object { ([string]$_).Trim() })

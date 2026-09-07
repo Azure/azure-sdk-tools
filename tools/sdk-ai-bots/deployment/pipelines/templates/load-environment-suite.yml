@@ -13,6 +13,10 @@
 #   AZURE_ENV_NAME, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, SERVICE_CONNECTION,
 #   AZURE_RESOURCE_GROUP, AZURE_LOCATION, AZURE_AI_LOCATION, ACR_NAME,
 #   CONTAINER_REGISTRY_NAME, KEY_VAULT_NAME, APP_CONFIG_NAME,
+#   AZURE_APPCONFIG_ENDPOINT, CANDIDATE_ENVIRONMENT,
+#   CANDIDATE_AZURE_SUBSCRIPTION_ID,
+#   CANDIDATE_AZURE_RESOURCE_GROUP, CANDIDATE_APP_CONFIG_NAME,
+#   CANDIDATE_APPCONFIG_ENDPOINT,
 #   FRONTEND_SITE_NAME, AGENT_SERVER_SITE_NAME, FUNCTION_APP_NAME,
 #   *_IMAGE_REPOSITORY, TEAMS_GROUP_ID, TEAMS_CHANNEL_IDS, bicepOverrides,
 #   TEAMS_CHANNEL_IDS_JSON, APPROVAL_REQUIRED, PROD_DEPLOY_ONLY_FROM_PIPELINE,
@@ -50,6 +54,7 @@ steps:
           set_var() {
             local name="$1"
             local val="$2"
+            export "${name}=${val}"
             echo "##vso[task.setvariable variable=${name}]${val}"
             echo "  ${name} = ${val}"
           }
@@ -172,4 +177,24 @@ steps:
             set_var_from_pipeline_or_default "$name" "" "${name}_OVERRIDE"
             set_var_from_pipeline_or_default "${name}_OVERRIDE" "" "$name"
           done
+
+          set_var_from_pipeline_or_default AZURE_APPCONFIG_ENDPOINT "https://${APP_CONFIG_NAME}.azconfig.io"
+          CANDIDATE_ENVIRONMENT=$(yq -r ".environments.${ENV}.candidateEnvironment // \"\"" "$SUITE")
+          set_var CANDIDATE_ENVIRONMENT "$CANDIDATE_ENVIRONMENT"
+          if [ -n "$CANDIDATE_ENVIRONMENT" ]; then
+            CANDIDATE_APP_CONFIG_NAME=$(yq -r ".environments.${CANDIDATE_ENVIRONMENT}.appConfigName" "$SUITE")
+            if [ -z "$CANDIDATE_APP_CONFIG_NAME" ] || [ "$CANDIDATE_APP_CONFIG_NAME" = "null" ]; then
+              echo "##[error]candidate environment '${CANDIDATE_ENVIRONMENT}' has no appConfigName"
+              exit 1
+            fi
+            set_var CANDIDATE_AZURE_SUBSCRIPTION_ID "$(yq -r ".environments.${CANDIDATE_ENVIRONMENT}.subscriptionId" "$SUITE")"
+            set_var CANDIDATE_AZURE_RESOURCE_GROUP "$(yq -r ".environments.${CANDIDATE_ENVIRONMENT}.resourceGroupPrefix" "$SUITE")"
+            set_var CANDIDATE_APP_CONFIG_NAME "$CANDIDATE_APP_CONFIG_NAME"
+            set_var_from_pipeline_or_default CANDIDATE_APPCONFIG_ENDPOINT "https://${CANDIDATE_APP_CONFIG_NAME}.azconfig.io"
+          else
+            set_var CANDIDATE_AZURE_SUBSCRIPTION_ID ""
+            set_var CANDIDATE_AZURE_RESOURCE_GROUP ""
+            set_var CANDIDATE_APP_CONFIG_NAME ""
+            set_var_from_pipeline_or_default CANDIDATE_APPCONFIG_ENDPOINT ""
+          fi
       displayName: 'Load environment-suite (${{ parameters.environment }})'

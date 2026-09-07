@@ -150,6 +150,7 @@ environments:
             - '19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype'
             - '19:084875bb626242ed95f3ac8dddfaa12a@thread.skype'
             - '19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype'
+            - '19:6d2c19322c254a80bcc521675134da03@thread.skype'
         regions:
             - name: 'westus2'
               ring: 'canary'
@@ -161,6 +162,7 @@ environments:
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: true
+        candidateEnvironment: 'dev'
         bicepOverrides:
             DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
             DEVELOPER_PRINCIPAL_TYPE: 'Group'

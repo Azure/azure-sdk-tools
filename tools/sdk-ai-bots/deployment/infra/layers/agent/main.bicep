@@ -39,6 +39,12 @@ param developerGroupObjectId string = ''
 @description('Principal type for the developer role assignment: User, Group, or ServicePrincipal.')
 param developerPrincipalType string = 'User'
 
+@description('Object ID of the principal executing deployment and scheduled data pipelines.')
+param deploymentPrincipalObjectId string = ''
+
+@description('Principal type for deployment automation: User, Group, or ServicePrincipal.')
+param deploymentPrincipalType string = 'ServicePrincipal'
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var agentLogWorkspaceName = !empty(agentLogWorkspaceNameOverride) ? agentLogWorkspaceNameOverride : 'qabot-agent-log-${suffix}'
 var agentAppInsightsName = !empty(agentAppInsightsNameOverride) ? agentAppInsightsNameOverride : 'qabot-agent-${suffix}'
@@ -349,6 +355,28 @@ resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/r
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
     principalId: developerGroupObjectId
     principalType: developerPrincipalType
+  }
+}
+
+var hasDistinctDeploymentPrincipal = !empty(deploymentPrincipalObjectId) && deploymentPrincipalObjectId != developerGroupObjectId
+
+resource deploymentOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  scope: account
+  name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
+resource deploymentFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  scope: account
+  name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
   }
 }
 

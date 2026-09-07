@@ -4,7 +4,7 @@
  * The frontend image ships only the pre-compiled `lib/` output (its
  * .dockerignore excludes src/*.ts/tsconfig.json), so the TypeScript must be
  * built before the image is assembled. This hook:
- *   1. Runs `npm install` + `npm run build` locally (plain tsc — no Docker), and
+ *   1. Runs `npm ci` + `npm run build` locally (plain tsc — no Docker), and
  *   2. Builds/pushes the image via `az acr build` (cloud-side — no Docker),
  *      which ships the freshly-built `lib/`.
  */
@@ -55,8 +55,8 @@ function log(msg: string): void {
   const frontendRoot = path.resolve(process.cwd(), "../azure-sdk-qa-bot");
 
   // 1. Compile lib/ locally (plain tsc — the image only ships compiled output).
-  log("Compiling frontend (npm install + npm run build)...");
-  execSync("npm install", { stdio: "inherit", cwd: frontendRoot });
+  log("Compiling frontend (npm ci + npm run build)...");
+  execSync("npm ci", { stdio: "inherit", cwd: frontendRoot });
   execSync("npm run build", { stdio: "inherit", cwd: frontendRoot });
 
   // 2. Build + push the image cloud-side (ships the freshly-built lib/).

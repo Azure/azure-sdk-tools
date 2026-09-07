@@ -1,0 +1,24 @@
+parameters:
+  - name: environment
+    type: string
+    values: [prod]
+  - name: dependsOn
+    type: string
+    default: DeployAgent
+
+stages:
+  - stage: DeployEvolutionAgent
+    displayName: 'Deploy chatbot evolution agent (prod)'
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - job: Deploy
+        timeoutInMinutes: 60
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        steps:
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/hosted-agent-deploy-steps.yml
+            parameters:
+              agentName: chatbot_evolution_agent
+              environment: ${{ parameters.environment }}

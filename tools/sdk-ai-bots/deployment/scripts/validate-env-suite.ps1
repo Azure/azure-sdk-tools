@@ -4,15 +4,20 @@
     Validates infra/environments/environment-suite.yaml.
 
 .DESCRIPTION
-    - Confirms required keys exist for every environment.
+    - Confirms required keys exist for each selected environment.
     - Confirms no placeholder values (REPLACE_WITH_*) remain.
     - Confirms subscription IDs are GUID-shaped.
+    - Confirms source-controlled bot routes cover every monitored Teams channel.
+    - Confirms every route tenant is defined and links to the configured team.
     - Exits non-zero on any failure.
 #>
 
 [CmdletBinding()]
 param(
-    [string]$SuitePath = "$PSScriptRoot/../infra/environments/environment-suite.yaml"
+    [string]$SuitePath = "$PSScriptRoot/../infra/environments/environment-suite.yaml",
+
+    [ValidateSet('dev', 'preview', 'prod')]
+    [string[]]$Environment = @('dev', 'preview', 'prod')
 )
 
 Set-StrictMode -Version 4
@@ -35,7 +40,8 @@ $RequiredKeys = @(
     'prodDeployOnlyFromPipeline', 'chatbotEvolutionAgentEnabled',
     'rolloutStrategy'
 )
-$Envs = @('dev', 'preview', 'prod')
+$Envs = $Environment
+$DeploymentRoot = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $SuitePath -Parent) '../..'))
 
 $errors = @()
 
@@ -77,6 +83,53 @@ foreach ($env in $Envs) {
             $errors += "[$env] missing or empty key 'teamsChannelIds'"
         } elseif (@($teamsChannelIds | Where-Object { [string]::IsNullOrWhiteSpace($_) -or $_ -match '^REPLACE_WITH_' }).Count -gt 0) {
             $errors += "[$env] 'teamsChannelIds' contains an empty value or placeholder"
+        }
+
+        $evolutionEnabled = (& yq -r ".environments.$env.chatbotEvolutionAgentEnabled" $SuitePath).Trim()
+        $candidateEnvironment = (& yq -r ".environments.$env.candidateEnvironment // `"`"" $SuitePath).Trim()
+        if ($evolutionEnabled -eq 'true' -and [string]::IsNullOrWhiteSpace($candidateEnvironment)) {
+            $errors += "[$env] chatbot evolution is enabled but candidateEnvironment is missing"
+        } elseif (-not [string]::IsNullOrWhiteSpace($candidateEnvironment) -and $candidateEnvironment -notin @('dev', 'preview', 'prod')) {
+            $errors += "[$env] candidateEnvironment '$candidateEnvironment' is not declared"
+        }
+
+        $channelConfigPath = Join-Path $DeploymentRoot "config/$env/channel.yaml"
+        $tenantConfigPath = Join-Path $DeploymentRoot "config/$env/tenant.yaml"
+        if (-not (Test-Path $channelConfigPath)) {
+            $errors += "[$env] config/$env/channel.yaml is missing"
+        } else {
+            $routeIds = @(& yq -r '.channels[].id' $channelConfigPath)
+            foreach ($channelId in $teamsChannelIds) {
+                if ($channelId -notin $routeIds) {
+                    $errors += "[$env] monitored Teams channel '$channelId' has no route in config/$env/channel.yaml"
+                }
+            }
+            foreach ($routeId in $routeIds) {
+                if ($routeId -notin $teamsChannelIds) {
+                    $errors += "[$env] config/$env/channel.yaml contains unmonitored Teams channel '$routeId'"
+                }
+            }
+
+            if (-not (Test-Path $tenantConfigPath)) {
+                $errors += "[$env] config/$env/tenant.yaml is missing"
+            } else {
+                $routeTenants = @(
+                    & yq -r '[.default.tenant, .channels[].tenant] | unique | .[]' $channelConfigPath
+                )
+                $definedTenants = @(& yq -r '.tenants[].tenant' $tenantConfigPath)
+                foreach ($routeTenant in $routeTenants) {
+                    if ($routeTenant -notin $definedTenants) {
+                        $errors += "[$env] route tenant '$routeTenant' is not defined in config/$env/tenant.yaml"
+                    }
+                }
+
+                $teamsGroupId = (& yq -r ".environments.$env.teamsGroupId" $SuitePath).Trim()
+                foreach ($channelLink in @(& yq -r '.tenants[].channel_link' $tenantConfigPath)) {
+                    if ($channelLink -notmatch "[?&]groupId=$([regex]::Escape($teamsGroupId))(?:&|$)") {
+                        $errors += "[$env] tenant channel link targets a different Teams group: '$channelLink'"
+                    }
+                }
+            }
         }
     } else {
         $content = Get-Content $SuitePath -Raw

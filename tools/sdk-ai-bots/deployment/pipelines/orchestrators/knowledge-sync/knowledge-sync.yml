@@ -1,4 +1,5 @@
-# Provisions the selected environment, then refreshes the Search index.
+# Synchronizes knowledge and refreshes Search. Infrastructure provisioning is
+# an explicit opt-in for manual runs; scheduled and restoration runs are data-only.
 name: tools - sdk-ai-bots-knowledge-sync - provision-and-sync
 
 trigger: none
@@ -16,6 +17,10 @@ parameters:
       type: string
       default: prod
       values: [dev, preview, prod]
+    - name: provisionInfrastructure
+      displayName: 'Provision infrastructure before syncing'
+      type: boolean
+      default: false
 
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
@@ -24,7 +29,7 @@ variables:
       parameters:
           environment: ${{ parameters.environment }}
     - name: workingDirectory
-      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+      value: '$(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
 
 resources:
     repositories:
@@ -48,14 +53,17 @@ extends:
             skipBuildTagsForGitHubPullRequests: true
             networkIsolationPolicy: Permissive
         stages:
-            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml@self
-              parameters:
-                  environment: ${{ parameters.environment }}
+            - ${{ if eq(parameters.provisionInfrastructure, true) }}:
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml@self
+                    parameters:
+                        environment: ${{ parameters.environment }}
             - stage: SyncKnowledge
               displayName: 'Sync knowledge'
-              dependsOn: Provision
+              ${{ if eq(parameters.provisionInfrastructure, true) }}:
+                  dependsOn: Provision
               jobs:
                   - job: Sync
+                    timeoutInMinutes: 120
                     pool:
                         name: $(LINUXPOOL)
                         image: $(LINUXVMIMAGE)
@@ -67,20 +75,41 @@ extends:
                         - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml@self
                           parameters:
                               environment: '${{ parameters.environment }}'
-                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml@self
+                              suitePath: '$(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml'
                         - task: NodeTool@0
                           inputs: { versionSpec: '24.x' }
                         - script: npm ci
                           workingDirectory: $(workingDirectory)
-                        - script: npm start
-                          workingDirectory: $(workingDirectory)
-                          displayName: 'Run knowledge sync'
                         - task: AzureCLI@2
-                          displayName: 'Validate Search index doc count'
+                          displayName: 'Run knowledge sync'
+                          inputs:
+                              azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                              addSpnToEnvironment: true
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              workingDirectory: $(workingDirectory)
+                              inlineScript: |
+                                  set -euo pipefail
+                                  token_file="$(Agent.TempDirectory)/knowledge-sync-id-token"
+                                  printf '%s' "$idToken" > "$token_file"
+                                  export AZURE_CLIENT_ID="$servicePrincipalId"
+                                  export AZURE_TENANT_ID="$tenantId"
+                                  export AZURE_FEDERATED_TOKEN_FILE="$token_file"
+                                  npm start
+                          env:
+                              AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                              AZURE_SDK_DOCS_PATH: $(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms
+                              AZURE_SDK_WIKI_PATH: $(Agent.BuildDirectory)/s/internal.wiki
+                              HOME: $(Agent.HomeDirectory)
+                              TMPDIR: $(Agent.TempDirectory)
+                        - task: AzureCLI@2
+                          displayName: 'Run knowledge Search indexer'
                           inputs:
                               azureSubscription: $(AZURE_SERVICE_CONNECTION)
                               scriptType: bash
                               scriptLocation: inlineScript
                               inlineScript: |
                                   set -euo pipefail
-                                  echo "TODO: implement index regression guard"
+                                  bash "$(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/deployment/scripts/run-search-indexer.sh" AI_SEARCH_INDEXER
+                          env:
+                              APP_CONFIG_NAME: $(APP_CONFIG_NAME)

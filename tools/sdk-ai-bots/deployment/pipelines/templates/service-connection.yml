@@ -14,3 +14,6 @@ variables:
           value: azuresdkqabot-preview
       ${{ else }}:
           value: 'Azure SDK Engineering System'
+    - ${{ if eq(parameters.environment, 'prod') }}:
+          - name: CANDIDATE_AZURE_SERVICE_CONNECTION
+            value: azure-sdk-tests-playground

@@ -30,9 +30,9 @@ export class BlobService {
 
         // Use ChainedTokenCredential for better fallback options
         const credential = new ChainedTokenCredential(
+            new WorkloadIdentityCredential(),
             new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new AzureCliCredential()
         );
 
         const accountUrl = `https://${storageAccountName}.blob.core.windows.net`;

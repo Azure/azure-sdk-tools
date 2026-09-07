@@ -33,6 +33,7 @@ deployment/
 - [Master plan](DEPLOYMENT_TRANSFORMATION.md)
 - [Manual setup guide](docs/manual-setup.md) — **start here for a new ADO project / subscription**
 - [Dev deployment checklist](docs/dev-deployment-checklist.md)
+- [Recent merged-PR impact audit](docs/recent-pr-deployment-impact-2026-09.md)
 - [Environment-contract](docs/environment-contract.md)
 - [Deploy runbook](docs/runbook-deploy.md)
 - [Rollback runbook](docs/runbook-rollback.md)
@@ -42,8 +43,8 @@ deployment/
 ## Get started (dev)
 
 ```bash
-# 1. Validate the environment-suite (replace placeholders first)
-pwsh ./scripts/validate-env-suite.ps1
+# 1. Validate the target environment and its bot routing
+pwsh ./scripts/validate-env-suite.ps1 -Environment dev
 
 # 2. Create the azd env and sync it from environment-suite.yaml
 npm install
@@ -74,3 +75,11 @@ For preview / prod, use the component pipelines under
 the selected layer's dependencies, previews and applies only that component's
 infrastructure layer, then deploys the component. Configure approvals, branch
 controls, and pipeline permissions on the corresponding service connection.
+
+The generated-wiki build, chatbot-evolution deployment, and feedback scan are
+specialized pipelines listed in [pipelines/README.md](pipelines/README.md). They
+share the same environment suite and provisioned resources but run separately
+from the long-running application-service deployment.
+
+The full-stack prod pipeline also deploys the evolution agent after the chat
+agent and grants its runtime identity separate prod and candidate-dev access.

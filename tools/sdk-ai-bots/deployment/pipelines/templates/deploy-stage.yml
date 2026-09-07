@@ -58,9 +58,18 @@ stages:
           environment: ${{ parameters.environment }}
           dependsOn: DeployFunctionApp
 
+    - ${{ if eq(parameters.environment, 'prod') }}:
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/evolution-agent-deploy-stage.yml
+            parameters:
+                environment: prod
+                dependsOn: DeployAgent
+
     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
       parameters:
           stageName: DeployFrontend
           component: frontend
           environment: ${{ parameters.environment }}
-          dependsOn: DeployAgent
+          ${{ if eq(parameters.environment, 'prod') }}:
+              dependsOn: DeployEvolutionAgent
+          ${{ else }}:
+              dependsOn: DeployAgent

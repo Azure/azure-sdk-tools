@@ -54,10 +54,11 @@ function ensureSecretsOfficerRole(
     return;
   }
 
-  const principalId = env.DEVELOPER_PRINCIPAL_ID?.trim();
-  const principalType = env.DEVELOPER_PRINCIPAL_TYPE?.trim() || "User";
+  const principalId = env.DEPLOYMENT_PRINCIPAL_ID?.trim() || env.DEVELOPER_PRINCIPAL_ID?.trim();
+  const principalType =
+    env.DEPLOYMENT_PRINCIPAL_TYPE?.trim() || env.DEVELOPER_PRINCIPAL_TYPE?.trim() || "User";
   if (!principalId) {
-    log("  DEVELOPER_PRINCIPAL_ID is not set — relying on existing access.");
+    log("  DEPLOYMENT_PRINCIPAL_ID is not set — relying on existing access.");
     return;
   }
 

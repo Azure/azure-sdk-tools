@@ -42,6 +42,12 @@ param developerGroupObjectId string = ''
 @description('Principal type for the developer role assignments: User, Group, or ServicePrincipal.')
 param developerPrincipalType string = 'User'
 
+@description('Object ID of the principal executing deployment and scheduled data pipelines.')
+param deploymentPrincipalObjectId string = ''
+
+@description('Principal type for deployment automation: User, Group, or ServicePrincipal.')
+param deploymentPrincipalType string = 'ServicePrincipal'
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var managedIdentityName = !empty(managedIdentityNameOverride) ? managedIdentityNameOverride : 'qabot-identity-${suffix}'
 var actionGroupName = !empty(actionGroupNameOverride) ? actionGroupNameOverride : 'qabot-alert-${suffix}'
@@ -474,6 +480,37 @@ resource container9 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
   }
 }
 
+resource qaRecordsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2026-03-15' = {
+  name: 'qa-records'
+  parent: sqlDatabase
+  properties: {
+    resource: {
+      id: 'qa-records'
+      indexingPolicy: {
+        indexingMode: 'consistent'
+        automatic: true
+        includedPaths: [
+          {
+            path: '/*'
+          }
+        ]
+        excludedPaths: [
+          {
+            path: '/"_etag"/?'
+          }
+        ]
+      }
+      partitionKey: {
+        paths: [
+          '/tenant_id'
+        ]
+        kind: 'Hash'
+        version: 2
+      }
+    }
+  }
+}
+
 // ============================================================================
 // Azure RBAC role assignments
 // ----------------------------------------------------------------------------
@@ -501,6 +538,7 @@ var roleIds = {
   keyVaultSecretsOfficer: 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
   appConfigurationDataReader: '516239f1-63e1-4d78-a4de-a74fb236a071'
   searchIndexDataContributor: '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
+  searchServiceContributor: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
   contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
   acrPull: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
   cosmosDbDataContributor: '00000000-0000-0000-0000-000000000002'
@@ -692,6 +730,80 @@ resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignm
   properties: {
     roleDefinitionId: '${databaseAccount.id}/sqlRoleDefinitions/${roleIds.cosmosDbDataContributor}'
     principalId: developerGroupObjectId
+    scope: databaseAccount.id
+  }
+}
+
+// --- Deployment and scheduled-pipeline principal --------------------------
+
+var hasDistinctDeploymentPrincipal = !empty(deploymentPrincipalObjectId) && deploymentPrincipalObjectId != developerGroupObjectId
+
+resource deploymentStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  name: guid(storageAccount.id, deploymentPrincipalObjectId, roleIds.storageBlobDataContributor)
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.storageBlobDataContributor)
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
+resource deploymentAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  name: guid(configurationStore.id, deploymentPrincipalObjectId, roleIds.appConfigurationDataReader)
+  scope: configurationStore
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.appConfigurationDataReader)
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
+resource deploymentKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  name: guid(vault.id, deploymentPrincipalObjectId, roleIds.keyVaultSecretsUser)
+  scope: vault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.keyVaultSecretsUser)
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
+resource deploymentAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  name: guid(registry.id, deploymentPrincipalObjectId, roleIds.contributor)
+  scope: registry
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.contributor)
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
+resource developerSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+  name: guid(searchService.id, developerGroupObjectId, roleIds.searchServiceContributor)
+  scope: searchService
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.searchServiceContributor)
+    principalId: developerGroupObjectId
+    principalType: developerPrincipalType
+  }
+}
+
+resource deploymentSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+  name: guid(searchService.id, deploymentPrincipalObjectId, roleIds.searchServiceContributor)
+  scope: searchService
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.searchServiceContributor)
+    principalId: deploymentPrincipalObjectId
+    principalType: deploymentPrincipalType
+  }
+}
+
+resource deploymentCosmosDataContributor 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2026-03-15' = if (hasDistinctDeploymentPrincipal) {
+  name: guid(databaseAccount.id, deploymentPrincipalObjectId, roleIds.cosmosDbDataContributor)
+  parent: databaseAccount
+  properties: {
+    roleDefinitionId: '${databaseAccount.id}/sqlRoleDefinitions/${roleIds.cosmosDbDataContributor}'
+    principalId: deploymentPrincipalObjectId
     scope: databaseAccount.id
   }
 }

@@ -55,13 +55,21 @@ apply sequence.
 | function-app                     | `function-app/function-app.yml`               | `function-app/function-app.ci.yml`     |
 | logic-app                        | `logic-app/logic-app.yml`                     | n/a                                    |
 | knowledge-sync                   | `knowledge-sync/knowledge-sync.yml` (scheduled) | `knowledge-sync/knowledge-sync.ci.yml` |
+| generated wiki                   | `../../azure-sdk-qa-bot-wiki-index/build_wiki.yml` (scheduled) | `../../azure-sdk-qa-bot-wiki-index/ci.yml` |
+| chatbot evolution agent          | `qa-bot-all.yml` for prod or `../../azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` | `agent/agent.ci.yml` |
+| feedback/evolution loop          | `../../azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` (scheduled) | `agent/agent.ci.yml` |
+
+Knowledge sync and wiki generation are data jobs, not long-running `azd`
+services. Both load the environment suite, authenticate through the mapped WIF
+service connection, and trigger their provisioned Search indexer. The feedback
+job queues sync-only dev knowledge runs before and after candidate analysis.
 
 ## Existing pipelines (phase 1 coexistence)
 
 The following pipelines are **not** removed by this transformation. Cut them
 over to the new structure in phase 2, after dev has been validated:
 
-- `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/{server-ci,server-cd,agent-cd,logicapp-cd}.yml`
+- `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/{server-ci,server-cd,logicapp-cd}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/{ci,sync_knowledge}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml` (Teams manifest publish only — the ARM step is replaced by the consolidated orchestrator)
 - `tools/sdk-ai-bots/{online,offline}-evaluation.yml` (evaluation framework; not in scope)

@@ -66,10 +66,11 @@ function ensureDataOwnerRole(
     return;
   }
 
-  const principalId = env.DEVELOPER_PRINCIPAL_ID?.trim();
-  const principalType = env.DEVELOPER_PRINCIPAL_TYPE?.trim() || "User";
+  const principalId = env.DEPLOYMENT_PRINCIPAL_ID?.trim() || env.DEVELOPER_PRINCIPAL_ID?.trim();
+  const principalType =
+    env.DEPLOYMENT_PRINCIPAL_TYPE?.trim() || env.DEVELOPER_PRINCIPAL_TYPE?.trim() || "User";
   if (!principalId) {
-    log("  DEVELOPER_PRINCIPAL_ID is not set — relying on existing access.");
+    log("  DEPLOYMENT_PRINCIPAL_ID is not set — relying on existing access.");
     return;
   }
 
@@ -111,6 +112,8 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     // ── AI Foundry agent ─────────────────────────────────────────────────
     AI_FOUNDRY_AGENT_COMPLETION_MODEL: "gpt-5.6-sol",
     AI_FOUNDRY_AGENT_REASONING_EFFORT: "medium",
+    AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME: "azure-sdk-chatbot-evolution-agent",
+    AI_FOUNDRY_RAI_POLICY_ID: or("AI_FOUNDRY_RAI_POLICY_ID", "Microsoft.DefaultV2"),
     CHATBOT_EVOLUTION_AGENT_ENABLED: or("CHATBOT_EVOLUTION_AGENT_ENABLED", "false"),
 
     // ── Azure OpenAI chat (model selection + tuning) ─────────────────────
@@ -127,10 +130,12 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     // ── AI Search data-plane names (created by the indexing setup, not ARM;
     //    values taken from the reference store, override per env if needed) ──
     AI_SEARCH_AGENT: or("AI_SEARCH_AGENT", "azure-sdk-knowledgebase"),
+    AI_SEARCH_EMBEDDING_MODEL: or("AI_SEARCH_EMBEDDING_MODEL", "text-embedding-3-small"),
     AI_SEARCH_INDEX: or("AI_SEARCH_INDEX", "azure-sdk-knowledge"),
     AI_SEARCH_INDEXER: or("AI_SEARCH_INDEXER", "azure-sdk-knowledge-indexer"),
     AI_SEARCH_KNOWLEDGE_BASE: or("AI_SEARCH_KNOWLEDGE_BASE", "azure-sdk-knowledgebase"),
     AI_SEARCH_KNOWLEDGE_SOURCE: or("AI_SEARCH_KNOWLEDGE_SOURCE", "azure-sdk-knowledge-source"),
+    AI_SEARCH_WIKI_INDEXER: or("AI_SEARCH_WIKI_INDEXER", "azure-sdk-knowledge-wiki-indexer"),
     // Template resolved at runtime by the backend: {AI_SEARCH_BASE_URL} and
     // {AI_SEARCH_AGENT} placeholders are substituted before the request.
     AI_SEARCH_KNOWLEDGE_BASE_API: or(
@@ -138,6 +143,9 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
       "{AI_SEARCH_BASE_URL}/knowledgebases/{AI_SEARCH_AGENT}/retrieve?api-version=2025-11-01-preview",
     ),
     AI_SEARCH_TOPK: "10",
+
+    // ── Generated wiki knowledge layer ──────────────────────────────────
+    WIKI_SYNTHESIS_DEPLOYMENT: or("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.6-sol"),
 
     // ── Tenant / user memory ─────────────────────────────────────────────
     ENABLE_TENANT_MEMORY_SEARCH: "true",
@@ -158,6 +166,7 @@ export function fixedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, str
     STORAGE_FEEDBACK_CONTAINER: "feedback",
     STORAGE_KNOWLEDGE_CONTAINER: "knowledge",
     STORAGE_RECORDS_CONTAINER: "records",
+    STORAGE_WIKI_OUTPUT_CONTAINER: or("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki"),
   };
 }
 
@@ -192,9 +201,13 @@ export function derivedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, s
     AI_SEARCH_BASE_URL: `https://${searchServiceName}.search.windows.net`,
     // Backend appends '/openai/v1/' to this, so no trailing slash.
     AOAI_CHAT_COMPLETIONS_ENDPOINT: `https://${aiResourceName}.openai.azure.com`,
+    AZURE_OPENAI_ENDPOINT: `https://${aiResourceName}.openai.azure.com`,
     AZURE_COSMOSDB_ENDPOINT: `https://${cosmosAccountName}.documents.azure.com`,
     KEYVAULT_ENDPOINT: `https://${keyVaultName}.vault.azure.net`,
     STORAGE_ACCOUNT_NAME: storageAccountName,
+    STORAGE_ACCOUNT_RESOURCE_ID:
+      `/subscriptions/${required("AZURE_SUBSCRIPTION_ID")}/resourceGroups/${required("AZURE_RESOURCE_GROUP")}` +
+      `/providers/Microsoft.Storage/storageAccounts/${storageAccountName}`,
     STORAGE_BASE_URL: `https://${storageAccountName}.blob.core.windows.net`,
   };
 }

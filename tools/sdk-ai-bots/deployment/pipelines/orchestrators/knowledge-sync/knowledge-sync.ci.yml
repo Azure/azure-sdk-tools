@@ -41,6 +41,6 @@ extends:
                         - script: npm run build
                           workingDirectory: $(workingDirectory)
                         - script: |
-                              npm test -- --reporter=junit --outputFile=vitest-report.xml || echo "Tests completed with exit code $?"
+                            npm test -- --reporter=junit --outputFile=vitest-report.xml
                           workingDirectory: $(workingDirectory)
                           displayName: 'npm test'

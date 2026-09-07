@@ -10,7 +10,9 @@
  *   - Detects local-dev drift between the env-suite and the azd env vars
  *     and tells the developer to run scripts/sync-env-suite.ps1.
  *   - Detects the deploying principal from its ARM access token without
- *     requiring Microsoft Graph access.
+ *     requiring Microsoft Graph access. The active principal is persisted
+ *     separately from the optional developer user/group so automation always
+ *     receives its own data-plane access.
  */
 
 import { execFileSync, execSync } from "child_process";
@@ -114,6 +116,12 @@ function detectLocalDrift(): void {
     expected.CONTAINER_REGISTRY_NAME = expected.ACR_NAME;
     expected.KEY_VAULT_NAME = read(`.environments.${ENV_NAME}.keyVaultName`);
     expected.APP_CONFIG_NAME = read(`.environments.${ENV_NAME}.appConfigName`);
+    expected.AZURE_APPCONFIG_ENDPOINT = `https://${expected.APP_CONFIG_NAME}.azconfig.io`;
+    const candidateEnvironment = read(`.environments.${ENV_NAME}.candidateEnvironment // ""`);
+    if (candidateEnvironment) {
+      const candidateAppConfigName = read(`.environments.${candidateEnvironment}.appConfigName`);
+      expected.CANDIDATE_APPCONFIG_ENDPOINT = `https://${candidateAppConfigName}.azconfig.io`;
+    }
     expected.FRONTEND_IMAGE_REPOSITORY = `${read('.components.frontend.imageName')}:${ENV_NAME}`;
     expected.AGENT_SERVER_IMAGE_REPOSITORY = `${read('.components."agent-server".imageName')}:${ENV_NAME}`;
     expected.FUNCTION_IMAGE_REPOSITORY = `${read('.components."function-app".imageName')}:${ENV_NAME}`;
@@ -219,18 +227,12 @@ function checkResourceQuotas(): void {
 }
 
 /**
- * Detects the currently authenticated principal's object ID and type, then
- * persists them as DEVELOPER_PRINCIPAL_ID / DEVELOPER_PRINCIPAL_TYPE so Bicep
- * grants the deployer direct access to Azure resources (Key Vault, ACR, etc.).
- *
- * Only runs when DEVELOPER_PRINCIPAL_ID is not already set.
+ * Detects the currently authenticated principal's object ID and type. The
+ * deployment identity is refreshed on every provision; the developer identity
+ * is initialized from it only when no explicit user/group has been configured.
  */
-function ensureDeveloperPrincipal(): void {
-  if (process.env.DEVELOPER_PRINCIPAL_ID?.trim()) {
-    log(`  ✓ DEVELOPER_PRINCIPAL_ID already set (${process.env.DEVELOPER_PRINCIPAL_ID.trim()})`);
-    return;
-  }
-  log("DEVELOPER_PRINCIPAL_ID not set — detecting current auth principal...");
+function ensureAccessPrincipals(): void {
+  log("Detecting the current deployment principal...");
   try {
     const token = execFileSync(
       "az",
@@ -264,14 +266,24 @@ function ensureDeveloperPrincipal(): void {
       ? "ServicePrincipal"
       : "User";
 
-    execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_ID", principalId], { stdio: "inherit" });
-    execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_TYPE", principalType], { stdio: "inherit" });
-    process.env.DEVELOPER_PRINCIPAL_ID = principalId;
-    process.env.DEVELOPER_PRINCIPAL_TYPE = principalType;
-    log(`  ✓ DEVELOPER_PRINCIPAL_ID=${principalId} (${principalType})`);
+    execFileSync("azd", ["env", "set", "DEPLOYMENT_PRINCIPAL_ID", principalId], { stdio: "inherit" });
+    execFileSync("azd", ["env", "set", "DEPLOYMENT_PRINCIPAL_TYPE", principalType], { stdio: "inherit" });
+    process.env.DEPLOYMENT_PRINCIPAL_ID = principalId;
+    process.env.DEPLOYMENT_PRINCIPAL_TYPE = principalType;
+    log(`  ✓ DEPLOYMENT_PRINCIPAL_ID=${principalId} (${principalType})`);
+
+    if (!process.env.DEVELOPER_PRINCIPAL_ID?.trim()) {
+      execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_ID", principalId], { stdio: "inherit" });
+      execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_TYPE", principalType], { stdio: "inherit" });
+      process.env.DEVELOPER_PRINCIPAL_ID = principalId;
+      process.env.DEVELOPER_PRINCIPAL_TYPE = principalType;
+      log(`  ✓ DEVELOPER_PRINCIPAL_ID=${principalId} (${principalType})`);
+    } else {
+      log(`  ✓ preserving DEVELOPER_PRINCIPAL_ID=${process.env.DEVELOPER_PRINCIPAL_ID.trim()}`);
+    }
     return;
   } catch {
-    log("  ⚠ Could not detect principal ID — developer role assignments will be skipped.");
+    log("  ⚠ Could not detect principal ID — deployment-principal role assignments will be skipped.");
   }
 }
 
@@ -284,7 +296,7 @@ function ensureDeveloperPrincipal(): void {
   enforceProvisionGuard();
   validateAuth();
   checkResourceQuotas();
-  ensureDeveloperPrincipal();
+  ensureAccessPrincipals();
 
   log("Preprovision checks passed.");
 })().catch((err) => {

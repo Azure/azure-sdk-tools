@@ -30,12 +30,15 @@ graph TD
     subgraph "Application Code (azd services)"
         FE_APP[frontend app<br/>Teams bot container]
         FN_APP[function-app app<br/>queue handler container]
-        AG_APP[hosted agent<br/>Foundry container agent]
+        AG_APP[chat agent<br/>Foundry hosted container]
+        EV_APP[evolution agent<br/>prod Foundry hosted container]
         AG_SRV[agent-server<br/>production container]
     end
 
     subgraph "Data Maintenance"
         KS[knowledge-sync<br/>scheduled ADO job]
+        WI[wiki builder<br/>scheduled ADO job]
+        FB[feedback jobs<br/>scheduled ADO job]
     end
 
     RG --> SR
@@ -51,9 +54,14 @@ graph TD
 
     BE --> AG_SRV
     AGP --> AG_APP
+    AGP --> EV_APP
     BE --> FE_APP
     SR --> FN_APP
     SR --> KS
+    KS --> WI
+    FB --> EV_APP
+    EV_APP -->|candidate updates| SR
+    FB -->|restore before/after analysis| KS
 ```
 
 ## Deploy order
@@ -75,7 +83,11 @@ order (driven by the `services:` block in `azure.yaml`):
 1. `agent-server` — deploys directly to its production App Service
 2. `function-app` (no dependents)
 3. `agent` (hosted agent) — depends on agent-platform layer
-4. `frontend` (Teams bot) — must come last so a deploy-time channel rebind
+4. `chatbot_evolution_agent` for prod — receives prod and candidate-dev access
+5. `frontend` (Teams bot) — must come last so a deploy-time channel rebind
    does not race with the others
 
-`knowledge-sync` runs on a cron schedule independent of any deploy.
+`knowledge-sync`, wiki generation, and feedback processing run as scheduled data
+jobs. Knowledge sync and wiki generation immediately start their Search
+indexers. Feedback processing queues sync-only dev restoration before candidate
+analysis and again before production validation.

@@ -149,7 +149,7 @@ permissions for this deployment. No client secret is created.
 
 ---
 
-## 6. Register the 12 pipelines
+## 6. Register the 16 pipelines
 
 In Azure DevOps → Pipelines → "New pipeline" → "Existing Azure Pipelines
 YAML file", create the following. **Name them exactly** per the repo
@@ -178,6 +178,18 @@ convention (`tools - <tool-name> - <action>`).
 ### Full-stack provision and deploy (1)
 
 - [ ] `tools - sdk-ai-bots - provision-and-deploy-all` → [qa-bot-all.yml](../pipelines/orchestrators/qa-bot-all.yml)
+
+### Specialized data and evolution workflows (4)
+
+- [ ] `tools - sdk-ai-bots-wiki-index - ci` → [ci.yml](../../azure-sdk-qa-bot-wiki-index/ci.yml)
+- [ ] `tools - sdk-ai-bots-wiki-index - build` → [build_wiki.yml](../../azure-sdk-qa-bot-wiki-index/build_wiki.yml) (scheduled)
+- [ ] `tools - sdk-ai-bots-hosted-agent - deploy` → [agent-cd.yml](../../azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) (use `chatbot_evolution_agent` only with `prod`)
+- [ ] `tools - sdk-ai-bots-feedback-jobs` → [feedback-job.yml](../../azure-sdk-qa-bot-agent/pipelines/feedback-job.yml) (scheduled, prod)
+
+Grant the feedback pipeline's build identity **Queue builds** permission on the
+knowledge-sync definition. Candidate restoration resolves that definition by
+the exact name `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` and
+queues it with `environment=dev` and `provisionInfrastructure=false`.
 
 ### Cross-repo authorization
 

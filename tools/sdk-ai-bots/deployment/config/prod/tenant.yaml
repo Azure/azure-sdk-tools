@@ -1,0 +1,28 @@
+tenants:
+  - tenant: azure_sdk_onboarding
+    channel_name: Azure SDK Onboarding and E2E SDK
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3Ade3fce22c2994be18cac50502c55f717%40thread.skype/Azure%20SDK%20Onboarding%20and%20E2E%20SDK?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
+
+  - tenant: typespec_channel_qa_bot
+    channel_name: TypeSpec Discussion
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3A906c1efbbec54dc8949ac736633e6bdf%40thread.skype/TypeSpec%20Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
+
+  - tenant: python_channel_qa_bot
+    channel_name: Language - Python
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3Ab97d98e6d22c41e0970a1150b484d935%40thread.skype/Language%20-%20Python?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
+
+  - tenant: api_spec_review_bot
+    channel_name: API Spec Review
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3A0351f5f9404446e4b4fd4eaf2c27448d%40thread.skype/API%20Spec%20Review?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
+
+  - tenant: general_qa_bot
+    channel_name: General
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3Af6d52ac6465c40ea80dc86b8be3825aa%40thread.skype/Azure%20SDK?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
+
+  - tenant: java_channel_qa_bot
+    channel_name: Language - Java
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3A5e673e41085f4a7eaaf20823b85b2b53%40thread.skype/Language%20-%20Java?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False
+
+  - tenant: azsdk_tools_agent_qa_bot
+    channel_name: AzSDK Tools Agent
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3A6d2c19322c254a80bcc521675134da03%40thread.skype/AzSDK%20Tools%20Agent?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False

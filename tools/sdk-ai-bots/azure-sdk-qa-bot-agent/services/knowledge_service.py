@@ -56,6 +56,16 @@ class KnowledgeService:
                 len(search_result.results) if search_result.results else 0,
             )
 
+            if req.with_wiki_search:
+                wiki_search_result = await self._knowledge_tools.wiki_search(
+                    queries=queries,
+                    tenant_id=req.tenant_id.value,
+                    sources=req.sources,
+                    search_mode=req.search_mode or "quick",
+                )
+                if wiki_search_result.results:
+                    search_result.results.extend(wiki_search_result.results)
+
             has_result = True if len(search_result.results) else False
             return KnowledgeRetrieveResponse(has_result=has_result, knowledge_list=search_result.results)
             

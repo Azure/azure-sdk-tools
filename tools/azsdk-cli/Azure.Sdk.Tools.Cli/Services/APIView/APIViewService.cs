@@ -1,6 +1,6 @@
 
 using System.Text.Json;
-
+using Azure.Sdk.Tools.Cli.Models.APIView;
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 using System.Net;
@@ -28,16 +28,12 @@ public interface IAPIViewService
     /// </summary>
     Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct);
 
-    /// <summary>
-    /// Creates an API revision for a pull request if API surface changes are detected.
-    /// Use this during PR validation to compare the PR's API against the baseline.
-    /// </summary>
-    Task<(string? content, int statusCode)> CreatePullRequestRevisionAsync(
-        string buildId, string artifactName, string filePath, string commitSha,
-        string repoName, string packageName,
-        int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
-        string? language = null, string? project = null, string? packageType = null,
-        string? metadataFile = null, CancellationToken ct = default);
+    Task<APIViewMarkReleasedResult> MarkPackageReleasedAsync(
+        string packageName,
+        string language,
+        string version,
+        CancellationToken ct = default,
+        bool dryRun = false);
 
     /// <summary>
     /// Submits API surface text for automated Copilot review.
@@ -177,71 +173,17 @@ public class APIViewService : IAPIViewService
         return await _httpService.PostAsync(endpoint, ct);
     }
 
-    /// <inheritdoc />
-    public async Task<(string? content, int statusCode)> CreatePullRequestRevisionAsync(
-        string buildId,
-        string artifactName,
-        string filePath,
-        string commitSha,
-        string repoName,
+    public async Task<APIViewMarkReleasedResult> MarkPackageReleasedAsync(
         string packageName,
-        int pullRequestNumber = 0,
-        string? codeFile = null,
-        string? baselineCodeFile = null,
-        string? language = null,
-        string? project = null,
-        string? packageType = null,
-        string? metadataFile = null,
-        CancellationToken ct = default
-    ) {
-        var queryParams = new List<string>
-        {
-            $"buildId={Uri.EscapeDataString(buildId)}",
-            $"artifactName={Uri.EscapeDataString(artifactName)}",
-            $"filePath={Uri.EscapeDataString(filePath)}",
-            $"commitSha={Uri.EscapeDataString(commitSha)}",
-            $"repoName={Uri.EscapeDataString(repoName)}",
-            $"packageName={Uri.EscapeDataString(packageName)}"
-        };
-
-        if (pullRequestNumber > 0)
-        {
-            queryParams.Add($"pullRequestNumber={pullRequestNumber}");
-        }
-
-        if (!string.IsNullOrEmpty(codeFile))
-        {
-            queryParams.Add($"codeFile={Uri.EscapeDataString(codeFile)}");
-        }
-
-        if (!string.IsNullOrEmpty(baselineCodeFile))
-        {
-            queryParams.Add($"baselineCodeFile={Uri.EscapeDataString(baselineCodeFile)}");
-        }
-
-        if (!string.IsNullOrEmpty(language))
-        {
-            queryParams.Add($"language={Uri.EscapeDataString(language)}");
-        }
-
-        if (!string.IsNullOrEmpty(project))
-        {
-            queryParams.Add($"project={Uri.EscapeDataString(project)}");
-        }
-
-        if (!string.IsNullOrEmpty(packageType))
-        {
-            queryParams.Add($"packageType={Uri.EscapeDataString(packageType)}");
-        }
-
-        if (!string.IsNullOrEmpty(metadataFile))
-        {
-            queryParams.Add($"metadataFile={Uri.EscapeDataString(metadataFile)}");
-        }
-
-        string endpoint = $"/api/PullRequests/CreateAPIRevisionIfAPIHasChanges?{string.Join("&", queryParams)}";
-
-        return await _httpService.GetAsync(endpoint, ct);
+        string language,
+        string version,
+        CancellationToken ct = default,
+        bool dryRun = false)
+    {
+        string endpoint = $"/api/reviews/mark-released?packageName={Uri.EscapeDataString(packageName)}&language={Uri.EscapeDataString(language)}&version={Uri.EscapeDataString(version)}&dryRun={dryRun.ToString().ToLowerInvariant()}";
+        (string? content, _) = await _httpService.PostAsync(endpoint, ct);
+        return JsonSerializer.Deserialize<APIViewMarkReleasedResult>(content ?? string.Empty)
+            ?? throw new InvalidDataException("APIView returned an empty mark-released response.");
     }
 
     /// <inheritdoc />

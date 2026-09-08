@@ -1,3 +1,8 @@
+# 1.4.0
+
+- APIView token files with `ParserVersion >= 2.0.0` now pass through unchanged.
+- Older token files, files without `ParserVersion`, and legacy rustdoc JSON inputs continue through the existing rustdoc-to-APIView conversion path.
+
 # 1.3.0
 
 - Reverted changes made in 1.2.0 because they are not compatible with previous input.

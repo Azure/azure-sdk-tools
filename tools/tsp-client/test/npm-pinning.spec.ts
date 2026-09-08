@@ -58,6 +58,7 @@ describe("use-npm-pinning flag", () => {
     });
 
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
       "use-npm-pinning": true,
@@ -81,6 +82,7 @@ describe("use-npm-pinning flag", () => {
     });
 
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
       "use-npm-pinning": true,
@@ -98,6 +100,7 @@ describe("use-npm-pinning flag", () => {
 
   it("does not call npmViewPackageDevDependencies when use-npm-pinning is not set", async () => {
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
     };
@@ -113,6 +116,7 @@ describe("use-npm-pinning flag", () => {
 
   it("does not call npmViewPackageDevDependencies when use-npm-pinning is false", async () => {
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
       "use-npm-pinning": false,
@@ -131,6 +135,7 @@ describe("use-npm-pinning flag", () => {
     mockedNpmView.mockResolvedValue(undefined);
 
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
       "use-npm-pinning": true,
@@ -158,6 +163,7 @@ describe("use-npm-pinning flag", () => {
     });
 
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package-sdk-pinning.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
       "use-npm-pinning": true,
@@ -182,6 +188,7 @@ describe("use-npm-pinning flag", () => {
     });
 
     const args = {
+      "output-dir": tmpDir,
       "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       "emitter-package-json-path": emitterPackageJsonPath,
       overrides: joinPaths(cwd(), "test", "examples", "overrides.json"),

@@ -146,7 +146,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     /// <summary>
     /// MCP tool entry point — applies patches to customization files based on build errors,
-    /// regenerates code if needed (Java), builds, and returns success/failure with build result.
+    /// regenerates code if needed (C# and Java), builds, and returns success/failure with build result.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
@@ -154,7 +154,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
-    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(
         [Description("Absolute path to the SDK package directory. REQUIRED. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
         string packagePath,
@@ -715,19 +715,21 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             });
         }
 
-        // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
-        if (languageService.Language == SdkLanguage.Java)
+        // C# partial customizations affect generated declarations; Java customizations run during generation.
+        if (languageService.Language is SdkLanguage.Java or SdkLanguage.DotNet)
         {
-            logger.LogInformation("Regenerating code after patches (Java)...");
+            logger.LogInformation("Regenerating code after patches ({Language})...", languageService.Language);
 
             // tspProjectPath is optional in custom-code-only scope. When supplied, regenerate from the
             // local spec project; when omitted, pass no local spec repo so tsp-client regenerates from the
             // pinned commit recorded in the package's tsp-location.yaml (no local spec checkout required).
             string? localSpecProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? null : Path.GetFullPath(tspProjectPath);
 
-            logger.LogDebug("Java regeneration local spec source: {localSpecProjectPath}",
+            logger.LogDebug("Regeneration local spec source: {localSpecProjectPath}",
                 localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
 
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            await languageService.PreGenerateAsync(repoRoot, ct);
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {

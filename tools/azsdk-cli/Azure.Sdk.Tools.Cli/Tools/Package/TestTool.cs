@@ -144,6 +144,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var timeout = timeoutSeconds.HasValue ? TimeSpan.FromSeconds(timeoutSeconds.Value) : (TimeSpan?)null;
                 var testResponse = await languageService.RunAllTests(packagePath, testMode, liveTestEnvironment, timeout, ct);
 
+                if (testResponse.ExitCode == 0 && (testResponse.NextSteps == null || testResponse.NextSteps.Count == 0))
+                {
+                    testResponse.NextSteps = ["Tests passed. Run package validation checks using azsdk_package_run_check if not already done.", "Update changelog, metadata, and version when preparing for release."];
+                }
+
                 await AddPackageDetailsInResponse(testResponse, packagePath, ct);
                 return testResponse;
             }

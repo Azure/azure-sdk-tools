@@ -19,4 +19,7 @@ public static class Constants
     public const string GITHUB_LABEL_CREATED_BY_COPILOT = "Created By Copilot";
 
     public const string TOOLS_ACTIVITY_SOURCE = "azsdk.tools";
+
+    // Notification service environment variables
+    public const string NOTIFICATION_SERVICE_URL_ENV_VAR = "AZSDKTOOLS_NOTIFICATION_SERVICE_URL";
 }

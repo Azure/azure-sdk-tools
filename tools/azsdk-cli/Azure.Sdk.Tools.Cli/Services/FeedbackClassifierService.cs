@@ -27,7 +27,7 @@ public interface IFeedbackClassifierService
     Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
-        string tspProjectPath,
+        string? tspProjectPath,
         string? apiViewUrl = null,
         string? plainTextFeedback = null,
         string? language = null,
@@ -77,7 +77,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
-        string tspProjectPath,
+        string? tspProjectPath,
         string? apiViewUrl = null,
         string? plainTextFeedback = null,
         string? language = null,
@@ -98,19 +98,31 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             throw new ArgumentException("No feedback items to classify. Provide an APIView URL or plain text feedback.");
         }
 
-        var specRepoBasePath = _typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
-        if (string.IsNullOrEmpty(specRepoBasePath))
+        string? specRepoBasePath = null;
+        var referenceDocContent = string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(tspProjectPath))
+        {
+            specRepoBasePath = _typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+            if (string.IsNullOrEmpty(specRepoBasePath))
+            {
+                throw new ArgumentException(
+                    $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
+                    nameof(tspProjectPath));
+            }
+
+            referenceDocContent = await LoadTspCustomizationGuideAsync(specRepoBasePath, ct);
+        }
+        else if (editScope.HasFlag(EditScope.SpecInputs))
         {
             throw new ArgumentException(
-                $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
+                "A TypeSpec project path is required when spec inputs are in scope.",
                 nameof(tspProjectPath));
         }
 
         var effectiveBatchSize = batchSize ?? DefaultBatchSize;
         _logger.LogInformation("Classifying {Count} items in batch(es) of up to {BatchSize} items",
             items.Count, effectiveBatchSize);
-
-        var referenceDocContent = await LoadTspCustomizationGuideAsync(specRepoBasePath, ct);
 
         foreach (var chunk in items.Chunk(effectiveBatchSize))
         {
@@ -192,7 +204,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         string? language,
         string? serviceName,
         string referenceDocContent,
-        string specRepoBasePath,
+        string? specRepoBasePath,
         EditScope editScope,
         CancellationToken ct)
     {
@@ -202,18 +214,21 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             referenceDocContent: referenceDocContent,
             items: items,
             globalContext: globalContext,
-            editScope: editScope
+            editScope: editScope,
+            specInspectionAvailable: !string.IsNullOrWhiteSpace(specRepoBasePath)
         );
 
         var prompt = template.BuildPrompt();
 
-        // Tools scoped to spec repo for TypeSpec project inspection
-        var specTools = new List<AIFunction>
+        // Spec inspection is optional for custom-code-only repair, which intentionally
+        // runs without a local azure-rest-api-specs checkout.
+        var specTools = new List<AIFunction>();
+        if (!string.IsNullOrWhiteSpace(specRepoBasePath))
         {
-            FileTools.CreateReadFileTool(specRepoBasePath),
-            FileTools.CreateListFilesTool(specRepoBasePath),
-            FileTools.CreateGrepSearchTool(specRepoBasePath)
-        };
+            specTools.Add(FileTools.CreateReadFileTool(specRepoBasePath));
+            specTools.Add(FileTools.CreateListFilesTool(specRepoBasePath));
+            specTools.Add(FileTools.CreateGrepSearchTool(specRepoBasePath));
+        }
 
         var result = await _agentRunner.RunAsync(new CopilotAgent<string>
         {
@@ -292,7 +307,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             item.ClassificationReason = reason;
             item.AppendContext($"Classification: {classification}\nReason: {reason}", leadingNewLines: 2);
         }
-        
+
         _logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
     }
 

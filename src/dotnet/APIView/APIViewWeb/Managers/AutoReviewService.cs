@@ -81,44 +81,58 @@ public class AutoReviewService : IAutoReviewService
                 // Scope to automatic revisions for the same logical version as the incoming upload.
                 var automaticRevisions = apiRevisions
                     .Where(r => r.APIRevisionType == APIRevisionType.Automatic
-                        && (incomingVersionModel == null|| r.APIVersionId == incomingVersionModel.Id || string.IsNullOrEmpty(r.APIVersionId)))
+                        && (incomingVersionModel == null || r.APIVersionId == incomingVersionModel.Id || string.IsNullOrEmpty(r.APIVersionId)))
                     .ToList();
                 if (automaticRevisions.Count > 0)
                 {
-                    // For release pipeline runs, compare against all approved revisions first to catch hotfix API changes.
-                    // Use the full package version in that comparison to distinguish stable releases from pre-release builds.
-                    bool considerPackageVersion = !string.IsNullOrWhiteSpace(codeFile.PackageVersion);
-
-                    if (compareAllRevisions)
+                    // Revision identity and approval inheritance are separate decisions. Repeated uploads of the
+                    // same package version and API surface reuse the revision so SkipDiff token changes are retained.
+                    // Released revisions are immutable. Different package versions fall through to creation and may
+                    // inherit approval later when their API surface matches an approved revision.
+                    foreach (var matchingVersionRevision in automaticRevisions.Where(r => r.PackageVersion == codeFile.PackageVersion))
                     {
-                        foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
+                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(matchingVersionRevision, renderedCodeFile, true, incomingContentHash))
                         {
-                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile, considerPackageVersion, incomingContentHash))
+                            if (matchingVersionRevision.IsReleased)
                             {
-                                TrackCarryForwardEvent("APIViewAutomaticRevisionExistingApprovedMatch", review, approvedAPIRevision, approvedAPIRevision, incomingContentHash, true);
-                                return (review, approvedAPIRevision);
+                                TrackCarryForwardEvent("APIViewAutomaticRevisionExistingReleasedMatch", review, matchingVersionRevision, matchingVersionRevision, incomingContentHash, true);
+                                return (review, matchingVersionRevision);
                             }
+
+                            apiRevision = await UpdateAutomaticAPIRevisionCodeFile(
+                                matchingVersionRevision,
+                                label,
+                                originalName,
+                                memoryStream,
+                                codeFile,
+                                sourceBranch,
+                                incomingVersionModel?.Id);
+                            TrackCarryForwardEvent("APIViewAutomaticRevisionExistingMatchUpdated", review, apiRevision, matchingVersionRevision, incomingContentHash, true);
+                            break;
                         }
                     }
 
-                    var comments = await _commentsManager.GetCommentsAsync(review.Id);
-                    var revisionIdsWithComments = comments.Select(c => c.APIRevisionId).ToHashSet();
-
-                    // Find the newest pending automatic revision to replace.
-                    var latestAutomaticAPIRevision = automaticRevisions.FirstOrDefault(
-                        r => !r.IsApproved && !r.IsReleased && !revisionIdsWithComments.Contains(r.Id)
-                        && r.PackageVersion == codeFile.PackageVersion);
-
-                    if (latestAutomaticAPIRevision != null)
+                    if (apiRevision == null)
                     {
-                        apiRevision = await UpdateAutomaticAPIRevisionCodeFile(
-                            latestAutomaticAPIRevision,
-                            label,
-                            originalName,
-                            memoryStream,
-                            codeFile,
-                            sourceBranch,
-                            incomingVersionModel?.Id);
+                        var comments = await _commentsManager.GetCommentsAsync(review.Id);
+                        var revisionIdsWithComments = comments.Select(c => c.APIRevisionId).ToHashSet();
+
+                        // Find the newest pending automatic revision to replace when the API surface changed.
+                        var latestAutomaticAPIRevision = automaticRevisions.FirstOrDefault(
+                            r => !r.IsApproved && !r.IsReleased && !revisionIdsWithComments.Contains(r.Id)
+                            && r.PackageVersion == codeFile.PackageVersion);
+
+                        if (latestAutomaticAPIRevision != null)
+                        {
+                            apiRevision = await UpdateAutomaticAPIRevisionCodeFile(
+                                latestAutomaticAPIRevision,
+                                label,
+                                originalName,
+                                memoryStream,
+                                codeFile,
+                                sourceBranch,
+                                incomingVersionModel?.Id);
+                        }
                     }
                 }
             }

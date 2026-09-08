@@ -1,7 +1,7 @@
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -17,7 +17,7 @@ internal class CopilotAgentRunnerTests
     private TokenUsageHelper tokenUsageHelper;
     private Mock<ICopilotClientWrapper> clientMock;
     private Mock<ICopilotSessionWrapper> sessionMock;
-    private List<SessionEventHandler> eventHandlers;
+    private List<Action<SessionEvent>> eventHandlers;
     private ICollection<AIFunction>? capturedTools;
 
     [SetUp]
@@ -31,8 +31,8 @@ internal class CopilotAgentRunnerTests
 
         // Setup session mock
         sessionMock = new Mock<ICopilotSessionWrapper>();
-        sessionMock.Setup(s => s.On(It.IsAny<SessionEventHandler>()))
-            .Callback<SessionEventHandler>(handler => eventHandlers.Add(handler))
+        sessionMock.Setup(s => s.On(It.IsAny<Action<SessionEvent>>()))
+            .Callback<Action<SessionEvent>>(handler => eventHandlers.Add(handler))
             .Returns(() => Mock.Of<IDisposable>());
         sessionMock.Setup(s => s.DisposeAsync())
             .Returns(ValueTask.CompletedTask);
@@ -46,7 +46,7 @@ internal class CopilotAgentRunnerTests
                 It.IsAny<CancellationToken>()))
             .Callback<SessionConfig?, CancellationToken>((config, ct) =>
             {
-                capturedTools = config?.Tools;
+                capturedTools = config?.Tools?.OfType<AIFunction>().ToList();
             })
             .ReturnsAsync(sessionMock.Object);
     }
@@ -486,7 +486,7 @@ internal class CopilotAgentRunnerTests
             .Callback<SessionConfig?, CancellationToken>((config, ct) =>
             {
                 capturedConfig = config;
-                capturedTools = config?.Tools;
+                capturedTools = config?.Tools?.OfType<AIFunction>().ToList();
             })
             .ReturnsAsync(sessionMock.Object);
 
@@ -518,6 +518,30 @@ internal class CopilotAgentRunnerTests
             Assert.That(capturedConfig.SystemMessage?.Mode, Is.EqualTo(SystemMessageMode.Append));
         });
 
+    }
+
+    [Test]
+    public async Task RunAsync_WithoutModel_LetsCopilotSelectDefault()
+    {
+        SessionConfig? capturedConfig = null;
+        clientMock.Setup(c => c.CreateSessionAsync(
+                It.IsAny<SessionConfig>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<SessionConfig?, CancellationToken>((config, _) =>
+            {
+                capturedConfig = config;
+                capturedTools = config?.Tools?.OfType<AIFunction>().ToList();
+            })
+            .ReturnsAsync(sessionMock.Object);
+        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => SimulateExitToolCall("Success"))
+            .ReturnsAsync("msg-id");
+
+        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
+
+        await runner.RunAsync(new CopilotAgent<string> { Instructions = "Test" });
+
+        Assert.That(capturedConfig?.Model, Is.Null);
     }
 
     [Test]
@@ -571,10 +595,8 @@ internal class CopilotAgentRunnerTests
         // Arrange - Use a fake CLI path that doesn't exist
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {
-            UseStdio = true,
-            AutoStart = true,
+            Connection = RuntimeConnection.ForStdio("/nonexistent/path/to/copilot-cli"),
             UseLoggedInUser = false,
-            CliPath = "/nonexistent/path/to/copilot-cli"
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
         var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
@@ -608,8 +630,7 @@ internal class CopilotAgentRunnerTests
         // Arrange - Use an invalid GitHub token
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {
-            UseStdio = true,
-            AutoStart = true,
+            Connection = RuntimeConnection.ForStdio(),
             UseLoggedInUser = false,
             GitHubToken = "invalid_token_that_will_not_work"
         });

@@ -1,0 +1,6 @@
+azure-storage-blob==12.29.0
+azure-identity==1.26.0b2
+azure-appconfiguration==1.7.1
+aiohttp>=3.9.0
+openai>=1.40.0
+requests>=2.31.0

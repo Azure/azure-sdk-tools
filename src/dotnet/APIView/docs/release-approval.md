@@ -18,19 +18,19 @@ The primary approval mechanism. Each `APIRevisionListItemModel` carries:
 
 A revision is considered approved when `Approvers` is non-empty. Multiple reviewers can each toggle their approval independently; removing all approvers reverts the revision to unapproved.
 
-**Source:** [`APIViewWeb/LeanModels/ReviewListModels.cs`](../APIViewWeb/LeanModels/ReviewListModels.cs) (fields on `APIRevisionListItemModel`), [`APIViewWeb/Managers/APIRevisionsManager.cs`](../APIViewWeb/Managers/APIRevisionsManager.cs) (`ToggleAPIRevisionApprovalAsync`).
+**Source:** [`APIViewWeb/LeanModels/ReviewListModels.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/LeanModels/ReviewListModels.cs) (fields on `APIRevisionListItemModel`), [`APIViewWeb/Managers/APIRevisionsManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/APIRevisionsManager.cs) (`ToggleAPIRevisionApprovalAsync`).
 
 ### b. Review-Level (First-Release) Approval
 
 A separate, review-scoped flag on `ReviewListItemModel.IsApproved`. This covers first-release approval of a package name/namespace and is largely a legacy concept being phased out in favour of namespace approval (below).
 
-**Source:** [`APIViewWeb/Managers/ReviewManager.cs`](../APIViewWeb/Managers/ReviewManager.cs) (`ToggleReviewApprovalAsync`).
+**Source:** [`APIViewWeb/Managers/ReviewManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/ReviewManager.cs) (`ToggleReviewApprovalAsync`).
 
 ### c. Namespace Approval
 
 For TypeSpec-based packages, APIView tracks whether the namespace has been approved across all SDK languages in a review group. When every SDK language's revision for a TypeSpec project is approved, the namespace is auto-approved. This approval is tracked per-language in a `ProjectNamespaceInfo` record.
 
-**Source:** [`APIViewWeb/Managers/NamespaceManager.cs`](../APIViewWeb/Managers/NamespaceManager.cs) (`IsNamespaceApprovedAsync`), [`APIViewWeb/Managers/ReviewManager.cs`](../APIViewWeb/Managers/ReviewManager.cs) (`RequestNamespaceReviewAsync`).
+**Source:** [`APIViewWeb/Managers/NamespaceManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/NamespaceManager.cs) (`IsNamespaceApprovedAsync`), [`APIViewWeb/Managers/ReviewManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/ReviewManager.cs) (`RequestNamespaceReviewAsync`).
 
 ---
 
@@ -66,7 +66,7 @@ Versions sort with GA above preview at the same major.minor.patch. For example (
 | **Copilot review gate** | Must have Copilot review before human approval (for supported languages). | Exempt — approval is allowed without Copilot review. |
 | **Auto-archive** | The last approved GA revision is always preserved. | The most recent preview revision is always preserved (regardless of approval status). |
 
-**Source:** [`APIViewWeb/Helpers/AzureEngSemanticVersion.cs`](../APIViewWeb/Helpers/AzureEngSemanticVersion.cs), [`ClientSPA/src/app/_models/azureEngSemanticVersion.ts`](../ClientSPA/src/app/_models/azureEngSemanticVersion.ts), [`APIViewWeb/Managers/APIRevisionsManager.cs`](../APIViewWeb/Managers/APIRevisionsManager.cs) (`IsPrerelease`, `AutoArchiveAPIRevisions`).
+**Source:** [`APIViewWeb/Helpers/AzureEngSemanticVersion.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Helpers/AzureEngSemanticVersion.cs), [`ClientSPA/src/app/_models/azureEngSemanticVersion.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/ClientSPA/src/app/_models/azureEngSemanticVersion.ts), [`APIViewWeb/Managers/APIRevisionsManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/APIRevisionsManager.cs) (`IsPrerelease`, `AutoArchiveAPIRevisions`).
 
 ---
 
@@ -82,7 +82,7 @@ Before a user can approve a revision in the Angular SPA, the UI enforces several
 
 On the backend, the controller additionally verifies that the requesting user has the **approver** role via `ManagerHelpers.AssertApprover()`.
 
-**Source:** [`ClientSPA/src/app/_components/review-page-options/review-page-options.component.ts`](../ClientSPA/src/app/_components/review-page-options/review-page-options.component.ts) (`shouldDisableApproval`).
+**Source:** [`ClientSPA/src/app/_components/review-page-options/review-page-options.component.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/ClientSPA/src/app/_components/review-page-options/review-page-options.component.ts) (`shouldDisableApproval`).
 
 ---
 
@@ -103,14 +103,23 @@ When a reviewer clicks **Approve** (or **Revert API Approval**):
 
 ## 5. Automatic Approval Carry-Forward
 
-When a new automatic revision is created (e.g., from a CI build), its API surface is compared against existing approved revisions using `AreAPIRevisionsTheSame()`.
+Revision selection happens before approval carry-forward:
+
+| Incoming upload | Revision behavior |
+|-----------------|-------------------|
+| Same package version and API surface, not released | Replace the existing revision's token file in place; preserve approval and comments. |
+| Same package version and API surface, released | Return the immutable released revision unchanged. |
+| Same package version and changed API surface | Replace an unapproved, unreleased, comment-free revision, or create one if no such revision exists. |
+| Different package version | Create a revision, even when the API surface is unchanged. |
+
+After a revision is selected or created, its API surface is compared against existing approved revisions using `AreAPIRevisionsTheSame()`. Package versions do not need to match for approval carry-forward.
 
 - **Fast path:** If both revisions have a `ContentHash` (SHA-256 of the API surface), comparison is O(1).
 - **Slow path:** If no hash is stored, the token file is downloaded from Blob Storage and compared structurally. The hash is then back-filled for future comparisons.
 
 If the surfaces match and the source revision is approved, `CarryForwardRevisionDataAsync` copies the approval to the new revision. The change history records `"Approval copied from revision {sourceId}"` with the original approver's identity.
 
-**Source:** [`APIViewWeb/Managers/APIRevisionsManager.cs`](../APIViewWeb/Managers/APIRevisionsManager.cs) (`CarryForwardRevisionDataAsync`, `ApplyApprovalFrom`, `AreAPIRevisionsTheSame`).
+**Source:** [`APIViewWeb/Managers/APIRevisionsManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/APIRevisionsManager.cs) (`CarryForwardRevisionDataAsync`, `ApplyApprovalFrom`, `AreAPIRevisionsTheSame`).
 
 ---
 
@@ -125,7 +134,7 @@ GET /AutoReview/GetReviewStatus?language={lang}&packageName={pkg}
     [&packageVersion={ver}][&firstReleaseStatusOnly={bool}]
 ```
 
-**Source:** [`APIViewWeb/Controllers/AutoReviewController.cs`](../APIViewWeb/Controllers/AutoReviewController.cs) (`GetReviewStatus`).
+**Source:** [`APIViewWeb/Controllers/AutoReviewController.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Controllers/AutoReviewController.cs) (`GetReviewStatus`).
 
 ### Response Codes
 
@@ -167,13 +176,13 @@ POST /api/auto-reviews/upload   (or /api/auto-reviews/create)
 
 This triggers:
 
-1. `AutoReviewService.CreateAutomaticRevisionAsync()` — finds the existing approved revision with a matching API surface.
+1. `AutoReviewService.CreateAutomaticRevisionAsync()` — reuses an exact same-version revision or creates a revision for a new package version, carrying approval forward when the API surface matches.
 2. `APIRevisionsManager.UpdateRevisionMetadataAsync()` — sets `IsReleased = true` and `ReleasedOn = DateTime.UtcNow`.
 3. Once marked released, the revision's metadata is frozen (subsequent calls with `setReleaseTag` are no-ops).
 
 The revision then displays as **"Shipped"** in the UI.
 
-**Source:** [`APIViewWeb/LeanControllers/AutoReviewController.cs`](../APIViewWeb/LeanControllers/AutoReviewController.cs), [`APIViewWeb/Managers/APIRevisionsManager.cs`](../APIViewWeb/Managers/APIRevisionsManager.cs) (`UpdateRevisionMetadataAsync`).
+**Source:** [`APIViewWeb/LeanControllers/AutoReviewController.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/LeanControllers/AutoReviewController.cs), [`APIViewWeb/Managers/APIRevisionsManager.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Managers/APIRevisionsManager.cs) (`UpdateRevisionMetadataAsync`).
 
 ---
 
@@ -183,7 +192,7 @@ The revision then displays as **"Shipped"** in the UI.
 CI Build Pipeline
   │  POST /autoreview/upload (artifact)
   ▼
-APIView creates/matches APIRevision
+APIView reuses or creates APIRevision
   │  Carry-forward approval if surface unchanged
   ▼
 Reviewers approve in Angular SPA

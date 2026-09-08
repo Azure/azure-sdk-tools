@@ -53,10 +53,13 @@ extends:
           #vso[task.setvariable variable=COMPlus_Pkcs12UnspecifiedPasswordIterationLimit]-1
         displayName: Override Acceptable Password Iteration Count
     TestPostSteps:
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
       - task: UseNode@1
         inputs:
           version: ">=24"
         displayName: "Use Node"
+
       - pwsh: |
           npm ci
           npm exec --no -- tsp compile .

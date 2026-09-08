@@ -1,6 +1,6 @@
 # APIView — How Reviews, Revisions, and Pipelines Work
 
-This document explains how APIView integrates with SDK pull requests, CI pipelines, and releases. It clarifies when API revisions are created, when approvals are required, and why certain pipelines fail. For the detailed approval workflow and code references, see [release-approval.md](release-approval.md). For the technical workflow details (endpoints, sequence diagrams, per-language parsing), see [overview.md](overview.md#10-core-workflows).
+This document explains how APIView integrates with SDK pull requests, CI pipelines, and releases. It clarifies when API revisions are created, when approvals are required, and why certain pipelines fail. For the detailed approval workflow and code references, see [release-approval.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/docs/release-approval.md). For the technical workflow details (endpoints, sequence diagrams, per-language parsing), see [overview.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/docs/overview.md#10-core-workflows).
 
 ---
 
@@ -38,7 +38,12 @@ APIView compares **API surfaces**, not versions. An approval is valid if there e
 
 Created by the scheduled CI pipeline. These represent the API surface of what is currently on the `main` / release branch — the **source of truth** for what will ship.
 
-**Why only one pending revision exists:** The pipeline runs daily, and SDKs may change APIs over days or weeks. To avoid clutter, if the latest automatic revision is still pending, it is **deleted and replaced** by the newest one. Architects should only see one pending revision per version.
+**Why repeated builds do not create duplicate revisions:** The pipeline runs daily, and the same package version may be uploaded repeatedly. APIView handles revision identity separately from approval:
+
+- Same package version and API surface: update the existing non-released revision's token file in place. This preserves approval and comments while retaining changes in documentation and `SkipDiff` regions.
+- Same package version with a changed API surface: update the newest unapproved, unreleased, comment-free revision; otherwise create a revision so reviewed history is preserved.
+- Different package version: create a revision even when the API surface is unchanged, then carry approval forward from a matching approved revision.
+- Released exact match: return the released revision unchanged because released revisions are immutable.
 
 ---
 
@@ -63,7 +68,7 @@ If the release date is not set, approval status is ignored.
 | Beta | Not required (namespace approval still applies) |
 | Alpha / Dev | Not enforced |
 
-For the detailed version classification rules (how versions are parsed, Copilot review requirements, and auto-archive behavior by version type), see [release-approval.md](release-approval.md#2-ga-vs-preview-version-classification).
+For the detailed version classification rules (how versions are parsed, Copilot review requirements, and auto-archive behavior by version type), see [release-approval.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/docs/release-approval.md#2-ga-vs-preview-version-classification).
 
 This prevents surprise failures right before release, since scheduled pipelines surface issues early.
 
@@ -71,7 +76,7 @@ This prevents surprise failures right before release, since scheduled pipelines 
 
 ## Common Scenarios
 
-See [troubleshooting.md](troubleshooting.md) for common questions like "Why didn't my PR create an APIView revision?" and "My PR has no API changes but the release is blocked".
+See [troubleshooting.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/docs/troubleshooting.md) for common questions like "Why didn't my PR create an APIView revision?" and "My PR has no API changes but the release is blocked".
 
 ---
 

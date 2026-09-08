@@ -44,6 +44,8 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "javascript": "Language - JavaScript",
     "general": "General",
     "releasesupport": "SDK release support",
+    "authoring": "Authoring Test",
+    "sdkagent": "AzSDK Tools Agent",
 }
 
 # Composite weights

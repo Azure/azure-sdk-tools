@@ -502,8 +502,12 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   private isAcceptedRevisionFile(fileName: string): boolean {
     if (!this.acceptedFilesForReviewUpload) return true;
-    const extensions = this.acceptedFilesForReviewUpload.split(',').map(ext => ext.trim().toLowerCase());
     const lowerName = fileName.toLowerCase();
+    if (this.createRevisionForm.get('selectedCRLanguage')?.value?.data === "Rust") {
+      return lowerName.endsWith(".rust.json") || lowerName.endsWith("_rust.json");
+    }
+
+    const extensions = this.acceptedFilesForReviewUpload.split(',').map(ext => ext.trim().toLowerCase());
     return extensions.some(ext => lowerName.endsWith(ext));
   }
 
@@ -622,10 +626,10 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Rust":
         this.createRevisionInstruction = [
-          `In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/generate_api_report/Cargo.toml -- --package {package-name}</code>`,
-          `Upload <code>sdk/{service-name}/{package-name}/review/{package-name}.rust.json</code> using the file picker in this drawer.`
+          `In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/Cargo.toml -p generate_api -- --manifest-path sdk/{service-name}/{package-name}/Cargo.toml --format apiview --output target/generate_api/{package-name}</code>`,
+          `Rename <code>target/generate_api/{package-name}/apiview.json</code> to <code>{package-name}.rust.json</code> and upload the renamed file using the file picker in this drawer.`
         ];
-        this.acceptedFilesForReviewUpload = ".rust.json";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;

@@ -9,7 +9,7 @@ import logging
 import re
 from urllib.parse import urlparse
 
-from config.app_config import get as cfg
+from config.app_config import Settings, get as cfg
 from config.tenant_config import (
     get_tenant_scope_description,
 )
@@ -22,7 +22,7 @@ from models.chat import (
     ConversationItem,
     Role,
 )
-from models.conversation import ConversationMessage
+from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
@@ -37,7 +37,6 @@ from utils.azure_ai_foundry import (
     get_stateless_session_id,
     set_stateless_session_id,
 )
-from utils.azure_ai_foundry_agent import HostedAgentClient
 from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
@@ -48,6 +47,7 @@ from openai import (
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
+from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
 from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseOutputItem,
@@ -73,40 +73,66 @@ _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 class ChatService:
     """Coordinates conversation state, hosted-agent invocation, and response mapping."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        settings: Settings | None = None,
+        project_client: AIProjectClient | None = None,
+        openai_client: AsyncOpenAI | None = None,
+    ) -> None:
         self._conversation_service = ConversationService()
+        self._settings = settings or cfg
+        self._project_client = project_client
+        self._openai_client = openai_client
+        self._stateless_session_id: str | None = None
+
+    def _get_project_client(self) -> AIProjectClient:
+        return self._project_client or get_project_client()
+
+    def _get_openai_client(self) -> AsyncOpenAI:
+        return self._openai_client or get_openai_client()
+
+    def _get_stateless_session_id(self) -> str | None:
+        if self._project_client is None and self._openai_client is None:
+            return get_stateless_session_id()
+        return self._stateless_session_id
+
+    def _set_stateless_session_id(self, session_id: str | None) -> None:
+        if self._project_client is None and self._openai_client is None:
+            set_stateless_session_id(session_id)
+        else:
+            self._stateless_session_id = session_id
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        project_client = get_project_client()
+        project_client = self._get_project_client()
 
         agent = await self._get_agent(project_client)
-        openai_client = get_openai_client()
+        openai_client = self._get_openai_client()
 
         # Stateless calls (no customer conversation_id) skip conversation
         # threading and reuse a warm sandbox; threaded calls resolve history.
         stateless = not req.conversation_id
         if stateless:
             agent_conversation_id, is_new = None, True
-            agent_session_id = get_stateless_session_id()
+            agent_session_id = self._get_stateless_session_id()
             logger.info("Stateless request: reusing warm session=%s", agent_session_id)
         else:
             agent_conversation_id, is_new = await self._resolve_conversation(
                 openai_client, req
             )
             agent_session_id = None
+        tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
+        tenant_system_item = cast(
+            ResponseInputItemParam,
+            ConversationItem(
+                role=Role.System,
+                content=tenant_system_msg,
+            ).model_dump(mode="json", exclude_none=True),
+        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
-            tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
-            conversation_items.append(
-                cast(
-                    ResponseInputItemParam,
-                    ConversationItem(
-                        role=Role.System,
-                        content=tenant_system_msg,
-                    ).model_dump(mode="json", exclude_none=True),
-                )
-            )
+            conversation_items.append(tenant_system_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -156,17 +182,42 @@ class ChatService:
         }
 
         agent_client = HostedAgentClient(openai_client)
-        trace_id, response = await agent_client.invoke(
-            conversation_items=conversation_items,
-            agent_conversation_id=agent_conversation_id,
-            agent_session_id=agent_session_id,
-            agent_ref=agent_ref,
-        )
+        try:
+            trace_id, response = await agent_client.invoke(
+                conversation_items=conversation_items,
+                agent_conversation_id=agent_conversation_id,
+                agent_session_id=agent_session_id,
+                agent_ref=agent_ref,
+            )
+        except ConversationBrokenError:
+            if not agent_conversation_id:
+                raise
+            agent_conversation_id, conversation_items = (
+                await self._rebuild_conversation_after_failure(
+                    req.conversation_id,
+                    req.conversation_type,
+                )
+            )
+            # The replacement conversation has no tenant context of its own.
+            conversation_items.insert(0, tenant_system_item)
+            # Additional infos are not persisted in Cosmos; reuse the items already built.
+            conversation_items.extend(additional_items)
+            # Replace the poisoned mapping before the single recovery attempt.
+            await self._conversation_service.save_agent_conversation_mapping(
+                req.conversation_id,
+                req.conversation_type,
+                agent_conversation_id=agent_conversation_id,
+            )
+            trace_id, response = await agent_client.invoke(
+                conversation_items=conversation_items,
+                agent_conversation_id=agent_conversation_id,
+                agent_ref=agent_ref,
+            )
         # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless and not get_stateless_session_id():
+        if stateless and not self._get_stateless_session_id():
             extra = getattr(response, "model_extra", None) or {}
             captured = extra.get("agent_session_id")
-            set_stateless_session_id(captured)
+            self._set_stateless_session_id(captured)
             logger.info("Stateless request: captured warm session=%s", captured)
 
         logger.info(
@@ -202,7 +253,7 @@ class ChatService:
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
                 self._save_bot_answer_to_conversation(
-                    req, response.id, chat_response.answer
+                    req, response.id, chat_response.answer, trace_id
                 )
             )
         )
@@ -213,6 +264,7 @@ class ChatService:
         req: ChatRequest,
         response_id: str,
         answer: str,
+        trace_id: str | None = None,
     ) -> None:
         """Persist the final bot answer so intention uses the real reply, not placeholders."""
         if not req.conversation_id or not req.conversation_type:
@@ -232,6 +284,7 @@ class ChatService:
             created_at=datetime.now(timezone.utc),
             conversation_id=req.conversation_id,
             conversation_type=req.conversation_type,
+            trace_id=trace_id,
         )
 
         try:
@@ -245,8 +298,8 @@ class ChatService:
 
     async def _get_agent(self, project_client: AIProjectClient) -> AgentVersionDetails:
         """Load hosted-agent version definition from Foundry."""
-        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
-        agent_version = cfg("AI_FOUNDRY_AGENT_VERSION")
+        agent_name = self._settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+        agent_version = self._settings("AI_FOUNDRY_AGENT_VERSION", None)
         if agent_version:
             agent = await project_client.agents.get_version(agent_name, agent_version)
         else:
@@ -298,8 +351,74 @@ class ChatService:
         logger.info("Created new AI Foundry conversation: %s", new_id)
         return new_id, True
 
-    @staticmethod
+    async def _rebuild_conversation_after_failure(
+        self,
+        conversation_id: str | None,
+        conversation_type: ConversationType | None,
+    ) -> tuple[str, list[ResponseInputItemParam]]:
+        """Replace corrupted history and replay only safe message items."""
+        openai_client = self._get_openai_client()
+        replay_items = await self._list_message_items(
+            conversation_id,
+            conversation_type,
+        )
+
+        replacement = await openai_client.conversations.create()
+        replacement_id = replacement.id
+
+        logger.info(
+            "Created replacement Foundry conversation %s: replay_messages=%d",
+            replacement_id,
+            len(replay_items),
+        )
+        return replacement_id, replay_items
+
+    async def _list_message_items(
+        self,
+        conversation_id: str | None,
+        conversation_type: ConversationType | None,
+    ) -> list[ResponseInputItemParam]:
+        """Read replayable conversation messages from Cosmos in chronological order."""
+        replay: list[ResponseInputItemParam] = []
+        if not conversation_id or not conversation_type:
+            return replay
+        try:
+            messages = await self._conversation_service.get_messages_by_conversation_id(
+                conversation_id,
+                conversation_type,
+            )
+            for message in messages:
+                if message.sender_role == Role.User:
+                    role = Role.User
+                elif message.sender_role in (Role.System, Role.Assistant):
+                    role = Role.Assistant
+                else:
+                    continue
+
+                replay.append(
+                    cast(
+                        ResponseInputItemParam,
+                        ConversationItem(
+                            role=role,
+                            content=message.content,
+                            user_id=(message.sender_id if role == Role.User else None),
+                            user_name=(
+                                message.sender_name if role == Role.User else None
+                            ),
+                        ).model_dump(mode="json", exclude_none=True),
+                    )
+                )
+        except Exception:
+            logger.warning(
+                "Failed to read messages from Cosmos conversation %s; "
+                "continuing with fresh history",
+                conversation_id,
+                exc_info=True,
+            )
+        return replay
+
     async def _build_additional_info_items(
+        self,
         infos: list[AdditionalInfo],
     ) -> list[ResponseInputItemParam]:
         """Convert additional_infos into Responses API input items.
@@ -313,7 +432,7 @@ class ChatService:
         for info in infos:
             if info.type == AdditionalInfoType.Text and info.content:
                 content = info.content
-                max_chars = int(cfg("AOAI_CHAT_MAX_TOKENS", "100000"))
+                max_chars = int(self._settings("AOAI_CHAT_MAX_TOKENS", "100000") or "100000")
                 if len(content) > max_chars:
                     logger.warning(
                         "Text additional_info is large (%d chars, limit %d)",
@@ -374,7 +493,7 @@ class ChatService:
 
     def _resolve_memory_scope(self, req: ChatRequest) -> str | None:
         """Derive user memory scope from user_id. Returns None if disabled or no user_id."""
-        if cfg("ENABLE_USER_MEMORY_SEARCH", "true").lower() != "true":
+        if (self._settings("ENABLE_USER_MEMORY_SEARCH", "true") or "true").lower() != "true":
             logger.info("User memory search disabled by config")
             return None
         user_id = getattr(req.message, "user_id", None)

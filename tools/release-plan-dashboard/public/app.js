@@ -72,7 +72,6 @@
         plane: "",
         month: "",
         prLang: "",
-        prStatus: "",
         tag: "",
         language: "",
       },
@@ -213,17 +212,16 @@
       // Populate month filter dropdown from available release months
       populateMonthFilter(getPlans());
 
-      // Apply URL filter param if present
-      const urlFilter = params.get("filter") || "";
-      if (urlFilter) {
-        store().filters.search = urlFilter;
+      // Apply sticky filter params from the URL (client-side only — these do
+      // not trigger any backend request).
+      for (const [param, { key }] of Object.entries(STICKY_FILTER_PARAMS)) {
+        const value = params.get(param);
+        if (value) store().filters[key] = value;
       }
 
-      // Apply URL month param if present
-      const urlMonth = params.get("month") || "";
-      if (urlMonth) {
-        store().filters.month = urlMonth;
-      }
+      // Restore the active tab if present in the URL.
+      const urlTab = params.get("tab");
+      if (urlTab) store().activeTab = urlTab;
 
       render(getPlans());
       if (currentUserIsPM) renderPMView(getPlans());
@@ -414,6 +412,11 @@
     return rpt.includes("private");
   }
 
+  function isStatusInProgress(status) {
+    const normalized = (status || "").toLowerCase().replace(/[\s_-]+/g, "");
+    return normalized.includes("inprogress") || normalized.includes("running");
+  }
+
   /**
    * Computes the current workflow step and who action is required from.
    * Steps progress: API Spec → SDK Generation → SDK Review → Merge → Release.
@@ -486,6 +489,16 @@
 
     // Check if any SDK PRs exist
     const langsWithPr = activeLangs.filter((k) => langs[k].sdkPrUrl);
+    const langsAwaitingGeneration = activeLangs.filter(
+      (k) =>
+        !langs[k].sdkPrUrl && !isStatusInProgress(langs[k].generationStatus),
+    );
+    if (!langsWithPr.length && !langsAwaitingGeneration.length)
+      return {
+        status: "SDK Generation In Progress",
+        action: "",
+        statusClass: "step-inprogress",
+      };
     if (!langsWithPr.length)
       return {
         status: "SDK To Be Generated",
@@ -511,11 +524,21 @@
       (langs[k].releaseStatus || "").toLowerCase(),
     );
     const allReleased = releaseStatuses.every(
-      (s) => s.includes("completed") || s.includes("released"),
+      (s) => s === "completed" || s === "released",
     );
+    const allReleasedOrInProgress = releaseStatuses.every(
+      (s) => s === "completed" || s === "released" || isStatusInProgress(s),
+    );
+    const anyReleaseInProgress = releaseStatuses.some(isStatusInProgress);
 
     if (allMerged && allReleased)
       return { status: "Released", action: "", statusClass: "step-released" };
+    if (allMerged && allReleasedOrInProgress && anyReleaseInProgress)
+      return {
+        status: "SDK Release In Progress",
+        action: "",
+        statusClass: "step-inprogress",
+      };
     if (allMerged)
       return {
         status: "SDK Ready To Release",
@@ -595,7 +618,11 @@
       const isMergedOrCompleted = st === "merged" || st === "completed";
       const isReleasedOrCompleted = rel === "released" || rel === "completed";
 
-      return isMergedOrCompleted && !isReleasedOrCompleted;
+      return (
+        isMergedOrCompleted &&
+        !isReleasedOrCompleted &&
+        !isStatusInProgress(rel)
+      );
     });
   }
 
@@ -771,16 +798,37 @@
       select.value = currentValue;
   }
 
-  // Update URL parameters to reflect current filter state (for sharing)
+  // Update URL parameters to reflect current filter state (for sharing).
+  // These are sticky, client-side-only filters — restoring them from the URL
+  // never triggers a backend ADO/GitHub request.
+  const STICKY_FILTER_PARAMS = {
+    // urlParam: { key: filters key, default: value that should be omitted }
+    filter: { key: "search", default: "" },
+    plane: { key: "plane", default: "" },
+    month: { key: "month", default: "" },
+    sort: { key: "sort", default: "month" },
+    prLang: { key: "prLang", default: "" },
+    tag: { key: "tag", default: "" },
+    language: { key: "language", default: "" },
+  };
+
   function syncFiltersToUrl() {
     const params = new URLSearchParams(window.location.search);
-    const filter = store().filters.search.trim();
-    const month = store().filters.month;
+    const filters = store().filters;
 
-    if (filter) params.set("filter", filter);
-    else params.delete("filter");
-    if (month) params.set("month", month);
-    else params.delete("month");
+    for (const [param, { key, default: def }] of Object.entries(
+      STICKY_FILTER_PARAMS,
+    )) {
+      const raw = filters[key];
+      const value = typeof raw === "string" ? raw.trim() : raw;
+      if (value && value !== def) params.set(param, value);
+      else params.delete(param);
+    }
+
+    // Active tab is sticky too, but only when it's not the default view.
+    const tab = store().activeTab;
+    if (tab && tab !== "tab-release-plans") params.set("tab", tab);
+    else params.delete("tab");
 
     const newUrl = params.toString()
       ? `${window.location.pathname}?${params}`
@@ -1054,7 +1102,11 @@
     if (!isPmCard) p = displayPlan(p);
     const showPmAction = !!(options && options.showPmAction && currentUserIsPM);
     const pastDue = isPastDue(p);
-    const cardClass = pastDue ? "plan-card past-due" : "plan-card";
+    const isAbandoned = p.state === "Abandoned";
+    const cardClass =
+      "plan-card" +
+      (pastDue ? " past-due" : "") +
+      (isAbandoned ? " abandoned" : "");
     const step = computeCurrentStep(p);
     const copilotBadge =
       (p.createdUsing || "").toLowerCase() === "copilot"
@@ -1076,13 +1128,17 @@
       p.state === "Finished"
         ? `<span class="badge badge-finished-indicator">✔ ${esc(step.status)}</span>`
         : "";
+    const abandonedBadge = isAbandoned
+      ? '<span class="badge badge-abandoned">Abandoned</span>'
+      : "";
     const stepHTML =
-      step.status && !isTerminal
+      step.status && !isTerminal && !isAbandoned
         ? `<span class="step-badge ${step.statusClass}">${esc(step.status)}</span>`
         : "";
     const actionHTML =
       step.action &&
       !isTerminal &&
+      !isAbandoned &&
       !(showPmAction && p._pmAction) &&
       isServiceTeamAction(step.action)
         ? `<span class="action-badge">Action required from: ${esc(step.action)}</span>`
@@ -1137,7 +1193,7 @@
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
           ${p.submittedBy ? `<span class="card-submitter">${esc(p.submittedBy)}</span>` : ""}
-          ${stepHTML}${actionHTML}${finishedBadge}${dupHTML}
+          ${abandonedBadge}${stepHTML}${actionHTML}${finishedBadge}${dupHTML}
           ${apiReadinessBadge(p)}
           ${pastDue ? '<span class="badge badge-pastdue">Past Due</span>' : ""}
         </div>
@@ -1289,7 +1345,8 @@
     const step = computeCurrentStep(p);
     const isTerminal =
       step.status === "Released" || step.status === "Completed";
-    if (isTerminal || p.state === "Finished") return "";
+    if (isTerminal || p.state === "Finished" || p.state === "Abandoned")
+      return "";
 
     const specPath = p.specProjectPath || p.typeSpecPath || "";
     const specPrUrl = (p.apiSpec && p.apiSpec.specPrUrl) || "";
@@ -1358,7 +1415,8 @@
           (st.includes("merged") || st.includes("completed")) &&
           rel !== "completed" &&
           rel !== "released" &&
-          rel !== "approval pending"
+          rel !== "approval pending" &&
+          !isStatusInProgress(rel)
         );
       });
       const langList = toRelease.length
@@ -1769,17 +1827,22 @@
     }
     if (specPath)
       html += `<div class="detail-row"><strong>Spec Project Path:</strong> ${esc(specPath)}</div>`;
-    // Work item link — show as link for PMs, plain text for others
+    // Release plan link — show as link for PMs, plain text for others
     {
+      const planId = p.releasePlanId || p.id;
       const label = p.releasePlanId
         ? `#${esc(String(p.releasePlanId))}`
         : `WI ${esc(String(p.id))}`;
       if (currentUserIsPM) {
+        const dashboardUrl = `/?releasePlan=${encodeURIComponent(planId)}`;
         const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
-        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a> (<a href="${esc(wiUrl)}" target="_blank" rel="noopener">ADO work item ${esc(String(p.id))}</a>) <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
       } else {
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
+    }
+    if (p.apiSpec && p.apiSpec.apiVersion) {
+      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK Generated From API Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
     }
     if (
       p.typeSpecPath &&
@@ -1901,7 +1964,7 @@
             const isVersionPending =
               !isReleased && isPrMerged && !!displayVersion;
 
-            // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
+            // Package labels: first preview/GA + namespace approval (version now in its own column)
             let pkgLabels = "";
             if (l.isFirstPreview) {
               pkgLabels +=
@@ -1918,18 +1981,6 @@
             ) {
               pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
             }
-            if (
-              l.apiReviewStatus &&
-              l.apiReviewStatus.toLowerCase() !== "pending"
-            ) {
-              const arLower = l.apiReviewStatus.toLowerCase();
-              const arClass =
-                arLower === "approved"
-                  ? "pr-label-approved"
-                  : "pr-label-api-pending";
-              pkgLabels += `<span class="pr-label ${arClass}">API: ${esc(l.apiReviewStatus)}</span>`;
-            }
-
             // Action column — determine per-language action
             let actionCell = "";
             if (
@@ -1961,8 +2012,16 @@
 
               if (isReleased) {
                 actionCell = "";
+              } else if (relSt === "approval pending" && l.releasePipeline) {
+                // Release is queued and waiting for the service team to approve
+                // the release stage in the release pipeline. Link directly to it.
+                actionCell = `<a class="lang-action-btn action-btn-approve" href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release in the release pipeline">Approve Release</a>`;
+              } else if (isStatusInProgress(relSt)) {
+                actionCell = "";
               } else if (!hasPr) {
-                actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
+                if (!isStatusInProgress(l.generationStatus)) {
+                  actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
+                }
               } else if (isClosed && !isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.LINK_PR, lang, p, l);
               } else if (isDraft) {
@@ -2009,15 +2068,15 @@
               }
             }
 
-            // Release Status cell — when release approval is pending, link to the
-            // release pipeline so the service team can approve the release.
+            // Release Status cell — when release approval is pending, show a
+            // prominent badge. The pipeline approval link is surfaced as an
+            // "Approve Release" action in the Action Required column.
             let releaseCell = statusSpan(releaseDisplay);
             if (
               !exLabel &&
-              (l.releaseStatus || "").toLowerCase() === "approval pending" &&
-              l.releasePipeline
+              (l.releaseStatus || "").toLowerCase() === "approval pending"
             ) {
-              releaseCell = `${statusSpan(releaseDisplay)} <a href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release using release pipeline">Approve in pipeline</a>`;
+              releaseCell = `<span class="release-approval-pending-badge" title="The package release is queued and pending approval in the release pipeline"><span class="release-approval-pending-icon" aria-hidden="true">⏳</span> Pending Release Approval</span>`;
             }
 
             html += `<tr${rowClass}>
@@ -2564,9 +2623,9 @@
         store().filters.month,
         store().filters.sort,
         store().filters.prLang,
-        store().filters.prStatus,
         store().filters.tag,
         store().filters.language,
+        store().activeTab,
       ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
@@ -2701,9 +2760,12 @@
 
     const planeFilter = getGlobalPlaneFilter();
     const monthFilter = getMonthFilter();
-    let filtered = planeFilter
-      ? plans.filter((p) => classifyPlane(p) === planeFilter)
+    const filter = store().filters.search.toLowerCase();
+    let filtered = filter
+      ? plans.filter((p) => matchesFilter(p, filter))
       : plans;
+    if (planeFilter)
+      filtered = filtered.filter((p) => classifyPlane(p) === planeFilter);
     if (monthFilter)
       filtered = filtered.filter(
         (p) =>
@@ -2986,6 +3048,15 @@
     return "";
   }
 
+  function hasMergedSpecPr(plan) {
+    const specStatus = (plan.apiReadiness || "").toLowerCase();
+    return specStatus === "completed" || specStatus === "merged";
+  }
+
+  function isReviewRequiredSdkPrStatus(status) {
+    return (status || "").toLowerCase() === "open";
+  }
+
   // Extract candidate PRs without filtering by GitHub status (status fetched progressively).
   function extractCandidatePRs(plans) {
     const seen = new Set();
@@ -2994,6 +3065,7 @@
       if (!p.languages) continue;
       if (p.state === "Finished") continue;
       if (isPrivatePreviewPlan(p)) continue;
+      if (!hasMergedSpecPr(p)) continue;
       for (const [lang, l] of Object.entries(p.languages)) {
         if (isLangExcluded(l.exclusionStatus)) continue;
         if (!l.sdkPrUrl) continue;
@@ -3043,6 +3115,27 @@
     return prs;
   }
 
+  // On-demand progressive loading (GitHub PR status/detail fetches) may only be
+  // triggered when the URL explicitly requests a single release plan via the
+  // `releasePlan` param. Sticky filters (tag, language, month, etc.) must never
+  // cause on-demand GitHub/ADO requests — doing so leads to rate limiting (429).
+  function isReleasePlanRequested() {
+    const params = new URLSearchParams(window.location.search);
+    return !!(params.get("releasePlan") || params.get("releaseplan"));
+  }
+
+  // Builds the PR list from statuses already embedded in the plan data
+  // (server-side enrichment), without making any GitHub requests.
+  function buildPRListFromEmbeddedStatuses(candidates) {
+    for (const c of candidates) {
+      if (isReviewRequiredSdkPrStatus(c.prStatus)) {
+        c._statusLoaded = true;
+        getPrs().push(c);
+      }
+    }
+    renderFilteredPRs();
+  }
+
   // Progressively fetch GitHub PR statuses and build the PR list.
   async function progressiveLoadPRStatuses(plans) {
     const gen = ++prLoadGeneration;
@@ -3051,12 +3144,21 @@
 
     const prLoading = document.getElementById("pr-loading");
     const prList = document.getElementById("pr-list");
+    if (prList) prList.innerHTML = "";
+
+    // Only the `releasePlan` URL param may trigger on-demand GitHub loading.
+    // Otherwise build the list from server-enriched statuses (no GitHub calls).
+    if (!isReleasePlanRequested()) {
+      if (prLoading) prLoading.style.display = "none";
+      buildPRListFromEmbeddedStatuses(candidates);
+      return;
+    }
+
     if (prLoading) {
       prLoading.style.display = "";
       prLoading.querySelector("p").textContent =
         `Fetching PR statuses (0/${candidates.length})…`;
     }
-    if (prList) prList.innerHTML = "";
 
     // Collect unique PR URLs to fetch
     const uniqueUrls = [...new Set(candidates.map((c) => c.prUrl))];
@@ -3101,8 +3203,7 @@
         if (!st) continue;
         c._statusLoaded = true;
         c.prStatus = st;
-        const stLower = st.toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(st)) {
           getPrs().push(c);
           needsRender = true;
         }
@@ -3119,8 +3220,7 @@
     // Final pass: add any candidates whose URL wasn't fetched (network error) if they look open
     for (const c of candidates) {
       if (!c._statusLoaded) {
-        const stLower = (c.prStatus || "").toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(c.prStatus)) {
           getPrs().push(c);
         }
       }
@@ -3133,17 +3233,12 @@
 
   function filterPRs(prs) {
     const langFilter = store().filters.prLang || "";
-    const statusFilter = store().filters.prStatus || "";
     const textFilter = store().filters.search.toLowerCase();
     const planeFilter = getGlobalPlaneFilter();
 
     return prs.filter((pr) => {
       if (planeFilter && pr.plane !== planeFilter) return false;
       if (langFilter && pr.language !== langFilter) return false;
-      if (statusFilter) {
-        const st = (pr.prStatus || "").toLowerCase();
-        if (st !== statusFilter) return false;
-      }
       if (textFilter) {
         const searchable =
           `${pr.language} ${pr.repo} ${pr.prNumber} ${pr.packageName} ${pr.planTitle} ${pr.releasePlanId} ${pr.prStatus}`.toLowerCase();

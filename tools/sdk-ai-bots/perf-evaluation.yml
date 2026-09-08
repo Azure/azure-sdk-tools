@@ -24,6 +24,7 @@ parameters:
       - apispec
       - general
       - releasesupport
+      - authoring
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

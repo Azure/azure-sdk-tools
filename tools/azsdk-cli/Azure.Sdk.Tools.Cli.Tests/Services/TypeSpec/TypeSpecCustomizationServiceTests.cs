@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Moq;
 
 using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
@@ -80,8 +80,7 @@ internal class TypeSpecCustomizationServiceTests
         // Create real CopilotClient - this will use GitHub credentials
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {
-            UseStdio = true,
-            AutoStart = true
+            Connection = RuntimeConnection.ForStdio()
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
         var copilotAgentRunner = new CopilotAgentRunner(

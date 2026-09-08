@@ -97,7 +97,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   crossLanguageRowData: CrossLanguageContentDto[] = [];
 
   private codePanelIsLoading: boolean = true;
-  apiRevisionPageSize = 200;
+  apiRevisionPageSize = 100;
   lastNodeIdUnhashedDiscarded = '';
 
   codeLineSearchText: string | undefined = undefined;

@@ -23,9 +23,9 @@ public class CopilotAgent<TResult> where TResult : notnull
     public IEnumerable<AIFunction> Tools { get; init; } = [];
 
     /// <summary>
-    /// The model that this agent will use. Defaults to "claude-sonnet-4.5".
+    /// The model that this agent will use. When omitted, the Copilot CLI selects its default model.
     /// </summary>
-    public string Model { get; init; } = "claude-sonnet-4.5";
+    public string? Model { get; init; }
 
     /// <summary>
     /// The maximum number of iterations in the agent loop. If this is exceeded, the agent run is deemed to have failed.

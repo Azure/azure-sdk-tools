@@ -122,6 +122,10 @@ public class CodeownersLintHelper(
         HashSet<string> declaredLabelOwners,
         List<LintViolation> violations)
     {
+        // Keyed on the resolved expression rather than the authored string, so lint and generate
+        // group entries identically and lint cannot report a duplicate generate would accept.
+        var firstDeclaredAt = new Dictionary<string, int>(StringComparer.Ordinal);
+
         foreach (var entry in fragment.Paths)
         {
             var where = $"{fragment.FilePath}:{entry.Line}";
@@ -129,7 +133,7 @@ public class CodeownersLintHelper(
             // Containment first. generate silently drops an entry that escapes its subtree, so this
             // is the only thing standing between a '..' path and ownership disappearing unnoticed.
             var pathErrors = new List<OwnersValidationError>();
-            OwnersPathResolver.ResolveFragmentPath(fragment, entry, repoRoot, pathErrors);
+            var expression = OwnersPathResolver.ResolveFragmentPath(fragment, entry, repoRoot, pathErrors);
 
             violations.AddRange(pathErrors.Select(error => new LintViolation
             {
@@ -137,6 +141,27 @@ public class CodeownersLintHelper(
                 Description = error.Message,
                 SourceFile = where,
             }));
+
+            if (expression != null)
+            {
+                if (firstDeclaredAt.TryGetValue(expression, out var firstLine))
+                {
+                    violations.Add(new LintViolation
+                    {
+                        RuleId = "LNT-DUP-001",
+                        Description = $"Path '{entry.Path}' is already declared on line {firstLine} of this file.",
+                        SourceFile = where,
+                        Detail =
+                            $"Both entries resolve to '{expression}'. Merge their owners and pr-labels into one " +
+                            "entry; the second declaration does not add ownership, and generate rejects the file " +
+                            "with CFG-DUP-002.",
+                    });
+                }
+                else
+                {
+                    firstDeclaredAt[expression] = entry.Line;
+                }
+            }
 
             ValidateOwners(entry.Owners, where, violations);
 

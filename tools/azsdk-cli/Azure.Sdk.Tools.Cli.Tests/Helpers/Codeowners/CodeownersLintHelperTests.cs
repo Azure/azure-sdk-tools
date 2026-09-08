@@ -195,6 +195,84 @@ internal class CodeownersLintHelperTests
         Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-LBL-002"));
     }
 
+    /// <summary>
+    /// lint is the PR gate, so it has to catch this on its own. generate reports the same defect as
+    /// CFG-DUP-002, but generate does not run on the pull request that introduces it.
+    /// </summary>
+    [Test]
+    public async Task PathDeclaredTwiceInOneFragmentIsReported()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: .
+                owners: [test-user-02, test-user-24]
+                pr-labels: [OpenAI]
+              - path: .
+                owners: [test-user-07, test-user-09]
+                pr-labels: [OpenAI]
+            label-owners:
+              - labels: [OpenAI]
+                service-owners: [test-user-02, test-user-24]
+            """);
+
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-DUP-001"));
+    }
+
+    /// <summary>
+    /// The duplicate key is the resolved expression, the same key generate groups on, so the two
+    /// commands cannot disagree about which entries collide.
+    /// </summary>
+    [Test]
+    public async Task DuplicateReportedByLintIsTheSameOneGenerateRejects()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: Azure.AI.Inference/
+                owners: [test-user-02, test-user-24]
+                pr-labels: [OpenAI]
+              - path: Azure.AI.Inference/
+                owners: [test-user-07, test-user-09]
+                pr-labels: [OpenAI]
+            label-owners:
+              - labels: [OpenAI]
+                service-owners: [test-user-02, test-user-24]
+            """);
+
+        var lintRules = await RuleIds(Lint(), repo, AiFragment);
+        var generateCodes = repo.Render().Errors.Select(e => e.Code);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(lintRules, Does.Contain("LNT-DUP-001"));
+            Assert.That(generateCodes, Does.Contain("CFG-DUP-002"));
+        });
+    }
+
+    [Test]
+    public async Task DistinctPathsInOneFragmentAreNotReportedAsDuplicates()
+    {
+        using var repo = OwnersTestRepo.FromSpecAssets();
+        repo.WriteFragment("sdk/ai", """
+            version: 1
+            paths:
+              - path: Azure.AI.Inference/
+                owners: [test-user-02, test-user-24]
+                pr-labels: [OpenAI]
+              - path: Azure.AI.Projects/
+                owners: [test-user-07, test-user-09]
+                pr-labels: [OpenAI]
+            label-owners:
+              - labels: [OpenAI]
+                service-owners: [test-user-02, test-user-24]
+            """);
+
+        Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Not.Contain("LNT-DUP-001"));
+    }
+
     [Test]
     public async Task PrLabelWithNoOwnersInTheSameFileIsReported()
     {

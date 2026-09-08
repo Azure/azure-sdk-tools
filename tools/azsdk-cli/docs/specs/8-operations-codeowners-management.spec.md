@@ -623,6 +623,10 @@ files cannot in fact collide: [path containment](#component-3-path-containment-r
 fragment to its own subtree, and the `allowed-owner-yaml-paths` globs do not nest. The reachable case
 is one fragment declaring the same path twice.
 
+That case is file-local, so `lint-fragments` reports it too, as `LNT-DUP-001`. It has to: `lint` is
+the pull request gate and `generate` does not run on the pull request that introduces the duplicate.
+Both key on the **resolved** expression, so the two commands cannot disagree about what collides.
+
 **All four rules apply uniformly to every section. There are no exemptions.**
 
 An earlier draft had a `protected: true` section flag that suppressed `CFG-DUP-001`, `CFG-DUP-003`,
@@ -1288,6 +1292,7 @@ answer. It never edits the repository and never renders `.github/CODEOWNERS`.
 | `LNT-LBL-001` | Label is not in the common label set | `common-labels.csv` |
 | `LNT-LBL-002` | Path entry declares no `pr-labels` | — |
 | `LNT-LBL-003` | A `pr-label` is not claimed by any `label-owners` block in the same file | — |
+| `LNT-DUP-001` | The same resolved path expression is declared twice in one fragment | Repository tree |
 | `CFG-PATH-*` | Path escapes the fragment's directory, contains `..`, or is otherwise unresolvable | Repository tree |
 
 #### Each fragment is judged alone

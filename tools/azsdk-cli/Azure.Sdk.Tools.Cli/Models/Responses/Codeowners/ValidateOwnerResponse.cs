@@ -30,14 +30,10 @@ public class ValidateOwnerResponse : CommandResponse
 
     /// <summary>
     /// An invalid owner exits non-zero so the command is usable as a gate, not only as a report.
+    /// It is not a <c>ResponseError</c>: the answer "no" is a successful lookup, and marking it
+    /// Failed would suppress the explanation of what to do about it.
     /// </summary>
-    [JsonPropertyName("response_error")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public override string? ResponseError
-    {
-        get => Valid ? base.ResponseError : $"{Owner} is not a valid code owner: {Violation?.Description}";
-        set => base.ResponseError = value;
-    }
+    public override int ExitCode => Valid ? base.ExitCode : 1;
 
     protected override string Format()
     {

@@ -11,9 +11,6 @@ public class CheckPackageIssue
         public const string InsufficientOwners = "insufficient_owners";
         public const string MissingPrLabel = "missing_pr_label";
         public const string InsufficientServiceOwners = "insufficient_service_owners";
-        public const string InvalidOwner = "invalid_owner";
-        public const string InvalidCacheSource = "invalid_cache_source";
-        public const string InvalidRepo = "invalid_repo";
         public const string UnexpectedError = "unexpected_error";
     }
 

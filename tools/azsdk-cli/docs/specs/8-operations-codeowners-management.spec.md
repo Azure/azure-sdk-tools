@@ -220,7 +220,7 @@ sections:
 
 #### The owner minimums never fail generation
 
-`minimum-path-owners` and `minimum-label-owners` are evaluated by `lint` as `LNT-OWN-003` and
+`minimum-path-owners` and `minimum-label-owners` are evaluated by `lint-fragments` as `LNT-OWN-003` and
 `LNT-OWN-004`, and by `check-package` at release time. `generate` does not enforce them and a fragment that falls below
 them still renders.
 
@@ -467,7 +467,7 @@ Labels are normalized by trimming, stripping a leading `%`, and de-duplicating. 
 `%` prefix.
 
 Both happen **once, as the YAML is loaded**, before any entry reaches the renderer, the validator,
-`lint`, or `check-package`. Nothing downstream re-normalizes and nothing downstream sees an
+`lint-fragments`, or `check-package`. Nothing downstream re-normalizes and nothing downstream sees an
 un-normalized value, so `@alice` and `alice` are the same owner everywhere and `[AI Projects]` and
 `[ai projects]` are the same label set everywhere — including in the union key, the duplicate
 checks, and the `# Sources:` provenance. De-duplication is applied at the same moment, so an entry
@@ -1082,7 +1082,7 @@ marks every missing person invalid without tripping the empty-cache or staleness
 
 That defect still exists. What changed is its consequence. Under `--fix` it deleted dozens of real
 owners from source files and opened a pull request to commit the deletion, so it needed a circuit
-breaker. Under `lint` and `check-package` it produces a wave of false violations on builds that a
+breaker. Under `lint-fragments` and `check-package` it produces a wave of false violations on builds that a
 human is already looking at — loud, self-evident, and fixed by refreshing the cache. A noisy report
 does not need an override; a destructive edit did.
 
@@ -2031,7 +2031,7 @@ edited, because it declares `List<OwnerWorkItem> Owners`, `List<LabelWorkItem> L
 `List<LabelOwnerWorkItem> LabelOwners`; leaving it in place while deleting those three types is a
 guaranteed compile error.
 
-- **Replace the audit rule set with `lint`.** The rules are typed against the work-item model and
+- **Replace the audit rule set with `lint-fragments`.** The rules are typed against the work-item model and
   none survives unchanged. The registered rule classes (`InvalidOwnerRule`, `TeamNotWriteRule`,
   `MalformedTeamRule`, `LabelNotInRepoLabelsRule`, `ServiceAttentionMisuseRule`), the rule-engine
   registration in `Services/ServiceRegistrations.cs`, and `AuditContext` / `AuditViolation` are
@@ -2045,8 +2045,8 @@ guaranteed compile error.
   - `LabelNotInRepoLabelsRule` derived which repos use a label from `LabelOwner.Repository` and
     `Package.Language` via `BuildLabelToReposMap`. That derivation has no analogue here:
     `LNT-LBL-001` reads the common label set and does not know which repository it is running in.
-- **Plumb `--repo-root`.** The `audit` command took only `--fix`, `--force`, and `--repo`; `lint`
-  takes `--repo-root` and none of the other three.
+- **Plumb `--repo-root`.** The `audit` command took only `--fix`, `--force`, and `--repo`;
+  `lint-fragments` takes `--repo-root` and `--fragment`, and none of the other three.
 - **Drop the now-unused `IDevOpsService` injection** from `GitHubLabelsTool`'s constructor once
   `sync-ado` is gone.
 - **Update the test project** in the same change, or the build breaks:
@@ -2276,7 +2276,7 @@ YAML by a reviewed pull request, and no invalidity ledger is kept.
       generated comment and is not a moniker.
 - [ ] Supersede [`8-operations-codeowners-ownership-audit.spec.md`](./8-operations-codeowners-ownership-audit.spec.md):
       the "Azure DevOps work items" data source is replaced by the YAML sources described here, the
-      `audit` command and its rule engine are replaced by `lint`
+      `audit` command and its rule engine are replaced by `lint-fragments`
       ([Component 10](#component-10-lint-rules)), and the rules that were not carried over are listed
       there.
 - [ ] Update `tools/azsdk-cli/docs/mcp-tools.md` for the removed MCP tools, and remove the matching

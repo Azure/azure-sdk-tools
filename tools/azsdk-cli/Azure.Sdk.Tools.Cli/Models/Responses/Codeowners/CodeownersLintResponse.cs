@@ -21,16 +21,12 @@ public class CodeownersLintResponse : CommandResponse
     public int TotalViolations => Fragments.Sum(fragment => fragment.Violations.Count);
 
     /// <summary>
-    /// Violations fail the command, so lint can gate a pull request build without the caller having
-    /// to parse the report to find out whether it passed.
+    /// Violations exit non-zero so lint can gate a pull request build, but they are not a
+    /// <c>ResponseError</c>: the command ran fine and produced a report. Setting ResponseError here
+    /// would mark the run Failed, and a Failed response prints only the error line — which would
+    /// throw away the very report the contributor needs to fix their file.
     /// </summary>
-    public override string? ResponseError
-    {
-        get => TotalViolations == 0
-            ? base.ResponseError
-            : $"lint-fragments found {TotalViolations} violation(s) in {Fragments.Count(f => f.Violations.Count > 0)} file(s).";
-        set => base.ResponseError = value;
-    }
+    public override int ExitCode => TotalViolations == 0 ? base.ExitCode : 1;
 
     protected override string Format()
     {

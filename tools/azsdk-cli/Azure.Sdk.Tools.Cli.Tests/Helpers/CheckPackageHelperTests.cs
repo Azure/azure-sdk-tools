@@ -48,7 +48,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.Issues, Is.Empty);
         Assert.That(result.DirectoryPath, Is.EqualTo("sdk/two-owners/Azure.TwoOwners"));
         Assert.That(result.ResolvedTargetType, Is.EqualTo("package"));
@@ -67,7 +67,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.Owners.Count, Is.EqualTo(3));
         Assert.That(result.ServiceOwners.Count, Is.EqualTo(3));
     }
@@ -165,7 +165,7 @@ public class CheckPackageHelperTests
             customEntries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ExitCode, Is.EqualTo(1));
         Assert.That(result.Issues, Has.Count.EqualTo(2));
         Assert.That(result.Issues.Select(issue => issue.Code), Is.EquivalentTo(new[]
         {
@@ -237,7 +237,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.PRLabels.Count, Is.EqualTo(2));
         Assert.That(result.ServiceOwners.Count, Is.GreaterThanOrEqualTo(2));
     }
@@ -251,7 +251,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.Owners.Count, Is.EqualTo(3));
         Assert.That(result.PRLabels, Does.Contain("ThreeOwners"));
     }
@@ -285,7 +285,7 @@ public class CheckPackageHelperTests
             customEntries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
     }
 
@@ -304,7 +304,7 @@ public class CheckPackageHelperTests
             customEntries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
         Assert.That(result.ServiceLabels, Is.EquivalentTo(new[] { "TestLabel", "Service Attention" }));
     }
@@ -357,7 +357,7 @@ public class CheckPackageHelperTests
             customEntries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
         Assert.That(result.Owners, Is.EquivalentTo(new[] { "ownerAlice", "ownerBob" }));
         Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
     }
@@ -387,8 +387,10 @@ public class CheckPackageHelperTests
 
     private static void AssertFailure(CheckPackageResponse response, string issueCode, string messageFragment)
     {
-        Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
-        Assert.That(response.ResponseError, Is.Not.Null.And.Not.Empty);
+        // A check that finds problems is a successful run reporting them, so the gate is the exit
+        // code, not OperationStatus. Marking it Failed would suppress the report the caller needs.
+        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ToString(), Does.Contain(messageFragment));
         Assert.That(response.Issues.Any(issue => issue.Code == issueCode && issue.Message.Contains(messageFragment, StringComparison.Ordinal)),
             Is.True,
             $"Expected issue '{issueCode}' containing '{messageFragment}', but got: {string.Join("; ", response.Issues.Select(issue => $"[{issue.Code}] {issue.Message}"))}");

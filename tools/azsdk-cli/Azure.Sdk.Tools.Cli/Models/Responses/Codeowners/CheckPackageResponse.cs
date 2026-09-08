@@ -59,22 +59,15 @@ public class CheckPackageResponse : CommandResponse
     [JsonIgnore]
     public int IssueCount => Issues.Count;
 
-    [JsonPropertyName("response_error")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public override string? ResponseError
-    {
-        get => IssueCount switch
-        {
-            0 => base.ResponseError,
-            1 => Issues[0].Message,
-            _ => $"check-package found {IssueCount} issue(s) for path '{DirectoryPath}'."
-        };
-        set => base.ResponseError = value;
-    }
+    /// <summary>
+    /// Issues exit non-zero without marking the run Failed, so the report still prints. See
+    /// <see cref="CodeownersLintResponse.ExitCode"/> for why that distinction matters.
+    /// </summary>
+    public override int ExitCode => IssueCount == 0 ? base.ExitCode : 1;
 
     [JsonPropertyName("support_channel")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public override string? SupportChannel => OperationStatus == Status.Failed ? CodeownersSupportChannel : null;
+    public override string? SupportChannel => ExitCode == 0 ? null : CodeownersSupportChannel;
 
     protected override string Format()
     {
@@ -130,33 +123,5 @@ public class CheckPackageResponse : CommandResponse
         }
 
         return sb.ToString().TrimEnd();
-    }
-
-    public override string ToString()
-    {
-        var messages = new List<string>();
-        var formatted = Format();
-        var responseError = ResponseError;
-        if (!string.IsNullOrWhiteSpace(formatted))
-        {
-            messages.Add(formatted);
-        }
-
-        if (!string.IsNullOrEmpty(responseError))
-        {
-            messages.Add("[ERROR] " + responseError);
-        }
-
-        foreach (var error in ResponseErrors ?? [])
-        {
-            messages.Add("[ERROR] " + error);
-        }
-
-        if (SupportChannel != null)
-        {
-            messages.Add(SupportChannel);
-        }
-
-        return string.Join(Environment.NewLine, messages);
     }
 }

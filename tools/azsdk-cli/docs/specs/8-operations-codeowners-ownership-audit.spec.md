@@ -14,9 +14,9 @@
 >
 > What changed:
 >
-> - the `audit` command is replaced by `lint`, which reads YAML files instead of
+> - the `audit` command is replaced by `lint-fragments`, which reads YAML files instead of
 >   `Owner` / `Label` / `Label Owner` work items
-> - `lint` has no `--fix`. It reports and exits non-zero; it never edits the repository, so there is
+> - `lint-fragments` has no `--fix`. It reports and exits non-zero; it never edits the repository, so there is
 >   no safety threshold and no `--force`. The `Generator Interaction` section below describes the
 >   retired fix behavior and is retained for history.
 > - the rule engine and its five rule classes are deleted rather than ported. `AUD-STR-001` /

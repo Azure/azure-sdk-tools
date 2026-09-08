@@ -54,7 +54,14 @@ namespace APIViewWeb
             }
             catch
             {
-                Directory.Delete(tempDirectory, true);
+                try
+                {
+                    Directory.Delete(tempDirectory, true);
+                }
+                catch
+                {
+                    // best effort, and we don't want to mask the original exception if this fails
+                }
                 throw;
             }
 
@@ -132,6 +139,7 @@ namespace APIViewWeb
                 }
             }
 
+            var buffer = new byte[CopyBufferSize];
             long totalExpandedBytes = 0;
             foreach (var entry in archive.Entries)
             {
@@ -153,7 +161,6 @@ namespace APIViewWeb
                 using var outputStream = new FileStream(
                     destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
 
-                var buffer = new byte[CopyBufferSize];
                 long entryExpandedBytes = 0;
                 int read;
                 while ((read = entryStream.Read(buffer, 0, buffer.Length)) > 0)

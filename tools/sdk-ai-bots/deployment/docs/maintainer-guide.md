@@ -8,6 +8,8 @@ For routine deployment or incident recovery, use the
 [deploy runbook](runbook-deploy.md) or [rollback runbook](runbook-rollback.md).
 For the deployed topology, start with the
 [deployment architecture](deployment-architecture.md).
+For principal ownership and role scopes, use the
+[identity and access reference](identity-and-access.md).
 
 ## Azure Developer CLI Background
 

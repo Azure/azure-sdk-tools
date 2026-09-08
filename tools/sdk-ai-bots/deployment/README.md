@@ -26,6 +26,8 @@ deployment/
 
 Developers changing deployment code should start with the
 [deployment maintainer guide](docs/maintainer-guide.md).
+Use the [identity and access reference](docs/identity-and-access.md) when
+reviewing authentication, RBAC, managed identities, or delegated consent.
 For setup and operations, follow these documents in order.
 
 | Step | Document | Use it for |

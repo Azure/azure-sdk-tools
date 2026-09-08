@@ -105,7 +105,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"ZeroOwners\" has 0 unique service owner(s)");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label 'ZeroOwners' has 0 unique service owner(s)");
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"NoMatchingSvcLabel\" has 0 unique service owner(s)");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label 'NoMatchingSvcLabel' has 0 unique service owner(s)");
         Assert.That(result.ServiceLabels, Does.Contain("NoMatchingSvcLabel"));
     }
 
@@ -133,17 +133,35 @@ public class CheckPackageHelperTests
         AssertFailure(result, CheckPackageIssue.Codes.NoMatchingPath, "No owners.yaml entry matches path");
     }
 
+    /// <summary>
+    /// The helper's model builder throws if it is used, so reaching the <c>ArgumentException</c>
+    /// rather than that is what proves the path is rejected before any of the repository is read.
+    /// </summary>
     [Test]
-    public void CheckPackage_WildcardPath_ReturnsInvalidDirectoryPathFailure()
+    public void CheckPackage_WildcardPath_IsRejectedBeforeTheModelIsBuilt()
     {
-        var result = helper.Evaluate(
+        var ex = Assert.ThrowsAsync<ArgumentException>(() => helper.CheckPackage(
+            "sdk/*/Azure.Wildcard", "/repo", "Azure/azure-sdk-for-net", CancellationToken.None));
+
+        Assert.That(ex!.Message, Does.Contain("must not contain '*'").And.Contain("sdk/*/Azure.Wildcard"));
+        Assert.That(ex.ParamName, Is.EqualTo("directoryPath"));
+    }
+
+    [Test]
+    public void CheckPackage_BlankPath_IsRejectedBeforeTheModelIsBuilt()
+    {
+        Assert.ThrowsAsync<ArgumentException>(() => helper.CheckPackage(
+            "   ", "/repo", "Azure/azure-sdk-for-net", CancellationToken.None));
+    }
+
+    [Test]
+    public void Evaluate_WildcardPath_IsRejected()
+    {
+        Assert.Throws<ArgumentException>(() => helper.Evaluate(
             "sdk/*/Azure.Wildcard",
             "Azure/azure-sdk-for-net",
             entries,
-            settings: DefaultSettings, ownersFilePath: null);
-
-        AssertFailure(result, CheckPackageIssue.Codes.InvalidDirectoryPath, "must not contain '*'");
-        Assert.That(result.Issues[0].CurrentValues, Is.EquivalentTo(new[] { "sdk/*/Azure.Wildcard" }));
+            settings: DefaultSettings, ownersFilePath: null));
     }
 
     [Test]
@@ -225,7 +243,7 @@ public class CheckPackageHelperTests
             entries,
             settings: DefaultSettings, ownersFilePath: null);
 
-        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"MultiLabel1\" has 0 unique service owner(s)");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label 'MultiLabel1' has 0 unique service owner(s)");
     }
 
     [Test]

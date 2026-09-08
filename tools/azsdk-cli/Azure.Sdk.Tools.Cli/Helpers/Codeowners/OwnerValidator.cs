@@ -84,7 +84,6 @@ public class OwnerValidator(
 
     public IReadOnlyList<string> ExpandToIndividuals(IEnumerable<string> owners)
     {
-        var individuals = new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var owner in owners ?? [])
@@ -101,14 +100,11 @@ public class OwnerValidator(
 
             foreach (var individual in resolved)
             {
-                if (seen.Add(individual))
-                {
-                    individuals.Add(individual);
-                }
+                seen.Add(individual);
             }
         }
 
-        return individuals;
+        return seen.ToList();
     }
 
     public LintViolation? Validate(string owner, string? where)

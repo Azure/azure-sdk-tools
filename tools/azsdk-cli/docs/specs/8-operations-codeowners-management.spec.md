@@ -205,7 +205,7 @@ sections:
 | Key | Type | Required | Meaning |
 |-----|------|----------|---------|
 | `version` | int | yes | Schema version. `1` for this spec. Unknown versions are a hard error. |
-| `configs.allowed-owner-yaml-paths` | string[] | yes | Repo-root-relative globs. The complete set of locations a fragment may occupy. |
+| `configs.allowed-owner-yaml-paths` | string[] | yes | Repo-root-relative globs. The complete set of locations a fragment may occupy. Each glob must end in a literal file name, and a single directory may hold only one fragment. |
 | `configs.default-section` | string | yes | Section that receives fragment entries with no explicit `section`. Must exist and be `defined-in-files: true`. |
 | `configs.output` | string | no | Rendered file path. Default `.github/CODEOWNERS`. |
 | `configs.minimum-path-owners` | int | no | Minimum individual (non-team) owners on a fragment path entry. Default `2`. Fails `check-package` if not met |
@@ -713,9 +713,12 @@ CFG-DUP-001: Path '/sdk/tables/' is defined in more than one place.
 Deterministic. The same inputs — the YAML plus the membership caches — always produce a
 byte-identical file.
 
-1. **Load.** Parse the owners config. Enumerate every file matching
-   `configs.allowed-owner-yaml-paths`. Separately, scan the repo for any `owners.yaml` / `owners.yml`
-   that does *not* match those globs and fail with `CFG-LOC-001` if one is found.
+1. **Load.** Parse the owners config and take the fragment file names from the leaves of
+   `configs.allowed-owner-yaml-paths`; a glob ending in a wildcard names no file and is a hard error.
+   Enumerate every file with one of those names. Two fragments in the *same directory* (say
+   `sdk/ai/owners.yaml` and `sdk/ai/owners.yml`) is a hard error: both would render, so which one
+   governs the directory would come down to the order a reader looked in. A file with a fragment name
+   outside the globs fails with `CFG-LOC-001`.
 2. **Schema validate.** Reject unknown keys, missing required keys, non-canonical key spellings, and
    version mismatches.
 3. **Normalize.** Apply the path, owner, and label normalization rules above. Fragment path
@@ -1471,7 +1474,7 @@ same way GitHub resolves the whole file.
 
 | Language | Approach | Status |
 |----------|----------|--------|
-| .NET | `allowed-owner-yaml-paths: ["sdk/*/owners.yaml"]` | **Surveyed.** Reference implementation and first repo migrated |
+| .NET | `allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/*/owners.yml"]` | **Surveyed.** Reference implementation and first repo migrated. Both spellings are admitted; a directory may still hold only one |
 | Java | Expected same | **Not surveyed.** Multiple artifacts per service directory are ordinary path entries |
 | JavaScript | Expected same | **Not surveyed** |
 | Python | Expected same | **Not surveyed** |

@@ -14,8 +14,19 @@ public static class OwnersRepositoryLoader
 {
     public const string ConfigPath = ".github/owners.config.yaml";
 
-    /// <summary>Fragment file names, matched case-insensitively.</summary>
-    private static readonly string[] FragmentFileNames = ["owners.yaml", "owners.yml"];
+    /// <summary>
+    /// Reads the owners config, or returns null when the repository has not adopted one.
+    /// A config that exists but does not parse still throws: silently substituting defaults would
+    /// apply the wrong ownership minimums without saying so.
+    /// </summary>
+    public static OwnersConfig? TryLoadConfig(string repoRoot)
+    {
+        var configFile = Path.Combine(repoRoot, ConfigPath.Replace('/', Path.DirectorySeparatorChar));
+
+        return File.Exists(configFile)
+            ? OwnersYamlLoader.LoadConfig(File.ReadAllText(configFile), ConfigPath)
+            : null;
+    }
 
     /// <summary>
     /// Loads the config and every fragment it admits.
@@ -26,25 +37,19 @@ public static class OwnersRepositoryLoader
     /// of the repository still validates and the author sees every problem at once.
     /// </param>
     /// <exception cref="OwnersYamlException">
-    /// The config itself is missing or unreadable. Nothing downstream is meaningful without it, so
-    /// this is the one failure that stops the run.
+    /// The config is missing or unreadable, or two fragments share a directory. Neither leaves
+    /// anything downstream meaningful, so both stop the run.
     /// </exception>
     public static OwnersRepository Load(string repoRoot, List<OwnersValidationError> errors)
     {
-        var configFile = Path.Combine(repoRoot, ConfigPath.Replace('/', Path.DirectorySeparatorChar));
-        if (!File.Exists(configFile))
-        {
-            throw new OwnersYamlException($"{ConfigPath} not found under {repoRoot}.");
-        }
+        var config = TryLoadConfig(repoRoot)
+            ?? throw new OwnersYamlException($"{ConfigPath} not found under {repoRoot}.");
 
-        var config = OwnersYamlLoader.LoadConfig(File.ReadAllText(configFile), ConfigPath);
-
-        var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
-        matcher.AddIncludePatterns(config.Configs.AllowedOwnerYamlPaths);
+        var matcher = CreateMatcher(settings: config.Configs);
 
         var fragments = new List<OwnersFragment>();
 
-        foreach (var relativePath in FindFragmentFiles(repoRoot))
+        foreach (var relativePath in FindFragmentFiles(repoRoot, config.Configs))
         {
             if (!matcher.Match(relativePath).HasMatches)
             {
@@ -77,10 +82,21 @@ public static class OwnersRepositoryLoader
     }
 
     /// <summary>
-    /// Walks the whole checkout rather than just the allowed globs, because a fragment hiding outside
-    /// them is exactly what <c>CFG-LOC-001</c> exists to catch.
+    /// Repo-relative paths of every ownership fragment in the checkout, under any of the file names
+    /// <paramref name="settings"/> declares. This is the one fragment scan: <c>generate</c>,
+    /// <c>check-package</c> and <c>lint-fragments</c> all reach the same set of files through it,
+    /// rather than each deciding for itself what counts as a fragment.
+    /// <para>
+    /// Walks the whole checkout rather than the allowed globs, because a fragment hiding outside them
+    /// is what <c>CFG-LOC-001</c> exists to catch.
+    /// </para>
     /// </summary>
-    public static IEnumerable<string> FindFragmentFiles(string repoRoot)
+    /// <exception cref="OwnersYamlException">
+    /// Two fragments share a directory. Only files inside <c>allowed-owner-yaml-paths</c> are
+    /// considered: one outside them is not read at all, so it cannot be ambiguous with anything, and
+    /// it is already reported as <c>CFG-LOC-001</c>.
+    /// </exception>
+    public static IReadOnlyList<string> FindFragmentFiles(string repoRoot, OwnersConfigSettings settings)
     {
         var options = new EnumerationOptions
         {
@@ -89,10 +105,59 @@ public static class OwnersRepositoryLoader
             MatchCasing = MatchCasing.CaseInsensitive,
         };
 
-        return Directory.EnumerateFiles(repoRoot, "owners.y*ml", options)
-            .Where(file => FragmentFileNames.Contains(Path.GetFileName(file), StringComparer.OrdinalIgnoreCase))
+        var files = settings.FragmentFileNames
+            .SelectMany(fileName => Directory.EnumerateFiles(repoRoot, fileName, options))
             .Select(file => Path.GetRelativePath(repoRoot, file).Replace('\\', '/'))
             .Where(path => !path.StartsWith(".git/", StringComparison.Ordinal))
-            .OrderBy(path => path, StringComparer.Ordinal);
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .ToList();
+
+        var matcher = CreateMatcher(settings);
+        RequireOneFragmentPerDirectory([.. files.Where(path => matcher.Match(path).HasMatches)]);
+
+        return files;
+    }
+
+    internal static Matcher CreateMatcher(OwnersConfigSettings settings)
+    {
+        var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+        matcher.AddIncludePatterns(settings.AllowedOwnerYamlPaths);
+
+        return matcher;
+    }
+
+    /// <summary>
+    /// A directory owns its subtree through one file. Two fragments in the same directory would both
+    /// render, so their path entries would collide, and any caller asking which file governs the
+    /// directory would get whichever spelling it happened to look for first — different tools would
+    /// give different answers about the same directory. There is no reading of that which is correct,
+    /// so it stops the run rather than being reported and worked around.
+    /// </summary>
+    private static void RequireOneFragmentPerDirectory(IReadOnlyList<string> fragments)
+    {
+        var collisions = fragments
+            .GroupBy(DirectoryOf, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .ToList();
+
+        if (collisions.Count == 0)
+        {
+            return;
+        }
+
+        var described = collisions.Select(group => string.Join(" and ", group));
+
+        throw new OwnersYamlException(
+            $"A directory may hold only one ownership fragment, but found {string.Join("; ", described)}. " +
+            "Both would render, so their path entries would collide and which file governs the directory " +
+            "would depend on the order a reader looked in. Keep one and delete the other.");
+    }
+
+    private static string DirectoryOf(string relativePath)
+    {
+        var separator = relativePath.LastIndexOf('/');
+
+        return separator < 0 ? string.Empty : relativePath[..separator];
     }
 }

@@ -24,11 +24,16 @@ internal sealed class OwnersTestRepo : IDisposable
     }
 
     /// <summary>The full spec example: the reference config plus both reference fragments.</summary>
-    public static OwnersTestRepo FromSpecAssets()
+    /// <param name="transformConfig">
+    /// Rewrites the reference config before it is written, for tests that need a setting the
+    /// reference does not use.
+    /// </param>
+    public static OwnersTestRepo FromSpecAssets(Func<string, string>? transformConfig = null)
     {
         var repo = new OwnersTestRepo();
 
-        repo.WriteConfig(ReadAsset("owners.config.yaml"));
+        var config = ReadAsset("owners.config.yaml");
+        repo.WriteConfig(transformConfig == null ? config : transformConfig(config));
         repo.WriteFragment("sdk/ai", ReadAsset("sdk-ai-owners.yaml"));
         repo.WriteFragment("sdk/openai", ReadAsset("sdk-openai-owners.yaml"));
 

@@ -18,6 +18,34 @@ public sealed class OwnersRepository
 
     /// <summary>Ordered by repo-relative path, <see cref="StringComparer.Ordinal"/> ascending. That order is provenance order.</summary>
     public required IReadOnlyList<OwnersFragment> Fragments { get; init; }
+
+    /// <summary>
+    /// The fragment governing <paramref name="directoryPath"/>: the nearest one declared at or above
+    /// it. Null when no fragment covers the directory.
+    /// <para>
+    /// This answers "which file do I edit", which is a different question from "who owns this path".
+    /// Ownership can resolve to an entry declared in a fragment further up the tree, or to a static
+    /// entry in the owners config, but a fix still belongs in the nearest governing file.
+    /// </para>
+    /// <para>
+    /// Answered from the loaded fragments rather than by walking the working tree, so callers inherit
+    /// the discovery rules — the configured file name and <c>allowed-owner-yaml-paths</c> — instead of
+    /// each reimplementing them and disagreeing about which file governs a directory.
+    /// </para>
+    /// </summary>
+    public OwnersFragment? FindGoverningFragment(string directoryPath)
+    {
+        var candidate = directoryPath.Replace('\\', '/').Trim('/');
+
+        return Fragments
+            .Where(fragment => IsSelfOrUnder(candidate, fragment.Directory))
+            .MaxBy(fragment => fragment.Directory.Length);
+    }
+
+    private static bool IsSelfOrUnder(string candidate, string directory) =>
+        directory.Length == 0
+        || candidate.Equals(directory, StringComparison.OrdinalIgnoreCase)
+        || candidate.StartsWith($"{directory}/", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>

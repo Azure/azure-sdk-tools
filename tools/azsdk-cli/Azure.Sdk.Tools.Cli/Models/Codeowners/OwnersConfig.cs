@@ -24,12 +24,39 @@ public class OwnersConfig
 
 public class OwnersConfigSettings
 {
+    /// <summary>Fragment file name assumed when the config declares no globs to derive one from.</summary>
+    public const string DefaultFragmentFileName = "owners.yaml";
+
     /// <summary>
     /// Repo-root-relative globs naming the complete set of locations a fragment may occupy.
     /// An <c>owners.yaml</c> found anywhere else is a validation error, so ownership cannot be
     /// hidden in an unexpected location.
     /// </summary>
     public List<string> AllowedOwnerYamlPaths { get; set; } = [];
+
+    /// <summary>
+    /// Every file name a fragment may use, read off the leaves of
+    /// <see cref="AllowedOwnerYamlPaths"/>. A repository may admit more than one spelling; what it
+    /// may not do is let one directory hold two of them, which
+    /// <see cref="OwnersRepositoryLoader.FindFragmentFiles"/> enforces.
+    /// </summary>
+    [YamlIgnore]
+    public IReadOnlyList<string> FragmentFileNames
+    {
+        get
+        {
+            var names = AllowedOwnerYamlPaths
+                .Select(GlobFileName)
+                .Where(name => name.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return names.Count > 0 ? names : [DefaultFragmentFileName];
+        }
+    }
+
+    /// <summary>Leaf segment of a repo-relative glob: <c>owners.yaml</c> for <c>sdk/*/owners.yaml</c>.</summary>
+    public static string GlobFileName(string glob) => glob.Replace('\\', '/').Split('/')[^1].Trim();
 
     /// <summary>Section that receives fragment entries with no explicit section.</summary>
     public string DefaultSection { get; set; } = string.Empty;

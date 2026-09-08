@@ -22,17 +22,30 @@ public sealed record DroppedItem(
 /// <summary>
 /// The rendered CODEOWNERS file plus everything a caller needs to explain it.
 /// </summary>
-/// <param name="OutputPath">Repo-relative path the config nominates for the rendered file.</param>
-/// <param name="Settings">The config's <c>configs</c> block, carried so callers need not reload it.</param>
+/// <param name="Repository">
+/// The ownership YAML the render was produced from, carried so callers can ask which fragment
+/// governs a directory without re-reading the checkout under discovery rules of their own.
+/// <para>
+/// Read it for structure — which fragments exist, where they live, the config's settings — not for
+/// content. The builder filters entries and owners in place, so a fragment's <c>Paths</c> and
+/// <c>LabelOwners</c> hold what survived into <paramref name="Content"/>, not what is on disk.
+/// </para>
+/// </param>
 /// <param name="Content">Rendered file text. Always populated.</param>
 /// <param name="Entries">Every block in render order.</param>
 /// <param name="Dropped">Entries and owners excluded from <paramref name="Content"/>, with reasons.</param>
 public sealed record CodeownersModel(
-    string OutputPath,
-    OwnersConfigSettings Settings,
+    OwnersRepository Repository,
     string Content,
     IReadOnlyList<RenderedEntry> Entries,
-    IReadOnlyList<DroppedItem> Dropped);
+    IReadOnlyList<DroppedItem> Dropped)
+{
+    /// <summary>Repo-relative path the config nominates for the rendered file.</summary>
+    public string OutputPath => Repository.Config.Configs.Output;
+
+    /// <summary>The config's <c>configs</c> block, so callers need not reload it.</summary>
+    public OwnersConfigSettings Settings => Repository.Config.Configs;
+}
 
 /// <summary>
 /// Composes the pieces: load the YAML, drop what the caches reject, render.
@@ -66,8 +79,7 @@ public class CodeownersModelBuilder(IOwnerValidator ownerValidator) : ICodeowner
         }
 
         return new CodeownersModel(
-            repository.Config.Configs.Output,
-            repository.Config.Configs,
+            repository,
             rendered.Content,
             rendered.Entries,
             dropped);

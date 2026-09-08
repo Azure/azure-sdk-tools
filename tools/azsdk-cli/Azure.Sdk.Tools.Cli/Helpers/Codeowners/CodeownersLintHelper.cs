@@ -63,28 +63,21 @@ public class CodeownersLintHelper(
 
         var targets = fragmentPaths.Count > 0
             ? fragmentPaths
-            : [.. OwnersRepositoryLoader.FindFragmentFiles(repoRoot)];
+            : OwnersRepositoryLoader.FindFragmentFiles(repoRoot, settings);
 
         return new CodeownersLintResult(
             [.. targets.Select(path => LintOne(repoRoot, path, settings, commonLabels))]);
     }
 
     /// <summary>
-    /// Reads only the <c>configs</c> block. A missing or unreadable config falls back to the model
-    /// defaults so that linting a fragment still works in a checkout that has not adopted the config
-    /// yet.
+    /// Reads only the <c>configs</c> block: the minimums and the fragment file name are repository
+    /// policy, but nothing else about the rest of the repository bears on linting one file. A
+    /// checkout that has not adopted a config yet falls back to the model defaults, so a fragment can
+    /// still be linted; a config that exists but does not parse is not papered over, because
+    /// substituting defaults would silently apply the wrong minimums.
     /// </summary>
-    private static OwnersConfigSettings LoadSettings(string repoRoot)
-    {
-        try
-        {
-            return OwnersRepositoryLoader.Load(repoRoot, []).Config.Configs;
-        }
-        catch (OwnersYamlException)
-        {
-            return new OwnersConfigSettings();
-        }
-    }
+    private static OwnersConfigSettings LoadSettings(string repoRoot) =>
+        OwnersRepositoryLoader.TryLoadConfig(repoRoot)?.Configs ?? new OwnersConfigSettings();
 
     private FragmentLintResult LintOne(
         string repoRoot,

@@ -48,6 +48,7 @@ public static class OwnersYamlLoader
     {
         var config = Deserialize<OwnersConfig>(yaml, filePath);
         RequireSupportedVersion(config.Version, filePath);
+        RequireLiteralFragmentFileNames(config.Configs, filePath);
 
         foreach (var section in config.Sections)
         {
@@ -55,6 +56,32 @@ public static class OwnersYamlLoader
         }
 
         return config;
+    }
+
+    /// <summary>
+    /// Requires every <c>allowed-owner-yaml-paths</c> glob to end in a literal file name. The
+    /// wildcards belong to the directories above the file: a wildcarded leaf names no file, so
+    /// nothing could be scanned for and every fragment in the repository would go unread.
+    /// <para>
+    /// More than one distinct name is allowed. A repository may spell its fragments both
+    /// <c>owners.yaml</c> and <c>owners.yml</c>; what it may not do is put both in one directory,
+    /// which <see cref="OwnersRepositoryLoader.FindFragmentFiles"/> rejects.
+    /// </para>
+    /// </summary>
+    private static void RequireLiteralFragmentFileNames(OwnersConfigSettings settings, string filePath)
+    {
+        var wildcarded = settings.AllowedOwnerYamlPaths.FirstOrDefault(glob =>
+        {
+            var name = OwnersConfigSettings.GlobFileName(glob);
+            return name.Length == 0 || name.Contains('*') || name.Contains('?');
+        });
+
+        if (wildcarded != null)
+        {
+            throw new OwnersYamlException(
+                $"{filePath}: configs.allowed-owner-yaml-paths entries must end in a literal file name, " +
+                $"but '{wildcarded}' does not. Wildcards are for the directories above the file.");
+        }
     }
 
     /// <param name="filePath">

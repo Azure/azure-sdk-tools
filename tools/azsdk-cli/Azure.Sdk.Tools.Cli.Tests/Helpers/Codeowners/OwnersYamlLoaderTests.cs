@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners;
 
@@ -24,6 +25,7 @@ public class OwnersYamlLoaderTests
         {
             Assert.That(config.Version, Is.EqualTo(1));
             Assert.That(config.Configs.AllowedOwnerYamlPaths, Is.EqualTo(new[] { "sdk/*/owners.yaml", "sdk/*/owners.yml" }));
+            Assert.That(config.Configs.FragmentFileNames, Is.EqualTo(new[] { "owners.yaml", "owners.yml" }));
             Assert.That(config.Configs.DefaultSection, Is.EqualTo("Client Libraries"));
             Assert.That(config.Configs.Output, Is.EqualTo(".github/CODEOWNERS"));
             Assert.That(config.Configs.MinimumPathOwners, Is.EqualTo(2));
@@ -216,5 +218,71 @@ public class OwnersYamlLoaderTests
             () => OwnersYamlLoader.LoadFragment("# nothing but a comment\n", "sdk/ai/owners.yaml"));
 
         Assert.That(ex!.Message, Does.Contain("file is empty"));
+    }
+
+    /// <summary>
+    /// A repository may spell its fragments more than one way; the rule is per-directory, so the
+    /// same name at different depths is unremarkable.
+    /// </summary>
+    [Test]
+    public void LoadConfig_MoreThanOneFragmentFileNameIsAllowed()
+    {
+        var yaml = """
+            version: 1
+            configs:
+              allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/*/owners.yml"]
+              default-section: Client Libraries
+            sections:
+              - name: Client Libraries
+                defined-in-files: true
+            """;
+
+        var config = OwnersYamlLoader.LoadConfig(yaml, ".github/owners.config.yaml");
+
+        Assert.That(config.Configs.FragmentFileNames, Is.EqualTo(new[] { "owners.yaml", "owners.yml" }));
+    }
+
+    [Test]
+    public void LoadConfig_SameFileNameAtDifferentDepthsCollapsesToOneName()
+    {
+        var yaml = """
+            version: 1
+            configs:
+              allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/resourcemanager/*/owners.yaml"]
+              default-section: Client Libraries
+            sections:
+              - name: Client Libraries
+                defined-in-files: true
+            """;
+
+        var config = OwnersYamlLoader.LoadConfig(yaml, ".github/owners.config.yaml");
+
+        Assert.That(config.Configs.FragmentFileNames, Is.EqualTo(new[] { "owners.yaml" }));
+    }
+
+    /// <summary>A wildcarded leaf names no file, so there would be nothing to scan for.</summary>
+    [Test]
+    public void LoadConfig_WildcardedFileNameIsRejected()
+    {
+        var yaml = """
+            version: 1
+            configs:
+              allowed-owner-yaml-paths: ["sdk/*/owners.y*ml"]
+              default-section: Client Libraries
+            sections:
+              - name: Client Libraries
+                defined-in-files: true
+            """;
+
+        var ex = Assert.Throws<OwnersYamlException>(
+            () => OwnersYamlLoader.LoadConfig(yaml, ".github/owners.config.yaml"));
+
+        Assert.That(ex!.Message, Does.Contain("must end in a literal file name"));
+    }
+
+    [Test]
+    public void FragmentFileNames_DefaultWhenNoGlobsAreDeclared()
+    {
+        Assert.That(new OwnersConfigSettings().FragmentFileNames, Is.EqualTo(new[] { "owners.yaml" }));
     }
 }

@@ -19,7 +19,8 @@ version: 1
 configs:
   # Only fragment files matching these globs are read. Any owners.yaml / owners.yml
   # found outside these globs is a validation error, so ownership cannot be hidden
-  # in an unexpected location.
+  # in an unexpected location. Either spelling may be used, but a single directory
+  # may hold only one fragment: two would collide over the same paths.
   allowed-owner-yaml-paths:
     - "sdk/*/owners.yaml"
     - "sdk/*/owners.yml"

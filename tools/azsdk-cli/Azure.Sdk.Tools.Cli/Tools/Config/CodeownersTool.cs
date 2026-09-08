@@ -212,6 +212,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             try
             {
+                // Asked rather than caught, so a stray ArgumentException from somewhere deeper in the
+                // pipeline is not misreported as the caller having typed a bad path.
+                var pathProblem = CheckPackageHelper.DescribeUnusableDirectory(directoryPath);
+                if (pathProblem != null)
+                {
+                    return CreateCheckPackageFailureResponse(
+                        directoryPath,
+                        packageName,
+                        repo,
+                        CheckPackageIssue.Codes.InvalidDirectoryPath,
+                        $"check-package failed for path '{directoryPath}': {pathProblem}",
+                        "Rerun the ownership check with a single concrete package directory path",
+                        [directoryPath]);
+                }
+
                 return await checkPackageHelper.CheckPackage(directoryPath, repoRoot, repo, ct);
             }
             catch (Exception ex)
@@ -307,7 +322,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string? repo,
             string issueCode,
             string message,
-            string nextStep)
+            string nextStep,
+            List<string>? currentValues = null)
         {
             var response = new CheckPackageResponse
             {
@@ -322,6 +338,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 Code = issueCode,
                 Message = message,
                 NextStep = nextStep,
+                CurrentValues = currentValues,
             });
 
             return response;

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
@@ -19,6 +20,9 @@ public interface ICheckPackageHelper
     /// <param name="repoRoot">Absolute path to the repository root.</param>
     /// <param name="repo">Repository name, used for repo-label validation and prompt generation.</param>
     /// <returns>A <see cref="CheckPackageResponse"/> describing success or all discovered issues.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="directoryPath"/> does not name one concrete directory.
+    /// </exception>
     Task<CheckPackageResponse> CheckPackage(
         string directoryPath,
         string repoRoot,
@@ -34,8 +38,6 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
     private const string PathTargetType = "path";
     private const string PrLabelPlaceholder = "<pr-label>";
     private const string ServiceAttentionLabel = "Service Attention";
-
-    private static readonly string[] FragmentFileNames = ["owners.yaml", "owners.yml"];
 
     /// <summary>
     /// Resolves <paramref name="directoryPath"/> against the rendered CODEOWNERS model, minus the
@@ -58,8 +60,16 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
         string? repo,
         CancellationToken ct)
     {
+        // Before anything expensive. Rendering the repository to then reject the argument we were
+        // handed reads as a finding about the repository rather than a mistake in the request.
+        RequireOneConcreteDirectory(directoryPath);
+
         var model = await modelBuilder.Build(repoRoot, omitFallbackSections: true, ct);
-        var governingFragment = FindGoverningFragmentPath(directoryPath, repoRoot);
+
+        // The model already loaded the repository under its own discovery rules -- the configured
+        // fragment file names and allowed-owner-yaml-paths -- so ask it which file governs the
+        // directory rather than walking the checkout again and risking a different answer.
+        var governingFragment = model.Repository.FindGoverningFragment(directoryPath)?.FilePath;
 
         var response = Evaluate(
             directoryPath,
@@ -81,33 +91,41 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
     }
 
     /// <summary>
-    /// Repo-relative path of the <c>owners.yaml</c> that governs <paramref name="directoryPath"/>,
-    /// or null when there is none. This answers "which file should I edit", which is a different
-    /// question from "who owns this path" — ownership can be resolved by an entry declared in a
-    /// fragment further up the tree, but a fix still belongs in the nearest governing file.
+    /// Says why <paramref name="directoryPath"/> cannot be checked, or null when it can. Ownership is
+    /// a property of a specific directory, so a pattern matching several has no single answer and a
+    /// blank one has no subject at all.
+    /// <para>
+    /// Separate from <see cref="RequireOneConcreteDirectory"/> so a caller that can report the
+    /// problem to a user does not have to reach for an exception to learn about it.
+    /// </para>
     /// </summary>
-    private static string? FindGoverningFragmentPath(string directoryPath, string repoRoot)
+    public static string? DescribeUnusableDirectory(string directoryPath)
     {
-        var current = directoryPath.Trim('/');
-
-        while (!string.IsNullOrEmpty(current))
+        if (string.IsNullOrWhiteSpace(directoryPath))
         {
-            foreach (var fileName in FragmentFileNames)
-            {
-                var relativePath = $"{current}/{fileName}";
-                var file = Path.Combine(repoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            return "Directory path is required.";
+        }
 
-                if (File.Exists(file))
-                {
-                    return relativePath;
-                }
-            }
-
-            var separator = current.LastIndexOf('/');
-            current = separator < 0 ? string.Empty : current[..separator];
+        if (directoryPath.Contains('*'))
+        {
+            return "Package directory paths must not contain '*'.";
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Enforces <see cref="DescribeUnusableDirectory"/> for callers that have no way to report the
+    /// problem, so an unusable path stops at the boundary instead of resolving to nothing further in.
+    /// </summary>
+    public static void RequireOneConcreteDirectory(string directoryPath)
+    {
+        var problem = DescribeUnusableDirectory(directoryPath);
+
+        if (problem != null)
+        {
+            throw new ArgumentException($"{problem} Got '{directoryPath}'.", nameof(directoryPath));
+        }
     }
 
     /// <summary>
@@ -125,12 +143,12 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
         OwnersConfigSettings settings,
         string? ownersFilePath)
     {
-        if (string.IsNullOrWhiteSpace(directoryPath))
-        {
-            throw new ArgumentException("Directory path is required.", nameof(directoryPath));
-        }
+        RequireOneConcreteDirectory(directoryPath);
 
         var packageName = ResolvePackageName(directoryPath);
+
+        // Named once: every "here is what to do about it" below points at the same file.
+        var ownersFile = FormatOwnersFile(ownersFilePath, directoryPath);
 
         var response = new CheckPackageResponse
         {
@@ -139,27 +157,13 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
             Repo = repo,
         };
 
-        if (directoryPath.Contains('*'))
-        {
-            response.Issues.Add(new CheckPackageIssue
-            {
-                Code = CheckPackageIssue.Codes.InvalidDirectoryPath,
-                Message = $"check-package failed for path '{directoryPath}': Package directory paths must not contain '*'.",
-                NextStep = $"Rerun the ownership check with a concrete package directory path instead of {FormatPromptValue(directoryPath)}",
-                CurrentValues = [directoryPath],
-            });
-
-            return response;
-        }
-
-        var matchedEntry = TryFindMatchingEntry(directoryPath, codeownersEntries);
-        if (matchedEntry == null)
+        if (!TryFindMatchingEntry(directoryPath, codeownersEntries, out var matchedEntry))
         {
             response.Issues.Add(new CheckPackageIssue
             {
                 Code = CheckPackageIssue.Codes.NoMatchingPath,
                 Message = $"check-package failed: No owners.yaml entry matches path '{directoryPath}'.",
-                NextStep = $"Add a path entry for {FormatPromptValue(directoryPath)} with owners and pr-labels to {FormatOwnersFile(ownersFilePath, directoryPath)} so package {FormatPromptValue(packageName)} is covered",
+                NextStep = $"Add a path entry for '{directoryPath}' with owners and pr-labels to {ownersFile} so package '{packageName}' is covered",
             });
 
             return response;
@@ -184,7 +188,7 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has {owners.Count} unique owner(s); " +
                     $"at least {settings.MinimumPathOwners} are required. " +
                     $"Owners: [{string.Join(", ", matchedEntry.SourceOwners ?? [])}]",
-                NextStep = $"Add {CurrentGitHubUserPlaceholder} to the owners list of the {FormatPromptValue(resolvedTarget)} path entry in {FormatOwnersFile(ownersFilePath, directoryPath)}",
+                NextStep = $"Add {CurrentGitHubUserPlaceholder} to the owners list of the '{resolvedTarget}' path entry in {ownersFile}",
                 FoundCount = owners.Count,
                 RequiredCount = settings.MinimumPathOwners,
                 CurrentValues = matchedEntry.SourceOwners != null
@@ -201,13 +205,13 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
                 Message =
                     $"check-package failed for path '{directoryPath}': " +
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has no PR label.",
-                NextStep = $"Add a pr-labels entry to the {FormatPromptValue(resolvedTarget)} path entry in {FormatOwnersFile(ownersFilePath, directoryPath)}",
+                NextStep = $"Add a pr-labels entry to the '{resolvedTarget}' path entry in {ownersFile}",
             });
 
             return response;
         }
 
-        var serviceOwnerLabels = GetServiceOwnerPromptLabels(response.PRLabels);
+        var serviceOwnerLabels = GetServiceOwnerLabels(response.PRLabels);
         var (matchingServiceEntry, serviceOwners) = FindMatchingServiceEntry(matchedEntry, codeownersEntries);
         if (matchingServiceEntry == null)
         {
@@ -216,7 +220,7 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
             {
                 Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
                 Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, 0, settings.MinimumLabelOwners, null),
-                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFilePath, directoryPath),
+                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFile),
                 FoundCount = 0,
                 RequiredCount = settings.MinimumLabelOwners,
             });
@@ -225,7 +229,7 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
         }
 
         response.ServiceLabels = matchingServiceEntry.ServiceLabels ?? [];
-        serviceOwnerLabels = GetServiceOwnerPromptLabels(response.ServiceLabels);
+        serviceOwnerLabels = GetServiceOwnerLabels(response.ServiceLabels);
 
         response.ServiceOwners = serviceOwners;
 
@@ -235,7 +239,7 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
             {
                 Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
                 Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, serviceOwners.Count, settings.MinimumLabelOwners, matchingServiceEntry.ServiceOwners),
-                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFilePath, directoryPath),
+                NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, ownersFile),
                 FoundCount = serviceOwners.Count,
                 RequiredCount = settings.MinimumLabelOwners,
                 CurrentValues = matchingServiceEntry.ServiceOwners != null
@@ -248,19 +252,21 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
     }
 
     /// <summary>
-    /// Finds the matching CODEOWNERS entry by scanning in reverse order (last match wins).
-    /// Only considers entries that have a path expression (skips service-label-only entries).
-    /// Tries the path as-is first, then with a trailing slash appended to handle
-    /// directory-style CODEOWNERS patterns (e.g., /sdk/foo/ matching sdk/foo).
+    /// Finds the CODEOWNERS entry that owns <paramref name="directoryPath"/> by scanning in reverse
+    /// order, the way GitHub resolves the rendered file: last match wins. Entries without a path
+    /// expression are service-label blocks and are skipped.
+    /// <para>
+    /// A directory pattern such as <c>/sdk/foo/</c> only matches paths *under* that directory, so a
+    /// path authored without the trailing slash is tried both ways.
+    /// </para>
     /// </summary>
-    internal static CodeownersEntry? TryFindMatchingEntry(string directoryPath, List<CodeownersEntry> entries)
+    internal static bool TryFindMatchingEntry(
+        string directoryPath,
+        List<CodeownersEntry> entries,
+        [NotNullWhen(true)] out CodeownersEntry? matchedEntry)
     {
-        // Build the set of target paths to try: the original path, and if it doesn't
-        // end with '/', also try with a trailing slash appended. CODEOWNERS directory
-        // patterns like /sdk/foo/ only match paths *under* that directory, so
-        // "sdk/foo/" will match but "sdk/foo" will not.
         var pathsToTry = new List<string> { directoryPath };
-        if (!directoryPath.EndsWith("/"))
+        if (!directoryPath.EndsWith('/'))
         {
             pathsToTry.Add(directoryPath + "/");
         }
@@ -273,16 +279,16 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
                 continue;
             }
 
-            foreach (var targetPath in pathsToTry)
+            if (pathsToTry.Any(targetPath =>
+                DirectoryUtils.PathExpressionMatchesTargetPath(entry.PathExpression, targetPath)))
             {
-                if (DirectoryUtils.PathExpressionMatchesTargetPath(entry.PathExpression, targetPath))
-                {
-                    return entry;
-                }
+                matchedEntry = entry;
+                return true;
             }
         }
 
-        return null;
+        matchedEntry = null;
+        return false;
     }
 
     /// <summary>
@@ -340,7 +346,7 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
     {
         var message =
             $"check-package failed for path '{directoryPath}': " +
-            $"{FormatPrLabelTargetForMessage(labels)} {GetPluralVerb(labels)} {foundCount} unique service owner(s); " +
+            $"{FormatPrLabels(labels)} has {foundCount} unique service owner(s); " +
             $"at least {requiredCount} are required.";
 
         var currentServiceOwners = serviceOwners?.ToList();
@@ -352,11 +358,9 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
         return message;
     }
 
-    private static string BuildServiceOwnerNextStep(IReadOnlyList<string> labels, string? ownersFilePath, string directoryPath)
-    {
-        return $"Add {CurrentGitHubUserPlaceholder} to the service-owners list of the {FormatPrLabelTargetForPrompt(labels)} "
-            + $"label-owners block in {FormatOwnersFile(ownersFilePath, directoryPath)}";
-    }
+    private static string BuildServiceOwnerNextStep(IReadOnlyList<string> labels, string ownersFile) =>
+        $"Add {CurrentGitHubUserPlaceholder} to the service-owners list of the label-owners block "
+        + $"for {FormatPrLabels(labels)} in {ownersFile}";
 
     /// <summary>
     /// Names the fragment the caller should edit. When no fragment governs the directory, suggests
@@ -369,19 +373,27 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
             return ownersFilePath;
         }
 
+        // A repository may admit more than one spelling, so this could be derived from
+        // configs.allowed-owner-yaml-paths in the future. Until one does, naming the file a new
+        // fragment should be created under is a suggestion, and owners.yaml is the one to make.
+        const string fragmentFileName = "owners.yaml";
+
         var segments = directoryPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
         return segments.Length >= 2
-            ? $"{segments[0]}/{segments[1]}/owners.yaml"
-            : "the owners.yaml for this service";
+            ? $"{segments[0]}/{segments[1]}/{fragmentFileName}"
+            : $"the {fragmentFileName} for this service";
     }
 
-    private static IReadOnlyList<string> GetServiceOwnerPromptLabels(IEnumerable<string>? labels)
-    {
-        return (labels ?? [])
+    /// <summary>
+    /// The labels that a label-owners block must cover. <c>Service Attention</c> is excluded: it is
+    /// the routing label for the partner team, not a label anyone owns.
+    /// </summary>
+    private static IReadOnlyList<string> GetServiceOwnerLabels(IEnumerable<string>? labels) =>
+    [
+        .. (labels ?? [])
             .Where(label => !label.Equals(ServiceAttentionLabel, StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
+    ];
 
     private static (string resolvedTargetType, string resolvedTarget) ResolveMatchedTarget(
         string directoryPath,
@@ -415,38 +427,21 @@ public class CheckPackageHelper(ICodeownersModelBuilder modelBuilder, IOwnerVali
             : $"resolved service-level path entry '{resolvedTarget}'";
     }
 
-    private static string FormatPrLabelTargetForMessage(IReadOnlyList<string> labels)
+    /// <summary>
+    /// Names the PR labels a service-owners block is keyed on. Labels contain spaces, so they are
+    /// quoted; when the package declares none, the placeholder stands in for the one to add.
+    /// </summary>
+    private static string FormatPrLabels(IReadOnlyList<string> labels)
     {
         if (labels.Count == 0)
         {
-            return $"PR label {FormatQuotedValue(PrLabelPlaceholder)}";
+            return $"PR label '{PrLabelPlaceholder}'";
         }
 
-        return labels.Count == 1
-            ? $"PR label {FormatQuotedValue(labels[0])}"
-            : $"PR labels [{string.Join(", ", labels.Select(FormatQuotedValue))}]";
-    }
-
-    private static string FormatPrLabelTargetForPrompt(IReadOnlyList<string> labels)
-    {
-        if (labels.Count == 0)
-        {
-            return $"label {FormatQuotedValue(PrLabelPlaceholder)}";
-        }
+        var quoted = labels.Select(label => $"'{label}'");
 
         return labels.Count == 1
-            ? $"label {FormatQuotedValue(labels[0])}"
-            : $"labels {string.Join(", ", labels.Select(FormatQuotedValue))}";
+            ? $"PR label {quoted.First()}"
+            : $"PR labels {string.Join(", ", quoted)}";
     }
-
-    private static string GetPluralVerb(IReadOnlyList<string> labels) => labels.Count <= 1 ? "has" : "have";
-
-    private static string FormatPromptValue(string value)
-    {
-        return value.Contains(' ', StringComparison.Ordinal)
-            ? $"\"{value}\""
-            : value;
-    }
-
-    private static string FormatQuotedValue(string value) => $"\"{value}\"";
 }

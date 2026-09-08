@@ -369,9 +369,9 @@ azsdk config codeowners generate --repo-root <repo>
 
 # 3. Prove nothing moved
 dotnet run --project Azure.Sdk.Tools.CodeownersMigration -- verify \
-  --expected <repo>/.github/CODEOWNERS.orig \
-  --actual <repo>/.github/CODEOWNERS \
-  --repo-root <repo>
+  --baseline <repo>/.github/CODEOWNERS.orig \
+  --candidate <repo>/.github/CODEOWNERS \
+  --repo-root <repo> --include-files
 ```
 
 Not wired into any pipeline. **Delete this directory once every repository has migrated.**

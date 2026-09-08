@@ -116,8 +116,9 @@ the pipelines never manage it through Microsoft Graph.
 
 The preprovision hook detects the active login as
 `DEPLOYMENT_PRINCIPAL_ID` independently of `DEVELOPER_PRINCIPAL_ID`. This keeps
-pipeline WIF data-plane grants intact when production deliberately assigns the
-developer role set to an Entra group.
+pipeline WIF grants separate from developer access. The developer principal is
+configuration-owned and must be set explicitly in `bicepOverrides`; the hook
+never substitutes the deployment identity when it is absent.
 
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.

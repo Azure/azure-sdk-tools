@@ -228,8 +228,8 @@ function checkResourceQuotas(): void {
 
 /**
  * Detects the currently authenticated principal's object ID and type. The
- * deployment identity is refreshed on every provision; the developer identity
- * is initialized from it only when no explicit user/group has been configured.
+ * deployment identity is refreshed on every provision. The developer identity
+ * is configuration-owned and is never inferred from the deployment identity.
  */
 function ensureAccessPrincipals(): void {
   log("Detecting the current deployment principal...");
@@ -272,14 +272,10 @@ function ensureAccessPrincipals(): void {
     process.env.DEPLOYMENT_PRINCIPAL_TYPE = principalType;
     log(`  ✓ DEPLOYMENT_PRINCIPAL_ID=${principalId} (${principalType})`);
 
-    if (!process.env.DEVELOPER_PRINCIPAL_ID?.trim()) {
-      execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_ID", principalId], { stdio: "inherit" });
-      execFileSync("azd", ["env", "set", "DEVELOPER_PRINCIPAL_TYPE", principalType], { stdio: "inherit" });
-      process.env.DEVELOPER_PRINCIPAL_ID = principalId;
-      process.env.DEVELOPER_PRINCIPAL_TYPE = principalType;
-      log(`  ✓ DEVELOPER_PRINCIPAL_ID=${principalId} (${principalType})`);
-    } else {
+    if (process.env.DEVELOPER_PRINCIPAL_ID?.trim()) {
       log(`  ✓ preserving DEVELOPER_PRINCIPAL_ID=${process.env.DEVELOPER_PRINCIPAL_ID.trim()}`);
+    } else {
+      log("  No developer principal configured; developer role assignments will be skipped.");
     }
     return;
   } catch {

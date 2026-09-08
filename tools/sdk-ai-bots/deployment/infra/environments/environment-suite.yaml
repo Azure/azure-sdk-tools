@@ -70,6 +70,8 @@ environments:
         cosmosDbLocation: 'eastus2'
         chatbotEvolutionAgentEnabled: false
         bicepOverrides:
+            DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+            DEVELOPER_PRINCIPAL_TYPE: 'Group'
             BOT_SERVICE_NAME: 'azsdkqabot-dev-20260826-federated'
             # Set to 'true' for one provision only when recovering a soft-deleted
             # AIServices account, then reset to 'false' after recovery succeeds.

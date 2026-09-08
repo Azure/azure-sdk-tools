@@ -31,6 +31,34 @@ test("exports the deployment principal for targeted layer provisioning", () => {
   assert.match(auth, /variable=DEPLOYMENT_PRINCIPAL_TYPE]ServicePrincipal/);
 });
 
+test("keeps dev developer roles separate from the deployment principal", () => {
+  const suite = read("infra/environments/environment-suite.yaml");
+  const preprovision = read("hooks/preprovision.ts");
+  const seedAppConfig = read("hooks/lib/seed-app-config.ts");
+  const seedKeyVault = read("hooks/lib/seed-key-vault.ts");
+  const shared = read("infra/layers/shared-resources/main.bicep");
+  const agent = read("infra/layers/agent/main.bicep");
+  const dev = suite.match(/\n    dev:\n([\s\S]*?)\n    preview:/)?.[1] ?? "";
+
+  assert.match(dev, /DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'/);
+  assert.match(dev, /DEVELOPER_PRINCIPAL_TYPE: 'Group'/);
+  assert.doesNotMatch(preprovision, /"env", "set", "DEVELOPER_PRINCIPAL_ID"/);
+  assert.doesNotMatch(seedAppConfig, /DEPLOYMENT_PRINCIPAL_ID.*\|\|.*DEVELOPER_PRINCIPAL_ID/s);
+  assert.doesNotMatch(seedKeyVault, /DEPLOYMENT_PRINCIPAL_ID.*\|\|.*DEVELOPER_PRINCIPAL_ID/s);
+  for (const resourceName of [
+    "deploymentStorageBlobContributor",
+    "deploymentAppConfigDataReader",
+    "deploymentKeyVaultSecretsUser",
+    "deploymentAcrContributor",
+    "deploymentSearchServiceContributor",
+    "deploymentCosmosDataContributor",
+  ]) {
+    assert.match(shared, new RegExp(`resource ${resourceName} `));
+  }
+  assert.match(agent, /resource deploymentOpenAiUserRoleAssignment /);
+  assert.match(agent, /resource deploymentFoundryProjectManagerRoleAssignment /);
+});
+
 test("reports the selected image version before each azd deployment", () => {
   const orchestrator = read("pipelines/orchestrators/qa-bot-deploy.yml");
   const fullStack = read("pipelines/templates/deploy-stage.yml");

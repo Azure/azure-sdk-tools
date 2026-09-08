@@ -353,6 +353,8 @@ build-based tag when no override is supplied.
 
 - Never hard-code an environment-specific subscription, resource name, endpoint,
   or image tag in `azure.yaml`, Bicep, hooks, or pipeline templates.
+- Keep `DEVELOPER_PRINCIPAL_ID` configuration-owned. Never default it to the
+  deployment principal; omitted developer identity means skip developer roles.
 - Bicep outputs are contracts. Renaming one requires updating downstream
   `main.bicepparam` files, hooks, environment refreshes, and tests.
 - Preview and apply must use the same Bicep entry point and parameter adapter.

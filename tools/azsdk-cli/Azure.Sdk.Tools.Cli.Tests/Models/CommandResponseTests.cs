@@ -23,8 +23,9 @@ public class CommandResponseTests
         Assert.Multiple(() =>
         {
             Assert.That(
-                document.RootElement.GetProperty("next_steps")[0].GetString(),
+                document.RootElement.GetProperty("permission_guidance").GetString(),
                 Is.EqualTo(CommandResponse.AzureDevOpsAccessRequiredMessage));
+            Assert.That(document.RootElement.TryGetProperty("next_steps", out _), Is.False);
             Assert.That(response.ToString(), Does.Contain(CommandResponse.AzureDevOpsAccessRequiredMessage));
         });
     }
@@ -37,6 +38,13 @@ public class CommandResponseTests
             ResponseError = "Access denied to a local file"
         };
 
-        Assert.That(response.NextSteps, Is.Null);
+        var output = new OutputHelper(OutputHelper.OutputModes.Mcp).Format(response);
+        using var document = JsonDocument.Parse(output);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.PermissionGuidance, Is.Null);
+            Assert.That(document.RootElement.TryGetProperty("permission_guidance", out _), Is.False);
+        });
     }
 }

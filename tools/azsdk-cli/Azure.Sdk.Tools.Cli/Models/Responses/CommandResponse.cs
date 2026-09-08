@@ -15,7 +15,6 @@ public abstract class CommandResponse
 {
     private const string AzureDevOpsAccessDeniedCode = "TF215106";
     private int? exitCode = null;
-    private List<string>? nextSteps;
 
     public static readonly string AzureDevOpsAccessRequiredMessage =
         "Azure DevOps permission is required for this operation. Join Azure SDK Partners to request access: https://aka.ms/azsdk/access";
@@ -54,23 +53,7 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("next_steps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? NextSteps
-    {
-        get
-        {
-            if (HasAzureDevOpsAccessDeniedError())
-            {
-                nextSteps ??= [];
-                if (!nextSteps.Contains(AzureDevOpsAccessRequiredMessage))
-                {
-                    nextSteps.Add(AzureDevOpsAccessRequiredMessage);
-                }
-            }
-
-            return nextSteps;
-        }
-        set => nextSteps = value;
-    }
+    public List<string>? NextSteps { get; set; }
 
     /// <summary>
     /// Status shows whether the command operation was successful.
@@ -93,6 +76,14 @@ public abstract class CommandResponse
     [JsonPropertyName("support_channel")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
+
+    /// <summary>
+    /// Permission guidance for Azure DevOps access failures.
+    /// </summary>
+    [JsonPropertyName("permission_guidance")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual string? PermissionGuidance =>
+        HasAzureDevOpsAccessDeniedError() ? AzureDevOpsAccessRequiredMessage : null;
 
     private bool HasAzureDevOpsAccessDeniedError() =>
         ResponseError?.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase) == true ||
@@ -117,6 +108,11 @@ public abstract class CommandResponse
         foreach (var error in ResponseErrors ?? [])
         {
             messages.Add("[ERROR] " + error);
+        }
+
+        if (PermissionGuidance is { } permissionGuidance)
+        {
+            messages.Add(permissionGuidance);
         }
 
         if (NextSteps?.Count > 0)

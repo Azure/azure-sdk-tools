@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.44 (Unreleased)
-
-### Features Added
+## 0.6.44 (2026-09-08)
 
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
+- Product onboarding: removed the `--needs-sdk` option, renamed `N/A` to `I don't know` for `--data-plane` and `--management-plane` options.
 
 ## 0.6.43 (2026-09-03)
 

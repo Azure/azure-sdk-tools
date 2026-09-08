@@ -1031,10 +1031,16 @@ an ordinary source conflict resolved by the people who own that file.
 `generate`, `lint-fragments`, `check-package`, and `validate-owner` all read the owner-validity
 caches, and **all four fail closed.** There is one rule and no per-operation exceptions.
 
-A cache is unusable if it is unreachable, empty, older than six hours, or **does not parse**. Any of
+A cache is unusable if it is unreachable, empty, **stale**, or **does not parse**. Any of
 those conditions produces a non-zero exit that names the cache and the specific failure. Neither
 operation proceeds on a partial or assumed-empty cache, and neither downgrades a cache failure to a
 warning.
+
+Stale means older than 72 hours. That figure is derived from the producing pipeline, not chosen for
+its own sake: `automation - pipeline-owners-extraction` refreshes the caches once daily, and a
+failed run has been observed to open a two-day gap. A cutoff at or below the refresh interval leaves
+the cache expired for most of every day and fails all four operations closed while nothing is
+actually wrong, so the cutoff has to clear the refresh interval with room for a missed run.
 
 All four share one implementation of the decision — `IOwnerValidator` — so "is this a valid owner"
 has a single answer in the product rather than one per caller. Freshness is checked once per

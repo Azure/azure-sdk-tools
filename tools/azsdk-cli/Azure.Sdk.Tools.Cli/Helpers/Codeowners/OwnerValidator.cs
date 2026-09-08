@@ -37,8 +37,14 @@ public class OwnerValidator(
     UserOrgVisibilityCache userOrgVisibilityCache,
     ICacheValidator cacheValidator) : IOwnerValidator
 {
-    /// <summary>How stale cached membership may be before we refuse to judge owners against it.</summary>
-    private static readonly TimeSpan CacheMaxAge = TimeSpan.FromHours(6);
+    /// <summary>
+    /// How stale cached membership may be before we refuse to judge owners against it.
+    /// The producing pipeline ('automation - pipeline-owners-extraction') runs once daily, so this
+    /// has to clear 24 hours by enough to survive a failed run; a two-day gap has been observed.
+    /// Anything at or below the refresh interval leaves the cache expired for most of the day and
+    /// takes every command that validates owners down with it.
+    /// </summary>
+    private static readonly TimeSpan CacheMaxAge = TimeSpan.FromHours(72);
 
     public const string AzureSdkWriteTeam = "Azure/azure-sdk-write";
 

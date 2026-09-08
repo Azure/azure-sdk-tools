@@ -53,8 +53,8 @@ public class CodeownersResponseOutputTests
 
     /// <summary>
     /// Pins the report template. <c>Does.Contain</c> assertions pass under any ordering, so the
-    /// shape a contributor reads — ownership above violations, summary last — has to be asserted by
-    /// position or it is not actually covered.
+    /// shape a contributor reads — ownership above violations, blank lines separating each block,
+    /// summary last — has to be asserted by position or it is not actually covered.
     /// </summary>
     [Test]
     public void LintReportFollowsTheTemplate()
@@ -71,6 +71,12 @@ public class CodeownersResponseOutputTests
                             RuleId = "LNT-OWN-001",
                             Description = "owner @ghost is not a valid code owner",
                             SourceFile = "sdk/ai/owners.yaml:12",
+                        },
+                        new LintViolation
+                        {
+                            RuleId = "LNT-LBL-002",
+                            Description = "Path 'Azure.AI.Projects/' declares no pr-labels.",
+                            SourceFile = "sdk/ai/owners.yaml:20",
                         }
                     ],
                     [new DirectoryOwners("sdk/ai", ["alice"], ["OpenAI"], ".")])
@@ -83,14 +89,41 @@ public class CodeownersResponseOutputTests
         {
             Assert.That(lines[0], Is.EqualTo("--- sdk/ai/owners.yaml ---"));
             Assert.That(lines[1], Is.EqualTo("  sdk/ai: alice"), "ownership comes before violations");
-            Assert.That(lines[2], Is.EqualTo("  [LNT-OWN-001] owner @ghost is not a valid code owner"));
-            Assert.That(lines[3], Is.EqualTo("    At: sdk/ai/owners.yaml:12"));
-            Assert.That(lines[5], Is.EqualTo("=== Lint Report ==="));
-            Assert.That(lines[6], Is.EqualTo("Fragments checked: 1"));
-            Assert.That(lines[7], Is.EqualTo("Total violations: 1"));
+            Assert.That(lines[2], Is.Empty, "blank line between ownership and violations");
+            Assert.That(lines[3], Is.EqualTo("  [LNT-OWN-001] owner @ghost is not a valid code owner"));
+            Assert.That(lines[4], Is.EqualTo("    At: sdk/ai/owners.yaml:12"));
+            Assert.That(lines[5], Is.Empty, "blank line between violations");
+            Assert.That(lines[6], Is.EqualTo("  [LNT-LBL-002] Path 'Azure.AI.Projects/' declares no pr-labels."));
+            Assert.That(lines[7], Is.EqualTo("    At: sdk/ai/owners.yaml:20"));
+            Assert.That(lines[9], Is.EqualTo("=== Lint Report ==="));
+            Assert.That(lines[10], Is.EqualTo("Fragments checked: 1"));
+            Assert.That(lines[11], Is.EqualTo("Total violations: 2"));
             Assert.That(lines[^1], Is.EqualTo(
                 "See https://aka.ms/azsdk/codeowners to learn how to fix these violations"));
         });
+    }
+
+    /// <summary>
+    /// With no ownership report there is nothing to separate the first violation from, so the
+    /// report must not open with a stray blank line under the file header.
+    /// </summary>
+    [Test]
+    public void FragmentWithNoOwnershipReportDoesNotLeadWithABlankLine()
+    {
+        var response = new CodeownersLintResponse
+        {
+            Fragments =
+            [
+                new FragmentLintResult(
+                    "sdk/ai/owners.yaml",
+                    [new LintViolation { RuleId = "LNT-SCHEMA-001", Description = "does not parse" }],
+                    [])
+            ]
+        };
+
+        var lines = Strip(response.ToString());
+
+        Assert.That(lines[1], Is.EqualTo("  [LNT-SCHEMA-001] does not parse"));
     }
 
     /// <summary>Only violations are red; the ownership report and the summary are not.</summary>

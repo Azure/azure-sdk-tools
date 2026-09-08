@@ -55,8 +55,20 @@ public class CodeownersLintResponse : CommandResponse
                     : $"  {directory.Directory}: {string.Join(", ", directory.Owners)}");
             }
 
+            // A blank line before each violation, so the violations stand apart from the ownership
+            // report above them and a multi-line violation does not run into the next one. Skipped
+            // for the first violation when there is no ownership report to separate it from.
+            var needsSeparator = fragment.Directories.Count > 0;
+
             foreach (var violation in fragment.Violations)
             {
+                if (needsSeparator)
+                {
+                    sb.AppendLine();
+                }
+
+                needsSeparator = true;
+
                 sb.AppendLine(Colorize($"  [{violation.RuleId}] {violation.Description}"));
                 if (!string.IsNullOrEmpty(violation.SourceFile))
                 {

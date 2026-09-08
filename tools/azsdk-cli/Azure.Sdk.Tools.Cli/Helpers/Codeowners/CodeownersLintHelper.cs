@@ -220,7 +220,7 @@ public class CodeownersLintHelper(
                     RuleId = "LNT-LBL-001",
                     Description = $"Label '{label}' is not in the common label set.",
                     SourceFile = where,
-                    Detail = $"Add it to {CommonLabelSource.CommonLabelsCsvUrl} first, so the label means the same thing in every language repo.",
+                    Detail = $"Add it to {CommonLabelSource.CommonLabelsCsvUrl} first, so the label applies consistently across SDK repos.",
                 });
             }
 

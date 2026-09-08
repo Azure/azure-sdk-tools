@@ -1826,8 +1826,9 @@ Each fragment is judged on its own. `lint-fragments` reports and exits non-zero 
 does not edit the repository, so it has no `--fix` and no `--force`. It takes no `--repo`: owners come
 from repository-independent caches and labels from the common label set.
 
-Each fragment reports its ownership first, then its violations. The ownership report leads with the
-fragment's own directory — what a `path: .` entry claims — followed by each immediate subdirectory.
+Each fragment reports its ownership first, then its violations, one blank line apart and one blank
+line between each violation. The ownership report leads with the fragment's own directory — what a
+`path: .` entry claims — followed by each immediate subdirectory.
 Violations print in red; ownership and the summary do not. Color is suppressed when `NO_COLOR` is
 set, and never appears in `--output json` or MCP responses, which are serialized from the structured
 result rather than this report.
@@ -1839,9 +1840,11 @@ result rather than this report.
   sdk/ai: test-user-02, test-user-24
   sdk/ai/Azure.AI.Inference: test-user-07
   sdk/ai/Azure.AI.Projects: no owners
+
   [LNT-OWN-003] Path 'Azure.AI.Inference/' resolves to 1 owner(s); at least 2 are required.
     At: sdk/ai/owners.yaml:9
     Detail: Declared owners: [test-user-07]. Team owners count as their members.
+
   [LNT-LBL-002] Path 'Azure.AI.Projects.Agents/' declares no pr-labels.
     At: sdk/ai/owners.yaml:23
 

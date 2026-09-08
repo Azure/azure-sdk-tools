@@ -1,5 +1,8 @@
 # Pipelines — overview
 
+See the [deployment maintainer guide](../docs/maintainer-guide.md)
+before changing pipeline composition, azd parameter flow, or lifecycle hooks.
+
 ```text
 pipelines/
 ├─ templates/         ← reusable steps; all component pipelines compose these

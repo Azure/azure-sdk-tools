@@ -24,7 +24,9 @@ deployment/
 
 ## Documentation Order
 
-Follow these documents in order. Maintainer references can be read as needed.
+Developers changing deployment code should start with the
+[deployment maintainer guide](docs/maintainer-guide.md).
+For setup and operations, follow these documents in order.
 
 | Step | Document | Use it for |
 | --- | --- | --- |

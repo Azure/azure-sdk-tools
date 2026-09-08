@@ -13,7 +13,13 @@ public enum Status
 
 public abstract class CommandResponse
 {
+    private const string AzureDevOpsAccessDeniedCode = "TF215106";
     private int? exitCode = null;
+    private List<string>? nextSteps;
+
+    public static readonly string AzureDevOpsAccessRequiredMessage =
+        "Azure DevOps permission is required for this operation. Join Azure SDK Partners to request access: https://aka.ms/azsdk/access";
+
     [JsonIgnore]
     public virtual int ExitCode
     {
@@ -48,7 +54,23 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("next_steps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? NextSteps { get; set; }
+    public List<string>? NextSteps
+    {
+        get
+        {
+            if (HasAzureDevOpsAccessDeniedError())
+            {
+                nextSteps ??= [];
+                if (!nextSteps.Contains(AzureDevOpsAccessRequiredMessage))
+                {
+                    nextSteps.Add(AzureDevOpsAccessRequiredMessage);
+                }
+            }
+
+            return nextSteps;
+        }
+        set => nextSteps = value;
+    }
 
     /// <summary>
     /// Status shows whether the command operation was successful.
@@ -71,7 +93,16 @@ public abstract class CommandResponse
     [JsonPropertyName("support_channel")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
-    
+
+    private bool HasAzureDevOpsAccessDeniedError()
+    {
+        if (ResponseError?.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return true;
+        }
+
+        return ResponseErrors?.Any(error => error.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase)) == true;
+    }
 
     protected abstract string Format();
 

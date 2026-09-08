@@ -1,6 +1,6 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Live end-to-end demo for the full release-planner -> generate-SDK flow.
+  Live multi-turn smoke test for the release-plan -> generate-SDK flow.
 
   Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
   real git worktree of azure-rest-api-specs. The MCP server runs with
@@ -59,12 +59,14 @@ defaults:
 stimuli:
   - name: release-planner-e2e
     environment:
-      # Load the real release-planning skill so the executor can route to it
-      # (matches the mock suite). Without this the live executor reports
-      # "Skills used 0" and the skill-invocation grader can never pass.
+      # Mount both skills from turn 0 so release-plan and pipeline-generation
+      # guidance remain available throughout the resumed conversation. The
+      # fully concrete turns may validly call MCP tools directly, so tool
+      # results and the reported outcome are authoritative.
       # Path is relative to this eval file (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
       # Repo-relative azure-rest-api-specs worktree. Vally resolves a
       # non-absolute source relative to THIS eval file's directory (no
       # repo-root/env token yet — microsoft/vally#562), so the ../ depth is
@@ -100,7 +102,8 @@ stimuli:
       max_turns: 20
       max_tokens: 30000
     rubric:
-      - The final assistant message states a numeric DevOps work-item ID for the created or confirmed release plan.
+      - The final assistant message states work-item ID 29262 for the confirmed release plan.
+      - The final assistant message confirms SDK generation was initiated successfully or was already in progress, without reporting a generation failure.
       - The final assistant message states a GitHub pull request URL under github.com/Azure/azure-sdk-for-* that was linked to that release plan.
     # Ordering (create -> get -> generate -> link) is enforced by the
     # `turn:`-scoped graders below, so vally#453 no longer blocks it here.
@@ -115,10 +118,6 @@ stimuli:
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # azsdk_run_generate_sdk is a release-planner pipeline kickoff, not
-          # a local TypeSpec build. azsdk-common-generate-sdk-locally over-
-          # matches on the word "generate" and pulls in the wrong workflow.
-          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
             - azsdk-common-generate-sdk-locally
       - type: tool-calls
@@ -128,6 +127,7 @@ stimuli:
             - azsdk_create_release_plan
           disallowed:
             - azsdk_run_generate_sdk
+            - azsdk_get_sdk_pull_request_link
             - azsdk_link_sdk_pull_request_to_release_plan
       # Turn 1 — fetch back and report the work-item ID.
       - type: tool-calls
@@ -164,18 +164,21 @@ stimuli:
           scoring: binary
           threshold: 1.0
           prompt: |
-            Did the final assistant message clearly state BOTH of the
+            Did the final assistant message clearly state ALL THREE of the
             following, consistent with the tools that were actually called?
 
-              1. A numeric DevOps work-item ID for the release plan that was
-                 created (or confirmed). Any unambiguous format is fine
-                 (e.g. "work item 29262", "WI #29262", "/_workitems/edit/29262").
+            1. The confirmed release-plan work-item ID 29262. Any unambiguous
+              format is fine (e.g. "work item 29262", "WI #29262",
+              "/_workitems/edit/29262").
 
-              2. A GitHub pull request URL on
-                 github.com/Azure/azure-sdk-for-* that was linked back to
-                 that release plan.
+            2. A clear statement that SDK generation was initiated successfully
+              or was already in progress. Fail this criterion if the response
+              says generation was blocked, rejected, or failed.
 
-            Answer "pass" only if BOTH are present. Otherwise answer "fail"
+            3. A GitHub pull request URL on github.com/Azure/azure-sdk-for-*
+              that was linked back to that release plan.
+
+            Answer "pass" only if ALL THREE are present. Otherwise answer "fail"
             and briefly say which one is missing.
 
 scoring:

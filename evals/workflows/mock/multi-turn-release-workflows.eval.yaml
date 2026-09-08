@@ -243,18 +243,16 @@ stimuli:
         I've already got the azure-rest-api-specs repo cloned — generate and
         build just the Python SDK locally from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
-        My azure-sdk-for-python clone is at ./azure-sdk-for-python.
+        My local azure-sdk-for-python target package is at
+        sdk/contosowidgetmanager/azure-contoso-widgetmanager.
     constraints:
       max_turns: 16
       max_tokens: 22000
     graders:
       # Session-scoped: the conversation must route to LOCAL generation (local
       # skill + package_generate_code) and never touch the pipeline/publish path.
-      # The agent commonly acts on the first, already-actionable
-      # turn rather than waiting for the clarifying turn, so these are asserted
-      # session-wide rather than pinned to a single turn.
-      # As in scenario 4, the vague opener legitimately loads the pipeline skill
-      # while exploring, so only the tool-level guard enforces routing.
+      # The vague opener may briefly load the pipeline skill before the local
+      # clarification arrives, so the tool-level guard enforces the boundary.
       - type: skill-invocation
         config:
           required:
@@ -277,10 +275,13 @@ stimuli:
         I've got the azure-rest-api-specs repo cloned locally — generate and build
         just the Python SDK for the Contoso Widget Manager from
         specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
-        My azure-sdk-for-python clone is at ./azure-sdk-for-python.
+        My local azure-sdk-for-python target package is at
+        sdk/contosowidgetmanager/azure-contoso-widgetmanager.
       - |
         Actually, I need this for every language now. Kick off SDK generation for
-        all languages using release plan 29262 and open the SDK pull requests.
+        all languages using release plan 29262, TypeSpec project
+        specification/contosowidgetmanager/Contoso.WidgetManager, and SDK release
+        type beta, then open the SDK pull requests.
     constraints:
       max_turns: 16
       max_tokens: 22000

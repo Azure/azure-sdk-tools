@@ -519,6 +519,11 @@ describe("getPackageFeedInfo", () => {
 
 describe("closed PR action logic", () => {
   // Replicates the action determination logic from app.js SDK table rendering
+  function isStatusInProgress(status) {
+    const normalized = (status || "").toLowerCase().replace(/[\s_-]+/g, "");
+    return normalized.includes("inprogress") || normalized.includes("running");
+  }
+
   function determineAction(l) {
     const prSt = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
     const relSt = (l.releaseStatus || "").toLowerCase();
@@ -539,7 +544,9 @@ describe("closed PR action logic", () => {
       l.prDetails.mergeableState === "clean";
 
     if (isReleased) return null;
-    if (!hasPr) return "generate";
+    if (isStatusInProgress(relSt)) return null;
+    if (!hasPr)
+      return isStatusInProgress(l.generationStatus) ? null : "generate";
     if (isClosed && !isMerged) return "link-pr";
     if (isDraft) return "mark-ready";
     if (isOpen && hasFailedChecks) return "fix-checks";
@@ -578,6 +585,16 @@ describe("closed PR action logic", () => {
     expect(action).toBe("release");
   });
 
+  test("returns null when release is in progress for a merged PR", () => {
+    const action = determineAction({
+      sdkPrUrl: "https://github.com/Azure/azure-sdk-for-go/pull/123",
+      sdkPrGitHubStatus: "merged",
+      prStatus: "",
+      releaseStatus: "Release In Progress",
+    });
+    expect(action).toBeNull();
+  });
+
   test("does not return link-pr when PR is merged", () => {
     const action = determineAction({
       sdkPrUrl: "https://github.com/Azure/azure-sdk-for-go/pull/123",
@@ -595,6 +612,16 @@ describe("closed PR action logic", () => {
       releaseStatus: "",
     });
     expect(action).toBe("generate");
+  });
+
+  test("returns null when SDK generation is in progress", () => {
+    const action = determineAction({
+      sdkPrUrl: "",
+      prStatus: "",
+      generationStatus: "In Progress",
+      releaseStatus: "",
+    });
+    expect(action).toBeNull();
   });
 
   test("returns null when release status is released and SDK PR is missing", () => {

@@ -1000,29 +1000,48 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
-    // Java-specific: regen after patches
+    // Regeneration after patches
     // ========================================================================
 
-    [Test]
-    public async Task Java_RegenAfterPatches_Fails_ReturnsRegenerateAfterPatchesFailed()
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java", EditScope.All)]
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java", EditScope.CustomCode)]
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net", EditScope.All)]
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net", EditScope.CustomCode)]
+    public async Task RegenAfterPatches_Fails_ReturnsRegenerateAfterPatchesFailed(
+        SdkLanguage language, string repoName, EditScope editScope)
     {
+        var buildCalls = 0;
         var svc = new ConfigurableLanguageService(
-            buildFunc: () => (false, "error in build", null),
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return (false, "error in build", null);
+            },
             hasCustomizations: true,
-            patchesFunc: () => [new AppliedPatch("test.java", "patch", 1)],
-            language: SdkLanguage.Java);
+            patchesFunc: () => [new AppliedPatch("customization", "patch", 1)],
+            language: language);
 
-        // Pass 1 regen call succeeds (1st call), Java regen-after-patches (2nd) fails
-        var failingTspForJavaRegen = new CallCountMockTspHelper(failAfterCall: 1, failError: "regen failed: tsp-client error");
-        var (tool, _) = CreateTool(languageService: svc, tspHelper: failingTspForJavaRegen);
+        var failingTsp = new CallCountMockTspHelper(
+            failAfterCall: editScope == EditScope.All ? 1 : 0,
+            failError: "regen failed: tsp-client error");
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: failingTsp,
+            configureClassifier: editScope == EditScope.CustomCode ? CodeCustomizationClassifier("Fix customization") : null,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
         var pkg = CreateTempDir();
-        var tspDir = CreateTempDir();
+        var tspDir = editScope == EditScope.All ? CreateTempDir() : null;
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(
+            packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization",
+            editScope: editScope, ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed));
+        Assert.That(result.BuildResult, Is.EqualTo("regen failed: tsp-client error"));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.TypeSpecChangesSummary, Has.Count.EqualTo(editScope == EditScope.All ? 1 : 0));
+        Assert.That(buildCalls, Is.EqualTo(1), "A failed regeneration must prevent the final build.");
     }
 
     // ========================================================================
@@ -1855,11 +1874,12 @@ public class CustomizedCodeUpdateToolAutoTests
     // Optional tspProjectPath (auto-resolve regen from pinned tsp-location.yaml)
     // ========================================================================
 
-    [Test]
-    public async Task CustomCodeScope_NoTspProjectPath_Java_RegeneratesFromPinnedCommit()
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java")]
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net")]
+    public async Task CustomCodeScope_NoTspProjectPath_RegeneratesFromPinnedCommit(SdkLanguage language, string repoName)
     {
         // CustomCode scope does not edit spec inputs, so a local TypeSpec checkout is optional. When
-        // tspProjectPath is omitted, the Java post-patch regeneration must pass localSpecRepoPath == null,
+        // tspProjectPath is omitted, post-patch regeneration must pass localSpecRepoPath == null,
         // causing tsp-client to regenerate from the commit pinned in the package's tsp-location.yaml.
         string? capturedLocalSpecRepo = "SENTINEL";
         var callCount = 0;
@@ -1875,7 +1895,7 @@ public class CustomizedCodeUpdateToolAutoTests
                 (_, _, _, localSpec, _) =>
                 {
                     callCount++;
-                    // CODE_CUSTOMIZATION only (no TSP_APPLICABLE), so the Java post-patch regen is the
+                    // CODE_CUSTOMIZATION only (no TSP_APPLICABLE), so post-patch regen is the
                     // first and only UpdateGenerationAsync call.
                     if (callCount == 1)
                         capturedLocalSpecRepo = localSpec;
@@ -1890,13 +1910,14 @@ public class CustomizedCodeUpdateToolAutoTests
                 return buildCalls <= 1 ? (false, "error: cannot find symbol foo", null) : (true, null, null);
             },
             hasCustomizations: true,
-            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
-            language: SdkLanguage.Java);
+            patchesFunc: () => [new AppliedPatch("customization", "Fixed reference", 1)],
+            language: language);
 
         var (tool, _) = CreateTool(
             languageService: svc,
             tspHelper: tsp.Object,
-            configureClassifier: CodeCustomizationClassifier("Fix customization reference"));
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
 
         var pkg = CreateTempDir();
 
@@ -1908,16 +1929,17 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.True);
         Assert.That(result.ErrorCode, Is.Null);
-        Assert.That(callCount, Is.GreaterThanOrEqualTo(1), "Java regen should run even without a local spec path.");
+        Assert.That(callCount, Is.EqualTo(1), "Regeneration should run once after patching, even without a local spec path.");
         Assert.That(capturedLocalSpecRepo, Is.Null,
-            "With tspProjectPath omitted, Java regen must pass localSpecRepoPath == null so tsp-client uses the pinned tsp-location.yaml commit.");
+            "With tspProjectPath omitted, regeneration must use the pinned tsp-location.yaml commit.");
+        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, null, CancellationToken.None), Times.Once);
     }
 
-    [Test]
-    public async Task CustomCodeScope_NoTspProjectPath_NonJava_SucceedsWithoutValidatingSpecPath()
+    [TestCase(SdkLanguage.JavaScript, "azure-sdk-for-js")]
+    [TestCase(SdkLanguage.Python, "azure-sdk-for-python")]
+    public async Task CustomCodeScope_NoTspProjectPath_OtherLanguages_DoNotRegenerate(SdkLanguage language, string repoName)
     {
-        // For a non-Java language the custom-code flow never regenerates, so tspProjectPath is unnecessary.
-        // When omitted, the tool must not attempt to validate a (non-existent) spec path and must succeed.
+        var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(
             buildFunc: () =>
@@ -1926,13 +1948,14 @@ public class CustomizedCodeUpdateToolAutoTests
                 return buildCalls <= 1 ? (false, "error CS0103: name does not exist", null) : (true, null, null);
             },
             hasCustomizations: true,
-            patchesFunc: () => [new AppliedPatch("Customization.cs", "Fixed reference", 1)],
-            language: SdkLanguage.DotNet);
+            patchesFunc: () => [new AppliedPatch("customization", "Fixed reference", 1)],
+            language: language);
 
         var (tool, mocks) = CreateTool(
             languageService: svc,
+            tspHelper: tsp.Object,
             configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
-            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
 
         var pkg = CreateTempDir();
 
@@ -1946,12 +1969,17 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.ErrorCode, Is.Null);
         mocks.TypeSpecHelper.Verify(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>()), Times.Never,
             "When tspProjectPath is omitted in CustomCode scope, the tool must not validate a spec path.");
+        tsp.VerifyNoOtherCalls();
     }
 
-    [Test]
-    public async Task CustomCodeScope_WithTspProjectPath_Java_UsesLocalSpecRepo()
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java", false)]
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java", true)]
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net", false)]
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net", true)]
+    public async Task CustomCodeScope_WithTspProjectPath_UsesLocalSpecRepo(
+        SdkLanguage language, string repoName, bool useRelativePath)
     {
-        // When a local TypeSpec project path IS provided in CustomCode scope, the Java post-patch regen
+        // When a local TypeSpec project path IS provided in CustomCode scope, post-patch regen
         // should use it as localSpecRepoPath (regenerate from the local checkout).
         string? capturedLocalSpecRepo = null;
         var callCount = 0;
@@ -1980,13 +2008,14 @@ public class CustomizedCodeUpdateToolAutoTests
                 return buildCalls <= 1 ? (false, "error: cannot find symbol foo", null) : (true, null, null);
             },
             hasCustomizations: true,
-            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
-            language: SdkLanguage.Java);
+            patchesFunc: () => [new AppliedPatch("customization", "Fixed reference", 1)],
+            language: language);
 
         var (tool, _) = CreateTool(
             languageService: svc,
             tspHelper: tsp.Object,
-            configureClassifier: CodeCustomizationClassifier("Fix customization reference"));
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoName));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -1994,13 +2023,207 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(
             packagePath: pkg,
             customizationRequest: "Fix customization reference",
-            tspProjectPath: tspDir,
+            tspProjectPath: useRelativePath ? Path.GetRelativePath(Environment.CurrentDirectory, tspDir) : tspDir,
             editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
+        Assert.That(callCount, Is.EqualTo(1));
         Assert.That(capturedLocalSpecRepo, Is.EqualTo(Path.GetFullPath(tspDir)),
-            "When provided, the local TypeSpec project path should be passed to the Java regen as localSpecRepoPath.");
+            "When provided, the local TypeSpec project path should be passed to regeneration as an absolute localSpecRepoPath.");
+        tsp.Verify(t => t.UpdateGenerationAsync(pkg, null, false, Path.GetFullPath(tspDir), CancellationToken.None), Times.Once);
+    }
+
+    [TestCase(EditScope.CustomCode, true)]
+    [TestCase(EditScope.CustomCode, false)]
+    [TestCase(EditScope.All, true)]
+    [TestCase(EditScope.All, false)]
+    public async Task DotNet_Patches_AreRegeneratedBeforeFinalBuild(EditScope editScope, bool finalBuildSucceeds)
+    {
+        using var cts = new CancellationTokenSource();
+        var pkg = CreateTempDir();
+        var tspDir = editScope == EditScope.All ? CreateTempDir() : null;
+        var repoRoot = CreateTempDir();
+        var operations = new List<string>();
+        var customTypeIsPublic = false;
+        var generatedTypeIsPublic = false;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                operations.Add("build");
+                if (customTypeIsPublic != generatedTypeIsPublic)
+                {
+                    return (false, "CS0262: Partial declarations have conflicting accessibility", null);
+                }
+                if (!generatedTypeIsPublic)
+                {
+                    return (false, "CS0050: Inconsistent accessibility", null);
+                }
+                return finalBuildSucceeds ? (true, null, null) : (false, "Unresolved build error", null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () =>
+            {
+                operations.Add("patch");
+                customTypeIsPublic = true;
+                return [new AppliedPatch("Models/Token.cs", "Make the token public", 1)];
+            },
+            language: SdkLanguage.DotNet,
+            preGenerateFunc: async (root, ct) =>
+            {
+                Assert.That(root, Is.EqualTo(repoRoot));
+                Assert.That(ct, Is.EqualTo(cts.Token));
+                await Task.Yield();
+                operations.Add("prepare");
+            });
+        var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
+        tsp.Setup(t => t.UpdateGenerationAsync(pkg, null, false, tspDir, cts.Token))
+            .Callback(() =>
+            {
+                operations.Add("regenerate");
+                generatedTypeIsPublic = customTypeIsPublic;
+            })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = pkg });
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix token accessibility"),
+            configureGit: g =>
+            {
+                g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+                g.Setup(x => x.DiscoverRepoRootAsync(pkg, cts.Token)).ReturnsAsync(repoRoot);
+            });
+
+        var result = await tool.UpdateAsync(pkg, "Fix token accessibility", tspDir, editScope, cts.Token);
+
+        Assert.That(operations, Is.EqualTo(new[] { "build", "patch", "prepare", "regenerate", "build" }));
+        Assert.That(result.Success, Is.EqualTo(finalBuildSucceeds));
+        Assert.That(result.ErrorCode, Is.EqualTo(finalBuildSucceeds ? null : CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed));
+        Assert.That(result.BuildResult, Is.EqualTo(finalBuildSucceeds ? null : "Unresolved build error"));
+        Assert.That(result.AppliedPatches, Has.Count.EqualTo(1));
+        tsp.VerifyAll();
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task DotNet_NoPatches_DoesNotRegenerate(bool hasCustomizations)
+    {
+        var buildCalls = 0;
+        var preparationCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return (false, "Build failed", null);
+            },
+            hasCustomizations: hasCustomizations,
+            language: SdkLanguage.DotNet,
+            preGenerateFunc: (_, _) =>
+            {
+                preparationCalls++;
+                return Task.CompletedTask;
+            });
+        var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
+
+        var result = await tool.UpdateAsync(CreateTempDir(), "Fix customization", editScope: EditScope.CustomCode);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(hasCustomizations
+            ? CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed
+            : CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed));
+        Assert.That(buildCalls, Is.EqualTo(1));
+        Assert.That(preparationCalls, Is.Zero);
+        tsp.VerifyNoOtherCalls();
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task DotNet_PostPatchPreparationFailure_StopsRegeneration(bool cancel)
+    {
+        using var cts = new CancellationTokenSource();
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return (false, "Build failed", null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.cs", "Fixed reference", 1)],
+            language: SdkLanguage.DotNet,
+            preGenerateFunc: (_, ct) =>
+            {
+                if (cancel)
+                {
+                    cts.Cancel();
+                    throw new OperationCanceledException(ct);
+                }
+                throw new InvalidOperationException("Preparation failed");
+            });
+        var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
+        var pkg = CreateTempDir();
+
+        if (cancel)
+        {
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(
+                () => tool.UpdateAsync(pkg, "Fix customization", editScope: EditScope.CustomCode, ct: cts.Token));
+            Assert.That(exception!.CancellationToken, Is.EqualTo(cts.Token));
+        }
+        else
+        {
+            var result = await tool.UpdateAsync(pkg, "Fix customization", editScope: EditScope.CustomCode, ct: cts.Token);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+            Assert.That(result.BuildResult, Is.EqualTo("Preparation failed"));
+        }
+
+        Assert.That(buildCalls, Is.EqualTo(1));
+        tsp.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public void DotNet_PostPatchRegenerationCancellation_Propagates()
+    {
+        using var cts = new CancellationTokenSource();
+        var pkg = CreateTempDir();
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return (false, "Build failed", null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.cs", "Fixed reference", 1)],
+            language: SdkLanguage.DotNet);
+        var tsp = new Mock<ITspClientHelper>(MockBehavior.Strict);
+        tsp.Setup(t => t.UpdateGenerationAsync(pkg, null, false, null, cts.Token))
+            .Callback(cts.Cancel)
+            .ThrowsAsync(new OperationCanceledException(cts.Token));
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
+
+        var exception = Assert.ThrowsAsync<OperationCanceledException>(
+            () => tool.UpdateAsync(pkg, "Fix customization", editScope: EditScope.CustomCode, ct: cts.Token));
+
+        Assert.That(exception!.CancellationToken, Is.EqualTo(cts.Token));
+        Assert.That(buildCalls, Is.EqualTo(1));
+        tsp.VerifyAll();
     }
 
     [Test]
@@ -2052,6 +2275,7 @@ public class CustomizedCodeUpdateToolAutoTests
         private readonly Func<List<AppliedPatch>>? _patchesFunc;
         private readonly bool _hasCustomizations;
         private readonly bool _isCustomizedCodeUpdateSupported;
+        private readonly Func<string, CancellationToken, Task>? _preGenerateFunc;
 
         public override SdkLanguage Language { get; }
         public override bool IsCustomizedCodeUpdateSupported => _isCustomizedCodeUpdateSupported;
@@ -2061,14 +2285,19 @@ public class CustomizedCodeUpdateToolAutoTests
             bool hasCustomizations = false,
             Func<List<AppliedPatch>>? patchesFunc = null,
             SdkLanguage language = SdkLanguage.Java,
-            bool isCustomizedCodeUpdateSupported = true)
+            bool isCustomizedCodeUpdateSupported = true,
+            Func<string, CancellationToken, Task>? preGenerateFunc = null)
         {
             _buildFunc = buildFunc ?? (() => (true, null, null));
             _hasCustomizations = hasCustomizations;
             _patchesFunc = patchesFunc;
             Language = language;
             _isCustomizedCodeUpdateSupported = isCustomizedCodeUpdateSupported;
+            _preGenerateFunc = preGenerateFunc;
         }
+
+        public override Task PreGenerateAsync(string repoRoot, CancellationToken ct)
+            => _preGenerateFunc?.Invoke(repoRoot, ct) ?? Task.CompletedTask;
 
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
             => Task.FromResult(new List<ApiChange>());

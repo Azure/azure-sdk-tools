@@ -20,7 +20,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_create_pull_request |  | Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch. |
 | azsdk_create_release_plan | `azsdk release-plan create` | Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. |
 | azsdk_create_service_label |  | Creates a pull request to add a new service label |
-| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result. |
+| azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (C# and Java), builds, and returns success/failure with build result. |
 | azsdk_engsys_codeowner_add_label_owner |  | Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. A 3-segment path (e.g. sdk/<service>/<package>) is rejected because it targets a package directory; add owners to the package by name instead, or set force=true to create the path anyway. |
 | azsdk_engsys_codeowner_add_package_label |  | Add PR label(s) to a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_add_package_owner |  | Add source owner(s) to a package in CODEOWNERS work items. |
@@ -104,4 +104,3 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk list` |  |
-

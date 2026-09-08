@@ -94,15 +94,9 @@ public abstract class CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
 
-    private bool HasAzureDevOpsAccessDeniedError()
-    {
-        if (ResponseError?.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase) == true)
-        {
-            return true;
-        }
-
-        return ResponseErrors?.Any(error => error.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase)) == true;
-    }
+    private bool HasAzureDevOpsAccessDeniedError() =>
+        ResponseError?.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase) == true ||
+        ResponseErrors?.Any(error => error.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase)) == true;
 
     protected abstract string Format();
 

@@ -7,6 +7,9 @@ parameters:
     - name: environment
       type: string
       values: [dev, preview, prod]
+    - name: imageTag
+      type: string
+      default: ''
     - name: stageName
       type: string
       default: DeployComponent
@@ -33,6 +36,7 @@ stages:
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
                   parameters:
                       service: ${{ parameters.component }}
+                      imageTag: ${{ parameters.imageTag }}
                       # Foundry publication includes ACR upload/build and can exceed azd's 20-minute default.
                       ${{ if eq(parameters.component, 'agent') }}:
                           timeoutSeconds: 2400

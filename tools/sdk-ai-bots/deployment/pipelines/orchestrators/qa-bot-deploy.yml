@@ -14,6 +14,10 @@ parameters:
       type: string
       default: dev
       values: [dev, preview, prod]
+    - name: imageTag
+      displayName: Image tag
+      type: string
+      default: ''
 
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
@@ -34,6 +38,7 @@ extends:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
                     parameters:
                         environment: ${{ parameters.environment }}
+                        imageTag: ${{ parameters.imageTag }}
                         dependsOn: Provision
                         ${{ if eq(parameters.environment, 'prod') }}:
                             stabilizationSeconds: 600
@@ -70,6 +75,7 @@ extends:
                         component: agent-server
                         dependencyLayers: resource-group,shared-resources,agent,frontend
                         environment: ${{ parameters.environment }}
+                        imageTag: ${{ parameters.imageTag }}
 
             - ${{ if eq(parameters.component, 'function-app') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
@@ -77,6 +83,7 @@ extends:
                         component: function-app
                         dependencyLayers: resource-group,shared-resources,frontend
                         environment: ${{ parameters.environment }}
+                        imageTag: ${{ parameters.imageTag }}
 
             - ${{ if eq(parameters.component, 'agent') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
@@ -84,6 +91,7 @@ extends:
                         component: agent
                         dependencyLayers: resource-group,shared-resources
                         environment: ${{ parameters.environment }}
+                        imageTag: ${{ parameters.imageTag }}
 
             - ${{ if eq(parameters.component, 'frontend') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
@@ -91,6 +99,7 @@ extends:
                         component: frontend
                         dependencyLayers: resource-group,shared-resources
                         environment: ${{ parameters.environment }}
+                        imageTag: ${{ parameters.imageTag }}
 
             - ${{ if eq(parameters.component, 'logic-app') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml

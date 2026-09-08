@@ -36,8 +36,9 @@ generation and feedback processing use their specialized scheduled pipelines.
 ## 3. Preview, Approve, and Apply
 
 Queue the selected pipeline with `environment=dev`, `preview`, or `prod`. For
-`qa-bot-deploy.yml`, also select `component`. The pipeline performs these
-stages:
+`qa-bot-deploy.yml`, also select `component`. Optionally set `imageTag` to use
+one tag for every selected application image; leave it blank to retain automatic
+tagging. The pipeline performs these stages:
 
 1. Load the environment suite and authenticate with WIF.
 2. Compile Bicep and validate the selected environment.

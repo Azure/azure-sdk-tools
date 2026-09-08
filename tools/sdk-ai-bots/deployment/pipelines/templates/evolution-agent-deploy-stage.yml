@@ -2,6 +2,9 @@ parameters:
   - name: environment
     type: string
     values: [prod]
+  - name: imageTag
+    type: string
+    default: ''
   - name: dependsOn
     type: string
     default: DeployAgent
@@ -22,3 +25,4 @@ stages:
             parameters:
               agentName: chatbot_evolution_agent
               environment: ${{ parameters.environment }}
+              imageTag: ${{ parameters.imageTag }}

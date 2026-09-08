@@ -16,6 +16,7 @@ services:
             path: Dockerfile
             context: ../..
             registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
             remoteBuild: true
         hooks:
             postdeploy:
@@ -47,6 +48,7 @@ services:
             context: .
             image: azure-sdk-qa-bot-agent-server
             registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
             remoteBuild: true
     frontend:
         project: azure-sdk-qa-bot
@@ -70,6 +72,7 @@ services:
             path: Dockerfile
             context: .
             registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
             remoteBuild: true
         hooks:
             postdeploy:

@@ -11,6 +11,9 @@ parameters:
     - name: environment
       type: string
       values: [dev, preview, prod]
+    - name: imageTag
+      type: string
+      default: ''
     - name: stabilizationSeconds
       type: number
       default: 0
@@ -24,6 +27,7 @@ stages:
           stageName: DeployAgentServer
           component: agent-server
           environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
           dependsOn: ${{ parameters.dependsOn }}
 
     - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
@@ -46,6 +50,7 @@ stages:
           stageName: DeployFunctionApp
           component: function-app
           environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
           ${{ if gt(parameters.stabilizationSeconds, 0) }}:
               dependsOn: WatchAgentServer
           ${{ else }}:
@@ -56,12 +61,14 @@ stages:
           stageName: DeployAgent
           component: agent
           environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
           dependsOn: DeployFunctionApp
 
     - ${{ if eq(parameters.environment, 'prod') }}:
           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/evolution-agent-deploy-stage.yml
             parameters:
                 environment: prod
+                imageTag: ${{ parameters.imageTag }}
                 dependsOn: DeployAgent
 
     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
@@ -69,6 +76,7 @@ stages:
           stageName: DeployFrontend
           component: frontend
           environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
           ${{ if eq(parameters.environment, 'prod') }}:
               dependsOn: DeployEvolutionAgent
           ${{ else }}:

@@ -26,9 +26,12 @@ function log(msg: string): void {
 (async () => {
   if (!REGISTRY_NAME) throw new Error("CONTAINER_REGISTRY_NAME not set.");
 
-  // Auto-increment the major version against ACR for each remote build.
-  const tag = getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
-  log(`Resolved next version tag '${tag}'`);
+  // Pipelines resolve the tag before deployment so it can be reviewed in its
+  // own step. Local deployments retain automatic versioning.
+  const tag =
+    process.env.AZD_IMAGE_TAG?.trim() ||
+    getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
+  log(`Using image version tag '${tag}'`);
 
   // The function project root (with the Dockerfile) is two levels up from
   // deployment/hooks/: ../../azure-sdk-qa-bot-function. process.cwd() is the

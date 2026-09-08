@@ -7,6 +7,9 @@
 parameters:
     - name: service
       type: string # frontend | function-app | agent | agent-server
+    - name: imageTag
+      type: string
+      default: ''
     - name: timeoutSeconds
       type: number
       default: 1200
@@ -26,8 +29,47 @@ steps:
       workingDirectory: '${{ parameters.workingDirectory }}'
 
     - task: AzureCLI@2
+      displayName: 'Show image version'
+      env:
+          REQUESTED_IMAGE_TAG: '${{ parameters.imageTag }}'
+      inputs:
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          workingDirectory: '${{ parameters.workingDirectory }}'
+          inlineScript: |
+              set -euo pipefail
+              case '${{ parameters.service }}' in
+                frontend) IMAGE_REPOSITORY="${FRONTEND_IMAGE_REPOSITORY%:*}" ;;
+                function-app) IMAGE_REPOSITORY="${FUNCTION_IMAGE_REPOSITORY%:*}" ;;
+                agent-server) IMAGE_REPOSITORY="${AGENT_SERVER_IMAGE_REPOSITORY%:*}" ;;
+                agent) IMAGE_REPOSITORY="sdk-ai-bots/agent-${AZURE_ENV_NAME}" ;;
+              esac
+
+              if [ -n "$REQUESTED_IMAGE_TAG" ]; then
+                IMAGE_VERSION="$REQUESTED_IMAGE_TAG"
+              elif [ '${{ parameters.service }}' = 'frontend' ] || [ '${{ parameters.service }}' = 'function-app' ]; then
+                IMAGE_VERSION=$(./node_modules/.bin/tsx scripts/resolve-image-version.ts \
+                  "$ACR_NAME" "$IMAGE_REPOSITORY" "$AZURE_ENV_NAME")
+              else
+                IMAGE_VERSION="azd-deploy-$(Build.BuildId)"
+              fi
+
+              if [[ ! "$IMAGE_VERSION" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+                echo "##[error]Invalid image tag: $IMAGE_VERSION"
+                exit 1
+              fi
+
+              ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+              echo "Image selected for deployment: ${ACR_LOGIN_SERVER}/${IMAGE_REPOSITORY}:${IMAGE_VERSION}"
+              echo "Image version: $IMAGE_VERSION"
+              echo "##vso[task.setvariable variable=AZD_IMAGE_TAG]$IMAGE_VERSION"
+
+    - task: AzureCLI@2
       displayName: 'azd deploy ${{ parameters.service }}'
-      env: { SYSTEM_ACCESSTOKEN: '$(System.AccessToken)' }
+      env:
+          SYSTEM_ACCESSTOKEN: '$(System.AccessToken)'
+          AZD_IMAGE_TAG: '$(AZD_IMAGE_TAG)'
       inputs:
           azureSubscription: $(AZURE_SERVICE_CONNECTION)
           scriptType: bash
@@ -66,6 +108,7 @@ steps:
                   azd env refresh "$AZURE_ENV_NAME" --layer "$LAYER" --no-prompt
                 done
               fi
+              azd env set AZD_IMAGE_TAG "$AZD_IMAGE_TAG"
 
               DEPLOY_LOG="$(Agent.TempDirectory)/azd-deploy-${{ parameters.service }}.log"
               DEPLOY_MAX_ATTEMPTS=2

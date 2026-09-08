@@ -5,6 +5,9 @@ parameters:
   - name: environment
     type: string
     values: [dev, preview, prod]
+  - name: imageTag
+    type: string
+    default: ''
   - name: workingDirectory
     type: string
     default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
@@ -21,6 +24,19 @@ steps:
     displayName: 'Authenticate pip to Azure Artifacts'
     inputs:
       artifactFeeds: 'public/azure-sdk-for-python'
+
+  - bash: |
+      set -euo pipefail
+      IMAGE_VERSION="${REQUESTED_IMAGE_TAG:-$(Build.BuildId)}"
+      if [[ ! "$IMAGE_VERSION" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+        echo "##[error]Invalid image tag: $IMAGE_VERSION"
+        exit 1
+      fi
+      echo "Image version: $IMAGE_VERSION"
+      echo "##vso[task.setvariable variable=AZD_IMAGE_TAG]$IMAGE_VERSION"
+    displayName: 'Show image version'
+    env:
+      REQUESTED_IMAGE_TAG: '${{ parameters.imageTag }}'
 
   - task: AzureCLI@2
     displayName: 'Build, push, and deploy ${{ parameters.agentName }}'
@@ -48,7 +64,7 @@ steps:
 
         python scripts/deploy_hosted_agent.py \
           '${{ parameters.agentName }}' \
-          --tag '$(Build.BuildId)' \
+          --tag '$(AZD_IMAGE_TAG)' \
           --appconfig-endpoint '$(AZURE_APPCONFIG_ENDPOINT)'
     env:
       AZURE_CORE_WELCOME_MESSAGE: 'false'

@@ -17,6 +17,8 @@ parameters:
         - name: component
             default: all
             values: [all, shared-resources, agent, frontend, agent-server, function-app, logic-app]
+        - name: imageTag
+            default: '' # automatic when omitted
 ```
 
 Dev, preview, and production all require a successful infrastructure preview

@@ -3,6 +3,8 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Models;
 
@@ -46,5 +48,27 @@ public class CommandResponseTests
             Assert.That(response.PermissionGuidance, Is.Null);
             Assert.That(document.RootElement.TryGetProperty("permission_guidance", out _), Is.False);
         });
+    }
+
+    [Test]
+    public void CheckPackageResponseIncludesAccessInstructionsInCliOutput()
+    {
+        var response = new CheckPackageResponse
+        {
+            ResponseError = "TF215106: Access denied"
+        };
+
+        Assert.That(response.ToString(), Does.Contain(CommandResponse.AzureDevOpsAccessRequiredMessage));
+    }
+
+    [Test]
+    public void PackageMarkReleasedResponseIncludesAccessInstructionsInCliOutput()
+    {
+        var response = new PackageMarkReleasedResponse
+        {
+            ResponseErrors = ["TF215106: Access denied"]
+        };
+
+        Assert.That(response.ToString(), Does.Contain(CommandResponse.AzureDevOpsAccessRequiredMessage));
     }
 }

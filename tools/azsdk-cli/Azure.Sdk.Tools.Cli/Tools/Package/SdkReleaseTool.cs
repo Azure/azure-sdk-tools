@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -15,7 +16,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(
+    public partial class SdkReleaseTool(
         IDevOpsService devopsService,
         IAPIViewService apiViewService,
         ILogger<SdkReleaseTool> logger,
@@ -24,6 +25,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
         private const string Pipeline_Success_Status = "Succeeded";
+
+        [GeneratedRegex("^[0-9]+\\.[0-9]+\\.[0-9]+$")]
+        private static partial Regex StablePackageVersionRegex();
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -256,11 +260,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     package.PackageReadinessDetails = $"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct. ";
                 }
 
-                // Determine preview vs. stable from the package version (a pre-release suffix such
-                // as "-beta.1" indicates a preview release), not from the Planned Releases label.
-                // The label can be Patch/GA/Beta/Stable/etc.; keying off it previously misclassified
-                // Patch releases and blocked them.
-                bool isPreviewRelease = package.Version?.Contains('-') ?? false;
+                // Only a numeric major.minor.patch version is stable. Preview formats vary by language,
+                // including Python's PEP 440 form (for example, 1.0.0b1).
+                bool isPreviewRelease = !StablePackageVersionRegex().IsMatch(package.Version ?? string.Empty);
                 bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)

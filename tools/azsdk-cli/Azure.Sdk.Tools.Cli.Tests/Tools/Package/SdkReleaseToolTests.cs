@@ -142,6 +142,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         }
 
         [Test]
+        public async Task TestCheckReadyTreatsPythonPep440PrereleaseAsPreview()
+        {
+            var packageName = "azure-template";
+            var language = "Python";
+
+            devOpsService.ConfiguredPackageVersion = "1.0.0b1";
+            devOpsService.ConfiguredPackageType = SdkType.Dataplane;
+            devOpsService.ConfiguredAPIViewStatus = "Pending";
+
+            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", checkReady: true);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("Package 'azure-template' is ready for release."));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API view is not approved"));
+            });
+        }
+
+        [Test]
         public async Task TestRunReleaseForJavaPassesPackageNameTemplateParam()
         {
             var packageName = "azure-storage-blob";

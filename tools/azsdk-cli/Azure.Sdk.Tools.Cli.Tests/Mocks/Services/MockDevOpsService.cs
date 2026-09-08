@@ -18,6 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
+        public string ConfiguredPackageVersion { get; set; } = "1.0.0";
+        public SdkType ConfiguredPackageType { get; set; } = SdkType.Unknown;
 
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct)
         {
@@ -37,7 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default)
         {
             var sdkLanguage = SdkLanguageHelpers.GetSdkLanguage(language);
-            var version = string.IsNullOrEmpty(packageVersion) ? "1.0.0" : packageVersion;
+            var version = string.IsNullOrEmpty(packageVersion) ? ConfiguredPackageVersion : packageVersion;
 
             return Task.FromResult(
                 new PackageWorkitemResponse
@@ -58,6 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     PlannedReleaseDate = "06/30/2025",
                     DisplayName = packageName,
                     Version = version,
+                    PackageType = ConfiguredPackageType,
                     PlannedReleases = new List<SDKReleaseInfo>
                     {
                         new() {

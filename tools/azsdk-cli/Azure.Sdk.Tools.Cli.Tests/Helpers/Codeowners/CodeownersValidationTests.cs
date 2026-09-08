@@ -25,6 +25,13 @@ internal class CodeownersValidationTests
     private static IEnumerable<string> Codes(OwnersTestRepo repo) =>
         repo.Render().Errors.Select(e => e.Code);
 
+    /// <summary>
+    /// For rules that share a code. CFG-SEC-001 covers both "no such section" and "that section
+    /// refuses fragments", so the code alone cannot tell the two apart.
+    /// </summary>
+    private static IEnumerable<string> Messages(OwnersTestRepo repo) =>
+        repo.Render().Errors.Select(e => e.Message);
+
     [Test]
     public void ParentSegmentInAFragmentPathIsRejected()
     {
@@ -134,14 +141,14 @@ internal class CodeownersValidationTests
         repo.WriteFragment("sdk/openai",
             """
             version: 1
-            section: Not A Real Section
             paths:
               - path: .
+                section: Not A Real Section
                 owners: [test-user-01, test-user-02]
                 pr-labels: [Example]
             """);
 
-        Assert.That(Codes(repo), Does.Contain("CFG-SEC-001"));
+        Assert.That(Messages(repo), Has.Some.Contains("does not exist in .github/owners.config.yaml"));
     }
 
     [Test]
@@ -151,14 +158,14 @@ internal class CodeownersValidationTests
         repo.WriteFragment("sdk/openai",
             """
             version: 1
-            section: EngSys
             paths:
               - path: .
+                section: EngSys
                 owners: [test-user-01, test-user-02]
                 pr-labels: [Example]
             """);
 
-        Assert.That(Codes(repo), Does.Contain("CFG-SEC-001"));
+        Assert.That(Messages(repo), Has.Some.Contains("does not accept fragment entries"));
     }
 
     [Test]

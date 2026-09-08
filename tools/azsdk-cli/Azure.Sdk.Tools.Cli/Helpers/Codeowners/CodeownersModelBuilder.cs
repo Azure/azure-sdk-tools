@@ -26,9 +26,8 @@ public sealed record DroppedItem(
 /// The ownership YAML the render was produced from, carried so callers can ask which fragment
 /// governs a directory without re-reading the checkout under discovery rules of their own.
 /// <para>
-/// Read it for structure — which fragments exist, where they live, the config's settings — not for
-/// content. The builder filters entries and owners in place, so a fragment's <c>Paths</c> and
-/// <c>LabelOwners</c> hold what survived into <paramref name="Content"/>, not what is on disk.
+/// The builder filters entries and owners in place, so a fragment's <c>Paths</c> and
+/// <c>LabelOwners</c> hold what passed validation, not necessarily what is on disk.
 /// </para>
 /// </param>
 /// <param name="Content">Rendered file text. Always populated.</param>
@@ -87,11 +86,11 @@ public class CodeownersModelBuilder(IOwnerValidator ownerValidator) : ICodeowner
 
     /// <summary>
     /// Removes owners the membership caches reject, then removes any entry left with nobody.
+    /// This is only done on fragments, all information in the owners.config.yaml
+    /// is assumed to be valid.
     /// <para>
-    /// An entry with no owners is not rendered as an ownerless path. In CODEOWNERS that would mean
-    /// "nobody owns this", which stops the path from falling through to the broader match that would
-    /// otherwise catch it — so a decayed service entry would silently disown its directory instead of
-    /// deferring to the repository backstop.
+    /// An entry with no owners is not rendered as an ownerless path because 
+    /// that would prevent the fallback path from being used.
     /// </para>
     /// </summary>
     private void DropInvalidFragmentOwners(OwnersRepository repository, List<DroppedItem> dropped)
@@ -168,7 +167,7 @@ public class CodeownersModelBuilder(IOwnerValidator ownerValidator) : ICodeowner
     /// <summary>
     /// Drops the repo-wide guardrail sections. Rendering keeps them — GitHub needs the backstop — but
     /// ownership resolution steps over them so a package with no ownership of its own reports as
-    /// unowned rather than resolving to <c>/sdk/ @Azure/azure-sdk-write</c> and passing.
+    /// unowned rather than resolving to some fallback path like /**.
     /// </summary>
     private static void OmitFallbackSections(OwnersRepository repository)
     {
@@ -177,23 +176,17 @@ public class CodeownersModelBuilder(IOwnerValidator ownerValidator) : ICodeowner
 
         repository.Config.Sections = kept;
 
-        // A fragment can route itself into an excluded section, so filter the fragments too rather
+        // An entry can route itself into an excluded section, so filter the fragments too rather
         // than relying on the section list alone.
         foreach (var fragment in repository.Fragments)
         {
-            fragment.Paths = [.. fragment.Paths.Where(entry => IsKept(entry.Section, fragment.Section))];
-            fragment.LabelOwners = [.. fragment.LabelOwners.Where(entry => IsKept(entry.Section, fragment.Section))];
+            fragment.Paths = [.. fragment.Paths.Where(entry => IsKept(entry.Section))];
+            fragment.LabelOwners = [.. fragment.LabelOwners.Where(entry => IsKept(entry.Section))];
         }
 
-        bool IsKept(string? entrySection, string? fragmentSection)
-        {
-            var target = entrySection ?? fragmentSection;
-
-            // No explicit target means the config's default section, which the loop above already
-            // kept or dropped by name.
-            return target == null
-                ? keptNames.Contains(repository.Config.Configs.DefaultSection)
-                : keptNames.Contains(target);
-        }
+        bool IsKept(string? entrySection) =>
+            // No override means the config's default section, which the loop above already kept or
+            // dropped by name.
+            keptNames.Contains(entrySection ?? repository.Config.Configs.DefaultSection);
     }
 }

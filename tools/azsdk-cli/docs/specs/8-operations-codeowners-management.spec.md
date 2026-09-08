@@ -247,9 +247,6 @@ fragment a question of *where the data lives* rather than *where it lands in the
 ```yaml
 version: 1
 
-# Optional. Routes every entry in this file to a non-default section.
-section: Client Libraries
-
 paths:
   - path: .
     owners: [test-user-07, test-user-09, test-user-18, test-user-23, test-user-24]
@@ -278,11 +275,11 @@ label-owners:
 | `paths[].path` | string | yes | **Relative to the fragment directory.** `.` means the fragment directory itself. Directories must end in `/`; see [Normalization](#normalization). |
 | `paths[].owners` | string[] | yes | At least one. |
 | `paths[].pr-labels` | string[] | **yes** | At least one. Renders as `# PRLabel:`. |
-| `paths[].section` | string | no | Entry-level section override. |
+| `paths[].section` | string | no | Renders this entry in a named section instead of `configs.default-section`. There is no file-level default; each entry routes itself. |
 | `label-owners[].labels` | string[] | yes | At least one. The merge key. |
 | `label-owners[].service-owners` | string[] | conditional | Renders as `# ServiceOwners:`. |
 | `label-owners[].azure-sdk-owners` | string[] | conditional | Renders as `# AzureSdkOwners:`. |
-| `label-owners[].section` | string | no | Entry-level section override. |
+| `label-owners[].section` | string | no | Renders this entry in a named section instead of `configs.default-section`. Part of the label-owner merge key. |
 
 At least one of `service-owners` / `azure-sdk-owners` is required on a label-owner entry. 
 

@@ -14,9 +14,6 @@ public class OwnersFragment
     /// <summary>Must match <see cref="OwnersConfig.Version"/>.</summary>
     public int Version { get; set; }
 
-    /// <summary>Routes every entry in this file to a section other than the config's default.</summary>
-    public string? Section { get; set; }
-
     public List<OwnersPathEntry> Paths { get; set; } = [];
 
     public List<OwnersLabelOwnerEntry> LabelOwners { get; set; } = [];

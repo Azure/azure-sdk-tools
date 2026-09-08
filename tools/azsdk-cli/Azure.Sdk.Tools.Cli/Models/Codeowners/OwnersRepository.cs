@@ -16,7 +16,8 @@ public sealed class OwnersRepository
 
     public required OwnersConfig Config { get; init; }
 
-    /// <summary>Ordered by repo-relative path, <see cref="StringComparer.Ordinal"/> ascending. That order is provenance order.</summary>
+    /// <summary>Ordered by repo-relative path, <see cref="StringComparer.Ordinal"/> 
+    /// ascending. That order is provenance order.</summary>
     public required IReadOnlyList<OwnersFragment> Fragments { get; init; }
 
     /// <summary>

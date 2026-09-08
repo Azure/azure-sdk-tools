@@ -11,10 +11,6 @@
       "const": 1,
       "description": "Schema version. Must match the version in .github/owners.config.yaml."
     },
-    "section": {
-      "type": "string",
-      "description": "Routes every entry in this file to a named section of owners.config.yaml instead of the configured default section."
-    },
     "paths": {
       "type": "array",
       "description": "Directories and files owned by this service.",
@@ -68,7 +64,7 @@
         },
         "section": {
           "type": "string",
-          "description": "Routes this entry to a named section, overriding the file-level section."
+          "description": "Routes this entry to a named section of owners.config.yaml instead of configs.default-section."
         }
       }
     },
@@ -95,7 +91,7 @@
         },
         "section": {
           "type": "string",
-          "description": "Routes this entry to a named section, overriding the file-level section."
+          "description": "Routes this entry to a named section of owners.config.yaml instead of configs.default-section."
         }
       }
     }

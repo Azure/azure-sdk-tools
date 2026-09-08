@@ -109,7 +109,6 @@ public class OwnersYamlLoaderTests
         Assert.Multiple(() =>
         {
             Assert.That(fragment.Version, Is.EqualTo(1));
-            Assert.That(fragment.Section, Is.Null, "this fragment relies on configs.default-section");
             Assert.That(fragment.FilePath, Is.EqualTo("sdk/ai/owners.yaml"));
             Assert.That(fragment.Directory, Is.EqualTo("sdk/ai"));
             Assert.That(fragment.Paths.Select(p => p.Path), Is.EqualTo(new[]
@@ -152,21 +151,46 @@ public class OwnersYamlLoaderTests
     {
         var yaml = """
             version: 1
-            section: Client Libraries
             paths:
               - path: Azure.ResourceManager.AI/
                 section: Management Libraries
                 owners: [test-user-07]
                 pr-labels: [Mgmt]
+              - path: Azure.AI.Inference/
+                owners: [test-user-07]
+                pr-labels: [AI Model Inference]
             """;
 
         var fragment = OwnersYamlLoader.LoadFragment(yaml, "sdk/ai/owners.yaml");
 
         Assert.Multiple(() =>
         {
-            Assert.That(fragment.Section, Is.EqualTo("Client Libraries"));
             Assert.That(fragment.Paths[0].Section, Is.EqualTo("Management Libraries"));
+            Assert.That(fragment.Paths[1].Section, Is.Null,
+                "an entry that names no section falls through to configs.default-section");
         });
+    }
+
+    /// <summary>
+    /// Routing is per entry. A file-level default would make the section a property of where the
+    /// entry was written rather than of the entry, which is the thing that renders.
+    /// </summary>
+    [Test]
+    public void LoadFragment_FileLevelSectionIsRejected()
+    {
+        var yaml = """
+            version: 1
+            section: Client Libraries
+            paths:
+              - path: Azure.AI.Inference/
+                owners: [test-user-07]
+                pr-labels: [AI Model Inference]
+            """;
+
+        var ex = Assert.Throws<OwnersYamlException>(
+            () => OwnersYamlLoader.LoadFragment(yaml, "sdk/ai/owners.yaml"));
+
+        Assert.That(ex!.Message, Does.Contain("section"));
     }
 
     [Test]

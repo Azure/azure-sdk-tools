@@ -170,7 +170,7 @@ public static class CodeownersRenderer
 
                 var expression = OwnersPathResolver.ResolveFragmentPath(fragment, pathEntry, repository.RepoRoot, errors);
                 var section = ResolveFragmentSection(
-                    repository.Config, sectionsByName, fragment, pathEntry.Section, declaredAt, errors);
+                    repository.Config, sectionsByName, pathEntry.Section, declaredAt, errors);
 
                 if (expression == null || section == null)
                 {
@@ -214,7 +214,7 @@ public static class CodeownersRenderer
             {
                 var declaredAt = $"{fragment.FilePath}:{labelEntry.Line}";
                 var section = ResolveFragmentSection(
-                    repository.Config, sectionsByName, fragment, labelEntry.Section, declaredAt, errors);
+                    repository.Config, sectionsByName, labelEntry.Section, declaredAt, errors);
 
                 if (section != null)
                 {
@@ -249,12 +249,11 @@ public static class CodeownersRenderer
     private static OwnersSection? ResolveFragmentSection(
         OwnersConfig config,
         Dictionary<string, OwnersSection> sectionsByName,
-        OwnersFragment fragment,
         string? entrySection,
         string declaredAt,
         List<OwnersValidationError> errors)
     {
-        var name = entrySection ?? fragment.Section ?? config.Configs.DefaultSection;
+        var name = entrySection ?? config.Configs.DefaultSection;
 
         if (!sectionsByName.TryGetValue(name, out var section))
         {

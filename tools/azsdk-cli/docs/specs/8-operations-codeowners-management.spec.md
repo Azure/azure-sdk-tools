@@ -292,7 +292,7 @@ CODEOWNERS, so a label-owner entry with only `azure-sdk-owners` renders a block 
 `# ServiceOwners:` line and re-parses with zero service owners, which fails `check-package` with
 `InsufficientServiceOwners` and trips `LNT-OWN-004`. Some labels legitimately have only an Azure SDK
 owner — `%Tables` and `%Azure.Identity` are like that in azure-sdk-for-net today — so this is a
-schema warning rather than an error. See [Component 12](#component-12-migration-utilities).
+schema warning rather than an error.
 
 #### `pr-labels` is required in fragments and optional in the owners config
 
@@ -312,16 +312,14 @@ today, 48 of 201 path lines carry no `# PRLabel:` moniker; 12 of the 17 under `/
 guardrails (`/sdk/**/ci*.yml`, `/sdk/**/global.json`, `/sdk/**/*.tsp`, and similar) that are static
 config entries by construction and are unaffected by this rule.
 
-**Migration consequence.** That leaves five service-directory entries in azure-sdk-for-net that a
-fragment cannot express as written: `/sdk/` itself, the three `/sdk/agentserver/Azure.AI.AgentServer.*`
-entries, and the two `/sdk/ai/Azure.AI.Extensions.OpenAI/` and `/sdk/ai/Azure.AI.Projects.Agents/`
-entries. `convert` does not fix these. It transcribes them faithfully into fragments without labels
-and reports them, so migration is a two-step operation: convert, then work through what
-`generate` rejects. Each entry has two non-equivalent resolutions — assign a label and keep
-it in the fragment, or move it to a static owners config entry — and they place the entry on
-opposite sides of its service catch-all under last-match-wins. The reference assets take the second
-option for the two `/sdk/ai/` entries, which preserves what the hand-written file resolves to today.
-See [`tools/codeowners-migration/README.md`](../../../codeowners-migration/README.md).
+**Consequence for existing files.** That leaves five service-directory entries in azure-sdk-for-net
+that a fragment cannot express as written: `/sdk/` itself, the three
+`/sdk/agentserver/Azure.AI.AgentServer.*` entries, and the two `/sdk/ai/Azure.AI.Extensions.OpenAI/`
+and `/sdk/ai/Azure.AI.Projects.Agents/` entries. Each has two non-equivalent resolutions — assign a
+label and keep it in the fragment, or move it to a static owners config entry — and they place the
+entry on opposite sides of its service catch-all under last-match-wins. The reference assets take
+the second option for the two `/sdk/ai/` entries, which preserves what the hand-written file
+resolves to today.
 
 #### Schema normalization decisions
 
@@ -696,8 +694,8 @@ GitHub evaluates path expressions case-sensitively.
 correct rather than permissive: one of them matches nothing on GitHub, so the package it was meant
 to cover reports as unowned, which names the actual defect.
 
-Genuine ordering mistakes that exact matching cannot see are caught by resolution testing instead;
-see Component 12.
+Genuine ordering mistakes that exact matching cannot see are caught by resolution testing
+instead.
 
 Error messages name every contributing file and line so the fix is obvious:
 
@@ -803,9 +801,8 @@ first. In the real file, `/sdk/servicebus/Microsoft.Azure.WebJobs.Extensions.Ser
 `Service Bus` label on `/sdk/servicebus/`. The descendant renders first and the catch-all wins.
 
 The correct response is to leave the condition alone rather than change the sort. `generate` never
-rewrites ownership to avoid an inversion. The migration tooling reports inversions where they are
-actionable — as a resolution change between the old file and the new one (see
-[Component 12](#component-12-migration-utilities)) — because that is the moment a team can decide
+rewrites ownership to avoid an inversion. An inversion is actionable when it shows up as a
+resolution change between the old file and the new one, because that is the moment a team can decide
 between relabelling the descendant and moving the section to `sort: false`.
 
 9. **Emit.** Render the fixed generated-file banner, then each section. Each entry is formatted by
@@ -957,8 +954,8 @@ This is a deliberate choice with a real cost, so the reasoning matters:
 - **The file is the unit of review.** The people reviewing a change to `sdk/ai/owners.yaml` are the
   people who own `sdk/ai/`. They are the correct audience for a defect anywhere in that file, and
   they are the only audience that will ever be assembled for it.
-- **It is the mechanism that finishes the migration.** `convert` will leave entries that need human
-  judgment (a service directory with no PR label, an orphaned path). Nothing forces those to be
+- **It is the mechanism that finishes the migration.** Converting an existing CODEOWNERS file leaves
+  entries that need human judgment (a service directory with no PR label, an orphaned path). Nothing forces those to be
   resolved on a schedule. Whole-file validation resolves them on contact: the next person to touch
   the file fixes them, and the file is permanently clean afterward.
 
@@ -1470,33 +1467,6 @@ Because matching no longer runs against an exported section, there is no `--sect
 `check-package` and no scope question to settle: resolution happens over the whole loaded model, the
 same way GitHub resolves the whole file.
 
-### Component 12: Migration utilities
-
-Migration needs two capabilities that the steady-state command surface deliberately does not have:
-producing the first draft of the YAML files, and proving that the rendered output did not change who
-owns anything. Both are one-time aids with no role after a repository has converted.
-
-They live in **[`tools/codeowners-migration/`](../../../codeowners-migration/README.md)** as a
-standalone .NET tool with two verbs, `convert` and `verify`. They are **not** part of `azsdk-cli`,
-and their design is documented with the tool rather than here.
-
-Keeping them out of `azsdk-cli` is a deliberate boundary. The whole point of this design is that
-`azsdk-cli` renders and validates but never authors ownership; a `convert` verb inside it would
-reintroduce a tool-writes-ownership path that [Component 9](#component-9-command-surface) removes.
-`verify` compares two CODEOWNERS files, which is meaningless once the old file is gone. Both
-reference `Azure.Sdk.Tools.CodeownersUtils` directly, so neither needs anything from `azsdk-cli`.
-
-Two things the migration tooling depends on are decided by this document and are restated here
-because they constrain the migration schedule:
-
-- The three single-line sub-headings in `azure-sdk-for-net/.github/CODEOWNERS` (`Core Libraries`,
-  `Eng Sys`, `Code Generation`) are rewritten as ordinary three-line banners in a **prerequisite pull
-  request**, before any conversion runs. `CodeownersSectionFinder` is then used unmodified.
-- `verify` must prove resolution equivalence, not just declaration equivalence, because the sorting
-  this design applies to fragments can reorder entries relative to a catch-all
-  ([Component 6](#component-6-rendering-algorithm)).
-
-
 ### Cross-Language Considerations
 
 | Language | Approach | Status |
@@ -1945,19 +1915,14 @@ azsdk config github-label create azure-openai --link https://learn.microsoft.com
 
 - Milestone: `.github/owners.config.yaml` plus `sdk/*/owners.yaml` produce a CODEOWNERS that is
   semantically equivalent to the current file.
-- Build the two migration utilities under `tools/codeowners-migration/`, per
-  [their README](../../../codeowners-migration/README.md). They are standalone; they reference
-  `Azure.Sdk.Tools.CodeownersUtils` and are not part of `azsdk-cli`.
 - **Prerequisite pull request against `azure-sdk-for-net`**: rewrite the three single-line
   sub-headings — `Core Libraries`, `Eng Sys`, and `Code Generation` — as ordinary three-line
   banners. This is a comment-only change with no effect on ownership resolution, and it lets the
   converter use `CodeownersSectionFinder` unmodified.
-- Run `convert` to produce the first draft, then hand-review it. Conversion is expected to leave a
-  small number of glob-headed paths static and to report them; those stay in the config.
-- Prove equivalence with `verify`, supplying `--repo-root` so that path resolution actually runs. A
-  run that resolved zero paths proves nothing.
-- Order of operations: self-compare the current file first to establish the comparer is clean, then
-  compare current against rendered.
+- Produce the first draft of the YAML mechanically, then hand-review it. A small number of
+  glob-headed paths cannot become fragments and stay in the config.
+- Prove equivalence by resolving owners and labels for every path in the repository against both the
+  old file and the rendered one, rather than by diffing text.
 - Dependencies: Phase 1.
 
 ### Phase 3: Enforcement
@@ -2097,15 +2062,13 @@ of not waiting is an unmigrated repo with no working generator, which is neither
 
 ### Phase 5: Remaining language repos
 
-- Milestone: Java, JavaScript, Python, and Go repos migrated using the Component 12 utilities.
-- Go passes a deeper `--fragment-glob` (`sdk/resourcemanager/*/owners.yaml`); this is a command-line
+- Milestone: Java, JavaScript, Python, and Go repos migrated.
+- Go uses a deeper fragment glob (`sdk/resourcemanager/*/owners.yaml`); this is a configuration
   value, not a code change.
 - Each repo needs the same survey `azure-sdk-for-net` received before it starts: heading style,
   path shape, and whether `sdk/<service>/` is the right fragment granularity. The
   `Cross-Language Considerations` table records the answers. Do not assume the .NET layout carries
   over — that table's "Expected same" rows are a hypothesis, not a finding.
-- Once the last repository has migrated and its `verify` run is clean, `tools/codeowners-migration/`
-  is deleted along with its pipeline. Nothing in the steady state depends on it.
 - Delete the `cache/azure/<repo>/CODEOWNERS.cache` blobs from the `azuresdkartifacts` storage
   account. This waits until every repo has migrated because the blob is per-repo and unmigrated repos
   still read it.
@@ -2230,22 +2193,16 @@ migrated.
 - Lint rules against fixture caches, including the fail-fast behavior on stale, empty, and
   inconsistent caches.
 
-### Migration Utility Tests
-
-The `convert` and `verify` utilities are tested in their own project. The test matrix lives with the
-tool, in [`tools/codeowners-migration/README.md`](../../../codeowners-migration/README.md#testing).
-
-
 ### Manual Testing
 
-- Full azure-sdk-for-net migration verified with the Component 12 `verify` command.
+- Full azure-sdk-for-net migration verified by comparing resolved ownership before and after.
 - Confirm GitHub actually assigns the expected reviewers on a sample PR in each migrated repo.
 
 ### Cross-Language Validation
 
-Run `verify` in all five language repos before enabling the drift gate, always with `--repo-root` so
-that path resolution runs. It compares parsed entries and resolved owners per path, not file text, so
-cosmetic reordering does not produce false failures.
+Compare resolved ownership in all five language repos before enabling the drift gate. The
+comparison must resolve owners per path rather than diff file text, so that cosmetic reordering does
+not produce false failures.
 
 ---
 

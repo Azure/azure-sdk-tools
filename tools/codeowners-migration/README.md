@@ -317,10 +317,26 @@ that output and reports it as a `ParseError` difference so silent data loss cann
 
 ## Expected outcome for `azure-sdk-for-net`
 
-The current file yields 201 distinct path expressions and 131 distinct service label sets across 12
+The current file yields 200 distinct path expressions and 131 distinct service label sets across 12
 sections once both heading styles are recognized. Comparing the file against itself must report zero
 differences; that self-comparison is the first check to run, because any difference it reports is a
 defect in the comparer rather than in the migration.
+
+### Observed on the first full run
+
+Conversion produced 92 files — one `.github/owners.config.yaml` and 91 `sdk/*/owners.yaml` — with
+five warnings, all of them glob-headed paths correctly left static.
+
+`verify` reported 973 differences, and every one traced to `generate` filtering owners that no longer
+pass the membership check rather than to the conversion. That is the distinction to check before
+treating any difference as a migration defect: nothing was invented in the candidate, no surviving
+path changed its labels, and every removed owner appeared in `generate`'s own dropped list. Eighteen
+owners were dropped, which removed seven whole paths and twelve label blocks and let those paths fall
+through to a broader match, which in turn accounts for the remaining resolution changes.
+
+Six entries needed human judgment and are not something the converter can decide: five service
+directories carry no PR label, and `/sdk/discovery/Azure.AI.Discovery` is written without a trailing
+slash in the hand-maintained file even though the directory exists.
 
 ## Testing
 
@@ -362,7 +378,8 @@ Run by hand during migration, per repository:
 dotnet run --project Azure.Sdk.Tools.CodeownersMigration -- convert \
   --codeowners <repo>/.github/CODEOWNERS \
   --output-root <repo> \
-  --fragment-section "Client Libraries"
+  --fragment-section "Client Libraries" \
+  --fragment-section "Management Libraries"
 
 # 2. Render from the drafted YAML
 azsdk config codeowners generate --repo-root <repo>
@@ -371,7 +388,19 @@ azsdk config codeowners generate --repo-root <repo>
 dotnet run --project Azure.Sdk.Tools.CodeownersMigration -- verify \
   --baseline <repo>/.github/CODEOWNERS.orig \
   --candidate <repo>/.github/CODEOWNERS \
-  --repo-root <repo> --include-files
+  --paths-from targets.txt
 ```
+
+Back up the original file before step 2 — `generate` overwrites `.github/CODEOWNERS` in place, and
+step 3 needs the original to compare against.
+
+### Do not use `--include-files` on a repository this size
+
+`--repo-root --include-files` enumerates every tracked file and matches each one against every path
+expression. On azure-sdk-for-net that is roughly 145,000 files against 200 expressions, which does
+not finish in any useful time. Build a sampled target list instead and pass it with `--paths-from`:
+every directory, plus a couple of files per distinct file-shaped pattern, which is enough to satisfy
+the coverage assertion in pass 3. Around 9,000 targets completes in about two and a half minutes and
+still exercises every expression.
 
 Not wired into any pipeline. **Delete this directory once every repository has migrated.**

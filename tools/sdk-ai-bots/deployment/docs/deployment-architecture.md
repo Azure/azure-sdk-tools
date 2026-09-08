@@ -56,8 +56,8 @@ resource outputs.
 
 ## Pipeline Flow
 
-The consolidated application deployment pipeline follows the same control flow
-for full-stack and component-scoped runs:
+The consolidated deployment pipeline follows the same control flow for
+full-stack and component-scoped runs:
 
 ```mermaid
 flowchart LR
@@ -66,7 +66,9 @@ flowchart LR
     VALIDATE --> PREVIEW[azd provision preview]
     PREVIEW --> APPROVE[Manual approval]
     APPROVE --> APPLY[azd provision apply]
-    APPLY --> DEPLOY[Remote build and deploy]
+    APPLY --> SCOPE{Deployable service?}
+    SCOPE -->|Yes| DEPLOY[Remote build and deploy]
+    SCOPE -->|No| VERIFY
     DEPLOY --> VERIFY[Operator verification]
 ```
 
@@ -81,8 +83,9 @@ The full-stack deployment stage runs application code in this order:
 
 `qa-bot-deploy.yml` defaults to `component=all`. Selecting `agent-server`,
 `function-app`, `agent`, or `frontend` provisions that layer and its
-dependencies, then deploys only that component. Component CI remains separate
-from provisioning and deployment.
+dependencies, then deploys only that component. Selecting `shared-resources` or
+`logic-app` provisions that infrastructure scope without an application deploy.
+Component CI remains separate from provisioning and deployment.
 
 ## Reconciled State
 
@@ -113,16 +116,13 @@ flowchart LR
     KNOWLEDGE --> WIKI[Wiki builder]
     WIKI --> WIKIBLOB[wiki blob container]
     WIKIBLOB --> WIKIINDEX[Wiki Search indexer]
-    FEEDBACK[Production feedback job] --> RESTORE1[Restore candidate dev]
-    RESTORE1 --> EVOLVE[Evolution analysis]
-    EVOLVE --> RESTORE2[Restore candidate dev again]
-    RESTORE2 --> VALIDATE[Validate production records]
+    FEEDBACK[Production feedback job] --> EVOLVE[Evolution analysis]
+    EVOLVE --> VALIDATE[Validate closed issues]
 ```
 
-Knowledge sync and wiki generation start their Search indexers immediately
-after writing blobs. The feedback job restores candidate knowledge both before
-and after candidate mutation so production validation never uses candidate
-clients or modified candidate state.
+  The existing knowledge-sync and wiki-generation pipelines remain outside the
+  deployment orchestrator set and start their Search indexers after writing blobs.
+  The feedback pipeline does not queue a knowledge-sync pipeline.
 
 ## Security Boundaries
 

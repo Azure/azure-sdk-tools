@@ -131,36 +131,32 @@ approval and branch-control checks for preview and production. The pipelines
 also include their own preview-to-apply manual gate.
 
 The production evolution and feedback workflows also need the configured
-candidate service connection. Grant the feedback pipeline's build identity
-**Queue builds** permission on the knowledge-sync definition.
+candidate service connection.
 
 ## 6. Register the Pipeline Definitions
 
-Create these 12 definitions from their existing YAML paths and use the exact
+Create these 5 definitions from their existing YAML paths and use the exact
 names shown.
 
 | Purpose | Pipeline name | YAML |
 | --- | --- | --- |
-| Frontend CI | `tools - sdk-ai-bots-frontend - ci` | `deployment/pipelines/orchestrators/frontend/frontend.ci.yml` |
-| Function CI | `tools - sdk-ai-bots-function-app - ci` | `deployment/pipelines/orchestrators/function-app/function-app.ci.yml` |
-| Agent and agent-server CI | `tools - sdk-ai-bots-agent - ci` | `deployment/pipelines/orchestrators/agent/agent.ci.yml` |
-| Knowledge-sync CI | `tools - sdk-ai-bots-knowledge-sync - ci` | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml` |
 | Application provision/deploy | `tools - sdk-ai-bots - deploy` | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` |
-| Knowledge provision/sync | `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` |
-| Shared resources | `tools - sdk-ai-bots-shared-resources - provision` | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` |
-| Logic App | `tools - sdk-ai-bots-logic-app - provision` | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` |
 | Wiki CI | `tools - sdk-ai-bots-wiki-index - ci` | `azure-sdk-qa-bot-wiki-index/ci.yml` |
 | Wiki build | `tools - sdk-ai-bots-wiki-index - build` | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
 | Hosted-agent deploy | `tools - sdk-ai-bots-hosted-agent - deploy` | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
 | Feedback jobs | `tools - sdk-ai-bots-feedback-jobs` | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
 
-The application deployment definition accepts `component=all` (the default),
-`agent-server`, `function-app`, `agent`, or `frontend`. Use `all` for the full
-environment and a component value for an isolated provision-and-deploy run.
+Component CI remains in existing package-owned workflows and is not registered
+from `deployment/pipelines/orchestrators`.
 
-Authorize the knowledge-sync pipeline to use its declared resource repositories
-on first run. Keep the exact knowledge-sync pipeline name because the feedback
-job resolves it by name when restoring candidate data.
+The application deployment definition accepts `component=all` (the default),
+`shared-resources`, `agent`, `frontend`, `agent-server`, `function-app`, or
+`logic-app`. Use `all` for the full environment. Application selections
+provision and deploy one service; `shared-resources` and `logic-app` are
+provision-only selections.
+
+The existing knowledge-sync CI and scheduled sync definitions under
+`azure-sdk-qa-bot-knowledge-sync` remain outside this deployment pipeline set.
 
 See the [pipeline reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md) for composition and ownership.
 
@@ -249,8 +245,9 @@ Complete the [operational readiness checklist](https://github.com/Azure/azure-sd
 
 Keep legacy component definitions during initial validation. After dev and
 preview have run successfully and operators accept the new runbooks, disable
-the superseded server, Logic App, knowledge-sync, and ARM deployment paths.
-Keep evaluation pipelines separate; they are not part of this deployment.
+the superseded server, Logic App, and ARM deployment paths. Keep the existing
+knowledge-sync and evaluation pipelines separate; they are not part of this
+deployment.
 
 ## Re-provisioning Warning
 

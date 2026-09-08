@@ -1,5 +1,5 @@
-# Provisions and deploys either the complete environment or one selected
-# application component.
+# Provisions the complete environment or one selected infrastructure scope, then
+# deploys the selected application component when applicable.
 name: tools - sdk-ai-bots - deploy
 
 trigger: none
@@ -9,7 +9,7 @@ parameters:
     - name: component
       type: string
       default: all
-      values: [all, agent-server, function-app, agent, frontend]
+      values: [all, shared-resources, agent, frontend, agent-server, function-app, logic-app]
     - name: environment
       type: string
       default: dev
@@ -38,6 +38,32 @@ extends:
                         ${{ if eq(parameters.environment, 'prod') }}:
                             stabilizationSeconds: 600
 
+            - ${{ if eq(parameters.component, 'shared-resources') }}:
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+                    parameters:
+                        layer: shared-resources
+                        dependencyLayers: resource-group
+                        provisionResourceGroup: true
+                        environment: ${{ parameters.environment }}
+                        operation: preview
+                        stageName: PreflightLayer
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
+                    parameters:
+                        environment: ${{ parameters.environment }}
+                        stageName: ApproveLayer
+                        dependsOn: PreflightLayer
+                        preflightJobName: AzdProvisionLayer
+                        scope: resource-group and shared-resources layers
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+                    parameters:
+                        layer: shared-resources
+                        dependencyLayers: resource-group
+                        provisionResourceGroup: true
+                        environment: ${{ parameters.environment }}
+                        operation: apply
+                        stageName: ProvisionLayer
+                        dependsOn: ApproveLayer
+
             - ${{ if eq(parameters.component, 'agent-server') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-and-deploy-component.yml
                     parameters:
@@ -65,3 +91,27 @@ extends:
                         component: frontend
                         dependencyLayers: resource-group,shared-resources
                         environment: ${{ parameters.environment }}
+
+            - ${{ if eq(parameters.component, 'logic-app') }}:
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+                    parameters:
+                        layer: logic-app
+                        dependencyLayers: resource-group,shared-resources,frontend,agent-server,function-app
+                        environment: ${{ parameters.environment }}
+                        operation: preview
+                        stageName: PreflightLayer
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/approval-stage.yml
+                    parameters:
+                        environment: ${{ parameters.environment }}
+                        stageName: ApproveLayer
+                        dependsOn: PreflightLayer
+                        preflightJobName: AzdProvisionLayer
+                        scope: logic-app layer
+                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml
+                    parameters:
+                        layer: logic-app
+                        dependencyLayers: resource-group,shared-resources,frontend,agent-server,function-app
+                        environment: ${{ parameters.environment }}
+                        operation: apply
+                        stageName: ProvisionLayer
+                        dependsOn: ApproveLayer

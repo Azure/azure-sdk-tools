@@ -5,7 +5,8 @@ exception with an owner and due date.
 
 ## Source and Configuration
 
-- [ ] The candidate source revision is recorded and all component CI is green.
+- [ ] The candidate source revision is recorded and all relevant build and test
+      checks are green.
 - [ ] `validate-env-suite.ps1 -Environment prod` passes.
 - [ ] No selected production value contains `REPLACE_WITH_*`.
 - [ ] Production tenant/channel YAML matches the environment suite.
@@ -21,8 +22,6 @@ exception with an owner and due date.
 - [ ] Production service-connection approval and branch-control checks are
       active.
 - [ ] The pipeline manual preview-to-apply gate has designated approvers.
-- [ ] The feedback pipeline can queue the exact knowledge-sync definition.
-- [ ] Required cross-repository resources are authorized for knowledge sync.
 
 ## Identity and Access
 
@@ -54,8 +53,6 @@ exception with an owner and due date.
 
 - [ ] Knowledge sync and wiki build definitions have completed successfully and
       both Search indexer triggers were accepted.
-- [ ] The feedback/evolution workflow has completed a candidate restore before
-      and after analysis in a non-production validation run.
 - [ ] Cosmos DB continuous backup is enabled and its restore procedure is known.
 - [ ] Blob versioning is enabled if blob-version rollback is part of the
       recovery plan; it is disabled by the current Bicep configuration.

@@ -32,13 +32,9 @@ test("exports the deployment principal for targeted layer provisioning", () => {
 });
 
 test("runs Search indexers after both data producers", () => {
-  const knowledge = read("pipelines/orchestrators/knowledge-sync/knowledge-sync.yml");
+  const knowledge = read("../azure-sdk-qa-bot-knowledge-sync/src/DailySyncKnowledge.ts");
   const wiki = read("../azure-sdk-qa-bot-wiki-index/build_wiki.yml");
 
-  assert.match(knowledge, /run-search-indexer\.sh" AI_SEARCH_INDEXER/);
-  assert.match(
-    knowledge,
-    /Agent\.BuildDirectory\)\/s\/azure-sdk-tools\/tools\/sdk-ai-bots\/deployment/,
-  );
+  assert.match(knowledge, /searchService\.runIndexer\(\)/);
   assert.match(wiki, /run-search-indexer\.sh" AI_SEARCH_WIKI_INDEXER/);
 });

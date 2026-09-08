@@ -116,12 +116,7 @@ extends:
 
                     python scripts/run_feedback_jobs.py "${JOB_ARGS[@]}"
                 env:
-                  ADO_COLLECTION_URI: $(System.CollectionUri)
-                  ADO_PROJECT: $(System.TeamProject)
-                  ADO_SOURCE_BRANCH: $(Build.SourceBranch)
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
                   GITHUB_TOKEN: $(GH_TOKEN)
-                  KNOWLEDGE_SYNC_ENVIRONMENT: $(CANDIDATE_ENVIRONMENT)
-                  KNOWLEDGE_SYNC_PIPELINE_NAME: tools - sdk-ai-bots-knowledge-sync - provision-and-sync
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

@@ -55,12 +55,6 @@ Code redeployment does not automatically restore data.
    emergency first step.
 - **Cosmos DB:** use the configured continuous-backup restore procedure. Restore
    to a separate account and validate before redirecting consumers.
-- **Candidate evolution:** queue
-   `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` with
-   `environment=dev` and `provisionInfrastructure=false`, then verify it
-   completes before resuming feedback processing. The caller needs permission to
-   queue that definition.
-
 Blob versioning is disabled by the current Bicep configuration. Do not claim
 blob-version recovery unless it was enabled and tested before the incident.
 

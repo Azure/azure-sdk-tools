@@ -5,10 +5,9 @@ Use this runbook for routine deployments after the one-time
 
 ## 1. Select the Deployment Path
 
-Use the application deployment pipeline with `component=all` when
-infrastructure contracts or multiple services change. Select one component for
-an isolated application change. Shared resources, Logic App, and knowledge sync
-retain specialized pipelines.
+Use the deployment pipeline with `component=all` when infrastructure contracts
+or multiple services change. Select one component for an isolated application
+or infrastructure change. Existing knowledge-sync jobs remain separate.
 
 | Scope | Pipeline | `component` |
 | --- | --- | --- |
@@ -17,9 +16,8 @@ retain specialized pipelines.
 | Agent-server | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `agent-server` |
 | Frontend | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `frontend` |
 | Function App | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `function-app` |
-| Shared resources | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` | n/a |
-| Logic App | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` | n/a |
-| Knowledge sync | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` | n/a |
+| Shared resources | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `shared-resources` |
+| Logic App | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `logic-app` |
 
 Production evolution-agent deployment is included in the full-stack path. Wiki
 generation and feedback processing use their specialized scheduled pipelines.
@@ -27,7 +25,7 @@ generation and feedback processing use their specialized scheduled pipelines.
 ## 2. Pre-deployment Checks
 
 1. Record the candidate source revision.
-2. Confirm the relevant component CI passed for that revision.
+2. Confirm the relevant component build and test checks passed for that revision.
 3. Confirm the target environment contains no unresolved placeholders.
 4. Run `validate-env-suite.ps1 -Environment <env>` for local verification.
 5. For production, complete the
@@ -60,8 +58,9 @@ has been implemented.
 
 ## 4. Deploy Application Code
 
-After apply, `qa-bot-deploy.yml` deploys the selected service. With
-`component=all`, it runs:
+After apply, `qa-bot-deploy.yml` deploys the selected application service.
+`shared-resources` and `logic-app` stop after provisioning. With `component=all`,
+the pipeline runs:
 
 1. agent-server;
 2. a 10-minute agent-server stabilization wait in production;

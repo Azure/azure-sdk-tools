@@ -401,7 +401,6 @@ class KnowledgeTools:
             replacement_content,
             1,
         )
-        print("##vso[task.setvariable variable=restore_required]true", flush=True)
         try:
             await self._upload_blob(
                 knowledge_container,

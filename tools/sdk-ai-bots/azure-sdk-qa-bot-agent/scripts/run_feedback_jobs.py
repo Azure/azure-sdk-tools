@@ -19,14 +19,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote
 
-import httpx
 import yaml
 from dotenv import load_dotenv
 
@@ -56,11 +53,6 @@ _TESTING_CHANNEL_NAMES = {
     "azure sdk qa bot - auto reply - test",
     "smoke-tests",
 }
-_DEFAULT_KNOWLEDGE_SYNC_PIPELINE = (
-    "tools - sdk-ai-bots-knowledge-sync - provision-and-sync"
-)
-
-
 def _is_testing_channel(name: str) -> bool:
     normalized = name.strip().casefold()
     return (
@@ -104,102 +96,6 @@ def _resolve_window(args: argparse.Namespace) -> tuple[datetime, datetime]:
     if start >= end:
         raise ValueError(f"start ({start}) must be before end ({end})")
     return start, end
-
-
-async def _restore_candidate_knowledge(
-    *,
-    transport: httpx.AsyncBaseTransport | None = None,
-) -> int:
-    """Queue the sync-only candidate knowledge pipeline and await completion."""
-    token = os.environ.get("SYSTEM_ACCESSTOKEN", "").strip()
-    collection_uri = os.environ.get("ADO_COLLECTION_URI", "").strip().rstrip("/")
-    project = os.environ.get("ADO_PROJECT", "").strip()
-    source_branch = os.environ.get("ADO_SOURCE_BRANCH", "").strip() or "refs/heads/main"
-    pipeline_name = os.environ.get(
-        "KNOWLEDGE_SYNC_PIPELINE_NAME",
-        _DEFAULT_KNOWLEDGE_SYNC_PIPELINE,
-    ).strip()
-    environment = os.environ.get("KNOWLEDGE_SYNC_ENVIRONMENT", "dev").strip()
-    missing = [
-        name
-        for name, value in {
-            "SYSTEM_ACCESSTOKEN": token,
-            "ADO_COLLECTION_URI": collection_uri,
-            "ADO_PROJECT": project,
-            "KNOWLEDGE_SYNC_PIPELINE_NAME": pipeline_name,
-            "KNOWLEDGE_SYNC_ENVIRONMENT": environment,
-        }.items()
-        if not value
-    ]
-    if missing:
-        raise RuntimeError(
-            "Cannot restore candidate knowledge; missing pipeline settings: "
-            + ", ".join(missing)
-        )
-
-    api_root = f"{collection_uri}/{quote(project, safe='')}/_apis/build"
-    auth = httpx.BasicAuth("", token)
-    timeout_seconds = int(os.environ.get("KNOWLEDGE_SYNC_TIMEOUT_SECONDS", "7200"))
-    deadline = asyncio.get_running_loop().time() + timeout_seconds
-
-    async with httpx.AsyncClient(auth=auth, timeout=60, transport=transport) as client:
-        definitions_response = await client.get(
-            f"{api_root}/definitions",
-            params={"name": pipeline_name, "api-version": "7.1"},
-        )
-        definitions_response.raise_for_status()
-        definitions = [
-            item
-            for item in definitions_response.json().get("value", [])
-            if item.get("name") == pipeline_name
-        ]
-        if len(definitions) != 1:
-            raise RuntimeError(
-                f"Expected one Azure DevOps pipeline named {pipeline_name!r}; "
-                f"found {len(definitions)}"
-            )
-
-        queue_response = await client.post(
-            f"{api_root}/builds",
-            params={"api-version": "7.1"},
-            json={
-                "definition": {"id": definitions[0]["id"]},
-                "sourceBranch": source_branch,
-                "templateParameters": {
-                    "environment": environment,
-                    "provisionInfrastructure": "false",
-                },
-            },
-        )
-        queue_response.raise_for_status()
-        build_id = int(queue_response.json()["id"])
-        logger.info(
-            "Queued candidate knowledge restore build %d using %s",
-            build_id,
-            pipeline_name,
-        )
-
-        while asyncio.get_running_loop().time() < deadline:
-            status_response = await client.get(
-                f"{api_root}/builds/{build_id}",
-                params={"api-version": "7.1"},
-            )
-            status_response.raise_for_status()
-            build = status_response.json()
-            if build.get("status") == "completed":
-                result = build.get("result")
-                if result != "succeeded":
-                    raise RuntimeError(
-                        f"Candidate knowledge restore build {build_id} finished with {result}"
-                    )
-                logger.info("Candidate knowledge restore build %d succeeded", build_id)
-                return build_id
-            await asyncio.sleep(15)
-
-    raise TimeoutError(
-        f"Candidate knowledge restore build {build_id} did not finish within "
-        f"{timeout_seconds} seconds"
-    )
 
 
 async def _validate_pending_records(
@@ -288,48 +184,41 @@ async def _run(args: argparse.Namespace) -> None:
         "skipped": 0,
     }
 
-    # 2. Restore candidate knowledge before analysis so a failed prior run
-    # cannot leak temporary content into this run. Restore again afterward,
-    # before any production validation, even when an analysis call fails.
-    # each conversation. The pipeline does not make either decision itself.
+    # 2. Analyze each eligible conversation. The Agent decides whether the
+    # conversation is complete and whether its answer needs remediation.
     analyzable = await qa_service.list_analyzable(tenant_id=args.tenant)
     if args.limit is not None:
         analyzable = analyzable[: args.limit]
-    if analyzable:
-        await _restore_candidate_knowledge()
+    for record in analyzable:
+        if QARecordService.channel_key_of(record) in excluded_channels:
+            counts["skipped"] += 1
+            continue
         try:
-            for record in analyzable:
-                if QARecordService.channel_key_of(record) in excluded_channels:
-                    counts["skipped"] += 1
-                    continue
-                try:
-                    result = await evolution_service.run_job(
-                        record.id,
-                        record.tenant_id,
-                        mode=ChatbotEvolutionAgentMode.analysis,
-                    )
-                except Exception:
-                    logger.exception("Analysis persistence failed for %s", record.id)
-                    counts["skipped"] += 1
-                    continue
-                if result is None:
-                    counts["skipped"] += 1
-                elif result.outcome in (
-                    ChatbotEvolutionAgentOutcome.processing_failed,
-                    ChatbotEvolutionAgentOutcome.remediation_failed,
-                ):
-                    counts["evolution_failed"] += 1
-                elif result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
-                    counts["ongoing"] += 1
-                elif result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
-                    counts["finished"] += 1
-                else:
-                    counts["issues"] += 1
-        finally:
-            await _restore_candidate_knowledge()
+            result = await evolution_service.run_job(
+                record.id,
+                record.tenant_id,
+                mode=ChatbotEvolutionAgentMode.analysis,
+            )
+        except Exception:
+            logger.exception("Analysis persistence failed for %s", record.id)
+            counts["skipped"] += 1
+            continue
+        if result is None:
+            counts["skipped"] += 1
+        elif result.outcome in (
+            ChatbotEvolutionAgentOutcome.processing_failed,
+            ChatbotEvolutionAgentOutcome.remediation_failed,
+        ):
+            counts["evolution_failed"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
+            counts["ongoing"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
+            counts["finished"] += 1
+        else:
+            counts["issues"] += 1
 
-    # 3. Validate closed issues only after candidate state is authoritative.
-    # Issues created by this run remain open and are considered on a later run.
+    # 3. Validate closed issues. Issues created by this run remain open and are
+    # considered on a later run.
     await _validate_pending_records(
         qa_service,
         evolution_service,

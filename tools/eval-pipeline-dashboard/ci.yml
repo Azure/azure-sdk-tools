@@ -1,0 +1,47 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/eval-pipeline-dashboard/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/eval-pipeline-dashboard/**
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Test
+        jobs:
+          - job: TestDashboard
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+              - task: UseNode@1
+                inputs:
+                  version: 22.x
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+              - script: npm ci --ignore-scripts --include=optional
+                displayName: Restore locked dependencies
+                workingDirectory: tools/eval-pipeline-dashboard
+              - script: npm run postinstall
+                displayName: Apply Vally query optimization
+                workingDirectory: tools/eval-pipeline-dashboard
+              - script: npm test
+                displayName: Test local artifact ingestion
+                workingDirectory: tools/eval-pipeline-dashboard

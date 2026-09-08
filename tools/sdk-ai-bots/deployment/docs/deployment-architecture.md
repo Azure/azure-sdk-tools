@@ -56,8 +56,8 @@ resource outputs.
 
 ## Pipeline Flow
 
-Every full-stack or component provisioning pipeline follows the same control
-flow:
+The consolidated application deployment pipeline follows the same control flow
+for full-stack and component-scoped runs:
 
 ```mermaid
 flowchart LR
@@ -79,9 +79,10 @@ The full-stack deployment stage runs application code in this order:
 5. evolution agent when `environment=prod`
 6. `frontend`
 
-Component orchestrators provision the selected layer and its dependencies, then
-deploy only that component. Component CI is separate from provisioning and
-deployment.
+`qa-bot-deploy.yml` defaults to `component=all`. Selecting `agent-server`,
+`function-app`, `agent`, or `frontend` provisions that layer and its
+dependencies, then deploys only that component. Component CI remains separate
+from provisioning and deployment.
 
 ## Reconciled State
 

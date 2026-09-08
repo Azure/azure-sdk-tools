@@ -136,7 +136,7 @@ candidate service connection. Grant the feedback pipeline's build identity
 
 ## 6. Register the Pipeline Definitions
 
-Create these 16 definitions from their existing YAML paths and use the exact
+Create these 12 definitions from their existing YAML paths and use the exact
 names shown.
 
 | Purpose | Pipeline name | YAML |
@@ -145,18 +145,18 @@ names shown.
 | Function CI | `tools - sdk-ai-bots-function-app - ci` | `deployment/pipelines/orchestrators/function-app/function-app.ci.yml` |
 | Agent and agent-server CI | `tools - sdk-ai-bots-agent - ci` | `deployment/pipelines/orchestrators/agent/agent.ci.yml` |
 | Knowledge-sync CI | `tools - sdk-ai-bots-knowledge-sync - ci` | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.ci.yml` |
-| Frontend provision/deploy | `tools - sdk-ai-bots-frontend - provision-and-deploy` | `deployment/pipelines/orchestrators/frontend/frontend.yml` |
-| Agent-server provision/deploy | `tools - sdk-ai-bots-agent-server - provision-and-deploy` | `deployment/pipelines/orchestrators/agent-server/agent-server.yml` |
-| Function provision/deploy | `tools - sdk-ai-bots-function-app - provision-and-deploy` | `deployment/pipelines/orchestrators/function-app/function-app.yml` |
-| Agent provision/deploy | `tools - sdk-ai-bots-agent - provision-and-deploy` | `deployment/pipelines/orchestrators/agent/agent.yml` |
+| Application provision/deploy | `tools - sdk-ai-bots - deploy` | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` |
 | Knowledge provision/sync | `tools - sdk-ai-bots-knowledge-sync - provision-and-sync` | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` |
 | Shared resources | `tools - sdk-ai-bots-shared-resources - provision` | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` |
 | Logic App | `tools - sdk-ai-bots-logic-app - provision` | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` |
-| Full stack | `tools - sdk-ai-bots - provision-and-deploy-all` | `deployment/pipelines/orchestrators/qa-bot-all.yml` |
 | Wiki CI | `tools - sdk-ai-bots-wiki-index - ci` | `azure-sdk-qa-bot-wiki-index/ci.yml` |
 | Wiki build | `tools - sdk-ai-bots-wiki-index - build` | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
 | Hosted-agent deploy | `tools - sdk-ai-bots-hosted-agent - deploy` | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
 | Feedback jobs | `tools - sdk-ai-bots-feedback-jobs` | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
+
+The application deployment definition accepts `component=all` (the default),
+`agent-server`, `function-app`, `agent`, or `frontend`. Use `all` for the full
+environment and a component value for an isolated provision-and-deploy run.
 
 Authorize the knowledge-sync pipeline to use its declared resource repositories
 on first run. Keep the exact knowledge-sync pipeline name because the feedback

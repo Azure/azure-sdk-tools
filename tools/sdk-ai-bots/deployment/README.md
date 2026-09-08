@@ -16,7 +16,7 @@ deployment/
 │  ├─ environments/              ← dev/preview/prod contract
 │  └─ layers/                    ← seven Bicep entry points
 ├─ pipelines/
-│  ├─ orchestrators/             ← full-stack and component entry points
+│  ├─ orchestrators/             ← deployment, CI, and data-job entry points
 │  └─ templates/                 ← reusable authentication and deployment stages
 ├─ scripts/                      ← validation and operator utilities
 └─ test/                         ← deployment contract tests
@@ -45,10 +45,11 @@ Maintainers should also use the [infrastructure reference](https://github.com/Az
 	 environment's federated service connection.
 3. Preflight validates configuration and runs `azd provision --preview`.
 4. An operator reviews the preview and approves or rejects the apply stage.
-5. `azd provision` applies the complete graph or a selected layer and its
-	 dependencies.
+5. `qa-bot-deploy.yml` applies the complete graph when `component=all`, or the
+	 selected application layer and its dependencies for a component deployment.
 6. Full-stack deployment runs `agent-server`, `function-app`, `agent`, the
-	 production-only evolution agent, and `frontend` in that order.
+	 production-only evolution agent, and `frontend` in that order; a component
+	 deployment runs only the selected service.
 7. Hooks reconcile App Configuration, Key Vault data, Search resources, RBAC,
 	 Teams configuration, hosted-agent settings, and the Logic App workflow.
 8. Scheduled knowledge, wiki, and feedback jobs maintain the data plane.

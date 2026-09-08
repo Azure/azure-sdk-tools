@@ -4,22 +4,21 @@
 pipelines/
 ├─ templates/         ← reusable steps; all component pipelines compose these
 └─ orchestrators/
-    ├─ qa-bot-all.yml  ← full-stack provision and deployment
-    └─ <component>/    ← component CI + provision/deploy pipelines
+    ├─ qa-bot-deploy.yml  ← full-stack or component provision and deployment
+    ├─ <component>/       ← component CI pipelines
+    └─ ...               ← specialized layer and data-job pipelines
 ```
 
 ## Composition
 
-Every deployment orchestrator follows the same shape:
+The application deployment pipeline selects either the complete deployment
+sequence or one component sequence:
 
 ```yaml
-extends: /eng/pipelines/templates/stages/1es-redirect.yml
 parameters:
-    stages:
-        - template: provision-with-approval.yml
-        - template: component-deploy-stage.yml
-          parameters:
-              dependsOn: Provision
+        - name: component
+            default: all
+            values: [all, agent-server, function-app, agent, frontend]
 ```
 
 Dev, preview, and production all require a successful infrastructure preview
@@ -39,24 +38,24 @@ hook installs the complete workflow definition and enables it.
 
 ## Component → pipeline map
 
-Each component deployment refreshes its dependency layers, previews and applies
-only its matching infrastructure layer, then deploys that component. The
-environment-wide `qa-bot-all.yml` pipeline provisions every layer before
-remotely building and deploying every component. Provision-only layer pipelines
-remain available for focused changes and use the same preview, approval, and
-apply sequence.
+Each non-`all` component selection refreshes its dependency layers, previews and
+applies only its matching infrastructure layer, then deploys that component.
+`qa-bot-deploy.yml` with `component=all` provisions every layer before remotely
+building and deploying every component. Provision-only layer pipelines remain
+available for focused changes and use the same preview, approval, and apply
+sequence.
 
 | Layer/component                 | Orchestrator                                  | CI                                     |
 | ------------------------------- | --------------------------------------------- | -------------------------------------- |
 | resource-group + shared-resources | `shared-resources/shared-resources.yml`    | n/a                                    |
-| agent                            | `agent/agent.yml`                             | `agent/agent.ci.yml`                   |
-| frontend                         | `frontend/frontend.yml`                       | `frontend/frontend.ci.yml`             |
-| agent-server                     | `agent-server/agent-server.yml`               | built by agent CI                      |
-| function-app                     | `function-app/function-app.yml`               | `function-app/function-app.ci.yml`     |
+| agent                            | `qa-bot-deploy.yml` (`component=agent`)       | `agent/agent.ci.yml`                   |
+| frontend                         | `qa-bot-deploy.yml` (`component=frontend`)    | `frontend/frontend.ci.yml`             |
+| agent-server                     | `qa-bot-deploy.yml` (`component=agent-server`) | built by agent CI                     |
+| function-app                     | `qa-bot-deploy.yml` (`component=function-app`) | `function-app/function-app.ci.yml`    |
 | logic-app                        | `logic-app/logic-app.yml`                     | n/a                                    |
 | knowledge-sync                   | `knowledge-sync/knowledge-sync.yml` (scheduled) | `knowledge-sync/knowledge-sync.ci.yml` |
 | generated wiki                   | `../../azure-sdk-qa-bot-wiki-index/build_wiki.yml` (scheduled) | `../../azure-sdk-qa-bot-wiki-index/ci.yml` |
-| chatbot evolution agent          | `qa-bot-all.yml` for prod or `../../azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` | `agent/agent.ci.yml` |
+| chatbot evolution agent          | `qa-bot-deploy.yml` with `component=all` for prod or `../../azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` | `agent/agent.ci.yml` |
 | feedback/evolution loop          | `../../azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` (scheduled) | `agent/agent.ci.yml` |
 
 Knowledge sync and wiki generation are data jobs, not long-running `azd`

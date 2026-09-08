@@ -1,9 +1,9 @@
 # Rollback Runbook
 
 The deployment does not provide an automated slot or revision rollback. The
-supported code recovery is to rerun the matching orchestrator from a known-good
-source revision, producing a new remote build and reapplying its deployment
-hooks.
+supported code recovery is to rerun `qa-bot-deploy.yml` with the affected
+component from a known-good source revision, producing a new remote build and
+reapplying its deployment hooks.
 
 ## 1. Decide and Contain
 
@@ -20,18 +20,18 @@ delivery, data integrity, or latency regression.
 
 ## 2. Redeploy a Known-good Revision
 
-Queue the matching component orchestrator at the last verified source revision.
-Use the full-stack orchestrator only when the failure crosses component or
-infrastructure contracts.
+Queue `qa-bot-deploy.yml` at the last verified source revision and select the
+affected component. Use `component=all` only when the failure crosses component
+or infrastructure contracts.
 
 | Failure area | Recovery path |
 | --- | --- |
-| Frontend | Run the frontend orchestrator from the known-good revision. Reapply the prior Teams package if its manifest changed. |
-| Agent-server | Run the agent-server orchestrator from the known-good revision. It deploys directly to the production site. |
-| Function App | Run the Function App orchestrator from the known-good revision; its postdeploy hook reapplies the Logic App definition. |
-| Chat agent | Run the agent orchestrator or hosted-agent pipeline from the known-good revision and verify the new active Foundry version. |
+| Frontend | Run with `component=frontend`. Reapply the prior Teams package if its manifest changed. |
+| Agent-server | Run with `component=agent-server`. It deploys directly to the production site. |
+| Function App | Run with `component=function-app`; its postdeploy hook reapplies the Logic App definition. |
+| Chat agent | Run with `component=agent` or use the hosted-agent pipeline, then verify the new active Foundry version. |
 | Evolution agent | Run the production hosted-agent deployment from the known-good revision and verify primary/candidate RBAC. |
-| Logic App | Deploy the Function App from the known-good revision to reapply its workflow, or keep the workflow disabled during investigation. |
+| Logic App | Run with `component=function-app` to reapply its workflow, or keep the workflow disabled during investigation. |
 
 Review and approve the infrastructure preview even during rollback. A prior
 source revision may also contain older Bicep; do not approve unintended

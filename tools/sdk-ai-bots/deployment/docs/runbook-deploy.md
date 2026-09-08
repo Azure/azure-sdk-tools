@@ -5,19 +5,21 @@ Use this runbook for routine deployments after the one-time
 
 ## 1. Select the Deployment Path
 
-Use a component orchestrator for an isolated change and the full-stack
-orchestrator when infrastructure contracts or multiple services change.
+Use the application deployment pipeline with `component=all` when
+infrastructure contracts or multiple services change. Select one component for
+an isolated application change. Shared resources, Logic App, and knowledge sync
+retain specialized pipelines.
 
-| Scope | Pipeline |
-| --- | --- |
-| Full environment | `deployment/pipelines/orchestrators/qa-bot-all.yml` |
-| Shared resources | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` |
-| Agent platform and chat agent | `deployment/pipelines/orchestrators/agent/agent.yml` |
-| Agent-server | `deployment/pipelines/orchestrators/agent-server/agent-server.yml` |
-| Frontend | `deployment/pipelines/orchestrators/frontend/frontend.yml` |
-| Function App | `deployment/pipelines/orchestrators/function-app/function-app.yml` |
-| Logic App | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` |
-| Knowledge sync | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` |
+| Scope | Pipeline | `component` |
+| --- | --- | --- |
+| Full environment | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `all` |
+| Agent platform and chat agent | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `agent` |
+| Agent-server | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `agent-server` |
+| Frontend | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `frontend` |
+| Function App | `deployment/pipelines/orchestrators/qa-bot-deploy.yml` | `function-app` |
+| Shared resources | `deployment/pipelines/orchestrators/shared-resources/shared-resources.yml` | n/a |
+| Logic App | `deployment/pipelines/orchestrators/logic-app/logic-app.yml` | n/a |
+| Knowledge sync | `deployment/pipelines/orchestrators/knowledge-sync/knowledge-sync.yml` | n/a |
 
 Production evolution-agent deployment is included in the full-stack path. Wiki
 generation and feedback processing use their specialized scheduled pipelines.
@@ -35,8 +37,9 @@ generation and feedback processing use their specialized scheduled pipelines.
 
 ## 3. Preview, Approve, and Apply
 
-Queue the selected orchestrator with `environment=dev`, `preview`, or `prod`.
-The pipeline performs these stages:
+Queue the selected pipeline with `environment=dev`, `preview`, or `prod`. For
+`qa-bot-deploy.yml`, also select `component`. The pipeline performs these
+stages:
 
 1. Load the environment suite and authenticate with WIF.
 2. Compile Bicep and validate the selected environment.
@@ -57,8 +60,8 @@ has been implemented.
 
 ## 4. Deploy Application Code
 
-After apply, component pipelines deploy their selected service. The full-stack
-pipeline runs:
+After apply, `qa-bot-deploy.yml` deploys the selected service. With
+`component=all`, it runs:
 
 1. agent-server;
 2. a 10-minute agent-server stabilization wait in production;

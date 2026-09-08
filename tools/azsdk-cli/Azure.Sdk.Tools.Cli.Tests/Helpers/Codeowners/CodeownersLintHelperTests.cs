@@ -322,8 +322,12 @@ internal class CodeownersLintHelperTests
         Assert.That(await RuleIds(Lint(), repo, AiFragment), Does.Contain("LNT-SCHEMA-001"));
     }
 
+    /// <summary>
+    /// The fragment's own directory leads the report. A <c>path: .</c> entry claims it, and it is
+    /// the service-level catch-all, so leaving it out hid the entry most fragments depend on.
+    /// </summary>
     [Test]
-    public async Task DirectoriesUnderTheFragmentAreReportedWithTheirOwners()
+    public async Task TheFragmentDirectoryAndItsSubdirectoriesAreReportedWithTheirOwners()
     {
         using var repo = OwnersTestRepo.FromSpecAssets();
 
@@ -332,7 +336,7 @@ internal class CodeownersLintHelperTests
 
         Assert.That(
             directories.Select(d => d.Directory),
-            Is.EqualTo(new[] { "sdk/ai/Azure.AI.Inference", "sdk/ai/Azure.AI.Projects" }));
+            Is.EqualTo(new[] { "sdk/ai", "sdk/ai/Azure.AI.Inference", "sdk/ai/Azure.AI.Projects" }));
         Assert.That(directories.All(d => d.Owners.Count > 0), Is.True);
     }
 

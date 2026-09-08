@@ -28,36 +28,25 @@ public class CodeownersLintResponse : CommandResponse
     /// </summary>
     public override int ExitCode => TotalViolations == 0 ? base.ExitCode : 1;
 
+    private const string Red = "\u001b[31m";
+    private const string Reset = "\u001b[0m";
+
+    /// <summary>
+    /// Each fragment reports its ownership first and its violations second, in red. Ownership is
+    /// what the file is for; violations are what has to change. The summary lands at the end so the
+    /// counts and the link are the last thing on screen after a long report.
+    /// <para>
+    /// Only reached in plain-text mode. <see cref="Helpers.OutputHelper.Format"/> serializes JSON
+    /// and MCP responses from the properties instead, so no consumer of those sees escape codes.
+    /// </para>
+    /// </summary>
     protected override string Format()
     {
         var sb = new StringBuilder();
-        sb.AppendLine("=== owners.yaml Lint Report ===");
-        sb.AppendLine($"Fragments checked: {Fragments.Count}");
-        sb.AppendLine($"Total violations: {TotalViolations}");
 
         foreach (var fragment in Fragments)
         {
-            sb.AppendLine();
             sb.AppendLine($"--- {fragment.FilePath} ---");
-
-            foreach (var violation in fragment.Violations)
-            {
-                sb.AppendLine($"  [{violation.RuleId}] {violation.Description}");
-                if (!string.IsNullOrEmpty(violation.SourceFile))
-                {
-                    sb.AppendLine($"    At: {violation.SourceFile}");
-                }
-
-                if (!string.IsNullOrEmpty(violation.Detail))
-                {
-                    sb.AppendLine($"    Detail: {violation.Detail}");
-                }
-            }
-
-            if (fragment.Violations.Count == 0)
-            {
-                sb.AppendLine("  No violations.");
-            }
 
             foreach (var directory in fragment.Directories)
             {
@@ -65,14 +54,37 @@ public class CodeownersLintResponse : CommandResponse
                     ? $"  {directory.Directory}: no owners"
                     : $"  {directory.Directory}: {string.Join(", ", directory.Owners)}");
             }
+
+            foreach (var violation in fragment.Violations)
+            {
+                sb.AppendLine(Colorize($"  [{violation.RuleId}] {violation.Description}"));
+                if (!string.IsNullOrEmpty(violation.SourceFile))
+                {
+                    sb.AppendLine(Colorize($"    At: {violation.SourceFile}"));
+                }
+
+                if (!string.IsNullOrEmpty(violation.Detail))
+                {
+                    sb.AppendLine(Colorize($"    Detail: {violation.Detail}"));
+                }
+            }
+
+            sb.AppendLine();
         }
+
+        sb.AppendLine("=== Lint Report ===");
+        sb.AppendLine($"Fragments checked: {Fragments.Count}");
+        sb.AppendLine($"Total violations: {TotalViolations}");
 
         if (TotalViolations > 0)
         {
             sb.AppendLine();
-            sb.AppendLine("See https://aka.ms/azsdk/codeowners for how to fix these.");
+            sb.AppendLine("See https://aka.ms/azsdk/codeowners to learn how to fix these violations");
         }
 
         return sb.ToString().TrimEnd();
     }
+
+    private static string Colorize(string value) =>
+        Environment.GetEnvironmentVariable("NO_COLOR") == null ? $"{Red}{value}{Reset}" : value;
 }

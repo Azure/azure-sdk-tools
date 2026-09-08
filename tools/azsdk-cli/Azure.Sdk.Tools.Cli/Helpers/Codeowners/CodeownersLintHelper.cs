@@ -249,8 +249,10 @@ public class CodeownersLintHelper(
             .OfType<LintViolation>());
 
     /// <summary>
-    /// Reports who owns each immediate subdirectory of the fragment's directory, so a reviewer can
-    /// see the effect of the file rather than reading path expressions. Directories that are not
+    /// Reports who owns the fragment's own directory and each of its immediate subdirectories, so a
+    /// reviewer can see the effect of the file rather than reading path expressions. The fragment's
+    /// own directory leads because that is what a <c>path: .</c> entry claims, and without it the
+    /// service-level catch-all has no visible effect in the report. Directories that are not
     /// packages are included: recognizing a package means knowing five languages' project layouts,
     /// and the answer is useful without it.
     /// </summary>
@@ -264,6 +266,7 @@ public class CodeownersLintHelper(
 
         return
         [
+            Describe(fragment.Directory, fragment, repoRoot),
             .. Directory.EnumerateDirectories(root)
                 .Select(dir => Path.GetRelativePath(repoRoot, dir).Replace('\\', '/'))
                 .OrderBy(dir => dir, StringComparer.Ordinal)

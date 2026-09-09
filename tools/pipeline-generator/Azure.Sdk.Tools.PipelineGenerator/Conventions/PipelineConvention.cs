@@ -399,6 +399,10 @@ namespace PipelineGenerator.Conventions
                 newTrigger.IsCommentRequiredForPullRequest = securePipeline;
                 // Repository-internal PRs require a comment only for secure pipelines (off for CI).
                 newTrigger.IsCommentRequiredForInternalRepoPRs = securePipeline;
+                if (securePipeline)
+                {
+                    newTrigger.CommentOptionInternalRepos = CommentTriggerOption.All;
+                }
 
                 definition.Triggers.Add(newTrigger);
                 hasChanges = true;
@@ -436,17 +440,21 @@ namespace PipelineGenerator.Conventions
                         hasChanges = true;
                     }
                     if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
-                       trigger.Forks.AllowSecrets != securePipeline ||
-                       trigger.Forks.Enabled != true ||
-                       trigger.IsCommentRequiredForPullRequest != securePipeline ||
-                       trigger.IsCommentRequiredForInternalRepoPRs != securePipeline
-                       )
+                        trigger.Forks.AllowSecrets != securePipeline ||
+                        trigger.Forks.Enabled != true ||
+                        trigger.IsCommentRequiredForPullRequest != securePipeline ||
+                        trigger.IsCommentRequiredForInternalRepoPRs != securePipeline ||
+                        (securePipeline && trigger.CommentOptionInternalRepos != CommentTriggerOption.All))
                     {
                         trigger.Forks.AllowSecrets = securePipeline;
                         trigger.Forks.Enabled = true;
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
                         trigger.IsCommentRequiredForPullRequest = securePipeline;
                         trigger.IsCommentRequiredForInternalRepoPRs = securePipeline;
+                        if (securePipeline)
+                        {
+                            trigger.CommentOptionInternalRepos = CommentTriggerOption.All;
+                        }
 
                         hasChanges = true;
                     }

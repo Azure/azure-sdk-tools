@@ -1,5 +1,5 @@
-extern alias AzureIdentity;
 using Azure.Core;
+using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -75,9 +75,9 @@ namespace PipelineGenerator
 
         private TokenCredential GetAzureCredentials()
         {
-            return new AzureIdentity::Azure.Identity.ChainedTokenCredential(
-                new AzureIdentity::Azure.Identity.AzureCliCredential(),
-                new AzureIdentity::Azure.Identity.AzurePowerShellCredential()
+            return new ChainedTokenCredential(
+                new AzureCliCredential(),
+                new AzurePowerShellCredential()
             );
         }
 

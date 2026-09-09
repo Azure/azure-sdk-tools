@@ -14,11 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <!-- Aliased: the ADO 20.278 InteractiveClient pulls Azure.Core 1.53.0, which also defines the
-         Azure.Identity credential types, so alias Azure.Identity to avoid a CS0433 type collision. -->
-    <PackageReference Include="Azure.Identity" Version="1.14.2">
-      <Aliases>AzureIdentity</Aliases>
-    </PackageReference>
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
     <PackageReference Include="Microsoft.TeamFoundation.DistributedTask.WebApi" Version="20.278.0-preview" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="20.278.0-preview" />

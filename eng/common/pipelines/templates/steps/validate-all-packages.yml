@@ -1,3 +1,5 @@
+# Compatibility wrapper: migrate callers to update-package-work-items.yml.
+# Keep this template until downstream language pipelines have migrated.
 parameters:
   - name: ArtifactPath
     type: string
@@ -13,34 +15,9 @@ parameters:
     default: []
 
 steps:
- - ${{ if and(ne(variables['Skip.PackageValidation'], 'true'), and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))) }}:
-    - pwsh: |
-        echo "##vso[task.setvariable variable=SetAsReleaseBuild]false"
-      displayName: "Set as release build"
-      condition: and(succeededOrFailed(), eq(variables['SetAsReleaseBuild'], ''))
-
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: opensource-api-connection
-        scriptType: pscore
-        scriptLocation: inlineScript
-        # PackageInfoFiles example: @('a/file1.json','a/file2.json')
-        inlineScript: |
-          $(Build.SourcesDirectory)/eng/common/scripts/Validate-All-Packages.ps1 `
-            -ArtifactList ('${{ convertToJson(parameters.Artifacts) }}' | ConvertFrom-Json | Select-Object Name) `
-            -ArtifactPath ${{ parameters.ArtifactPath }} `
-            -RepoRoot $(Build.SourcesDirectory) `
-            -APIKey $(azuresdk-apiview-apikey) `
-            -ConfigFileDir '${{ parameters.ConfigFileDir }}' `
-            -BuildDefinition $(System.CollectionUri)$(System.TeamProject)/_build?definitionId=$(System.DefinitionId) `
-            -PipelineUrl $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId) `
-            -IsReleaseBuild $$(SetAsReleaseBuild) `
-            -PackageInfoFiles @('${{ join(''',''', parameters.PackageInfoFiles) }}')
-        workingDirectory: $(Pipeline.Workspace)
-      displayName: Validate packages and update work items
-      continueOnError: true
-      condition: >-
-        and(
-          succeededOrFailed(),
-          not(endsWith(variables['Build.Repository.Name'], '-pr'))
-        )
+  - template: update-package-work-items.yml
+    parameters:
+      ArtifactPath: ${{ parameters.ArtifactPath }}
+      Artifacts: ${{ parameters.Artifacts }}
+      ConfigFileDir: ${{ parameters.ConfigFileDir }}
+      PackageInfoFiles: ${{ parameters.PackageInfoFiles }}

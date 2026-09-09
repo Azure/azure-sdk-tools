@@ -914,8 +914,10 @@ After a PR merges to `main`, the job checks out `main`, runs `generate`, and if 
   worse than opening none, so the job alerts and leaves the committed file alone.
 - **The regeneration PR is reviewed like any other.** It modifies `.github/CODEOWNERS`, which the
   repository-root section assigns to repository maintainers, so it lands in front of the people
-  responsible for the file. It is exempt from gate 1 by virtue of its head branch, and it does not
-  run gate 2 at all because it changes no YAML.
+  responsible for the file. It is exempt from gate 1 because the job opens it as
+  `azure-sdk-automation[bot]` — the exemption is on the author, not the head branch, so naming a
+  branch `codeowners/regenerate` buys a contributor nothing. It does not run gate 2 at all because
+  it changes no YAML.
 
   Because the render depends on the caches, this PR is also where an ownership *removal* becomes
   visible: an owner the caches began rejecting shows up as a deletion in a reviewed diff, attributed

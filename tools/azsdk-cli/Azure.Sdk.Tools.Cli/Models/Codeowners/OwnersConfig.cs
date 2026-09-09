@@ -35,10 +35,11 @@ public class OwnersConfigSettings
     public List<string> AllowedOwnerYamlPaths { get; set; } = [];
 
     /// <summary>
-    /// Every file name a fragment may use, read off the leaves of
-    /// <see cref="AllowedOwnerYamlPaths"/>. A repository may admit more than one spelling; what it
-    /// may not do is let one directory hold two of them, which
-    /// <see cref="OwnersRepositoryLoader.FindFragmentFiles"/> enforces.
+    /// The file name a fragment must use, read off the leaves of
+    /// <see cref="AllowedOwnerYamlPaths"/>. Every glob must end in the same name, which
+    /// <see cref="OwnersYamlLoader"/> enforces when it loads the config, so this is a single-element
+    /// list in practice. It stays a list because the scan takes a set of names and the globs may
+    /// still differ in depth.
     /// </summary>
     [YamlIgnore]
     public IReadOnlyList<string> FragmentFileNames

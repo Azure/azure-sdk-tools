@@ -317,12 +317,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         try
         {
             languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
-            if (languageService != null)
-            {
-                logger.LogInformation("Resolved language service for package path {PackagePath}: {Language}", packagePath, languageService.Language);
-                packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-
-            }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -330,7 +324,24 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
+            logger.LogWarning(ex, "Failed to resolve language service for {PackagePath}", packagePath);
+        }
+
+        if (languageService != null)
+        {
+            logger.LogInformation("Resolved package info for package path {PackagePath}: {Language}", packagePath, languageService.Language);
+            try
+            {
+                packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
+            }
         }
 
         // When spec inputs are out of scope: items that can only be fixed by a spec change

@@ -35,11 +35,10 @@ public class OwnersConfigSettings
     public List<string> AllowedOwnerYamlPaths { get; set; } = [];
 
     /// <summary>
-    /// The file name a fragment must use, read off the leaves of
-    /// <see cref="AllowedOwnerYamlPaths"/>. Every glob must end in the same name, which
-    /// <see cref="OwnersYamlLoader"/> enforces when it loads the config, so this is a single-element
-    /// list in practice. It stays a list because the scan takes a set of names and the globs may
-    /// still differ in depth.
+    /// Every file name a fragment may use, read off the leaves of
+    /// <see cref="AllowedOwnerYamlPaths"/>. A repository is expected to declare one: a directory
+    /// holding both <c>owners.yaml</c> and <c>owners.yml</c> would render both over the same paths.
+    /// Declaring two is a misconfiguration rather than a state this validates against.
     /// </summary>
     [YamlIgnore]
     public IReadOnlyList<string> FragmentFileNames

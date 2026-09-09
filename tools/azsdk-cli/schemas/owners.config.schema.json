@@ -28,7 +28,7 @@
         "allowed-owner-yaml-paths": {
           "type": "array",
           "minItems": 1,
-          "description": "Repo-root-relative globs naming every location a fragment may occupy. A fragment found anywhere else is an error, so ownership cannot be hidden in an unexpected place. Every glob must end in the same literal file name: two spellings would let one directory hold one of each, and both would render over the same paths.",
+          "description": "Repo-root-relative globs naming every location a fragment may occupy. A fragment found anywhere else is an error, so ownership cannot be hidden in an unexpected place. Each glob must end in a literal file name, which is what the fragment scan looks for. Use one file name: a directory holding both owners.yaml and owners.yml would render both over the same paths.",
           "items": { "type": "string", "minLength": 1 }
         },
         "default-section": {

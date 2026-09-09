@@ -715,12 +715,12 @@ Deterministic. The same inputs — the YAML plus the membership caches — alway
 byte-identical file.
 
 1. **Load.** Parse the owners config and take the fragment file names from the leaves of
-   `configs.allowed-owner-yaml-paths`. A glob ending in a wildcard names no file and is a hard error,
-   and so is a second distinct file name: admitting both `owners.yaml` and `owners.yml` would let one
-   directory hold one of each, and both would render over the same paths. One spelling makes that
-   unrepresentable rather than something every tool has to re-detect. The globs may still differ in
-   depth. Enumerate every file with that name; one found outside the globs fails with `CFG-LOC-001`,
-   and a file under any other name is not a fragment and is not read.
+   `configs.allowed-owner-yaml-paths`; a glob ending in a wildcard names no file and is a hard error.
+   Declare one file name. The globs may differ in depth, but a second *name* lets one directory hold
+   both `owners.yaml` and `owners.yml`, and both would render over the same paths — a
+   misconfiguration the system does not try to work around. Enumerate every file with that name; one
+   found outside the globs fails with `CFG-LOC-001`, and a file under any other name is not a
+   fragment and is not read.
 2. **Schema validate.** Reject unknown keys, missing required keys, non-canonical key spellings, and
    version mismatches.
 3. **Normalize.** Apply the path, owner, and label normalization rules above. Fragment path

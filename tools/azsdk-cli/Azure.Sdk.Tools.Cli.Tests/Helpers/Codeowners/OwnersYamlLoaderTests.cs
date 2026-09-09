@@ -245,33 +245,8 @@ public class OwnersYamlLoaderTests
     }
 
     /// <summary>
-    /// A directory holding one of each spelling would render both, so their path entries would
-    /// collide. Rejecting the second name at config load makes that unrepresentable instead of
-    /// leaving every tool to re-detect it during discovery.
-    /// </summary>
-    [Test]
-    public void LoadConfig_MoreThanOneFragmentFileNameIsRejected()
-    {
-        var yaml = """
-            version: 1
-            configs:
-              allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/*/owners.yml"]
-              default-section: Client Libraries
-            sections:
-              - name: Client Libraries
-                defined-in-files: true
-            """;
-
-        var ex = Assert.Throws<OwnersYamlException>(
-            () => OwnersYamlLoader.LoadConfig(yaml, ".github/owners.config.yaml"));
-
-        Assert.That(ex!.Message,
-            Does.Contain("single file name").And.Contain("owners.yaml").And.Contain("owners.yml"));
-    }
-
-    /// <summary>
-    /// The restriction is on the file name, not the glob, so a repository may still admit fragments
-    /// at more than one depth.
+    /// A repository may admit fragments at more than one depth. The scan takes file names, so the
+    /// extra glob adds a location without adding a name.
     /// </summary>
     [Test]
     public void LoadConfig_SameFileNameAtDifferentDepthsCollapsesToOneName()

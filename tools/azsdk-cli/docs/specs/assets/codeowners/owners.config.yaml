@@ -19,8 +19,9 @@ version: 1
 configs:
   # Only fragment files matching these globs are read. An owners.yaml found outside these
   # globs is a validation error, so ownership cannot be hidden in an unexpected location.
-  # Every glob must end in the same file name: two spellings would let one directory hold
-  # one of each, and both would render over the same paths.
+  # Each glob must end in a literal file name, which is what the scan looks for. Use one
+  # file name: a directory holding both owners.yaml and owners.yml would render both over
+  # the same paths.
   allowed-owner-yaml-paths:
     - "sdk/*/owners.yaml"
 

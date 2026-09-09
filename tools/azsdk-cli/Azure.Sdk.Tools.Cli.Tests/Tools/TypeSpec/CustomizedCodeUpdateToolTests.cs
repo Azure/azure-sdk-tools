@@ -2048,7 +2048,8 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task SpecInputsScope_InvalidPackageProjectPath_NotReturnInvalidInput()
     {
         // SpecInputs scope, package path is optional. The tool should not fail fast with InvalidInput if the package path is invalid.
-        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
+        var gitHelper = MockGitHelper();
+        var (tool, _) = CreateTool(gitHelper: gitHelper);
         var pkg = "invalid-path";
         var tspDir = CreateTempDir();
 
@@ -2067,7 +2068,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // CustomCode scope edits local custom code, which requires a package path to locate the customization files.
         // Invalid package path must fail fast with InvalidInput.
-        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
         var pkg = "invalid-path";
 
         var result = await tool.UpdateAsync(
@@ -2086,7 +2087,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // All scope edits both spec inputs and local custom code, which requires a package path to locate the customization files.
         // Invalid package path must fail fast with InvalidInput.
-        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
         var pkg = "invalid-path";
 
         var result = await tool.UpdateAsync(
@@ -2105,7 +2106,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // SpecInputs scope edits local spec inputs, package path is optional.
         // invalid package path will not cause failure. and the typespec customization will resolve the request.
-        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
         var pkg = "invalid-path";
         var tspDir = CreateTempDir();
         var result = await tool.UpdateAsync(
@@ -2121,7 +2122,36 @@ public class CustomizedCodeUpdateToolAutoTests
     // ========================================================================
     // Mock helpers
     // ========================================================================
+    private static Mock<IGitHelper> MockGitHelper()
+    {
+        var gitHelper = new Mock<IGitHelper>();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns<string, CancellationToken>((path, ct) =>
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("Path cannot be null or empty", nameof(path));
+            }
+            if (!Directory.Exists(path))
+            {
+                throw new InvalidOperationException($"The directory '{path}' does not exist.");
+            }
+            return Task.FromResult("azure-sdk-for-java");
+        });
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns<string, CancellationToken>((path, ct) =>
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("Path cannot be null or empty", nameof(path));
+            }
+            if (!Directory.Exists(path))
+            {
+                throw new InvalidOperationException($"The directory '{path}' does not exist.");
+            }
+            return Task.FromResult("/mock/repo/root");
+        });
 
+        return gitHelper;
+    }
     /// <summary>
     /// Flexible language service mock where all behaviors can be configured via constructor.
     /// </summary>

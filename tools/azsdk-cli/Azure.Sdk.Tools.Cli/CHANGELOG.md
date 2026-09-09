@@ -1,10 +1,24 @@
 # Release History
 
-## 0.6.42 (2026-09-01)
+## 0.6.45 (2026-09-08)
+
+### Bugs Fixed
+
+- C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
+
+## 0.6.44 (2026-09-08)
+
+### Breaking Changes
+
+- Product onboarding: removed the `--needs-sdk` option, renamed `N/A` to `I don't know` for `--data-plane` and `--management-plane` options.
+
+## 0.6.43 (2026-09-03)
 
 ### Breaking Changes
 
 - Moved `product-onboarding sync` CLI command to become `release-plan onboard-product`.
+
+## 0.6.42 (2026-09-01)
 
 ### Bugs Fixed
 

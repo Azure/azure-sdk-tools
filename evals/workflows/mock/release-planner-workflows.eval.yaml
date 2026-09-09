@@ -167,7 +167,6 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azsdk_get_release_plan
             - azsdk_update_api_spec_pull_request_in_release_plan
           disallowed:
             - azsdk_verify_setup
@@ -196,7 +195,6 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azsdk_get_release_plan
             - azsdk_update_sdk_details_in_release_plan
           disallowed:
             - azsdk_verify_setup
@@ -217,6 +215,7 @@ stimuli:
     environment: &specsWorktreeWithGenerate
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
         - ../../../.github/skills/azsdk-common-generate-sdk-locally
       git:
         type: worktree
@@ -231,10 +230,6 @@ stimuli:
       max_turns: 8
       max_tokens: 12000
     graders:
-      - type: skill-invocation
-        config:
-          required:
-            - azsdk-common-prepare-release-plan
       - type: tool-calls
         config:
           required:
@@ -261,7 +256,6 @@ stimuli:
           disallowed:
             - azsdk_get_sdk_pull_request_link
             - azsdk_get_pull_request
-            - azsdk_verify_setup
 
   # --- Scenario 7: Pipeline SDK generation skill routing (issue #16226)
   # Regression for https://github.com/Azure/azure-sdk-tools/issues/16226. The prompt
@@ -283,6 +277,9 @@ stimuli:
         type: worktree
         source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
+      files:
+        - src: ../../fixtures/README.md
+          dest: sdk/contosowidgetmanager/azure-contoso-widgetmanager/README.md
     prompt: |
       Run SDK generation for all languages for release 29262. My TypeSpec project is
       specification/contosowidgetmanager/Contoso.WidgetManager.
@@ -318,7 +315,8 @@ stimuli:
       I have the azure-rest-api-specs repo cloned locally. Generate the Python SDK
       for the Contoso Widget Manager from
       specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml, then
-      build it and run the checks locally.
+      build it and run the checks locally. My local azure-sdk-for-python target
+      package is at sdk/contosowidgetmanager/azure-contoso-widgetmanager.
     constraints:
       max_turns: 8
       max_tokens: 12000

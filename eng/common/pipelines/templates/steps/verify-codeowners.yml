@@ -1,25 +1,17 @@
 parameters:
-  - name: SourceRootPath
-    type: string
-    default: '$(System.DefaultWorkingDirectory)'
   - name: ArtifactPath
     type: string
     default: $(Build.ArtifactStagingDirectory)/PackageInfo
   - name: Artifacts
-    # Compatibility: Removing the Artifacts param breaks eng/common. Keeping it
-    # here for now to avoid breaking changes. This can be removed once the .NET
+    # Compatibility: Removing the Artifacts param breaks eng/common. Keeping it 
+    # here for now to avoid breaking changes. This can be removed once the .NET 
     # invocation of this template is updated to omit Artifacts
     type: object
     default: []
-  # Opt in to the pull request gates below. A repository that has not migrated to ownership YAML
-  # leaves this false: .github/CODEOWNERS is still hand maintained there, so rejecting hand edits
-  # would block its normal workflow.
   - name: EnablePrValidation
     type: boolean
     default: false
   - name: DiffDirectory
-    # Compatibility: the pull request gates below work off the CODEOWNERS and ownership YAML diffs
-    # directly, so nothing stages a diff artifact anymore and nothing reads this.
     type: string
     default: $(Build.ArtifactStagingDirectory)/CodeownersPrDiff
   - name: Repo
@@ -33,38 +25,45 @@ parameters:
       - data
       - functions
       - datamovement
-  # Comma separated list of emails allowed to skip codeowners validation. User
-  # must queue the pipeline manually with the 'Skip.VerifyCodeowners' variable
-  # set to 'true'.
+  # Comma separated list of Microsoft emails allowed to skip codeowners
+  # validation on manually queued builds. Build.RequestedForEmail is empty on
+  # pull request builds, so use AllowSkipAliases for those.
   - name: AllowSkipEmails
     type: string
     default: ''
+  # Comma separated list of GitHub aliases (logins) allowed to skip codeowners
+  # validation on pull request builds. Matched against the GitHub login of the
+  # pull request author. Pull requests opened by a coding agent report the agent
+  # as the author, so they are not exempt.
   - name: AllowSkipAliases
-    # Compatibility: accepted so existing callers keep parsing. Set-VerifyCodeownersSkip.ps1 in this
-    # repository does not read aliases yet, so passing this currently has no effect.
     type: string
     default: ''
 
 steps:
-  - task: PowerShell@2
-    displayName: Evaluate Codeowners Skip
-    condition: succeeded()
-    inputs:
-      pwsh: true
-      filePath: ${{ parameters.SourceRootPath }}/eng/common/scripts/Set-VerifyCodeownersSkip.ps1
-      arguments: >-
-        -RequestedForEmail '$(Build.RequestedForEmail)'
-        -SkipVerifyCodeowners '$(Skip.VerifyCodeowners)'
-        -AdditionalSkipEmails '${{ parameters.AllowSkipEmails }}'
-      workingDirectory: ${{ parameters.SourceRootPath }}
-
   - ${{ if and(eq(variables['Build.Reason'], 'PullRequest'), eq(parameters.EnablePrValidation, true)) }}:
-    # .github/CODEOWNERS is generated from ownership YAML, so a hand edit is either lost on the next
-    # render or silently diverges from the YAML that is supposed to be the source of truth. This runs
-    # ahead of the ownership-YAML steps below and outside their guard: a repository that opts in to
-    # these gates has migrated, and this check needs no CLI.
+    - task: PowerShell@2
+      displayName: Evaluate Codeowners Skip
+      condition: succeeded()
+      inputs:
+        pwsh: true
+        filePath: $(Build.SourcesDirectory)/eng/common/scripts/Set-VerifyCodeownersSkip.ps1
+        arguments: >-
+          -BuildReason '$(Build.Reason)'
+          -Repo '${{ parameters.Repo }}'
+          -PullRequestNumber '$(System.PullRequest.PullRequestNumber)'
+          -AdditionalSkipAliases '${{ parameters.AllowSkipAliases }}'
+        workingDirectory: $(Build.SourcesDirectory)
+
+    # Only meaningful once a repository generates .github/CODEOWNERS from ownership YAML. Until then
+    # the file is hand maintained and this step stays quiet. It needs no CLI, so it runs ahead of the
+    # install below.
     - pwsh: |
-        $scriptPath = [System.IO.Path]::Combine("${{ parameters.SourceRootPath }}", "eng", "common", "scripts", "get-changedfiles.ps1")
+        if (!(Test-Path ".github/owners.config.yaml")) {
+          Write-Host "This repository does not generate CODEOWNERS from ownership YAML."
+          exit 0
+        }
+
+        $scriptPath = [System.IO.Path]::Combine("$(Build.SourcesDirectory)", "eng", "common", "scripts", "get-changedfiles.ps1")
         try {
           $changedFiles = & $scriptPath `
             -DiffPath ".github/CODEOWNERS" `
@@ -87,7 +86,7 @@ steps:
         # The render is published by automation, which is the one author allowed to touch the
         # generated file.
         $prNumber = "$(System.PullRequest.PullRequestNumber)"
-        $repoName = "$(Build.Repository.Name)"
+        $repoName = "${{ parameters.Repo }}"
         $prUrl = "https://api.github.com/repos/$repoName/pulls/$prNumber"
         $prData = Invoke-RestMethod -Uri $prUrl -MaximumRetryCount 10 -RetryIntervalSec 6
         $prAuthor = $prData.user.login
@@ -107,12 +106,40 @@ steps:
         Write-Host "See https://aka.ms/azsdk/codeowners"
         exit 1
       displayName: 'Block direct CODEOWNERS edits'
-      workingDirectory: ${{ parameters.SourceRootPath }}
+      workingDirectory: $(Build.SourcesDirectory)
       condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
 
-    # Ownership YAML is not covered by the release check below: a change to sdk/<service>/owners.yaml
-    # produces no package artifacts, so nothing downstream would look at it. Lint is what catches an
-    # invalid owner before it is merged.
+    - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+      parameters:
+        Condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
+
+    - task: PowerShell@2
+      displayName: Generate PR Diff for Codeowners
+      condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
+      inputs:
+        pwsh: true
+        filePath: $(Build.SourcesDirectory)/eng/common/scripts/Generate-PR-Diff.ps1
+        arguments: >-
+          -ArtifactPath '${{ parameters.DiffDirectory }}'
+          -TargetPath '$(Build.SourcesDirectory)'
+        workingDirectory: $(Build.SourcesDirectory)
+
+    - task: PowerShell@2
+      displayName: Verify Codeowners
+      condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
+      inputs:
+        pwsh: true
+        filePath: $(Build.SourcesDirectory)/eng/common/scripts/Test-CodeownersForArtifacts.ps1
+        arguments: >-
+          -AzsdkPath '$(AZSDK)'
+          -PackageInfoDirectory '${{ parameters.ArtifactPath }}'
+          -SdkTypes ${{ join(',', parameters.SdkTypes) }}
+          -Repo '${{ parameters.Repo }}'
+          -PrDiffFile '${{ parameters.DiffDirectory }}/diff.json'
+        workingDirectory: $(Build.SourcesDirectory)
+
+    # A change to sdk/<service>/owners.yaml produces no package artifacts, so the artifact check
+    # above never looks at it. Lint is what catches an invalid owner before it merges.
     - pwsh: |
         if (!(Test-Path ".github/owners.config.yaml")) {
           Write-Host "This repository does not use ownership YAML yet."
@@ -120,7 +147,7 @@ steps:
           exit 0
         }
 
-        $scriptPath = [System.IO.Path]::Combine("${{ parameters.SourceRootPath }}", "eng", "common", "scripts", "get-changedfiles.ps1")
+        $scriptPath = [System.IO.Path]::Combine("$(Build.SourcesDirectory)", "eng", "common", "scripts", "get-changedfiles.ps1")
         try {
           # A single pathspec, so match both owners.yaml fragments and the repo-level config and
           # filter the result below rather than diffing twice.
@@ -149,13 +176,8 @@ steps:
         $ownershipFiles | ForEach-Object { Write-Host "    $_" }
         Write-Host "##vso[task.setvariable variable=ShouldLintCodeowners]true"
       displayName: 'Check if ownership YAML changed'
-      workingDirectory: ${{ parameters.SourceRootPath }}
+      workingDirectory: $(Build.SourcesDirectory)
       condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
-
-    - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
-      parameters:
-        SourceRootPath: ${{ parameters.SourceRootPath }}
-        Condition: and(succeeded(), eq(variables['ShouldLintCodeowners'], 'true'))
 
     # Every fragment, not just the changed ones. The config carries the owner minimums, so a change
     # to it invalidates fragments nobody touched, and the whole set is what makes the repository-wide
@@ -163,35 +185,43 @@ steps:
     #
     # No credential: lint reads the membership caches from anonymously readable blob storage.
     - pwsh: |
-        & "$(AZSDK)" config codeowners lint-fragments --repo-root "${{ parameters.SourceRootPath }}"
+        & "$(AZSDK)" config codeowners lint-fragments --repo-root "$(Build.SourcesDirectory)"
 
         if ($LASTEXITCODE) {
           Write-Host "##vso[task.logissue type=error]Ownership YAML failed lint. See the violations above."
           exit 1
         }
       displayName: 'Lint ownership YAML'
-      workingDirectory: ${{ parameters.SourceRootPath }}
+      workingDirectory: $(Build.SourcesDirectory)
       condition: and(succeeded(), eq(variables['ShouldLintCodeowners'], 'true'))
 
   - ${{ elseif eq(variables['Build.Reason'], 'Manual') }}:
+    - task: PowerShell@2
+      displayName: Evaluate Codeowners Skip
+      condition: succeeded()
+      inputs:
+        pwsh: true
+        filePath: $(Build.SourcesDirectory)/eng/common/scripts/Set-VerifyCodeownersSkip.ps1
+        arguments: >-
+          -RequestedForEmail '$(Build.RequestedForEmail)'
+          -SkipVerifyCodeowners '$(Skip.VerifyCodeowners)'
+          -BuildReason '$(Build.Reason)'
+          -AdditionalSkipEmails '${{ parameters.AllowSkipEmails }}'
+        workingDirectory: $(Build.SourcesDirectory)
+
     - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
       parameters:
-        SourceRootPath: ${{ parameters.SourceRootPath }}
         Condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
 
-    # A release is the last point where bad ownership is still cheap to fix, so every package being
-    # released is checked against the membership caches for both path owners and label owners. This
-    # asks about the packages in the build rather than the files in a diff, which is why it is a
-    # separate check from the lint above and not a special case of it.
     - task: PowerShell@2
       displayName: Verify Codeowners
       condition: and(succeeded(), ne(variables['ShouldSkipVerifyCodeowners'], 'true'))
       inputs:
         pwsh: true
-        filePath: ${{ parameters.SourceRootPath }}/eng/common/scripts/Test-CodeownersForArtifacts.ps1
+        filePath: $(Build.SourcesDirectory)/eng/common/scripts/Test-CodeownersForArtifacts.ps1
         arguments: >-
           -AzsdkPath '$(AZSDK)'
           -PackageInfoDirectory '${{ parameters.ArtifactPath }}'
           -SdkTypes ${{ join(',', parameters.SdkTypes) }}
           -Repo '${{ parameters.Repo }}'
-        workingDirectory: ${{ parameters.SourceRootPath }}
+        workingDirectory: $(Build.SourcesDirectory)

@@ -45,9 +45,15 @@ public class PackageMarkReleasedResponse : CommandResponse
 
     public override string ToString()
     {
-        string output = Format().TrimEnd();
-        return SupportChannel == null
-            ? output
-            : $"{output}{Environment.NewLine}{SupportChannel}";
+        List<string> messages = [Format().TrimEnd()];
+        if (PermissionGuidance is { } permissionGuidance)
+        {
+            messages.Add(permissionGuidance);
+        }
+        if (SupportChannel is { } supportChannel)
+        {
+            messages.Add(supportChannel);
+        }
+        return string.Join(Environment.NewLine, messages);
     }
 }

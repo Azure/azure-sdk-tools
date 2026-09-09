@@ -13,7 +13,12 @@ public enum Status
 
 public abstract class CommandResponse
 {
+    private const string AzureDevOpsAccessDeniedCode = "TF215106";
     private int? exitCode = null;
+
+    public static readonly string AzureDevOpsAccessRequiredMessage =
+        "Azure DevOps permission is required for this operation. Join Azure SDK Partners to request access: https://aka.ms/azsdk/access";
+
     [JsonIgnore]
     public virtual int ExitCode
     {
@@ -71,7 +76,18 @@ public abstract class CommandResponse
     [JsonPropertyName("support_channel")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
-    
+
+    /// <summary>
+    /// Permission guidance for Azure DevOps access failures.
+    /// </summary>
+    [JsonPropertyName("permission_guidance")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual string? PermissionGuidance =>
+        HasAzureDevOpsAccessDeniedError() ? AzureDevOpsAccessRequiredMessage : null;
+
+    private bool HasAzureDevOpsAccessDeniedError() =>
+        ResponseError?.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase) == true ||
+        ResponseErrors?.Any(error => error.Contains(AzureDevOpsAccessDeniedCode, StringComparison.OrdinalIgnoreCase)) == true;
 
     protected abstract string Format();
 
@@ -92,6 +108,11 @@ public abstract class CommandResponse
         foreach (var error in ResponseErrors ?? [])
         {
             messages.Add("[ERROR] " + error);
+        }
+
+        if (PermissionGuidance is { } permissionGuidance)
+        {
+            messages.Add(permissionGuidance);
         }
 
         if (NextSteps?.Count > 0)

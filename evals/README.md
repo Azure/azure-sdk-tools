@@ -97,7 +97,7 @@ but their primary assertion is still the underlying workflow:
 Every scenario above pins `skill-invocation`/`tool-calls` graders to the
 specific `turn:` that owns the assertion. Per-turn grader scoping is designed
 to be generic across every built-in grader, 0-based to match the `turns:`
-array index ([microsoft/vally#481](https://github.com/microsoft/vally/issues/481));
+array index;
 routing/tool-use graders turn-scope correctly here. `output-contains`/
 `output-matches` graders are asserted session-wide instead — in local testing
 they did not reliably isolate a single turn's content (see the comment in

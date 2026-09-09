@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
+
 ### Breaking Changes
 
 ### Bugs Fixed

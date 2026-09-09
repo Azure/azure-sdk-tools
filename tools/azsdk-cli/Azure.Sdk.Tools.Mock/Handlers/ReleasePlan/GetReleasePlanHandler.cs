@@ -17,13 +17,17 @@ public class GetReleasePlanHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var workItemId = arguments?.GetValueOrDefault("workItem")?.ToString() ?? "0";
+        var workItemId = arguments?.GetValueOrDefault("workItemId")?.ToString()
+            ?? arguments?.GetValueOrDefault("workItem")?.ToString()
+            ?? "0";
+        var releasePlanId = arguments?.GetValueOrDefault("releasePlanId")?.ToString() ?? "0";
+        var specPullRequestUrl = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString() ?? "";
 
-        return workItemId switch
-        {
-            "35000" => ContosoReleasePlanResponse(),
-            _ => MockToolFactory.GetDefaultResponse()
-        };
+        return workItemId == "35000"
+            || releasePlanId == "50001"
+            || specPullRequestUrl == "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+            ? ContosoReleasePlanResponse()
+            : MockToolFactory.GetDefaultResponse();
     }
 
     private static ReleasePlanResponse ContosoReleasePlanResponse() => new()
@@ -31,6 +35,14 @@ public class GetReleasePlanHandler : IMockToolHandler
         TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
         PackageType = SdkType.Dataplane,
         Message = "Release plan found",
+        Warnings =
+        [
+            $"Release plan 49999 ({ReleasePlanWorkItem.DashboardBaseUrl}49999) is past due. Its target release month was May 2026."
+        ],
+        NextSteps =
+        [
+            "Either postpone the past-due plan by updating its target release month, or abandon it and record the reason in the release plan dashboard."
+        ],
         ReleasePlanDetails = new ReleasePlanWorkItem
         {
             WorkItemId = 35000,

@@ -969,6 +969,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.IsNull(result, "Should return null when API version is empty");
         }
 
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationWhileMapping()
+        {
+            var releasePlanWorkItem = CreateReleasePlanWorkItem(100, "In Progress");
+            releasePlanWorkItem.Fields["Custom.ApiSpecProjectPath"] = "specification/contoso/Contoso.Management";
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management",
+                    ct: cts.Token));
+        }
+
         #endregion
         #region TestDevOpsConnection
 
@@ -1099,6 +1114,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled<WorkItem>(cancellationToken);
+                }
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
                     return Task.FromResult(workItem);

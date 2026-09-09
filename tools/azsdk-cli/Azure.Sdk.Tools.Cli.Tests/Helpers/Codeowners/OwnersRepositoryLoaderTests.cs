@@ -27,10 +27,6 @@ internal class OwnersRepositoryLoaderTests
     private static OwnersRepository Load(OwnersTestRepo repo) =>
         OwnersRepositoryLoader.Load(repo.Root, []);
 
-    /// <summary>Narrows the reference config to one spelling.</summary>
-    private static string OnlyYamlSpelling(string config) =>
-        config.Replace("    - \"sdk/*/owners.yml\"\n", "");
-
     [Test]
     public void FragmentsAreDiscoveredUnderTheConfiguredFileName()
     {
@@ -42,44 +38,14 @@ internal class OwnersRepositoryLoaderTests
     }
 
     /// <summary>
-    /// Both would render, so the directory's path entries would collide and which file governs it
-    /// would depend on the order a reader looked in.
-    /// </summary>
-    [Test]
-    public void TwoFragmentsInOneDirectoryAreFatal()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.Write("sdk/ai/owners.yml", Fragment);
-
-        var ex = Assert.Throws<OwnersYamlException>(() => Load(repo));
-
-        Assert.That(ex!.Message,
-            Does.Contain("sdk/ai/owners.yaml").And.Contain("sdk/ai/owners.yml").And.Contain("only one"));
-    }
-
-    /// <summary>
-    /// The rule is per-directory, so a repository admitting both spellings may use either, as long as
-    /// no directory uses both.
-    /// </summary>
-    [Test]
-    public void DifferentSpellingsInDifferentDirectoriesAreBothDiscovered()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.Write("sdk/tables/owners.yml", Fragment);
-
-        Assert.That(
-            Load(repo).Fragments.Select(f => f.FilePath),
-            Is.EqualTo(new[] { "sdk/ai/owners.yaml", "sdk/openai/owners.yaml", "sdk/tables/owners.yml" }));
-    }
-
-    /// <summary>
-    /// A spelling the config does not admit is not a fragment, so it cannot collide with one. Being
-    /// unread is the point of not declaring it.
+    /// The config names one spelling, so a file under any other name is not a fragment at all. It is
+    /// not read and not reported: declaring the name is what makes a file ownership, and this one
+    /// does not carry it.
     /// </summary>
     [Test]
     public void SpellingTheConfigDoesNotAdmitIsIgnored()
     {
-        using var repo = OwnersTestRepo.FromSpecAssets(OnlyYamlSpelling);
+        using var repo = OwnersTestRepo.FromSpecAssets();
         repo.Write("sdk/ai/owners.yml", Fragment);
 
         Assert.That(
@@ -102,25 +68,6 @@ internal class OwnersRepositoryLoaderTests
 
         Assert.That(errors.Select(e => e.Code), Does.Contain("CFG-LOC-001"));
         Assert.That(repository.Fragments.Select(f => f.FilePath), Does.Not.Contain("eng/owners.yaml"));
-    }
-
-    /// <summary>
-    /// Outside the allowed globs nothing is read, so a pair there is not ambiguous with anything.
-    /// It stays the reported <c>CFG-LOC-001</c> it already was rather than becoming fatal.
-    /// </summary>
-    [Test]
-    public void TwoFragmentsInOneDirectoryOutsideTheAllowedGlobsAreReportedRatherThanFatal()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.Write("eng/owners.yaml", Fragment);
-        repo.Write("eng/owners.yml", Fragment);
-
-        var errors = new List<OwnersValidationError>();
-        var repository = OwnersRepositoryLoader.Load(repo.Root, errors);
-
-        Assert.That(errors.Count(e => e.Code == "CFG-LOC-001"), Is.EqualTo(2));
-        Assert.That(repository.Fragments.Select(f => f.FilePath),
-            Is.EqualTo(new[] { "sdk/ai/owners.yaml", "sdk/openai/owners.yaml" }));
     }
 
     [Test]

@@ -3,6 +3,57 @@ parameters:
 
 steps:
   - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+    # .github/CODEOWNERS is generated from ownership YAML, so a hand edit is either lost on the next
+    # render or silently diverges from the YAML that is supposed to be the source of truth. This runs
+    # ahead of the ownership-YAML steps below and outside their guard: a repository that has not
+    # migrated yet still has a CODEOWNERS worth protecting.
+    - pwsh: |
+        $scriptPath = [System.IO.Path]::Combine("${{ parameters.SourceRootPath }}", "eng", "common", "scripts", "get-changedfiles.ps1")
+        try {
+          $changedFiles = & $scriptPath `
+            -DiffPath ".github/CODEOWNERS" `
+            -DiffFilterType ''
+
+          if ($LASTEXITCODE -gt 1) {
+            Write-Host "git diff returned exit code $LASTEXITCODE, which indicates an error. Output: $changedFiles"
+            exit 1
+          }
+        } catch {
+          Write-Host "Error running get-changedfiles.ps1: $_"
+          exit 1
+        }
+
+        if (!$changedFiles) {
+          Write-Host "CODEOWNERS file has not changed."
+          exit 0
+        }
+
+        # The render is published by automation, which is the one author allowed to touch the
+        # generated file.
+        $prNumber = "$(System.PullRequest.PullRequestNumber)"
+        $repoName = "$(Build.Repository.Name)"
+        $prUrl = "https://api.github.com/repos/$repoName/pulls/$prNumber"
+        $prData = Invoke-RestMethod -Uri $prUrl -MaximumRetryCount 10 -RetryIntervalSec 6
+        $prAuthor = $prData.user.login
+        Write-Host "PR author: $prAuthor"
+
+        if ($prAuthor -ieq 'azure-sdk-automation[bot]') {
+          Write-Host "PR opened by azure-sdk-automation[bot]. CODEOWNERS may be updated."
+          exit 0
+        }
+
+        Write-Host "##vso[task.logissue type=error].github/CODEOWNERS is a generated file and was modified by hand."
+        Write-Host ""
+        Write-Host "Revert the change and edit the owners YAML instead:"
+        Write-Host "    .github/owners.config.yaml   repository-wide sections and static entries"
+        Write-Host "    sdk/<service>/owners.yaml    per-service ownership"
+        Write-Host ""
+        Write-Host "See https://aka.ms/azsdk/codeowners"
+        exit 1
+      displayName: 'Block direct CODEOWNERS edits'
+      workingDirectory: ${{ parameters.SourceRootPath }}
+      condition: and(succeeded(), ne(variables['Skip.VerifyCodeownersEdits'], 'true'))
+
     # Ownership YAML is not covered by check-package: a change to sdk/<service>/owners.yaml
     # produces no package artifacts, so nothing downstream would look at it. Lint is what
     # catches an invalid owner before it is merged.

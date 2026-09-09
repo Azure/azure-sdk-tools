@@ -24,8 +24,8 @@ public class OwnersYamlLoaderTests
         Assert.Multiple(() =>
         {
             Assert.That(config.Version, Is.EqualTo(1));
-            Assert.That(config.Configs.AllowedOwnerYamlPaths, Is.EqualTo(new[] { "sdk/*/owners.yaml", "sdk/*/owners.yml" }));
-            Assert.That(config.Configs.FragmentFileNames, Is.EqualTo(new[] { "owners.yaml", "owners.yml" }));
+            Assert.That(config.Configs.AllowedOwnerYamlPaths, Is.EqualTo(new[] { "sdk/*/owners.yaml" }));
+            Assert.That(config.Configs.FragmentFileNames, Is.EqualTo(new[] { "owners.yaml" }));
             Assert.That(config.Configs.DefaultSection, Is.EqualTo("Client Libraries"));
             Assert.That(config.Configs.Output, Is.EqualTo(".github/CODEOWNERS"));
             Assert.That(config.Configs.MinimumPathOwners, Is.EqualTo(2));
@@ -245,11 +245,12 @@ public class OwnersYamlLoaderTests
     }
 
     /// <summary>
-    /// A repository may spell its fragments more than one way; the rule is per-directory, so the
-    /// same name at different depths is unremarkable.
+    /// A directory holding one of each spelling would render both, so their path entries would
+    /// collide. Rejecting the second name at config load makes that unrepresentable instead of
+    /// leaving every tool to re-detect it during discovery.
     /// </summary>
     [Test]
-    public void LoadConfig_MoreThanOneFragmentFileNameIsAllowed()
+    public void LoadConfig_MoreThanOneFragmentFileNameIsRejected()
     {
         var yaml = """
             version: 1
@@ -261,11 +262,17 @@ public class OwnersYamlLoaderTests
                 defined-in-files: true
             """;
 
-        var config = OwnersYamlLoader.LoadConfig(yaml, ".github/owners.config.yaml");
+        var ex = Assert.Throws<OwnersYamlException>(
+            () => OwnersYamlLoader.LoadConfig(yaml, ".github/owners.config.yaml"));
 
-        Assert.That(config.Configs.FragmentFileNames, Is.EqualTo(new[] { "owners.yaml", "owners.yml" }));
+        Assert.That(ex!.Message,
+            Does.Contain("single file name").And.Contain("owners.yaml").And.Contain("owners.yml"));
     }
 
+    /// <summary>
+    /// The restriction is on the file name, not the glob, so a repository may still admit fragments
+    /// at more than one depth.
+    /// </summary>
     [Test]
     public void LoadConfig_SameFileNameAtDifferentDepthsCollapsesToOneName()
     {

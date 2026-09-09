@@ -168,7 +168,7 @@ the tooling.
 version: 1
 
 configs:
-  allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/*/owners.yml"]
+  allowed-owner-yaml-paths: ["sdk/*/owners.yaml"]
   default-section: Client Libraries
   output: .github/CODEOWNERS
 
@@ -715,17 +715,18 @@ Deterministic. The same inputs — the YAML plus the membership caches — alway
 byte-identical file.
 
 1. **Load.** Parse the owners config and take the fragment file names from the leaves of
-   `configs.allowed-owner-yaml-paths`; a glob ending in a wildcard names no file and is a hard error.
-   Enumerate every file with one of those names. Two fragments in the *same directory* (say
-   `sdk/ai/owners.yaml` and `sdk/ai/owners.yml`) is a hard error: both would render, so which one
-   governs the directory would come down to the order a reader looked in. A file with a fragment name
-   outside the globs fails with `CFG-LOC-001`.
+   `configs.allowed-owner-yaml-paths`. A glob ending in a wildcard names no file and is a hard error,
+   and so is a second distinct file name: admitting both `owners.yaml` and `owners.yml` would let one
+   directory hold one of each, and both would render over the same paths. One spelling makes that
+   unrepresentable rather than something every tool has to re-detect. The globs may still differ in
+   depth. Enumerate every file with that name; one found outside the globs fails with `CFG-LOC-001`,
+   and a file under any other name is not a fragment and is not read.
 2. **Schema validate.** Reject unknown keys, missing required keys, non-canonical key spellings, and
    version mismatches.
 3. **Normalize.** Apply the path, owner, and label normalization rules above. Fragment path
    containment and expression validity (`CFG-PATH-001` / `CFG-PATH-002` / `CFG-PATH-003`) are
    enforced here.
-4. **Bind sections.** Resolve each entry's target section: entry `section` → file `section` →
+4. **Bind sections.** Resolve each entry's target section: entry `section` →
    `configs.default-section` for fragments; the declaring section for static entries. A fragment
    entry targeting a missing section, or one without `defined-in-files: true`, fails with
    `CFG-SEC-001`.
@@ -861,10 +862,12 @@ change ownership YAML only and never contain the rendered file.
 That gives three enforcement points with distinct jobs.
 
 **Gate 1 — hand-edit rejection.** Any pull request whose diff includes `.github/CODEOWNERS` and that
-did not come from the regeneration job fails immediately, with a message pointing at
-<https://aka.ms/azsdk/codeowners>. This is a check on the changed-file list and the PR head branch;
-it needs no rendering and runs before anything else, so a contributor who edits the generated file
-by hand gets one unambiguous error instead of a byte-level diff they cannot act on.
+was not opened by `azure-sdk-automation[bot]` fails immediately, with a message pointing at
+<https://aka.ms/azsdk/codeowners>. This is a check on the changed-file list and the PR author; it
+needs no rendering and no CLI, and runs before anything else, so a contributor who edits the
+generated file by hand gets one unambiguous error instead of a byte-level diff they cannot act on.
+It runs whether or not the repository has migrated: an unmigrated repository still has a CODEOWNERS
+worth protecting.
 
 **Gate 2 — YAML validity.** Runs on any PR touching `.github/owners.config.yaml` or an
 `owners.yaml`, and is the whole of what a contributor has to satisfy. It is checks 1 and 2 below.
@@ -889,8 +892,9 @@ It runs only on PRs that touch `.github/owners.config.yaml` or an `owners.yaml`.
 changes no ownership file does not run it and cannot be blocked by it. When a fragment changes, only
 that fragment is linted; when the config changes, every fragment is linted, because the config
 carries the minimums and can invalidate a fragment nobody touched.
-`eng/common/pipelines/templates/steps/lint-codeowners.yml` implements the trigger and the step; it is
-a no-op in a repository that has no `.github/owners.config.yaml` yet.
+`eng/common/pipelines/templates/steps/lint-codeowners.yml` implements the trigger and the step, and
+carries gate 1 ahead of them. The lint steps are a no-op in a repository that has no
+`.github/owners.config.yaml` yet; gate 1 is not, which is why it sits outside their guard.
 
 The caches it reads are anonymously readable blobs, so the step needs no credential and works on
 pull requests from forks.
@@ -1226,14 +1230,15 @@ contact with the YAML model ([Component 10](#component-10-lint-rules)).
 
 `export-section` existed to slice a section out of a rendered CODEOWNERS file. Its two callers were
 the ownership-extraction pipeline — which is deleted along with the rendered-CODEOWNERS cache — and
-`Test-CodeownersSections.ps1`, which diffs a section across two revisions to detect drift.
+`Test-CodeownersSections.ps1`, which diffed a section across two revisions to detect drift.
 
-That second caller keeps its job during migration: until a repository is generating its CODEOWNERS,
-gate 1 does not apply to it and the section comparison is the only thing protecting the file.
-Rather than hold the command alive for it, the script slices sections itself. A section is a
-three-line `###` / `# <Name>` / `###` fence running to the next `###`, which is a dozen lines of
-PowerShell and costs the check its dependency on the CLI — the template no longer installs one.
-Once every repository has migrated, gate 1 supersedes the script and both retire together.
+Both callers are gone. The script and its `verify-codeowners-sections.yml` template are deleted:
+comparing sections across revisions was a way to tolerate hand edits to CODEOWNERS while catching the
+damaging ones. Generating the file removes the premise. What replaces it is narrower and stated
+directly — a non-`azure-sdk-automation` author who edits `.github/CODEOWNERS` fails the build and is
+pointed at <https://aka.ms/azsdk/codeowners>. That check lives in `lint-codeowners.yml` ahead of the
+ownership-YAML steps and outside their guard, so it protects repositories that have not migrated
+yet.
 
 #### `view` is deleted, not reimplemented
 
@@ -1458,10 +1463,10 @@ and team membership. Those describe GitHub state that no repository can derive l
 exactly why they belong in a cache. A rendered CODEOWNERS section never met that test — it was
 derived from data this system already owns.
 
-`export-section` goes with it. The pipeline was one of its two callers; the other is
-`eng/common/scripts/Test-CodeownersSections.ps1`, which exported a section from two revisions of a
-CODEOWNERS file to diff them. Section order is now declared in `.github/owners.config.yaml` and the
-whole file is generated, so that comparison is a diff of the generated file.
+`export-section` goes with it, and so does its other caller. Section order is now declared in
+`.github/owners.config.yaml` and the whole file is generated, so a section diff has nothing left to
+tell anyone: `eng/common/scripts/Test-CodeownersSections.ps1` and
+`eng/common/pipelines/templates/steps/verify-codeowners-sections.yml` are both deleted.
 
 `eng/common/scripts/Test-CodeownersForArtifacts.ps1` calls `check-package --directory-path --repo
 --output json` and needs **no change**. `--directory-path` already locates the package inside the
@@ -1476,7 +1481,7 @@ same way GitHub resolves the whole file.
 
 | Language | Approach | Status |
 |----------|----------|--------|
-| .NET | `allowed-owner-yaml-paths: ["sdk/*/owners.yaml", "sdk/*/owners.yml"]` | **Surveyed.** Reference implementation and first repo migrated. Both spellings are admitted; a directory may still hold only one |
+| .NET | `allowed-owner-yaml-paths: ["sdk/*/owners.yaml"]` | **Surveyed.** Reference implementation and first repo migrated |
 | Java | Expected same | **Not surveyed.** Multiple artifacts per service directory are ordinary path entries |
 | JavaScript | Expected same | **Not surveyed** |
 | Python | Expected same | **Not surveyed** |
@@ -1787,13 +1792,13 @@ real one after the change merges. The same two commands in the regeneration job,
 **Gate 1 (a hand edit to the generated file):**
 
 ```text
-✗ This pull request modifies .github/CODEOWNERS, which is a generated file.
+.github/CODEOWNERS is a generated file and was modified by hand.
 
-  Revert the change and edit the owners YAML instead:
+Revert the change and edit the owners YAML instead:
     .github/owners.config.yaml   repository-wide sections and static entries
     sdk/<service>/owners.yaml    per-service ownership
 
-  See https://aka.ms/azsdk/codeowners
+See https://aka.ms/azsdk/codeowners
 ```
 
 ### View ownership

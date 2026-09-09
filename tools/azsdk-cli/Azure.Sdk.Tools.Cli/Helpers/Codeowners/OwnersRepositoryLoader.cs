@@ -37,8 +37,8 @@ public static class OwnersRepositoryLoader
     /// of the repository still validates and the author sees every problem at once.
     /// </param>
     /// <exception cref="OwnersYamlException">
-    /// The config is missing or unreadable, or two fragments share a directory. Neither leaves
-    /// anything downstream meaningful, so both stop the run.
+    /// The config is missing or unreadable. Nothing downstream is meaningful without it, so it stops
+    /// the run.
     /// </exception>
     public static OwnersRepository Load(string repoRoot, List<OwnersValidationError> errors)
     {
@@ -82,7 +82,7 @@ public static class OwnersRepositoryLoader
     }
 
     /// <summary>
-    /// Repo-relative paths of every ownership fragment in the checkout, under any of the file names
+    /// Repo-relative paths of every ownership fragment in the checkout, under the file name
     /// <paramref name="settings"/> declares. This is the one fragment scan: <c>generate</c>,
     /// <c>check-package</c> and <c>lint-fragments</c> all reach the same set of files through it,
     /// rather than each deciding for itself what counts as a fragment.
@@ -91,11 +91,6 @@ public static class OwnersRepositoryLoader
     /// is what <c>CFG-LOC-001</c> exists to catch.
     /// </para>
     /// </summary>
-    /// <exception cref="OwnersYamlException">
-    /// Two fragments share a directory. Only files inside <c>allowed-owner-yaml-paths</c> are
-    /// considered: one outside them is not read at all, so it cannot be ambiguous with anything, and
-    /// it is already reported as <c>CFG-LOC-001</c>.
-    /// </exception>
     public static IReadOnlyList<string> FindFragmentFiles(string repoRoot, OwnersConfigSettings settings)
     {
         var options = new EnumerationOptions
@@ -105,18 +100,13 @@ public static class OwnersRepositoryLoader
             MatchCasing = MatchCasing.CaseInsensitive,
         };
 
-        var files = settings.FragmentFileNames
+        return settings.FragmentFileNames
             .SelectMany(fileName => Directory.EnumerateFiles(repoRoot, fileName, options))
             .Select(file => Path.GetRelativePath(repoRoot, file).Replace('\\', '/'))
             .Where(path => !path.StartsWith(".git/", StringComparison.Ordinal))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(path => path, StringComparer.Ordinal)
             .ToList();
-
-        var matcher = CreateMatcher(settings);
-        RequireOneFragmentPerDirectory([.. files.Where(path => matcher.Match(path).HasMatches)]);
-
-        return files;
     }
 
     internal static Matcher CreateMatcher(OwnersConfigSettings settings)
@@ -127,37 +117,4 @@ public static class OwnersRepositoryLoader
         return matcher;
     }
 
-    /// <summary>
-    /// A directory owns its subtree through one file. Two fragments in the same directory would both
-    /// render, so their path entries would collide, and any caller asking which file governs the
-    /// directory would get whichever spelling it happened to look for first — different tools would
-    /// give different answers about the same directory. There is no reading of that which is correct,
-    /// so it stops the run rather than being reported and worked around.
-    /// </summary>
-    private static void RequireOneFragmentPerDirectory(IReadOnlyList<string> fragments)
-    {
-        var collisions = fragments
-            .GroupBy(DirectoryOf, StringComparer.OrdinalIgnoreCase)
-            .Where(group => group.Count() > 1)
-            .ToList();
-
-        if (collisions.Count == 0)
-        {
-            return;
-        }
-
-        var described = collisions.Select(group => string.Join(" and ", group));
-
-        throw new OwnersYamlException(
-            $"A directory may hold only one ownership fragment, but found {string.Join("; ", described)}. " +
-            "Both would render, so their path entries would collide and which file governs the directory " +
-            "would depend on the order a reader looked in. Keep one and delete the other.");
-    }
-
-    private static string DirectoryOf(string relativePath)
-    {
-        var separator = relativePath.LastIndexOf('/');
-
-        return separator < 0 ? string.Empty : relativePath[..separator];
-    }
 }

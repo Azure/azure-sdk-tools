@@ -62,22 +62,6 @@ internal class CodeownersLintHelperTests
             Is.EquivalentTo(new[] { AiFragment, "sdk/openai/owners.yaml" }));
     }
 
-    /// <summary>
-    /// Discovery is shared with generate, so lint refuses the same repository state rather than
-    /// reporting on one of the two colliding files and leaving the other unmentioned.
-    /// </summary>
-    [Test]
-    public void TwoFragmentsInOneDirectoryAreFatalForLintToo()
-    {
-        using var repo = OwnersTestRepo.FromSpecAssets();
-        repo.Write("sdk/ai/owners.yml", repo.Read(AiFragment));
-
-        var ex = Assert.ThrowsAsync<OwnersYamlException>(
-            () => Lint().Lint(repo.Root, [], CancellationToken.None));
-
-        Assert.That(ex!.Message, Does.Contain("sdk/ai/owners.yaml").And.Contain("sdk/ai/owners.yml"));
-    }
-
     [Test]
     public async Task OneFragmentIsJudgedWithoutLoadingTheOthers()
     {

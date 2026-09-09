@@ -48,7 +48,7 @@ public static class OwnersYamlLoader
     {
         var config = Deserialize<OwnersConfig>(yaml, filePath);
         RequireSupportedVersion(config.Version, filePath);
-        RequireLiteralFragmentFileNames(config.Configs, filePath);
+        RequireOneLiteralFragmentFileName(config.Configs, filePath);
 
         foreach (var section in config.Sections)
         {
@@ -59,16 +59,22 @@ public static class OwnersYamlLoader
     }
 
     /// <summary>
-    /// Requires every <c>allowed-owner-yaml-paths</c> glob to end in a literal file name. The
-    /// wildcards belong to the directories above the file: a wildcarded leaf names no file, so
-    /// nothing could be scanned for and every fragment in the repository would go unread.
+    /// Requires every <c>allowed-owner-yaml-paths</c> glob to end in the same literal file name.
     /// <para>
-    /// More than one distinct name is allowed. A repository may spell its fragments both
-    /// <c>owners.yaml</c> and <c>owners.yml</c>; what it may not do is put both in one directory,
-    /// which <see cref="OwnersRepositoryLoader.FindFragmentFiles"/> rejects.
+    /// The leaf must be literal because the wildcards belong to the directories above the file: a
+    /// wildcarded leaf names no file, so nothing could be scanned for and every fragment in the
+    /// repository would go unread.
+    /// </para>
+    /// <para>
+    /// The leaf must be the *only* name because a directory owns its subtree through one file.
+    /// Admitting both <c>owners.yaml</c> and <c>owners.yml</c> lets a directory hold one of each,
+    /// and then both render, their path entries collide, and which file governs the directory comes
+    /// down to the order a reader looked in. One spelling makes that unrepresentable rather than
+    /// something every tool has to re-detect. The globs may still differ in depth --
+    /// <c>sdk/*/owners.yaml</c> alongside <c>sdk/*/*/owners.yaml</c> is fine.
     /// </para>
     /// </summary>
-    private static void RequireLiteralFragmentFileNames(OwnersConfigSettings settings, string filePath)
+    private static void RequireOneLiteralFragmentFileName(OwnersConfigSettings settings, string filePath)
     {
         var wildcarded = settings.AllowedOwnerYamlPaths.FirstOrDefault(glob =>
         {
@@ -81,6 +87,19 @@ public static class OwnersYamlLoader
             throw new OwnersYamlException(
                 $"{filePath}: configs.allowed-owner-yaml-paths entries must end in a literal file name, " +
                 $"but '{wildcarded}' does not. Wildcards are for the directories above the file.");
+        }
+
+        var names = settings.AllowedOwnerYamlPaths
+            .Select(OwnersConfigSettings.GlobFileName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (names.Count > 1)
+        {
+            throw new OwnersYamlException(
+                $"{filePath}: configs.allowed-owner-yaml-paths must use a single file name, but names " +
+                $"{string.Join(" and ", names.Select(name => $"'{name}'"))}. A directory holding one of " +
+                "each would render both, so their path entries would collide. Pick one spelling.");
         }
     }
 

@@ -213,7 +213,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 .AddSingleton<UpgradeShutdownCoordinator>()
                 .AddHostedService<UpgradeShutdownService>();
 
-#if !DEBUG
+// TODO: Revert to `#if !DEBUG` before merging to main. Temporarily disabled for the CODEOWNERS
+// migration demo so command output stays free of the upgrade notice.
+#if false
             services.AddHostedService<UpgradeNotificationHostedService>();
 #endif
         }

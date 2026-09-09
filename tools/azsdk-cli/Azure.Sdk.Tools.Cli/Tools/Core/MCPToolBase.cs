@@ -66,7 +66,10 @@ public abstract class MCPToolBase
 
             output.OutputCommandResponse(response);
 
-#if !DEBUG
+// TODO: Revert to `#if !DEBUG` before merging to main. Temporarily disabled for the CODEOWNERS
+// migration demo: this notice shares a stream with the command response (a failing command writes
+// its JSON to stderr, and so does this), which corrupts machine-readable output.
+#if false
             // Show update notification after command output (skip for upgrade command itself)
             if (command.Name != SharedCommandNames.UpgradeCommandName)
             {

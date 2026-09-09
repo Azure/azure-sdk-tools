@@ -9,8 +9,8 @@ using Azure.Sdk.Tools.CodeownersUtils.Utils;
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 /// <summary>
-/// Renders a <see cref="OwnersRepository"/> into CODEOWNERS text. Deterministic: the same inputs
-/// always produce a byte-identical file.
+/// Renders a <see cref="OwnersRepository"/> into CODEOWNERS text. Always
+/// produces the same output for a given OwnersRepository.
 /// <para>
 /// The renderer touches no files except to answer the trailing-slash question in
 /// <see cref="OwnersPathResolver"/>. It returns every <c>CFG-*</c> error it finds rather than

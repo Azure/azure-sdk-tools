@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import overload
+from dataclasses import dataclass
+from typing import overload, Protocol
 
 from azure.appconfiguration.aio import AzureAppConfigurationClient
 
@@ -23,6 +24,53 @@ from utils.azure_credential import get_credential
 _logger = logging.getLogger(__name__)
 
 _settings: dict[str, str] | None = None
+
+
+class Settings(Protocol):
+    """Callable configuration lookup preserving default-value narrowing."""
+
+    @overload
+    def __call__(self, key: str, default: str) -> str: ...
+
+    @overload
+    def __call__(self, key: str, default: None = None) -> str | None: ...
+
+
+@dataclass(frozen=True)
+class AppConfigSnapshot:
+    """Immutable settings loaded from one App Configuration endpoint."""
+
+    endpoint: str
+    settings: dict[str, str]
+
+    @overload
+    def get(self, key: str, default: str) -> str: ...
+
+    @overload
+    def get(self, key: str, default: None = None) -> str | None: ...
+
+    def get(self, key: str, default: str | None = None) -> str | None:
+        return self.settings.get(key, default)
+
+
+async def load(endpoint: str) -> AppConfigSnapshot:
+    """Load a named configuration snapshot without changing global settings."""
+    if not endpoint:
+        raise ValueError("App Configuration endpoint is required.")
+
+    _logger.info("Loading settings from App Configuration: %s", endpoint)
+    credential = get_credential()
+    client = AzureAppConfigurationClient(base_url=endpoint, credential=credential)
+    try:
+        settings: dict[str, str] = {}
+        async for item in client.list_configuration_settings():
+            if item.value is not None:
+                settings[item.key] = item.value
+    finally:
+        await client.close()
+
+    _logger.info("Loaded %d settings from App Configuration", len(settings))
+    return AppConfigSnapshot(endpoint=endpoint, settings=settings)
 
 
 async def init() -> None:
@@ -38,17 +86,8 @@ async def init() -> None:
     if not endpoint:
         raise RuntimeError("AZURE_APPCONFIG_ENDPOINT environment variable is required.")
 
-    _logger.info("Loading settings from App Configuration: %s", endpoint)
-    credential = get_credential()
-    client = AzureAppConfigurationClient(base_url=endpoint, credential=credential)
-
-    config: dict[str, str] = {}
-    async for item in client.list_configuration_settings():
-        if item.value is not None:
-            config[item.key] = item.value
-    await client.close()
-
-    _settings = config
+    snapshot = await load(endpoint)
+    _settings = snapshot.settings
     _logger.info("Loaded %d settings from App Configuration", len(_settings))
 
 

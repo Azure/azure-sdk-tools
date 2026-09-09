@@ -24,6 +24,7 @@ _DEFAULT_DATABASE_NAME = "azure-sdk-qa-bot"
 _DEFAULT_MAPPING_CONTAINER_NAME = "conversation-mappings"
 _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
 _DEFAULT_EPISODE_CONTAINER_NAME = "experience-episodes"
+_DEFAULT_QA_RECORDS_CONTAINER_NAME = "qa-records"
 
 # Retry defaults for the Cosmos DB client
 _DEFAULT_RETRY_TOTAL = 3  # Maximum number of total retry attempts
@@ -40,6 +41,7 @@ _client: CosmosClient | None = None
 _mapping_container: ContainerProxy | None = None
 _message_container: ContainerProxy | None = None
 _episode_container: ContainerProxy | None = None
+_qa_records_container: ContainerProxy | None = None
 _client_lock = asyncio.Lock()
 _container_lock = asyncio.Lock()
 
@@ -172,10 +174,11 @@ async def get_conversation_message_container() -> ContainerProxy:
 
 async def close_cosmos_client() -> None:
     """Close the shared Cosmos client and reset cached proxies."""
-    global _client, _mapping_container, _message_container, _episode_container
+    global _client, _mapping_container, _message_container, _episode_container, _qa_records_container
     _mapping_container = None
     _message_container = None
     _episode_container = None
+    _qa_records_container = None
     if _client is not None:
         await _client.__aexit__(None, None, None)
         _client = None
@@ -337,10 +340,125 @@ async def query_episodes(
     kwargs: dict[str, Any] = {"query": query, "parameters": parameters}
     if partition_key:
         kwargs["partition_key"] = partition_key
-    else:
-        kwargs["enable_cross_partition_query"] = True
 
     items: list[dict[str, Any]] = []
     async for item in container.query_items(**kwargs):
         items.append(item)
+    return items
+
+
+# ---------------------------------------------------------------------------
+# QA-records container (`qa-records`)
+# ---------------------------------------------------------------------------
+
+
+async def ensure_qa_records_container() -> ContainerProxy:
+    """Return the ``qa-records`` container, creating it if needed.
+
+    Container is partitioned by ``/tenant_id`` (matches the episode and
+    conversation conventions). Each row is a two-layer status marker for a
+    single QA thread (see :class:`models.qa_record.QARecord`). Default
+    indexing (all fields) is sufficient — no vector index needed.
+    """
+    global _qa_records_container
+    if _qa_records_container is not None:
+        return _qa_records_container
+
+    async with _container_lock:
+        if _qa_records_container is not None:
+            return _qa_records_container
+
+        container_name = _DEFAULT_QA_RECORDS_CONTAINER_NAME
+
+        try:
+            _qa_records_container = await _get_container(
+                container_name=container_name,
+            )
+            logger.info("Using Cosmos DB qa-records container: %s", container_name)
+        except RuntimeError:
+            # Container doesn't exist — create it.
+            client = await _get_client()
+            database = client.get_database_client(_DEFAULT_DATABASE_NAME)
+            _qa_records_container = await database.create_container(
+                id=container_name,
+                partition_key=PartitionKey(path="/tenant_id"),
+            )
+            logger.info("Created qa-records container: %s", container_name)
+
+    return _qa_records_container
+
+
+async def get_qa_records_container() -> ContainerProxy:
+    """Return the qa-records container, creating it if needed."""
+    if _qa_records_container is not None:
+        return _qa_records_container
+    return await ensure_qa_records_container()
+
+
+async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
+    """Upsert a QA-record document into the qa-records container."""
+    container = await get_qa_records_container()
+    return await container.upsert_item(document)
+
+
+async def read_qa_record(*, record_id: str, tenant_id: str) -> dict[str, Any] | None:
+    """Read a single QA-record row by id within the tenant partition."""
+    container = await get_qa_records_container()
+    try:
+        return await container.read_item(item=record_id, partition_key=tenant_id)
+    except cosmos_exceptions.CosmosResourceNotFoundError:
+        return None
+
+
+async def query_qa_records_by_qa_status(
+    *,
+    qa_status: str,
+    tenant_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return QA records whose Layer-1 ``qa_status`` equals ``qa_status``.
+
+    Scoped to ``tenant_id`` when given (single-partition query); otherwise a
+    cross-partition scan intended for the daily batch job.
+    """
+    container = await get_qa_records_container()
+    conditions = ["c.qa_status = @qa_status"]
+    parameters: list[dict[str, Any]] = [{"name": "@qa_status", "value": qa_status}]
+    kwargs: dict[str, Any] = {}
+    if tenant_id:
+        conditions.append("c.tenant_id = @tenant_id")
+        parameters.append({"name": "@tenant_id", "value": tenant_id})
+        kwargs["partition_key"] = tenant_id
+
+    query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
+    items: list[dict[str, Any]] = []
+    async for raw in container.query_items(
+        query=query, parameters=parameters, **kwargs
+    ):
+        items.append(raw)
+    return items
+
+
+async def query_qa_records_by_feedback_status(
+    *,
+    feedback_status: str,
+    tenant_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return QA records whose embedded feedback status matches."""
+    container = await get_qa_records_container()
+    conditions = ["c.feedback.status = @feedback_status"]
+    parameters: list[dict[str, Any]] = [
+        {"name": "@feedback_status", "value": feedback_status}
+    ]
+    kwargs: dict[str, Any] = {}
+    if tenant_id:
+        conditions.append("c.tenant_id = @tenant_id")
+        parameters.append({"name": "@tenant_id", "value": tenant_id})
+        kwargs["partition_key"] = tenant_id
+
+    query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
+    items: list[dict[str, Any]] = []
+    async for raw in container.query_items(
+        query=query, parameters=parameters, **kwargs
+    ):
+        items.append(raw)
     return items

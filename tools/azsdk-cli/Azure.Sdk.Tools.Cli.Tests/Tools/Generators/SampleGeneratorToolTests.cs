@@ -307,7 +307,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public async Task GenerateSamples_DefaultModelUsedWhenNotSpecified()
+    public async Task GenerateSamples_CopilotDefaultModelUsedWhenNotSpecified()
     {
         var (_, packagePath) = await CreateFakeGoPackageAsync();
         CopilotAgent<List<GeneratedSample>>? captured = null;
@@ -320,7 +320,7 @@ public class SampleGeneratorToolTests
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
         Assert.That(captured, Is.Not.Null);
-        Assert.That(captured!.Model, Is.EqualTo("claude-sonnet-4.5"));
+        Assert.That(captured!.Model, Is.Null);
     }
 
     [Test]

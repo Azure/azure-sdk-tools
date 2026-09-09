@@ -1,0 +1,232 @@
+# API Review Hub queues this pipeline for create and update requests. Keep this
+# file language-agnostic: it decides which artifact bundles are needed, compares
+# them when appropriate, and publishes the result artifacts for the web service.
+pr: none
+trigger: none
+
+resources:
+  repositories:
+    - repository: python-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-python
+      ref: main
+    - repository: java-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-java
+      ref: main
+    - repository: csharp-repo
+      type: github
+      endpoint: Azure
+      name: tjprescott/azure-sdk-for-net
+      ref: arh/Onboarding
+    - repository: javascript-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-js
+      ref: main
+    - repository: go-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-go
+      ref: main
+    - repository: rust-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-rust
+      ref: main
+    - repository: swift-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-ios
+      ref: main
+    - repository: cpp-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-cpp
+      ref: main
+
+variables:
+  - name: callbackTokenAudience
+    value: 'api://apireviewhub'
+    readonly: true
+  - name: completionCallbackUrl
+    value: 'https://api-review-hub.azurewebsites.net/api/operations/'
+    readonly: true
+
+parameters:
+  - name: requestMode
+    type: string
+    values:
+      - create
+      - update
+  - name: language
+    type: string
+    values:
+      - python
+      - java
+      - csharp
+      - javascript
+      - go
+      - rust
+      - swift
+      - cpp
+  - name: operationId
+    type: string
+    default: ''
+  - name: callbackProofToken
+    type: string
+  - name: packageName
+    type: string
+    default: ''
+  - name: owner
+    type: string
+    default: 'Azure'
+  - name: baseRef
+    type: string
+    default: ''
+  - name: targetRef
+    type: string
+    default: ''
+  - name: resultArtifactName
+    type: string
+    default: 'apireview-result'
+  - name: baseArtifactName
+    type: string
+    default: 'apireview-base'
+  - name: targetArtifactName
+    type: string
+    default: 'apireview-target'
+
+stages:
+- stage: Generate
+  displayName: 'Generate API review artifacts'
+  jobs:
+        # The language value is validated above. Each supported language must provide:
+        # - /eng/pipelines/templates/jobs/apireview-hub-job-{language}.yml
+        # - /eng/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
+        - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml@{0}-repo', parameters.language) }}
+          parameters:
+            repositoryOwner: ${{ parameters.owner }}
+            steps:
+              - pwsh: eng/scripts/Initialize-ApiReviewHubRequest.ps1
+                displayName: 'Validate request parameters'
+                env:
+                  ARH_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+                  ARH_OPERATION_ID: ${{ parameters.operationId }}
+                  ARH_PACKAGE_NAME: ${{ parameters.packageName }}
+                  ARH_TARGET_REF: ${{ parameters.targetRef }}
+
+              # Create and update requests with a baseline generate it with the same
+              # pipeline and tooling inputs as the target. Either mode may omit baseRef
+              # to intentionally generate a target-only review.
+              - ${{ if ne(trim(parameters.baseRef), '') }}:
+                - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
+                  parameters:
+                    requestMode: ${{ parameters.requestMode }}
+                    operationId: ${{ parameters.operationId }}
+                    packageName: ${{ parameters.packageName }}
+                    ref: ${{ parameters.baseRef }}
+                    kind: base
+                    outputDir: $(Build.ArtifactStagingDirectory)/base
+                    workingDir: $(Pipeline.Workspace)/apireview/base
+
+              # Always generate the target bundle after any requested baseline bundle.
+              - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
+                parameters:
+                  requestMode: ${{ parameters.requestMode }}
+                  operationId: ${{ parameters.operationId }}
+                  packageName: ${{ parameters.packageName }}
+                  ref: ${{ parameters.targetRef }}
+                  kind: target
+                  outputDir: $(Build.ArtifactStagingDirectory)/target
+                  workingDir: $(Pipeline.Workspace)/apireview/target
+
+                  # The web service reads this summary to decide whether the operation
+                  # succeeded, whether a create request changed API shape, and which build
+                  # artifacts to download.
+              - pwsh: eng/scripts/Write-ApiReviewHubResultSummary.ps1
+                displayName: 'Compare and write result summary'
+                env:
+                  ARH_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+                  ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
+                  ARH_BASE_REF: ${{ parameters.baseRef }}
+                  ARH_LANGUAGE: ${{ parameters.language }}
+                  ARH_OPERATION_ID: ${{ parameters.operationId }}
+                  ARH_PACKAGE_NAME: ${{ parameters.packageName }}
+                  ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+                  ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+                  ARH_RESULT_STATUS: succeeded
+                  ARH_TARGET_ARTIFACT_NAME: ${{ parameters.targetArtifactName }}
+                  ARH_TARGET_REF: ${{ parameters.targetRef }}
+
+              - ${{ if ne(trim(parameters.baseRef), '') }}:
+                - task: PublishBuildArtifacts@1
+                  displayName: 'Publish base API review bundle'
+                  condition: succeeded()
+                  inputs:
+                    pathtoPublish: '$(Build.ArtifactStagingDirectory)/base'
+                    artifactName: '${{ parameters.baseArtifactName }}'
+
+              - task: PublishBuildArtifacts@1
+                displayName: 'Publish target API review bundle'
+                condition: succeeded()
+                inputs:
+                  pathtoPublish: '$(Build.ArtifactStagingDirectory)/target'
+                  artifactName: '${{ parameters.targetArtifactName }}'
+
+              # Ensure failed runs still publish an operation result artifact that the
+              # web service can surface to callers.
+              - pwsh: eng/scripts/Write-ApiReviewHubResultSummary.ps1
+                displayName: 'Write failure result summary'
+                condition: failed()
+                env:
+                  ARH_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+                  ARH_BASE_REF: ${{ parameters.baseRef }}
+                  ARH_LANGUAGE: ${{ parameters.language }}
+                  ARH_OPERATION_ID: ${{ parameters.operationId }}
+                  ARH_PACKAGE_NAME: ${{ parameters.packageName }}
+                  ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+                  ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+                  ARH_RESULT_STATUS: failed
+                  ARH_TARGET_REF: ${{ parameters.targetRef }}
+
+              - task: PublishBuildArtifacts@1
+                displayName: 'Publish API review result summary'
+                condition: succeededOrFailed()
+                inputs:
+                  pathtoPublish: '$(Build.ArtifactStagingDirectory)/result'
+                  artifactName: '${{ parameters.resultArtifactName }}'
+
+              - pwsh: eng/scripts/Mask-ApiReviewHubCallbackProofToken.ps1
+                displayName: 'Mask callback proof token'
+                condition: always()
+                env:
+                  ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
+
+              # API Review Hub treats this as a signal, then verifies the operation/run
+              # identity and downloads artifacts from ADO itself.
+              - task: AzurePowerShell@5
+                displayName: 'Notify API Review Hub of artifact completion'
+                condition: always()
+                inputs:
+                  azureSubscription: 'ADO to ARH Service Connection'
+                  azurePowerShellVersion: latestVersion
+                  pwsh: true
+                  ScriptType: FilePath
+                  ScriptPath: eng/scripts/Notify-ApiReviewHub.ps1
+                env:
+                  ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
+                  ARH_BASE_REF: ${{ parameters.baseRef }}
+                  ARH_BUILD_ID: $(Build.BuildId)
+                  ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
+                  ARH_CALLBACK_TOKEN_AUDIENCE: $(callbackTokenAudience)
+                  ARH_COMPLETION_CALLBACK_URL: $(completionCallbackUrl)
+                  ARH_LANGUAGE: ${{ parameters.language }}
+                  ARH_OPERATION_ID: ${{ parameters.operationId }}
+                  ARH_PROJECT: $(System.TeamProject)
+                  ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+                  ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+                  ARH_RESULT_SUMMARY_PATH: $(Build.ArtifactStagingDirectory)/result/result-summary.json
+                  ARH_TARGET_ARTIFACT_NAME: ${{ parameters.targetArtifactName }}

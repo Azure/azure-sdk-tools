@@ -23,15 +23,15 @@ steps:
         - ${{ parameters.DirectoryToSync }}
       Repositories:
         - ${{ each repo in parameters.Repos }}:
-          - Name: ${{ parameters.PROwner }}/${{ repo }}
+          - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
             Commitish: ${{ parameters.BaseBranchName }}
-            WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.RepoName }}
 
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         if (Test-Path '$(PatchFilesLocation)')
         {
-          pushd ${{ repo }}
+          pushd ${{ repo.RepoName }}
           $results = @()
           echo "##vso[task.setvariable variable=HasChanges]$false"
           $shaBeforePatches = git rev-parse --short HEAD
@@ -40,16 +40,53 @@ steps:
              Write-Host $file.FullName
              git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am -3 $file.FullName
              if ($lastExitCode -ne 0) {
-               git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff
-               Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/azure/${{ repo }}]"
-               exit 1
+               git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff | ForEach-Object {
+                 Write-Host ($_ -replace '##vso', '## vso')
+               }
+               git am --abort
+
+               Write-Warning "Patch did not apply cleanly. Mirroring the affected files from azure-sdk-tools."
+               $patchPaths = Get-Content $file.FullName | ForEach-Object {
+                 if ($_ -match '^diff --git a/(.+) b/(.+)$') {
+                   $Matches[1]
+                   $Matches[2]
+                 }
+               } | Sort-Object -Unique
+
+               if (!$patchPaths) {
+                 throw "Unable to determine the files changed by patch '$($file.FullName)'."
+               }
+
+               foreach ($patchPath in $patchPaths) {
+                 if (($patchPath -split '/') -contains '..' -or
+                     ($patchPath -ne '${{ parameters.DirectoryToSync }}' -and !$patchPath.StartsWith('${{ parameters.DirectoryToSync }}/'))) {
+                   throw "Patch path '$patchPath' is outside '${{ parameters.DirectoryToSync }}'."
+                 }
+
+                 $sourcePath = Join-Path '$(System.DefaultWorkingDirectory)' $patchPath
+                 $destinationPath = Join-Path (Get-Location) $patchPath
+                 if (Test-Path $sourcePath) {
+                   New-Item -ItemType Directory -Force -Path (Split-Path $destinationPath -Parent) | Out-Null
+                   Copy-Item -Force -Path $sourcePath -Destination $destinationPath
+                 } else {
+                   Remove-Item -Force -Recurse -ErrorAction Ignore -Path $destinationPath
+                 }
+               }
+
+               git add --all -- ${{ parameters.DirectoryToSync }}
+               if (git status --short -- ${{ parameters.DirectoryToSync }}) {
+                 git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" commit -m "${{ parameters.CommitMessage }}"
+                 if ($LASTEXITCODE -ne 0) {
+                   throw "Failed to commit files recovered from patch '$($file.FullName)'."
+                 }
+               }
              }
           }
           $shaAfterPatches = git rev-parse --short HEAD
           $hasChanges = $shaBeforePatches -ne $shaAfterPatches
           echo "##vso[task.setvariable variable=HasChanges]$hasChanges"
         }
-      displayName: Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      displayName: Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo.RepoOwner }}/${{ repo.RepoName }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
     - task: PowerShell@2
@@ -57,32 +94,32 @@ steps:
       condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
       inputs:
         pwsh: true
-        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.RepoName }}
         filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://x-access-token:${{ parameters.AuthToken }}@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN_${{ repo.RepoOwner }})@github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
     - task: PowerShell@2
       displayName: Push changes for Queueing Test Pipeline
-      condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
+      condition: and(succeeded(), ne(variables['${{ repo.RepoName }}-template-definition-id'], ''))
       inputs:
         pwsh: true
-        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        workingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.RepoName }}
         filePath: ${{ parameters.ScriptDirectory }}/git-branch-push.ps1
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://x-access-token:${{ parameters.AuthToken }}@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN_${{ repo.RepoOwner }})@github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 
     - task: AzureCLI@2
       displayName: Queue template pipeline
-      condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
+      condition: and(succeeded(), ne(variables['${{ repo.RepoName }}-template-definition-id'], ''))
       inputs:
         azureSubscription: opensource-api-connection
         scriptType: pscore
@@ -93,7 +130,7 @@ steps:
             -Organization "azure-sdk" `
             -Project "internal" `
             -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline" `
-            -DefinitionId "$(${{repo}}-template-definition-id)" `
+            -DefinitionId "$(${{ repo.RepoName }}-template-definition-id)" `
             -VsoQueuedPipelines "QUEUEDPIPELINES" `
             -CancelPreviousBuilds $True `
             -BearerToken $accessToken
@@ -101,7 +138,7 @@ steps:
 
     - task: AzureCLI@2
       displayName: Queue live-test template pipeline
-      condition: and(succeeded(), ne(variables['${{repo}}-template-tests-definition-id'], ''))
+      condition: and(succeeded(), ne(variables['${{ repo.RepoName }}-template-tests-definition-id'], ''))
       inputs:
         azureSubscription: opensource-api-connection
         scriptType: pscore
@@ -112,7 +149,7 @@ steps:
             -Organization "azure-sdk" `
             -Project "internal" `
             -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline" `
-            -DefinitionId "$(${{repo}}-template-tests-definition-id)" `
+            -DefinitionId "$(${{ repo.RepoName }}-template-tests-definition-id)" `
             -VsoQueuedPipelines "QUEUEDPIPELINES" `
             -CancelPreviousBuilds $True `
             -BearerToken $accessToken
@@ -145,14 +182,14 @@ steps:
           Commitish: $(Build.SourceVersion)
           WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
         - ${{ each repo in parameters.Repos }}:
-          - Name: ${{ parameters.PROwner }}/${{ repo }}
+          - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
             Commitish: ${{ parameters.BaseBranchName }}
-            WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.RepoName }}
 
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
-        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
+        $repoPath = "${{ repo.RepoName }}/${{ parameters.DirectoryToSync }}"
         New-Item -ItemType Directory -Force -ErrorAction Ignore -Path $repoPath
 
         $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
@@ -165,24 +202,25 @@ steps:
           $destPath = if ($patternDir) { Join-Path $repoPath $patternDir } else { $repoPath }
           New-Item -ItemType Directory -Force -ErrorAction Ignore -Path $destPath
 
-          Remove-Item -v -r -ErrorAction Ignore "${repoPath}/${filePattern}"
+          Remove-Item -v -r -Force -ErrorAction Ignore "${repoPath}/${filePattern}"
           Copy-Item -v -r `
             "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}/${filePattern}" `
             $destPath
         }
         Get-ChildItem -r $repoPath
-      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
+      displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo.RepoOwner }}/${{ repo.RepoName }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
-        RepoName: ${{ repo }}
+        RepoName: ${{ repo.RepoName }}
+        RepoOwner: ${{ repo.RepoOwner }}
         BaseBranchName: ${{ parameters.BaseBranchName }}
-        PRBranchName: sync-${{ parameters.DirectoryToSync }}
+        PRBranchName: ${{ parameters.UpstreamBranchName }}
         CommitMsg: ${{ parameters.CommitMessage }}
         PRTitle: ${{ parameters.CommitMessage }}
         PushArgs: -f
-        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
+        WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.RepoName }}
         ScriptDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.ScriptDirectory }}
         AuthToken: ''
 

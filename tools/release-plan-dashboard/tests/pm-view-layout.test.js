@@ -8,6 +8,7 @@ const indexHtml = readFileSync(
   path.join(__dirname, "../public/index.html"),
   "utf8",
 );
+const appJs = readFileSync(path.join(__dirname, "../public/app.js"), "utf8");
 
 function expectOrdered(block, labels) {
   let lastIndex = -1;
@@ -22,6 +23,27 @@ function expectOrdered(block, labels) {
 }
 
 describe("PM View Attention Required layout", () => {
+  test("applies the search filter to Attention Needed plans", () => {
+    expect(appJs).toMatch(
+      /function renderPMView\(plans\)[\s\S]*?const filter = store\(\)\.filters\.search\.toLowerCase\(\);[\s\S]*?plans\.filter\(\(p\) => matchesFilter\(p, filter\)\)/,
+    );
+  });
+
+  test("links release plan IDs to the dashboard and ADO work item", () => {
+    expect(appJs).toContain(
+      "const dashboardUrl = `/?releasePlan=${encodeURIComponent(planId)}`;",
+    );
+    expect(appJs).toContain(
+      '<a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a>',
+    );
+    expect(appJs).toContain(
+      "const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;",
+    );
+    expect(appJs).toContain(
+      '<a href="${esc(wiUrl)}" target="_blank" rel="noopener">ADO work item ${esc(String(p.id))}</a>',
+    );
+  });
+
   test("groups informational and action sections in the expected order", () => {
     const informationalIndex = indexHtml.indexOf('id="pm-informational"');
     const needsAttentionIndex = indexHtml.indexOf('id="pm-needs-attention"');

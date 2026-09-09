@@ -189,12 +189,10 @@ Before submitting your PR, ensure:
 
 You can validate your configuration locally:
 
-```bash
-1. Add a new source constant at https://github.com/wanlwanl/wanl-fork-azure-sdk-tools/blob/azure-sdk-ai-bot/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model/completion.go
-2. Add the new source to the tenant config: https://github.com/wanlwanl/wanl-fork-azure-sdk-tools/blob/azure-sdk-ai-bot/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config/tenant.go
-3. Follow the README, test locally: https://github.com/wanlwanl/wanl-fork-azure-sdk-tools/blob/azure-sdk-ai-bot/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/README.md
-```
+1. Validate your updated `knowledge-config.json` against `knowledge-config.schema.json`.
+2. Run the Knowledge Sync Service locally (see `azure-sdk-qa-bot-knowledge-sync/README.md`) to confirm the new source is cloned, processed, and uploaded to the search index.
+3. Test locally against the Chat Agent (see `azure-sdk-qa-bot-agent/README.md`) to confirm the bot can answer questions using the new source.
 
 #### Test Channel Validation
 
-Contact with the Teams Chat Bot developer to help deploy this change to [Dev environment](https://github.com/wanlwanl/wanl-fork-azure-sdk-tools/blob/azure-sdk-ai-bot/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md#development-environment), and test if knowledge source has been added successfully.
+Contact the Teams Chat Bot developer to help deploy this change to the Dev environment, and test if the knowledge source has been added successfully.

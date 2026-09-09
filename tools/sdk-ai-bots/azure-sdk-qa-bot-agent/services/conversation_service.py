@@ -10,6 +10,7 @@ conversation mapping.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,8 @@ from models.conversation import (
     ConversationMappingItem,
     ConversationMessage,
     ConversationMessageItem,
-    ConversationPartitionPrefix,
     ConversationType,
+    Role,
 )
 from utils.azure_cosmosdb import (
     get_conversation_mapping_container,
@@ -267,7 +268,44 @@ class ConversationService:
         )
         return items
 
-    async def get_messages_by_conversation(
+    async def get_message_by_trace_id(
+        self,
+        trace_id: str,
+    ) -> ConversationMessageItem | None:
+        """Look up a bot message by its OTel trace id (cross-partition).
+
+        Enables resolving a conversation from a user-supplied trace id when
+        neither the conversation id nor the bot response id is known. The
+        returned message carries ``conversation_id``/``conversation_type`` and
+        an id shaped ``bot-{response_id}``.
+        """
+        if not trace_id:
+            return None
+
+        container = await get_conversation_message_container()
+
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.trace_id = @trace_id "
+            "AND c.document_type = @dtype "
+            "ORDER BY c.created_at DESC"
+        )
+        parameters: list[dict[str, object]] = [
+            {"name": "@trace_id", "value": trace_id},
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+        ]
+
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
+            max_item_count=1,
+        ):
+            return ConversationMessageItem.model_validate(raw)
+
+        logger.info("No conversation message found for trace_id=%s", trace_id)
+        return None
+
+    async def get_messages_by_conversation_id(
         self,
         conversation_id: str,
         conversation_type: ConversationType,
@@ -295,4 +333,114 @@ class ConversationService:
         ):
             items.append(ConversationMessageItem.model_validate(raw))
 
+        return items
+
+
+    async def get_messages_in_period(
+        self,
+        start: datetime,
+        end: datetime,
+    ) -> list[ConversationMessageItem]:
+        """Retrieve all messages of conversations *active* in the window.
+
+        The lower bound is normalized to the **start of the day** (00:00:00) of
+        ``start``. A conversation qualifies when it has at least one *bot*
+        message (system/assistant) whose ``created_at`` falls within
+        ``[start_of_day, end)`` — regardless of when the conversation started.
+        When it qualifies, **all** of its messages are returned — including
+        earlier messages before ``start`` and later replies after ``end`` — so
+        the full thread can be evaluated.
+
+        Runs cross-partition queries over the message container. Intended for
+        offline/batch jobs (e.g. answer-quality evaluation), not the hot path.
+
+        Args:
+            start: Lower bound; normalized to the start of its day (UTC).
+            end: Exclusive upper bound on message activity.
+
+        Returns:
+            Messages of qualifying conversations, ordered by ``created_at``.
+        """
+        # Normalize aware datetimes to UTC before flooring/comparison. Stored
+        # ``created_at`` values are UTC ISO strings, so a non-UTC bound would
+        # otherwise select the wrong window. Naive datetimes are assumed UTC.
+        if start.tzinfo is not None:
+            start = start.astimezone(timezone.utc)
+        if end.tzinfo is not None:
+            end = end.astimezone(timezone.utc)
+        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        container = await get_conversation_message_container()
+
+        start_iso = start.isoformat()
+        end_iso = end.isoformat()
+
+        # Cosmos' gateway cannot serve GROUP BY / aggregate cross-partition
+        # queries, so the qualifying conversations are derived client-side
+        # using simple projection queries.
+        #
+        # A conversation is "active" in the window when it has at least one
+        # *bot* message (system/assistant) in [start, end). Its full thread is
+        # then fetched.
+
+        # Step 1: partitions that have a bot message inside the window.
+        bot_roles = [Role.System.value, Role.Assistant.value]
+        window_query = (
+            "SELECT c.conversation_partition AS partition FROM c "
+            "WHERE c.document_type = @dtype "
+            "AND ARRAY_CONTAINS(@bot_roles, c.sender_role) "
+            "AND c.created_at >= @start AND c.created_at < @end"
+        )
+        window_params: list[dict[str, object]] = [
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+            {"name": "@bot_roles", "value": bot_roles},
+            {"name": "@start", "value": start_iso},
+            {"name": "@end", "value": end_iso},
+        ]
+
+        candidate_partitions: set[str] = set()
+        async for row in container.query_items(
+            query=window_query,
+            parameters=window_params,
+        ):
+            partition = row.get("partition")
+            if partition:
+                candidate_partitions.add(partition)
+
+        if not candidate_partitions:
+            logger.info(
+                "No conversations had a bot message in period [%s, %s)",
+                start_iso,
+                end_iso,
+            )
+            return []
+
+        partitions = sorted(candidate_partitions)
+
+        # Step 2: fetch all messages for the qualifying conversations.
+        messages_query = (
+            "SELECT * FROM c "
+            "WHERE c.document_type = @dtype "
+            "AND ARRAY_CONTAINS(@partitions, c.conversation_partition)"
+        )
+        messages_params: list[dict[str, object]] = [
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+            {"name": "@partitions", "value": partitions},
+        ]
+
+        items: list[ConversationMessageItem] = []
+        async for raw in container.query_items(
+            query=messages_query,
+            parameters=messages_params,
+        ):
+            items.append(ConversationMessageItem.model_validate(raw))
+
+        items.sort(key=lambda m: m.created_at)
+
+        logger.info(
+            "Retrieved %d messages from %d conversations active in [%s, %s)",
+            len(items),
+            len(partitions),
+            start_iso,
+            end_iso,
+        )
         return items

@@ -194,7 +194,7 @@ Before adding new knowledge, follow this verification process:
 **1. Test with Bot Locally**
 
 1. Remove `static_typespec_qa` from the knowledge sources(already done)
-2. Run the backend service locally(reference tools\sdk-ai-bots\azure-sdk-qa-bot-backend\README.md)
+2. Run the chat agent locally (reference tools\sdk-ai-bots\azure-sdk-qa-bot-agent\README.md)
 3. Ask the bot the original question from the raw Q&A
 4. If the bot gives a correct answer → **No need to add** (knowledge already exists in other sources)
 

@@ -111,6 +111,54 @@ public class ReviewSearch : IReviewSearch
         };
     }
 
+    public async Task<ResolvePackageResponse> ResolveAutomaticRevisionForRelease(
+        string packageName,
+        string language,
+        string version)
+    {
+        if (string.IsNullOrEmpty(packageName))
+        {
+            throw new ArgumentException("Package name is required.", nameof(packageName));
+        }
+
+        if (string.IsNullOrEmpty(language))
+        {
+            throw new ArgumentException("Language is required.", nameof(language));
+        }
+
+        if (string.IsNullOrEmpty(version))
+        {
+            throw new ArgumentException("Version is required.", nameof(version));
+        }
+
+        ReviewListItemModel review = await _reviewManager.GetReviewAsync(language, packageName, null);
+        if (review == null)
+        {
+            return null;
+        }
+
+        IEnumerable<APIRevisionListItemModel> revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+        APIRevisionListItemModel revision = revisions
+            .Where(r => !r.IsDeleted && r.APIRevisionType == APIRevisionType.Automatic && r.PackageVersion == version)
+            .OrderByDescending(r => r.CreatedOn)
+            .FirstOrDefault();
+
+        if (revision == null)
+        {
+            return null;
+        }
+
+        return new ResolvePackageResponse
+        {
+            PackageName = review.PackageName,
+            Language = review.Language,
+            ReviewId = review.Id,
+            Version = revision.PackageVersion,
+            RevisionId = revision.Id,
+            RevisionLabel = revision.Label
+        };
+    }
+
     public async Task<ResolvePackageResponse> ResolvePackageLink(string link)
     {
         if (string.IsNullOrEmpty(link))

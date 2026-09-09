@@ -8,6 +8,7 @@ import { SearchService } from './services/SearchService';
 import { MetadataResolver } from './services/MetadataResolver';
 import { TypeSpecProcessor } from './services/TypeSpecProcessor';
 import { SampleProcessor } from './services/SampleProcessor';
+import { AlloySampleProcessor } from './services/AlloySampleProcessor';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -83,6 +84,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log(`processing typespec-azure samples`);
         processSamples(docsDir, "typespec-azure/packages/samples/specs");
 
+        console.log(`processing alloy framework samples`);
+        processAlloySamples(docsDir, "alloy/samples");
+
         console.log('Processing documentation sources...');
         
         console.log('Loading existing blob metadata for change detection...');
@@ -150,6 +154,10 @@ export async function processDailySyncKnowledge(): Promise<void> {
         
         // Clean up expired blobs
         await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles).concat(allMetadataChangedFiles));
+
+        // Trigger AI Search to reindex the knowledge base so the updated blobs are picked up
+        await searchService.runIndexer();
+
         console.log('Daily sync knowledge processing completed');
 
     } finally {
@@ -451,8 +459,8 @@ async function processSourceDirectory(
                     }
                 }
 
-                // Skip reference files and release notes
-                if (relativePath.startsWith('reference') || entry.name.startsWith('release-')) {
+                // Skip reference files and dated release notes (release-YYYY-MM-DD)
+                if (relativePath.startsWith('reference') || /^release-\d{4}-\d{2}-\d{2}\.(md|mdx)$/.test(entry.name)) {
                     continue;
                 }
                 
@@ -899,5 +907,16 @@ function processTypeSpec(docsDir: string, relativeLibDir: string) : void {
         new TypeSpecProcessor(docsDir, relativeLibDir).processTypeSpecLibraries();
     } catch (error) {
         console.error(`Error processing typespec library: ${relativeLibDir}`, error);
+    }
+}
+
+/**
+ * Process Alloy framework samples into generated markdown
+ */
+function processAlloySamples(docsDir: string, relativeSamplesDir: string) : void {
+    try {
+        new AlloySampleProcessor(docsDir, relativeSamplesDir).processSamples();
+    } catch (error) {
+        console.error(`Error processing alloy framework samples: ${relativeSamplesDir}`, error);
     }
 }

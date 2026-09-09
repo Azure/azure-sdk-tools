@@ -2,39 +2,66 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 
-/// <summary>Mock handler for azsdk_analyze_pipeline. Returns a fake-build summary with a single failed test + task.</summary>
+/// <summary>
+/// Mock handler for azsdk_analyze_pipeline. Build 6455504 returns the canonical Storage
+/// QueueClientOptions parser failure used by the analysis and fixer quality evals; other builds
+/// return the generic WidgetClientLiveTests failure used by tool-routing scenarios.
+/// </summary>
 public class AnalyzePipelineHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_analyze_pipeline";
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
+        var buildIdValue = int.TryParse(buildId, out var parsed) ? parsed : 90001;
+        var pipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
+        var isVersionParserFixture = buildId == "6455504";
+        var failedTestTitle = isVersionParserFixture
+            ? "Azure.Storage.Queues.Tests.QueueClientOptionsTests.TryGetServiceVersion_ParsesAllServiceVersions"
+            : "WidgetClientLiveTests.GetWidget";
+        var errorMessage = isVersionParserFixture
+            ? "QueueClientOptions.TryGetServiceVersion is missing mappings for service versions 2026-10-06 (V2026_10_06) and 2026-12-06 (V2026_12_06)"
+            : "Test WidgetClientLiveTests.GetWidget failed: expected 200 got 404";
         return new AnalyzePipelineResponse
         {
-            FailedTests = new Dictionary<string, List<string>>
+            AzurePipelineAnalyses = new List<AzurePipelineAnalysis>
             {
-                ["Contoso.Widgets.Tests"] = ["WidgetClientLiveTests.GetWidget"]
-            },
-            FailedTasks =
-            [
-                new LogAnalysisResponse
+                new AzurePipelineAnalysis
                 {
-                    PipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}",
-                    Errors =
-                    [
-                        new LogEntry
+                    PipelineBuild = new AzurePipelineBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
+                    FailedPipelineTests = new List<FailedTestArtifact>
+                    {
+                        new FailedTestArtifact
                         {
-                            File = "logs/test.log",
-                            Line = 128,
-                            Message = "Test WidgetClientLiveTests.GetWidget failed: expected 200 got 404"
+                            ArtifactFilePath = $"/tmp/{buildId}/Ubuntu2404_NET80_PackageRef_Debug/test-results.trx",
+                            Platform = "Ubuntu2404_NET80_PackageRef_Debug",
+                            FailedTestTitles =
+                            [
+                                failedTestTitle
+                            ]
                         }
-                    ]
+                    },
+                    FailedPipelineTasks = new LogAnalysisResponse
+                    {
+                        PipelineUrl = pipelineUrl,
+                        Errors =
+                        [
+                            new LogEntry
+                            {
+                                File = "logs/test.log",
+                                Line = 128,
+                                Message = errorMessage
+                            }
+                        ]
+                    }
                 }
-            ]
+            }
         };
     }
 }
@@ -46,7 +73,7 @@ public class GetPipelineLlmArtifactsHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
         return new ObjectCommandResponse
         {
             Message = $"Retrieved LLM artifacts for build {buildId} (mock)",

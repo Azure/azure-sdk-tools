@@ -1,7 +1,6 @@
 /**
  * The generation status strings for an SDK repository.
  */
-// tslint:disable-next-line: variable-name
 const SDKAutomationStateStrings = {
   /**
    * The generation process has not yet begun.
@@ -40,7 +39,6 @@ export function getSDKAutomationStateString(state: SDKAutomationState): string {
 /**
  * The names of the images that associate with the different SDK Automation states.
  */
-// tslint:disable-next-line: variable-name
 const SDKAutomationStateImageNames = {
   /**
    * The generation process has not yet begun.

@@ -608,11 +608,11 @@ internal class YourToolTests
 }
 ```
 
-### Add Test Prompts for Tool Discoverability
+### Add Test Prompts for Tool Coverage
 
-When creating a new tool, you **must** add test prompts to validate that LLM agents can discover your tool from natural language queries. This ensures your tool's description is effective for embedding-based tool matching.
+When creating a new tool, add representative prompts so the static coverage test tracks it. Add or update the corresponding Vally prompt-to-tool eval when validating actual tool selection behavior.
 
-**Add 2-3 prompt variations** to [`Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json`](../Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json):
+**Add 2-3 prompt variations** to [`Azure.Sdk.Tools.Cli.Tests/TestData/TestPrompts.json`](../Azure.Sdk.Tools.Cli.Tests/TestData/TestPrompts.json):
 
 ```json
 { "toolName": "azsdk_your_tool_method", "prompt": "Natural language query that should match your tool", "category": "all" },
@@ -626,19 +626,12 @@ When creating a new tool, you **must** add test prompts to validate that LLM age
 - Use `"category": "all"` for tools that work in any repository
 - Use `"category": "azure-rest-api-specs"` for tools specific to the specs repository
 
-**Run the discoverability tests:**
+**Run the coverage test:**
 ```bash
-# Test all prompts match their expected tools
-dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~Evaluate_PromptToToolMatch"
-
-# Verify your tool has test prompts (will fail if missing)
-dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~AllToolsHaveTestPrompts"
+dotnet test Azure.Sdk.Tools.Cli.Tests --filter "Name~AllToolsHaveTestPrompts"
 ```
 
-**If tests fail**, your tool description may need improvement. The test output shows:
-- Current ranking of your tool for the prompt
-- Confidence score (must be ≥40%)
-- Your tool's description (to help identify what needs improvement)
+**If the test fails**, add representative prompts for every missing tool listed in its output.
 
 **Tips for good tool descriptions:**
 - Include action verbs users would say: "analyze", "check", "create", "update"

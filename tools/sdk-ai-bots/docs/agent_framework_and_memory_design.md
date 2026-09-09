@@ -2,17 +2,17 @@
 
 ## 1 Background
 
-We are building a new agent service (`azure-sdk-qa-bot-agent`) based on the Azure AI Foundry Agent framework to replace the existing Go backend (`azure-sdk-qa-bot-backend`) built on a custom RAG framework. The motivations for this migration are:
+We are building an agent service (`azure-sdk-qa-bot-agent`) based on the Azure AI Foundry Agent framework, replacing an earlier RAG-based implementation. The motivations for this design are:
 
-- **Rigid workflow** — The Go backend uses a hard-coded workflow that is difficult to extend. Adding new capabilities requires modifying core code rather than configuration.
-- **No tool abstraction** — Search, analysis, prompt building, and LLM calls are all inline with no separation of concerns.
-- **Ecosystem mismatch** — Go is misaligned with the Python-first AI/LLM ecosystem (Azure AI Agents SDK, prompt frameworks, evaluation tooling).
+- **Flexible workflow** — The agent framework favors configuration over hard-coded workflows, so new capabilities can be added without modifying core code.
+- **Tool abstraction** — Search, analysis, prompt building, and LLM calls are separated into discrete tools with clear separation of concerns.
+- **Ecosystem alignment** — Python aligns with the AI/LLM ecosystem (Azure AI Agents SDK, prompt frameworks, evaluation tooling).
 
 ### 1.1 Agent Framework — GitHub Copilot SDK vs Azure AI Foundry Agent SDK
 
 > **References:**
 > - [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
-> - [Azure AI Foundry Agents](https://learn.microsoft.com/en-us/azure/foundry/agents/overview)
+> - [Azure AI Foundry Agents](https://learn.microsoft.com/azure/foundry/agents/overview)
 
 | | GitHub Copilot SDK | Azure AI Foundry Agent SDK |
 |---|---|---|
@@ -52,7 +52,7 @@ We are building a new agent service (`azure-sdk-qa-bot-agent`) based on the Azur
 ### 1.2 Memory — Hybrid Approach (AI Foundry Memory + Cosmos DB Episodes)
 
 > **References:**
-> - [AI Foundry Memory](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent)
+> - [AI Foundry Memory](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent)
 > - [AI Agent Memory Concepts](https://www.geeksforgeeks.org/artificial-intelligence/ai-agent-memory/)
 
 AI Agent Memory is the ability of an agent to store, recall, and use information from past interactions to make better decisions. Without memory, an agent treats every interaction as if it were the first. With memory, an agent can maintain context, adapt to users, and improve over time — gaining continuity, context-awareness, and learning abilities.
@@ -97,7 +97,7 @@ The agent is configured with the following components:
 | Component | Purpose |
 | --- | --- |
 | **Instruction** | System prompt defining the agent's role, behavior, and response format. |
-| **Tools** | `KnowledgeTools.search_knowledge_base` (AI Search), `WebTools.web_fetch`, `PipelineTools.azsdk_analyze_pipeline`, `web_search` (Bing grounding), ADO MCP tool, GitHub MCP tool. |
+| **Tools** | `KnowledgeTools.search_knowledge_base` and `KnowledgeTools.wiki_search` (AI Search), `WebTools.web_fetch`, `PipelineTools.azsdk_analyze_pipeline`, `web_search` (Bing grounding), ADO MCP tool, GitHub MCP tool. |
 | **Skills** | Tenant-specific skills auto-generated from tenant config. Each tenant becomes a `Skill` with a description (for routing) and content (QA guideline + knowledge source names). The agent self-routes to the correct tenant. |
 | **Context Providers** | `SkillsProvider` (injects active skill context), `MemoryContextProvider` (injects user + expert memories), `CompactionProvider` (compacts tool-call history to manage context size). |
 
@@ -107,11 +107,12 @@ Tools are capabilities the agent can invoke during reasoning:
 
 | Tool | Type | Description |
 | --- | --- | --- |
-| `search_knowledge_base` | `FunctionTool` | Queries Azure AI Search with multiple queries using a mixed strategy (quick vector search or deep agentic search). Automatically expands results by header hierarchy to return full section context. |
+| `search_knowledge_base` | `FunctionTool` | Retrieves raw source chunks with fused vector and BM25 search, plus agentic retrieval in deep mode. Automatically expands results by header hierarchy to return full section context. |
+| `wiki_search` | `FunctionTool` | Retrieves synthesized wiki pages and the bounded source chunks referenced by those pages. |
 | `web_fetch` | `FunctionTool` | Fetches and extracts content from a given URL. |
 | `azsdk_analyze_pipeline` | `FunctionTool` | Analyzes Azure SDK CI pipeline runs to diagnose failures. |
 | `web_search` | Built-in | Bing web search for grounding with real-time information. |
-| ADO MCP | MCP Server | Azure DevOps integration for work item queries. |
+| ADO MCP | MCP Server | Read-only Azure DevOps pipeline and build lookup. |
 | GitHub MCP | MCP Server | GitHub integration for issue/PR lookup. |
 
 #### 2.2.3 Skills
@@ -149,12 +150,14 @@ All knowledge is converted to markdown format for consistency.
 
 An Azure AI Search Indexer automatically splits markdown files into chunks using **Markdown** parsing mode with **H3** header depth.
 
-#### 2.3.3 Knowledge Retrieval (search_knowledge_base)
+#### 2.3.3 Knowledge Retrieval
 
 The `search_knowledge_base` tool supports two search modes:
 
-- **Quick** — Vector search only. Fast, good for straightforward factual lookups.
-- **Deep** — Agentic search + vector search in parallel. The LLM breaks a complex query into smaller focused subqueries for better coverage. Each subquery is semantically reranked. Better for complex or multi-faceted questions.
+- **Quick** — Vector and BM25 keyword search in parallel.
+- **Deep** — Agentic, vector, and BM25 keyword search in parallel. The agentic retriever decomposes a complex query into focused subqueries for better coverage.
+
+The ranked lists are fused with reciprocal-rank fusion before deduplication and hierarchy expansion. `wiki_search` uses the same retrieval pipeline over wiki pages, then routes each selected page through `chunk_refs` to its original source chunks.
 
 Both modes use:
 
@@ -167,7 +170,7 @@ Both modes use:
 
 #### 2.4.1 Memory Types
 
-AI Foundry Memory Store provides two built-in types of long-term memory (see [Foundry Memory — Memory Types](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent#memory-types)):
+AI Foundry Memory Store provides two built-in types of long-term memory (see [Foundry Memory — Memory Types](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent#memory-types)):
 
 - **User profile memory** — Information and preferences *about the user* (e.g., preferred name, SDK language, working patterns). These are considered "static" with respect to a conversation because they don't depend on the current chat context. They are retrieved **once at the start of each session**.
 - **Chat summary memory** — A distilled summary of each topic covered in prior chat sessions. These allow users to continue conversations or reference earlier sessions without repeating context. They are retrieved **every turn** using the current input messages as search items.
@@ -250,11 +253,11 @@ The `EpisodeDocument` extends this with storage fields: `id`, `tenant_id`, `sour
 
 ### 2.6 API Design
 
-See the [TypeSpec definitions](../azure-sdk-qa-bot-agent/tsp).
+See the [TypeSpec definitions](https://github.com/Azure/azure-sdk-tools/tree/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp).
 
 ## 3 Project Structure
 
-See the [Project directory](../azure-sdk-qa-bot-agent).
+See the [Project directory](https://github.com/Azure/azure-sdk-tools/tree/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent).
 
 ## 4 Evaluation
 

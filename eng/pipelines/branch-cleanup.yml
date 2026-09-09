@@ -7,7 +7,6 @@ parameters:
   default:
     - Azure/azure-sdk
     - Azure/azure-sdk-for-android
-    - Azure/azure-sdk-for-c
     - Azure/azure-sdk-for-cpp
     - Azure/azure-sdk-for-go
     - Azure/azure-sdk-for-ios
@@ -122,7 +121,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -BranchRegex "^(increment-package-version-|fluent-lite-generation-|auto-update-|version-increment-build-|post-release-automation-|restapi_auto_|t2-).*$"
+              -BranchRegex "^(increment-package-version-|fluent-lite-generation-|auto-update-|version-increment-build-|post-release-automation-|restapi_auto_|t2-|pipeline-fix/).*$"
               -LastCommitOlderThan ((Get-Date).AddDays(-1))
               -AuthToken $(GH_TOKEN_azure-sdk)
               -WhatIf:$${{parameters.WhatIfPreference}}

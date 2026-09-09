@@ -1,7 +1,6 @@
 """Text preprocessing utilities.
 
-Ports the preprocessing logic from the Go backend
-(azure-sdk-qa-bot-backend/service/preprocess/service.go) to Python.
+Preprocessing logic for chat responses.
 
 Handles:
   - HTML entity and Unicode escape decoding

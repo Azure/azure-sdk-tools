@@ -100,7 +100,7 @@ class IntentionService:
                 )
 
         if req.conversation_id and req.conversation_type:
-            history = await self._conversation_service.get_messages_by_conversation(
+            history = await self._conversation_service.get_messages_by_conversation_id(
                 req.conversation_id,
                 req.conversation_type,
             )

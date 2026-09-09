@@ -19,7 +19,7 @@ parameters:
 
 variables:
   PythonVersion: '3.10'
-  ApiStubVersion: '0.3.28'
+  ApiStubVersion: '0.3.31'
 
 jobs:
 - job: CreatePythonReviewCodeFile

@@ -1,14 +1,4 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-parameters:
-  # Deprecated 2026-05-21: the Azure.Sdk.Tools.Cli.Benchmarks project was
-  # removed in favor of Vally skill evals under .github/skills/. This
-  # parameter is kept as a no-op so any external pipeline definition or
-  # scheduled run still passing RunBenchmarks=true does not break.
-  # Safe to delete once we've confirmed no caller sets it.
-  - name: RunBenchmarks
-    displayName: Run Benchmarks (deprecated, no-op)
-    type: boolean
-    default: false
 
 trigger:
   branches:
@@ -40,6 +30,9 @@ extends:
     ToolDirectory: $(ToolDir)
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
     VerifyChangelog: true
+    # Force-create git tags/releases to work around the CFSClean network isolation
+    # policy bypass for this pipeline. Tracked by https://github.com/Azure/azure-sdk-tools/issues/16602
+    ForceCreate: true
     # GitHub.Copilot.SDK dependency is not strong name signed. Skip validation in order to sign azsdk cli.
     RequireStrongNames: false
     # Install copilot-cli separately from the copilot agent sdk.
@@ -70,14 +63,6 @@ extends:
         framework: net8.0
         assembly: azsdk
     ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-      CustomJobs:
-      - template: /eng/common/pipelines/templates/jobs/ai-eval-job.yml
-        parameters:
-          EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations
-          EvalRepoCommit: $(Build.SourceVersion)
-          TargetRepoName: azure-rest-api-specs
-          TargetRepoOwner: Azure
-          TargetRepoCommit: main
       CustomReleaseJobs:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:

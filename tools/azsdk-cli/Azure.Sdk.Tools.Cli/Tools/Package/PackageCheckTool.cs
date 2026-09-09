@@ -246,8 +246,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var nextSteps = new List<string>();
             if (overallSuccess)
             {
-                nextSteps.Add("All package validation checks passed! Your package is ready for the next steps in the development process.");
-                nextSteps.Add("Consider running package release readiness checks if preparing for release.");
+                nextSteps.Add("All package validation checks passed.");
+                nextSteps.Add("Update changelog content using azsdk_package_update_changelog_content if not already done.");
+                nextSteps.Add("Update package metadata using azsdk_package_update_metadata.");
+                nextSteps.Add("Update version using azsdk_package_update_version when preparing for release.");
             }
             else
             {

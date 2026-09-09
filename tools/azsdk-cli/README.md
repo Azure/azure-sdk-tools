@@ -220,7 +220,6 @@ This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/do
 - *Azure.Sdk.Tools.Cli.Analyzer* - Compilation addons to enforce conventions
     - Enforce all tools handled by try/catch
     - Enforce tool inclusion in service registration for dependency injector
-- *Azure.Sdk.Tools.Cli.Evaluations* - Evaluations Project
 
 ### Architecture Diagram
 

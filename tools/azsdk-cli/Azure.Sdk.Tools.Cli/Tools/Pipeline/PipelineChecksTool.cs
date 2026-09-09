@@ -4,8 +4,9 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -15,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 [McpServerToolType]
 public class PipelineChecksTool(
     IPipelineIdentifierHelper pipelineHelper,
+    IGitHubService gitHubService,
     ILogger<PipelineChecksTool> logger
 ) : MCPTool
 {
@@ -70,7 +72,7 @@ public class PipelineChecksTool(
             }
 
             logger.LogInformation("Getting check runs for {owner}/{repo}#{prNumber}", parsed.Owner, parsed.Repo, parsed.PrNumber);
-            var checks = await pipelineHelper.GetPrCheckRunsAsync(parsed.Owner, parsed.Repo, parsed.PrNumber, ct);
+            var checks = await gitHubService.GetPrCheckRunsAsync(parsed.Owner, parsed.Repo, parsed.PrNumber, ct);
 
             if (failed)
             {

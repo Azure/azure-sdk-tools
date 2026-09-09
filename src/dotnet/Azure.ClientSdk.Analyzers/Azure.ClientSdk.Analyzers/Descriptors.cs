@@ -24,14 +24,6 @@ namespace Azure.ClientSdk.Analyzers
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-virtual"
         );
 
-        public static DiagnosticDescriptor AZC0004 = new DiagnosticDescriptor(
-            nameof(AZC0004),
-            "DO provide both asynchronous and synchronous variants for all service methods.",
-            "DO provide both asynchronous and synchronous variants for all service methods.",
-            DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
-            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-sync-and-async"
-        );
-
         public static DiagnosticDescriptor AZC0005 = new DiagnosticDescriptor(
             nameof(AZC0005),
             "DO provide protected parameterless constructor for mocking.",
@@ -67,13 +59,6 @@ namespace Azure.ClientSdk.Analyzers
             nameof(AZC0014),
             "Avoid using banned types in public API",
             "Types from {0} assemblies should not be exposed as part of public API surface.",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning, true);
-
-        public static DiagnosticDescriptor AZC0015 = new DiagnosticDescriptor(
-            nameof(AZC0015),
-            "Unexpected client method return type.",
-            "Client methods should return Pageable<T>/AsyncPageable<T>/Operation<T>/Task<Operation<T>>/Response/Response<T>/Task<Response>/Task<Response<T>> or other client class found {0} instead.",
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
 

@@ -571,7 +571,6 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/eval-archive/
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/smoke-tests/
 # Local secrets.
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/auth.json
-tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generated.json
 
 # Azure SDK CLI Tool logs
 *.logs

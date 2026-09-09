@@ -1,0 +1,95 @@
+# Scheduled LLM wiki build.
+#
+# Reads the markdown corpus that the knowledge sync writes to the `knowledge`
+# blob container, incrementally rebuilds the wiki pages, and writes them to the
+# `wiki` container. The dedicated Azure AI Search indexer picks the pages up on
+# its own schedule.
+#
+# Dev and prod share this file; each ADO definition supplies its own
+# AZURE_APPCONFIG_ENDPOINT and SERVICE_CONNECTION, and every other setting is
+# read from that App Configuration store.
+
+name: Build Azure SDK QA Bot Wiki
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: '0 4 * * *'
+    displayName: 'Daily (04:00 UTC, after the 02:00 knowledge sync)'
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: minDocs
+    displayName: 'Minimum documents an entity/concept needs before it gets a page'
+    type: number
+    default: 2
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: BuildWiki
+        displayName: 'Build Wiki'
+        jobs:
+          - job: BuildWiki
+            displayName: 'Build Wiki Pages'
+            # A full rebuild fans out thousands of LLM calls; incremental runs
+            # are far shorter but the first run after a corpus change is not.
+            timeoutInMinutes: 360
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - task: AzureCLI@2
+                displayName: 'Build wiki pages'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  # DefaultAzureCredential would otherwise pick up the build
+                  # agent's own managed identity, which has no access to the
+                  # bot's resources; exporting the service connection's
+                  # federated token pins it to the right principal.
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    echo "$idToken" > "$(Agent.TempDirectory)/id_token"
+                    export AZURE_CLIENT_ID="$servicePrincipalId"
+                    export AZURE_TENANT_ID="$tenantId"
+                    export AZURE_FEDERATED_TOKEN_FILE="$(Agent.TempDirectory)/id_token"
+                    echo "authenticating as client id $servicePrincipalId"
+
+                    python -m pip install --upgrade pip
+                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+                    python -m pip config set global.index-url "$PIP_INDEX_URL"
+                    pip install -r requirements.txt --retries 5 --timeout 60
+
+                    python -m wiki_index.main \
+                      --min-docs ${{ parameters.minDocs }}
+                env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

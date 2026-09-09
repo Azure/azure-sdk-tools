@@ -80,7 +80,7 @@ internal class ToolPromptCoverageTests
                 $"Coverage gap: {missingTools.Count} tool(s) have no test prompts in TestPrompts.json. " +
                 $"Tool owners must add 2-3 prompt variations for each:\n" +
                 $"  - {string.Join("\n  - ", missingTools)}\n\n" +
-                $"To add prompts, edit: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json");
+                $"To add prompts, edit: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests/TestData/TestPrompts.json");
         }
     }
 

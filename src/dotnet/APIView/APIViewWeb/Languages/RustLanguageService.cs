@@ -10,7 +10,7 @@ namespace APIViewWeb
     public class RustLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Rust";
-        public override string[] Extensions { get; } = { ".rust.json" };
+        public override string[] Extensions { get; } = { ".rust.json", "_rust.json" };
         public override string ProcessName { get; } = "node";
         public override string VersionString { get; } = "1.3.0";
         private readonly string _rustParserToolPath;
@@ -26,4 +26,3 @@ namespace APIViewWeb
         }
     }
 }
-

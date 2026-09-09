@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -85,6 +88,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly CommandGroup APIView = new(
             Verb: "apiview",
             Description: "Interact with APIView services and functionality",
+            Options: []
+        );
+
+        public static readonly CommandGroup ApiReviewHub = new(
+            Verb: "api-review",
+            Description: "Interact with API Review Hub services and functionality",
+            Aliases: [],
             Options: []
         );
 

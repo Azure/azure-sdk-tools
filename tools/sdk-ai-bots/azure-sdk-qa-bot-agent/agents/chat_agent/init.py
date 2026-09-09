@@ -45,6 +45,7 @@ from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
 from utils.memory_context_provider import MemoryContextProvider
+from utils.tool_security import ToolOutputSecurityMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,7 @@ async def main() -> None:
 
     tools = [
         knowledge_tools.search_knowledge_base,
+        knowledge_tools.wiki_search,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,
@@ -155,6 +157,7 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider, memory_provider, compaction_provider],
+        middleware=[ToolOutputSecurityMiddleware()],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,

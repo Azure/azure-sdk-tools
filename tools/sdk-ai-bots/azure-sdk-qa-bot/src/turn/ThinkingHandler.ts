@@ -8,14 +8,16 @@ import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } f
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
 import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils.js';
+import type { AIEntity } from '@microsoft/teams-ai/lib/types/AIEntity.js';
 
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
   private readonly defaultThinkingMessage = '⏳Thinking';
-  private readonly aiGeneratedEntity = {
+  private readonly aiGeneratedEntity: AIEntity = {
     type: 'https://schema.org/Message',
     '@type': 'Message',
     '@context': 'https://schema.org',
+    '@id': '',
     additionalType: ['AIGeneratedContent'],
   };
   private readonly maxRetryTimesForFinish = 5;
@@ -71,11 +73,12 @@ export class ThinkingHandler {
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
     const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
     const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
-    const entity: Record<string, unknown> = {
+    const entity: AIEntity = {
       ...this.aiGeneratedEntity,
     };
     if (traceId) {
       entity.usageInfo = {
+        type: 'https://schema.org/Message',
         '@type': 'CreativeWork',
         name: 'Internal Tracking',
         description: `Trace ID: ${traceId}`,

@@ -40,6 +40,7 @@ class ConversationMessage(BaseModel):
     created_at: datetime  # UTC datetime
     conversation_id: str | None = None  # Customer Conversation ID
     conversation_type: ConversationType | None = None  # Customer Conversation Type
+    trace_id: str | None = None  # OTel trace id of the turn (bot messages only)
     should_reply: bool | None = (
         None  # Whether the message passed intention recognition (in bot scope)
     )
@@ -73,3 +74,11 @@ class ConversationMessageItem(ConversationMessage):
 
 class SaveConversationMessageResponse(BaseModel):
     pass
+
+
+class BotAnswerVerdict(str, Enum):
+    """The LLM's judgement of a bot answer's correctness."""
+
+    Correct = "correct"
+    Incorrect = "incorrect"
+    Unknown = "unknown"

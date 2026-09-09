@@ -845,9 +845,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
             logger.LogDebug("Regeneration local spec source: {localSpecProjectPath}",
                 localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
-
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-            await languageService.PreGenerateAsync(repoRoot, ct);
+            if (repoRoot != null)
+            {
+                await languageService.PreGenerateAsync(repoRoot, ct);
+            }
+            
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {

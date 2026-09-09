@@ -241,6 +241,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }).ToList();
                 return overduePlans;
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to list overdue release plans");

@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string checkApiReadinessCommandName = "check-api-readiness";
         private const string linkSdkPrCommandName = "link-sdk-pr";
         private const string listOverdueReleasePlansCommandName = "list-overdue";
+        private const string abandonOverdueReleasePlansCommandName = "abandon-overdue";
         private const string updateApiSpecPullRequestCommandName = "update-spec-pr";
         private const string getServiceDetailsCommandName = "get-service-details";
         private const string abandonReleasePlanCommandName = "abandon";
@@ -303,6 +304,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
+            new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon past-due release plans without active SDK pull requests"),
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
             new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan", AbandonReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, },
@@ -365,6 +367,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 case listOverdueReleasePlansCommandName:
                     return await ListOverdueReleasePlans(commandParser.GetValue(notifyOwnersOpt), commandParser.GetValue(azureSDKEmailerUriOpt), ct);
+
+                case abandonOverdueReleasePlansCommandName:
+                    return await AbandonOverdueReleasePlans(ct);
 
                 case updateApiSpecPullRequestCommandName:
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
@@ -1860,6 +1865,78 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new ReleasePlanListResponse { ResponseError = $"An error occurred while retrieving overdue release plans: {ex.Message}" };
             }
         }
+
+        public async Task<ReleasePlanListResponse> AbandonOverdueReleasePlans(CancellationToken ct = default)
+        {
+            try
+            {
+                var overdueReleasePlans = await devOpsService.ListOverdueReleasePlansAsync(ct);
+                var releasePlansToAbandon = overdueReleasePlans.Where(plan => !HasActiveSdkPullRequest(plan)).ToList();
+                var abandonedReleasePlans = new List<ReleasePlanWorkItem>();
+                var responseErrors = new List<string>();
+
+                foreach (var releasePlan in releasePlansToAbandon)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    try
+                    {
+                        var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(
+                            releasePlan.WorkItemId,
+                            new Dictionary<string, string> { { "System.State", "Abandoned" } },
+                            ct);
+
+                        if (updatedWorkItem == null)
+                        {
+                            var error = $"Failed to abandon overdue release plan {releasePlan.WorkItemId}: work item update returned null.";
+                            logger.LogError("{Error}", error);
+                            responseErrors.Add(error);
+                            continue;
+                        }
+
+                        releasePlan.Status = "Abandoned";
+                        abandonedReleasePlans.Add(releasePlan);
+                        await notificationService.SendEmailNotificationAsync(new PastDueReleasePlanEmail(releasePlan), ct);
+                        ct.ThrowIfCancellationRequested();
+                        logger.LogInformation("Abandoned overdue release plan {WorkItemId}", releasePlan.WorkItemId);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to abandon overdue release plan {WorkItemId}", releasePlan.WorkItemId);
+                        responseErrors.Add($"Failed to abandon overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    }
+                }
+
+                var response = new ReleasePlanListResponse
+                {
+                    Message = $"Abandoned {abandonedReleasePlans.Count} overdue release plan(s) without active SDK pull requests.",
+                    ReleasePlanDetailsList = abandonedReleasePlans
+                };
+                if (responseErrors.Count > 0)
+                {
+                    response.ResponseErrors = responseErrors;
+                }
+                return response;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error abandoning overdue release plans");
+                return new ReleasePlanListResponse { ResponseError = $"An error occurred while abandoning overdue release plans: {ex.Message}" };
+            }
+        }
+
+        private static bool HasActiveSdkPullRequest(ReleasePlanWorkItem releasePlan) =>
+            releasePlan.SDKInfo.Any(sdkInfo =>
+                !string.IsNullOrWhiteSpace(sdkInfo.SdkPullRequestUrl)
+                && !string.Equals(sdkInfo.PullRequestStatus, "Closed", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(sdkInfo.PullRequestStatus, "Merged", StringComparison.OrdinalIgnoreCase));
 
         private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri, CancellationToken ct)
         {

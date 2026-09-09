@@ -102,6 +102,28 @@ public class NotificationServiceTests
     }
 
     [Test]
+    public void PastDueReleasePlanEmail_ConstructsIssueMessage_FromReleasePlan()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            WorkItemId = 100,
+            ReleasePlanId = 42,
+            Owner = "Test Owner",
+            ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+        };
+
+        var template = new PastDueReleasePlanEmail(releasePlan);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "owner@microsoft.com" }));
+        Assert.That(template.Subject, Is.EqualTo("Your release plan (42) is now past due"));
+        Assert.That(template.Body, Does.Contain($"<a href=\"{releasePlan.ReleasePlanLink}\">42</a>"));
+        Assert.That(template.Body, Does.Contain("Hi Test Owner,"));
+        Assert.That(template.Body, Does.Contain("has been marked as abandoned because there are no active SDK PRs associated with it"));
+        Assert.That(template.Body, Does.Contain("please reopen the release plan and update the target release month accordingly"));
+        Assert.That(template.Body, Does.Contain("reaches either Completed or Closed status by the end of its target release month"));
+    }
+
+    [Test]
     public async Task SendEmailNotification_NoRecipients_SilentlyCompletes()
     {
         var (service, captured) = CreateService(url: ServiceUrl);

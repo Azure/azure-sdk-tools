@@ -1189,6 +1189,108 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_abandon_overdue_release_plans_only_without_active_sdk_prs()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var noPullRequest = new ReleasePlanWorkItem
+            {
+                WorkItemId = 204,
+                ReleasePlanId = 204,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "owner@microsoft.com"
+            };
+            var closedPullRequest = new ReleasePlanWorkItem
+            {
+                WorkItemId = 205,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-net/pull/1", PullRequestStatus = "Closed" }]
+            };
+            var mergedPullRequest = new ReleasePlanWorkItem
+            {
+                WorkItemId = 206,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/2", PullRequestStatus = "Merged" }]
+            };
+            var openPullRequest = new ReleasePlanWorkItem
+            {
+                WorkItemId = 207,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-java/pull/3", PullRequestStatus = "Open" }]
+            };
+            var inProgressPullRequest = new ReleasePlanWorkItem
+            {
+                WorkItemId = 208,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-js/pull/4", PullRequestStatus = "InProgress" }]
+            };
+            var unknownPullRequestStatus = new ReleasePlanWorkItem
+            {
+                WorkItemId = 209,
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-go/pull/5" }]
+            };
+            var mixedPullRequestStatuses = new ReleasePlanWorkItem
+            {
+                WorkItemId = 210,
+                SDKInfo =
+                [
+                    new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-net/pull/6", PullRequestStatus = "Closed" },
+                    new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/7", PullRequestStatus = "Open" }
+                ]
+            };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(
+                [noPullRequest, closedPullRequest, mergedPullRequest, openPullRequest, inProgressPullRequest, unknownPullRequestStatus, mixedPullRequestStatuses]);
+
+            var updatedWorkItemIds = new List<int>();
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(
+                    It.IsAny<int>(),
+                    It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Abandoned"),
+                    It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((workItemId, _, _) => updatedWorkItemIds.Add(workItemId))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+
+            var mockNotificationService = new Mock<INotificationService>();
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), mockNotificationService.Object);
+
+            var response = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(updatedWorkItemIds, Is.EqualTo(new[] { 204, 205, 206 }));
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { noPullRequest, closedPullRequest, mergedPullRequest }));
+            mockNotificationService.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+        }
+
+        [Test]
+        public async Task Test_abandon_overdue_release_plans_reports_partial_failures()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var failedPlan = new ReleasePlanWorkItem { WorkItemId = 211 };
+            var abandonedPlan = new ReleasePlanWorkItem { WorkItemId = 212 };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([failedPlan, abandonedPlan]);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(failedPlan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem)null!);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(abandonedPlan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.ResponseErrors, Has.One.Contains("211"));
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { abandonedPlan }));
+        }
+
+        [Test]
+        public void Test_abandon_overdue_release_plans_propagates_cancellation()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem { WorkItemId = 213 };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new OperationCanceledException());
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            Assert.ThrowsAsync<OperationCanceledException>(async () => await tool.AbandonOverdueReleasePlans());
+        }
+
+        [Test]
         public async Task Test_notification_includes_correct_missing_sdks()
         {
             var mockDevOps = new Mock<IDevOpsService>();

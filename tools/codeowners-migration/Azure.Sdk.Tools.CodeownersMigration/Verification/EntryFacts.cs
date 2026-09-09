@@ -7,25 +7,20 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
 {
     /// <summary>
     /// The semantic projection of a <see cref="CodeownersEntry"/>: everything GitHub and the Azure SDK
-    /// tooling actually acts on, with comments, blank lines, block ordering and team expansion removed.
+    /// tooling act on, with comments, blank lines and formatting removed.
     ///
-    /// Owner lists are captured *unexpanded* (from the parser's Original* properties) so that comparisons
-    /// are deterministic and do not depend on the live team membership blob. The parser's implicit owner
-    /// inheritance is re-applied here because it is a semantic rule, not formatting: when a block ends in a
-    /// source path/owner line, an empty AzureSdkOwners moniker and a ServiceLabel moniker both fall back to
-    /// the source owners.
+    /// Owner lists are captured <em>unexpanded</em> (from the parser's <c>Original*</c> properties) so that
+    /// a comparison is deterministic and does not depend on live GitHub team membership. Without this, a
+    /// team gaining or losing a member between two runs would read as an ownership change.
     /// </summary>
     public class EntryFacts
     {
-        /// <summary>Normalized path expression, or null for a pathless (service label only) block.</summary>
-        public string Path { get; set; }
-
         /// <summary>
-        /// The path exactly as it was declared, with only a leading slash guaranteed. <see cref="Path"/> is
-        /// normalized for <em>comparison</em>, which guesses a trailing slash from the final segment; that
-        /// guess is wrong often enough that it must never reach authored YAML. Conversion uses this instead.
+        /// The path expression, trimmed and given a leading slash. It is <em>not</em> otherwise normalized:
+        /// '/sdk/foo' and '/sdk/foo/' select different files in GitHub's matcher, so treating them as equal
+        /// would hide a real change.
         /// </summary>
-        public string DeclaredPath { get; set; }
+        public string Path { get; set; }
 
         public List<string> SourceOwners { get; set; } = new List<string>();
         public List<string> PRLabels { get; set; } = new List<string>();
@@ -33,25 +28,27 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
         public List<string> ServiceOwners { get; set; } = new List<string>();
         public List<string> AzureSdkOwners { get; set; } = new List<string>();
 
-        /// <summary>Line number of the originating block, for diagnostics.</summary>
+        /// <summary>Zero-based line number of the originating block, for diagnostics.</summary>
         public int StartLine { get; set; }
-
-        public bool HasPath => !string.IsNullOrEmpty(Path);
 
         public static EntryFacts FromEntry(CodeownersEntry entry)
         {
             var facts = new EntryFacts
             {
-                Path = string.IsNullOrWhiteSpace(entry.PathExpression) ? null : NormalizePath(entry.PathExpression),
-                DeclaredPath = string.IsNullOrWhiteSpace(entry.PathExpression) ? null : EnsureLeadingSlash(entry.PathExpression),
+                Path = string.IsNullOrWhiteSpace(entry.PathExpression) ? null : EnsureLeadingSlash(entry.PathExpression),
                 SourceOwners = Clean(entry.OriginalSourceOwners),
                 PRLabels = CleanLabels(entry.PRLabels),
                 ServiceLabels = CleanLabels(entry.ServiceLabels),
                 StartLine = entry.startLine
             };
 
-            // ServiceOwners: prefer the explicitly declared (unexpanded) owners. If the parser produced
-            // expanded service owners while none were declared, it inherited them from the source owners.
+            // The parser applies implicit owner inheritance: when a block carrying a '# ServiceLabel:' or an
+            // empty '# AzureSdkOwners:' moniker ends in a source path/owner line, the source owners become
+            // the service and Azure SDK owners. That is a semantic rule rather than formatting, and it does
+            // not appear in the Original* properties, so it is re-applied here. The populated-but-undeclared
+            // shape is what identifies it. Verified against the parser: an unexpandable team is retained
+            // rather than dropped, so the expanded list is never empty merely because team data was
+            // unavailable, and this test therefore does not depend on network access.
             facts.ServiceOwners = Clean(entry.OriginalServiceOwners);
             if (facts.ServiceOwners.Count == 0 && entry.ServiceOwners != null && entry.ServiceOwners.Count > 0)
             {
@@ -67,37 +64,31 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
             return facts;
         }
 
+        /// <summary>A one-line summary of the entry, used when reporting an added or removed entry.</summary>
+        public string Describe()
+        {
+            var parts = new List<string> { Path ?? "(no path)" };
+            Append("source", SourceOwners);
+            Append("service", ServiceOwners);
+            Append("azuresdk", AzureSdkOwners);
+            Append("pr-labels", PRLabels);
+            Append("service-labels", ServiceLabels);
+            return string.Join(", ", parts);
+
+            void Append(string name, List<string> values)
+            {
+                if (values.Count > 0)
+                {
+                    parts.Add($"{name}: {string.Join(" ", values)}");
+                }
+            }
+        }
+
         /// <summary>Trims the expression and guarantees a leading slash, changing nothing else.</summary>
         private static string EnsureLeadingSlash(string path)
         {
             string trimmed = path.Trim();
             return trimmed.Length == 0 || trimmed.StartsWith("/") ? trimmed : "/" + trimmed;
-        }
-
-        /// <summary>
-        /// Normalizes a path expression so that equivalent expressions written differently compare equal.
-        /// A leading slash is added, and a trailing slash is added unless the final segment names a file or
-        /// contains a glob.
-        /// </summary>
-        public static string NormalizePath(string path)
-        {
-            string normalized = EnsureLeadingSlash(path);
-            if (normalized.Length == 0)
-            {
-                return normalized;
-            }
-
-            if (!normalized.EndsWith("/"))
-            {
-                string lastSegment = normalized.Substring(normalized.LastIndexOf('/') + 1);
-                bool looksLikeFileOrGlob = lastSegment.Contains("*") || lastSegment.Contains(".");
-                if (!looksLikeFileOrGlob)
-                {
-                    normalized += "/";
-                }
-            }
-
-            return normalized;
         }
 
         /// <summary>Owner key used for comparison: case-insensitive and without the leading '@'.</summary>
@@ -122,6 +113,10 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
             return trimmed.ToLowerInvariant();
         }
 
+        /// <summary>
+        /// Owners as a set. Ordering within a single entry is not semantic to GitHub, so it is not compared;
+        /// the ordering that <em>is</em> semantic is the ordering of entries, which the comparer enforces.
+        /// </summary>
         public static SortedSet<string> OwnerSet(IEnumerable<string> owners)
         {
             var set = new SortedSet<string>(StringComparer.Ordinal);
@@ -136,6 +131,7 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
             return set;
         }
 
+        /// <summary>Labels as a set, on the same basis as <see cref="OwnerSet"/>.</summary>
         public static SortedSet<string> LabelSet(IEnumerable<string> labels)
         {
             var set = new SortedSet<string>(StringComparer.Ordinal);

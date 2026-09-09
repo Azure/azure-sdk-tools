@@ -897,9 +897,10 @@ of the whole set is one cache read either way. The trade is that a pre-existing 
 untouched fragment blocks an unrelated ownership PR — which is the intended direction, since the
 alternative is a repository that decays until a release discovers it.
 
-`eng/common/pipelines/templates/steps/lint-codeowners.yml` implements the trigger and the step, and
+`eng/common/pipelines/templates/steps/verify-codeowners.yml` implements the trigger and the step, and
 carries gate 1 ahead of them. The lint steps are a no-op in a repository that has no
-`.github/owners.config.yaml` yet; gate 1 is not, which is why it sits outside their guard. The same
+`.github/owners.config.yaml` yet; gate 1 is not, which is why it sits outside their guard. Both are
+gated on `EnablePrValidation`, which a repository sets once it has migrated. The same
 template carries the release check on a manual queue
 ([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)), so one template
 holds every ownership gate a repository runs.
@@ -1240,13 +1241,15 @@ contact with the YAML model ([Component 10](#component-10-lint-rules)).
 the ownership-extraction pipeline — which is deleted along with the rendered-CODEOWNERS cache — and
 `Test-CodeownersSections.ps1`, which diffed a section across two revisions to detect drift.
 
-Both callers are gone. The script and its `verify-codeowners-sections.yml` template are deleted:
-comparing sections across revisions was a way to tolerate hand edits to CODEOWNERS while catching the
-damaging ones. Generating the file removes the premise. What replaces it is narrower and stated
-directly — a non-`azure-sdk-automation` author who edits `.github/CODEOWNERS` fails the build and is
-pointed at <https://aka.ms/azsdk/codeowners>. That check lives in `lint-codeowners.yml` ahead of the
-ownership-YAML steps and outside their guard, so it protects repositories that have not migrated
-yet.
+Both callers are gone. `Test-CodeownersSections.ps1` is deleted, and its
+`verify-codeowners-sections.yml` template is reduced to a no-op that still parses so pipelines
+referencing it keep working until those references are removed. Comparing sections across revisions
+was a way to tolerate hand edits to CODEOWNERS while catching the damaging ones. Generating the file
+removes the premise. What replaces it is narrower and stated directly — a non-`azure-sdk-automation`
+author who edits `.github/CODEOWNERS` fails the build and is pointed at
+<https://aka.ms/azsdk/codeowners>. That check lives in `verify-codeowners.yml` ahead of the
+ownership-YAML steps and outside their guard, gated on the same `EnablePrValidation` opt-in that a
+repository uses to signal it has migrated.
 
 #### `view` is deleted, not reimplemented
 
@@ -1473,8 +1476,9 @@ derived from data this system already owns.
 
 `export-section` goes with it, and so does its other caller. Section order is now declared in
 `.github/owners.config.yaml` and the whole file is generated, so a section diff has nothing left to
-tell anyone: `eng/common/scripts/Test-CodeownersSections.ps1` and
-`eng/common/pipelines/templates/steps/verify-codeowners-sections.yml` are both deleted.
+tell anyone: `eng/common/scripts/Test-CodeownersSections.ps1` is deleted and
+`eng/common/pipelines/templates/steps/verify-codeowners-sections.yml` is reduced to a no-op shim so
+that pipelines still referencing it keep parsing.
 
 `eng/common/scripts/Test-CodeownersForArtifacts.ps1` calls `check-package --directory-path --repo
 --output json` and needs **no change**. `--directory-path` already locates the package inside the

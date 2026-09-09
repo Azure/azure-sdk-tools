@@ -882,19 +882,27 @@ thing that fails a contributor's build. Whether the committed file happens to be
 `generate`'s question either: the regeneration job answers that with `git diff --exit-code`, and gate
 2 does not care at all, because a contributor's PR is *expected* to leave the committed file stale.
 
-Gate 2 is therefore a single check: **`azsdk config codeowners lint-fragments`**. It validates the
-changed fragments against the publicly downloadable owner caches, checks that each entry resolves to
-enough individuals, and checks that its labels are in the common label set
+Gate 2 is therefore a single check: **`azsdk config codeowners lint-fragments`**. It validates
+fragments against the publicly downloadable owner caches, checks that each entry resolves to enough
+individuals, and checks that its labels are in the common label set
 ([Component 10](#component-10-lint-rules)). Fail on any violation, and fail if a cache is unusable
 (see [Cache availability](#cache-availability)).
 
 It runs only on PRs that touch `.github/owners.config.yaml` or an `owners.yaml`. A pull request that
-changes no ownership file does not run it and cannot be blocked by it. When a fragment changes, only
-that fragment is linted; when the config changes, every fragment is linted, because the config
-carries the minimums and can invalidate a fragment nobody touched.
+changes no ownership file does not run it and cannot be blocked by it. When it does run it lints
+*every* fragment, not the changed ones. Selecting by diff looks cheaper but is not sound: the config
+carries the minimums, so changing it invalidates fragments nobody touched, and linting named files
+one at a time skips the rules that are properties of the repository rather than of a file. The cost
+of the whole set is one cache read either way. The trade is that a pre-existing violation in an
+untouched fragment blocks an unrelated ownership PR — which is the intended direction, since the
+alternative is a repository that decays until a release discovers it.
+
 `eng/common/pipelines/templates/steps/lint-codeowners.yml` implements the trigger and the step, and
 carries gate 1 ahead of them. The lint steps are a no-op in a repository that has no
-`.github/owners.config.yaml` yet; gate 1 is not, which is why it sits outside their guard.
+`.github/owners.config.yaml` yet; gate 1 is not, which is why it sits outside their guard. The same
+template carries the release check on a manual queue
+([Component 8](#component-8-the-shared-build-pipeline-and-invalid-owner-handling)), so one template
+holds every ownership gate a repository runs.
 
 The caches it reads are anonymously readable blobs, so the step needs no credential and works on
 pull requests from forks.
@@ -976,10 +984,8 @@ reported by `check-package` at release time ([Component 8](#component-8-the-shar
 it tends to be cleaned up by the team that owns the file rather than landing on an unrelated author.
 And the condition is self-extinguishing per file — it can only fire once.
 
-This applies to fragments and to `.github/owners.config.yaml` alike. It does not extend across
-files: editing `sdk/ai/owners.yaml` does not lint `sdk/storage/owners.yaml`. The exception is a
-change to `.github/owners.config.yaml`, which carries the owner minimums and can therefore invalidate
-a fragment nobody touched; that change lints every fragment.
+This applies to fragments and to `.github/owners.config.yaml` alike. What it scopes is *whether* the
+check runs, not how much it looks at: any ownership change lints every fragment in the repository.
 
 #### Why validity checking is scoped to ownership changes
 
@@ -1958,8 +1964,9 @@ azsdk config github-label create azure-openai --link https://learn.microsoft.com
 
 ### Phase 3: Enforcement
 
-- Milestone: gate 1 rejects hand edits to `.github/CODEOWNERS`; gate 2 lints every touched fragment;
-  the regeneration job opens PRs from `main`; `check-package` resolves from the YAML.
+- Milestone: gate 1 rejects hand edits to `.github/CODEOWNERS`; gate 2 lints every fragment whenever
+  ownership YAML changes; the regeneration job opens PRs from `main`; `check-package` resolves from
+  the YAML.
 - Pipeline changes in `eng/pipelines/pipeline-owners-extraction.yml`:
   - delete the `Export Client Libraries section` and `Upload CODEOWNERS cache` tasks. Nothing reads
     `cache/azure/<repo>/CODEOWNERS.cache` once `check-package` resolves from the YAML, so the

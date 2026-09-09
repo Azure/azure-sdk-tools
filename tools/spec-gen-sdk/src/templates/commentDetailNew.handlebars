@@ -29,12 +29,6 @@
     {{#if (shouldRender messages isBetaMgmtSdk)}}
       {{renderMessagesUnifiedPipeline messages status}}
     {{/if}}
-    {{#if sdkChanges}}
-    <details>
-      <summary>SDK changes</summary>
-      {{renderMessagesUnifiedPipeline changelogs "succeeded"}}
-    </details>
-    {{/if}}
     {{#if (shouldRender presentSuppressionLines isBetaMgmtSdk hasBreakingChange)}}
       {{renderPresentSuppressionLines presentSuppressionLines}}
     {{/if}}

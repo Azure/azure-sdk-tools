@@ -9,7 +9,7 @@ The customization tool (`azure-sdk-mcp:azsdk_customized_code_update`) can be tri
 | Entry Point                   | Description                                                                                     | Example                                                                                    |
 | ----------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **Build failures**            | Compilation errors, analyzer violations, linting failures after SDK generation                  | `error CS0246: The type or namespace name 'FooModel' could not be found`                   |
-| **Selected compatibility customization** | `azsdk-common-sdk-breaking-change` has explained the evidence and the user selected a TypeSpec/custom-code mitigation | Preserve a verified SDK-only name change within the authorized edit scope |
+| **Breaking changes**          | Output from breaking changes analysis tools detecting renamed/removed properties, changed types | `Breaking changes detected: FooOptions.timeout property type changed from int to Duration` |
 | **User prompts**              | Natural language requests to modify SDK behavior                                                | "Rename FooClient to BarClient for .NET"                                                   |
 | **API review feedback**       | Feedback from APIView or PR comments on SDK naming/structure                                    | "Model name doesn't follow .NET casing conventions"                                        |
 | **.NET analyzer errors**      | AZC0030 (naming violations), AZC0012 (generic type names), etc.                                 | `AZC0030: Model name ends with 'Parameters'`                                               |
@@ -20,7 +20,7 @@ The customization tool (`azure-sdk-mcp:azsdk_customized_code_update`) can be tri
 
 - Build fails after `azure-sdk-mcp:azsdk_package_build_code` with compilation errors
 - Type name conflicts with reserved keywords or existing types
-- User-selected TypeSpec/custom-code mitigations from `azsdk-common-sdk-breaking-change`; not automatic fixes for every removed/renamed API or changed type
+- Breaking changes from spec updates (renamed/removed properties, changed types)
 - API surface changes that require `client.tsp` customizations
 - .NET analyzer violations (AZC0030, AZC0012, etc.)
 - Renaming clients, models, or operations for specific language SDKs
@@ -30,17 +30,6 @@ The customization tool (`azure-sdk-mcp:azsdk_customized_code_update`) can be tri
 - Duplicate fields between generated code and manual customization code
 
 ## Customization Steps
-
-For compatibility requests, first use `azsdk-common-sdk-breaking-change` to detect,
-explain, and obtain selected mitigations. It also routes proven .NET generator
-patterns to verified SDK guidance instead of this generic customization workflow.
-
-Set `editScope` to the authorized surface: `SpecInputs` for approved `client.tsp`
-changes, `CustomCode` for SDK-only hand-written customization, and `All` only when
-both surfaces are explicitly authorized. Supply `packagePath`,
-`customizationRequest`, and `tspProjectPath` when needed. Restricted scopes do not
-automatically run both phases. SDK-only work must preserve spec inputs and the
-pinned spec commit; `SpecChangeRequired` is a handoff, never a wider-scope retry.
 
 1. **Capture context** — Collect the build error output, user request, or API review feedback.
 2. **Apply customization** — Run `azure-sdk-mcp:azsdk_customized_code_update` with the error/request context. The tool handles the full workflow internally:
@@ -58,7 +47,7 @@ pinned spec commit; `SpecChangeRequired` is a handoff, never a wider-scope retry
 | Scenario                                    | Phase  | Customization                                                               |
 | ------------------------------------------- | ------ | --------------------------------------------------------------------------- |
 | Type name conflict with reserved keyword    | A      | Rename via `@@clientName` in `client.tsp`                                   |
-| Verified SDK-only naming change selected for mitigation | A | Consider a scoped naming customization only after confirming semantics and wire contract are unchanged |
+| Property renamed in new API version         | A      | Add `@@clientName` to preserve backward compatibility                       |
 | .NET analyzer error (AZC0030, AZC0012)      | A      | Apply scoped `@@clientName` decorators to fix naming violations             |
 | Hide internal operation from SDK            | A      | Apply `@@access` decorator with language scope                              |
 | Create subclient architecture               | A      | Use `@client` and `@clientInitialization` decorators                        |
@@ -79,9 +68,6 @@ Activates automatically when Phase A build fails AND customization files exist (
 When neither phase resolves the issue, or no customization files exist, the tool returns structured guidance for manual implementation.
 
 ## Retry Logic
-
-Compatibility mitigation uses the shared breaking-change skill's bounded loop and
-error handling; the build-only retry sequence below cannot establish compatibility.
 
 The tool handles retries internally with a two-pass classification approach:
 

@@ -1,18 +1,33 @@
 # Release History
 
-## 0.6.44 (Unreleased)
+## 0.6.46 (Unreleased)
 
 ### Features Added
 
-- Added .NET SDK breaking-change detection using the SDK repository's standalone ApiCompat detector, with structured API changes and shared mitigation routing.
+- Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 - Preserve detected SDK changes when classification or catalog loading fails, and reject invalid detector reports instead of silently falling back.
+- Fixed SDK release readiness for Patch releases and language-specific prerelease versions, preserving stable APIView checks for Python post-releases and versions with build metadata.
+- Ignored release-table headers and separators so packages without planned release dates remain blocked.
+- Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
 
 ### Other Changes
+
+## 0.6.45 (2026-09-08)
+
+### Bugs Fixed
+
+- C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
+
+## 0.6.44 (2026-09-08)
+
+### Breaking Changes
+
+- Product onboarding: removed the `--needs-sdk` option, renamed `N/A` to `I don't know` for `--data-plane` and `--management-plane` options.
 
 ## 0.6.43 (2026-09-03)
 

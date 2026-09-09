@@ -25,7 +25,7 @@
 | `azure-sdk-mcp:azsdk_package_build_code`               | Build package                                                                                                                                               |
 | `azure-sdk-mcp:azsdk_package_run_check`                | Validate package                                                                                                                                            |
 | `azure-sdk-mcp:azsdk_package_run_tests`                | Run tests                                                                                                                                                   |
-| `azure-sdk-mcp:azsdk_customized_code_update`           | Apply authorized TypeSpec/custom-code changes for build errors, ordinary SDK requests, or selected mitigations from `azsdk-common-sdk-breaking-change` |
+| `azure-sdk-mcp:azsdk_customized_code_update`           | Apply TypeSpec and code customizations to resolve build errors, breaking changes, or SDK modification requests (includes regeneration and build internally) |
 | `azure-sdk-mcp:azsdk_package_update_changelog_content` | Update changelog                                                                                                                                            |
 | `azure-sdk-mcp:azsdk_package_update_metadata`          | Update package metadata including ci.yml                                                                                                                    |
 | `azure-sdk-mcp:azsdk_package_update_version`           | Update package version                                                                                                                                      |
@@ -34,6 +34,5 @@
 
 If build fails:
 
-- For compatibility/ApiCompat diagnostics, use `azsdk-common-sdk-breaking-change` first; keep compilation/analyzer outcomes separate from compatibility detection.
-- Otherwise, run `azure-sdk-mcp:azsdk_customized_code_update` — it handles classification, TypeSpec fixes, regeneration, and build internally
+- Run `azure-sdk-mcp:azsdk_customized_code_update` — it handles classification, TypeSpec fixes, regeneration, and build internally
 - See [customization workflow](customization-workflow.md) for full details

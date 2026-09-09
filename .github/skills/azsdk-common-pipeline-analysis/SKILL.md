@@ -2,7 +2,7 @@
 name: azsdk-common-pipeline-analysis
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.0.0"
   distribution: shared
 description: 'Analyze Azure SDK CI/CD pipeline failures into a structured diagnosis, and define the required output format. Load this skill before calling azsdk_analyze_pipeline, which returns raw failure data that this skill interprets and formats. USE FOR: "pipeline failed", "build failure", "CI check failing", "tests failing in CI", "analyze pipeline", "debug SDK pipeline". DO NOT USE FOR: local build issues without pipeline context, API design review, SDK publishing, applying code fixes (instead use azsdk-common-pipeline-fixer). INVOKES: azure-sdk-mcp:azsdk_analyze_pipeline, azure-sdk-mcp:azsdk_get_pipeline_llm_artifacts, azure-sdk-mcp:azsdk_get_failed_test_run_data, azure-sdk-mcp:azsdk_get_failed_test_case_data, azure-sdk-mcp:azsdk_get_pr_checks, azure-sdk-mcp:azsdk_get_pipeline_status.'
 compatibility: "azure-sdk-mcp server, Azure DevOps pipeline build ID or GitHub PR link"
@@ -19,7 +19,6 @@ This skill analyzes Azure SDK CI/CD pipeline failures and provides a structured 
 - Analysis-only: never edit files or apply fixes — use `azsdk-common-pipeline-fixer` for changes.
 - Run `azsdk_analyze_pipeline` first, then categorize each failure and cite specific files/lines.
 - For infrastructure failures (network timeouts, agent crashes, throttling), recommend retry, not code changes.
-- For compatibility/ApiCompat failures, use the evidence and classification guidance in `azsdk-common-sdk-breaking-change` while remaining read-only. Keep .NET compatibility evidence separate from compilation/analyzer failures; recommend user-selected mitigation through that skill, not suppression or an assumed rename fix.
 
 ## MCP Tools
 
@@ -38,7 +37,7 @@ This skill analyzes Azure SDK CI/CD pipeline failures and provides a structured 
 2. **Analyze** - Run `azsdk_analyze_pipeline`. It returns `failed_pipeline_tasks` (log errors from failed steps) and `failed_pipeline_tests`, a lightweight index of failed tests grouped by artifact file. Each entry has `artifact_file_path`, `platform`, and `failed_test_titles` — titles only, no error text, to keep the response small.
 3. **Fetch failure details** - Fetch failure details lazily so you don't overload context: call `azsdk_get_failed_test_run_data` with the parameter `failedTestRunsPath` set to `artifact_file_path` once per file to get every failure in it. Or call `azsdk_get_failed_test_case_data` with
    `failedTestRunsPath` set to `artifact_file_path` and `testCaseTitle` set to one exact title from `failed_test_titles`. Prefer the per-file call when triaging a whole file's failures.
-4. **Categorize** each failure: test, build/compilation, compatibility, validation/lint, or infrastructure.
+4. **Categorize** each failure: test, build/compilation, validation/lint, or infrastructure.
 5. **Diagnose** - Give each failure's root cause and affected file(s)/line(s), and note if several share one root cause. See [failure patterns](references/failure-patterns.md).
 6. **Report** - Use the [output format](references/output-format.md): root cause, affected files, per-failure fix + verify command, and fixable vs infrastructure. Recommend `azsdk-common-pipeline-fixer` to apply fixes.
 

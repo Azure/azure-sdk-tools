@@ -2,7 +2,7 @@
 name: azsdk-common-sdk-release
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.0.0"
   distribution: shared
 description: 'Check release readiness and trigger the release pipeline for Azure SDK packages. **UTILITY SKILL**. USE FOR: "release SDK", "trigger release", "check release readiness", "release pipeline", "publish package", "ship SDK". DO NOT USE FOR: SDK development, code generation, pipeline debugging, release plan creation. INVOKES: azure-sdk-mcp:azsdk_release_sdk.'
 compatibility: "azure-sdk-mcp server, SDK package merged on release branch. Supports .NET, Java, JavaScript, Python, Go"
@@ -23,7 +23,6 @@ DO NOT USE FOR: SDK development, code generation, pipeline debugging, release pl
 - Requires the `azure-sdk-mcp` server; there is no CLI fallback for the release workflow.
 - Collect `packageName` and `language`, then run the readiness check before attempting to trigger release.
 - If release is triggered, show the pipeline link and remind the user that the release stage still requires approval.
-- If readiness reports a compatibility blocker, or the user requests mitigation before release, use `azsdk-common-sdk-breaking-change` before retrying readiness or triggering release. Do not suppress or automatically approve breaks; ordinary readiness/release requests keep the existing flow.
 
 ## MCP Tools
 
@@ -36,7 +35,7 @@ DO NOT USE FOR: SDK development, code generation, pipeline debugging, release pl
 1. **Collect Info** — Get `packageName` and `language` from the user. Optionally get `branch` (defaults to main).
 2. **Determine Intent** — If the user explicitly asks to "check readiness" or "check if ready", run `azure-sdk-mcp:azsdk_release_sdk` with `checkReady: true`. Otherwise, proceed to trigger the release directly.
 3. **Trigger Release** — Run `azure-sdk-mcp:azsdk_release_sdk` with `checkReady: false` (the default). Show pipeline link and inform user they must approve the release stage.
-4. **Review Results** — If the release fails due to readiness issues, display failing checks and guide user to resolve. Route compatibility failures to `azsdk-common-sdk-breaking-change`, preserving the evidence and requiring user-selected mitigations.
+4. **Review Results** — If the release fails due to readiness issues, display failing checks and guide user to resolve.
 
 ## Examples
 

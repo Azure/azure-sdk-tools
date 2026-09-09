@@ -4,21 +4,6 @@ import { WorkflowContext } from '../../src/types/Workflow';
 import { PackageResult } from '../../src/types/GenerateOutput';
 
 describe('PackageData', () => {
-  it.each(['sdk/service/Example.Package', 'sdk\\service\\Example.Package'])(
-    'retains package paths from generation output regardless of separators: %s',
-    packagePath => {
-      const context = {
-        config: { branchPrefix: 'test' },
-        sdkRepoConfig: {
-          integrationRepository: { owner: 'Azure', name: 'azure-sdk-for-net' },
-          mainRepository: { owner: 'Azure', name: 'azure-sdk-for-net' },
-        },
-      } as WorkflowContext;
-      const pkg = getPackageData(context, { packageName: 'Example.Package', path: [packagePath], result: 'succeeded' });
-      expect(pkg.relativeFolderPath).toBe(packagePath);
-    },
-  );
-
   describe('typespecProjectIsManagementPlane detection', () => {
     const mockContext: WorkflowContext = {
       config: {

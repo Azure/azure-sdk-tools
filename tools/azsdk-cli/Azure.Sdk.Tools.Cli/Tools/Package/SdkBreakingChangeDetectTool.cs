@@ -96,25 +96,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             PackageInfo? packageInfo = null;
             try
             {
+                ct.ThrowIfCancellationRequested();
                 logger.LogInformation("Parameters: packagePath={PackagePath}, tspConfigPath={TspConfigPath}, changesOnly={ChangesOnly}, localSdkChangeJsonFilePath={LocalSdkChangeJsonFilePath}",
                     packagePath, tspConfigPath ?? "null", changesOnly, localSdkChangeJsonFilePath ?? "null");
 
                 if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
-                    return PackageOperationResponse.CreateFailure($"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
+                    return CreateFailure($"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
                 }
 
                 LanguageService languageService = await GetLanguageServiceAsync(packagePath, ct);
 
                 if (languageService == null)
                 {
-                    return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.");
+                    return CreateFailure("Tooling error: unable to determine language service for the specified package path.");
                 }
                 // Discover the repository root
                 var sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (sdkRepoRoot == null)
                 {
-                    return PackageOperationResponse.CreateFailure($"Unable to find git repository root from the provided package path: {packagePath}. Please ensure the package path is within a valid git repository.");
+                    return CreateFailure($"Unable to find git repository root from the provided package path: {packagePath}. Please ensure the package path is within a valid git repository.");
                 }
                 packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 if (!string.IsNullOrEmpty(localSdkChangeJsonFilePath) && !changesOnly)
@@ -140,16 +141,32 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     if (isSupported && sdkChange == null)
                     {
                         logger.LogError("Failed to retrieve SDK changes using the configured script.");
-                        return PackageOperationResponse.CreateFailure("Failed to retrieve SDK changes using the configured script.", packageInfo);
+                        return CreateFailure("Failed to retrieve SDK changes using the configured script.", packageInfo);
                     }
-                    if (!isSupported)
+                    if (!isSupported && languageService.Language == SdkLanguage.DotNet)
                     {
-                        sdkChange = await languageService.GetSdkChangesAsync(packagePath, ct);
+                        var blocked = CreateFailure(
+                            ".NET SDK breaking-change detection requires packageOptions.getSdkChangesScript.command or .path in eng/swagger_to_sdk_config.json. Configure the SDK repository's detector or supply a local SDK change report.",
+                            packageInfo);
+                        blocked.BreakingChangeStatus = SdkBreakingChangeStatus.Blocked;
+                        return blocked;
                     }
                 }
 
                 if (sdkChange != null)
                 {
+                    if (languageService.Language == SdkLanguage.DotNet &&
+                        string.IsNullOrWhiteSpace(sdkChange.Details?.BaselineVersion))
+                    {
+                        return new PackageOperationResponse
+                        {
+                            Result = CreateUnclassifiedResult(sdkChange),
+                            BreakingChangeStatus = SdkBreakingChangeStatus.Inconclusive,
+                            Message = "No GA baseline provenance is available; compatibility was not evaluated. Supply a detector report with details.baselineVersion.",
+                            Language = languageService.Language,
+                            PackageName = packageInfo?.PackageName,
+                        };
+                    }
                     if (sdkChange.HasBreakingChange && !changesOnly)
                     {
                         // analyze and classify the breaking changes
@@ -160,11 +177,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         return new PackageOperationResponse()
                         {
                             Result = CreateUnclassifiedResult(sdkChange),
+                            BreakingChangeStatus = sdkChange.HasBreakingChange ? SdkBreakingChangeStatus.Detected : SdkBreakingChangeStatus.Clean,
                             Message = sdkChange.HasBreakingChange
                                 ? "SDK changes detected. Breaking change classification skipped as per the 'changes-only' option."
-                                : languageService.Language == SdkLanguage.DotNet && sdkChange.Details is { BaselineVersion: null }
-                                    ? "No GA baseline is available; compatibility was not evaluated."
-                                    : "No SDK breaking changes detected.",
+                                : "No SDK breaking changes detected.",
                             Language = languageService.Language,
                             PackageName = packageInfo?.PackageName,
                         };
@@ -173,7 +189,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Run default logic to detect SDK breaking changes
                 logger.LogInformation("Running default logic to detect SDK breaking changes for the package...");
-                return await languageService.DetectSdkBreakingChangeAsync(packagePath, ct);
+                var fallbackResponse = await languageService.DetectSdkBreakingChangeAsync(packagePath, ct);
+                ct.ThrowIfCancellationRequested();
+                fallbackResponse.BreakingChangeStatus = fallbackResponse.ExitCode == 0
+                    ? SdkBreakingChangeStatus.Clean : SdkBreakingChangeStatus.Failed;
+                return fallbackResponse;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -182,13 +202,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred while detecting SDK breaking changes.");
-                var response = PackageOperationResponse.CreateFailure($"An error occurred while detecting SDK breaking changes: {ex.Message}", packageInfo);
+                var response = CreateFailure($"An error occurred while detecting SDK breaking changes: {ex.Message}", packageInfo);
                 if (sdkChange != null)
                 {
                     response.Result = CreateUnclassifiedResult(sdkChange);
                 }
                 return response;
             }
+        }
+
+        private static PackageOperationResponse CreateFailure(string message, PackageInfo? packageInfo = null)
+        {
+            var response = PackageOperationResponse.CreateFailure(message, packageInfo);
+            response.BreakingChangeStatus = SdkBreakingChangeStatus.Failed;
+            return response;
         }
 
         private static SdkBreakingChangeDetectionResult CreateUnclassifiedResult(SdkChange sdkChange) => new()
@@ -205,7 +232,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             bool isSupported = true;
             // execute configured sdk change retrieve script
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSdkChanges, ct);
-            if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
+            ct.ThrowIfCancellationRequested();
+            if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrWhiteSpace(configValue))
             {
                 logger.LogInformation("Found valid configuration for getting sdk changes. Executing configured script...");
 
@@ -241,7 +269,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     }
                     finally
                     {
-                        File.Delete(sdkChangeFilePath);
+                        try
+                        {
+                            File.Delete(sdkChangeFilePath);
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        {
+                            logger.LogWarning(ex, "Could not delete SDK change report at {Path}.", sdkChangeFilePath);
+                        }
                     }
                 }
                 else
@@ -266,23 +301,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             // analyze and classify the breaking changes
             var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
+            ct.ThrowIfCancellationRequested();
             var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+            ct.ThrowIfCancellationRequested();
             if (sdkBreakingChangeResult == null)
             {
                 logger.LogError("Failed to classify SDK breaking changes.");
                 return new PackageOperationResponse
                 {
                     ResponseError = "Failed to classify SDK breaking changes.",
+                    BreakingChangeStatus = SdkBreakingChangeStatus.Failed,
                     Result = CreateUnclassifiedResult(sdkChange),
                     Language = languageService.Language,
                     PackageName = packageInfo?.PackageName,
                 };
             }
-            if (!sdkBreakingChangeResult.HasBreakingChange || sdkBreakingChangeResult.BreakingChanges is not { Count: > 0 })
+            var validationError = languageService.ValidateBreakingChangeClassification(sdkBreakingChangeResult);
+            if (validationError != null)
             {
                 return new PackageOperationResponse
                 {
-                    ResponseError = "No SDK breaking changes were classified from the detected SDK changes.",
+                    ResponseError = validationError,
+                    BreakingChangeStatus = SdkBreakingChangeStatus.Failed,
                     Result = CreateUnclassifiedResult(sdkChange),
                     Language = languageService.Language,
                     PackageName = packageInfo?.PackageName,
@@ -293,6 +333,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return new PackageOperationResponse()
             {
                 Result = sdkBreakingChangeResult,
+                BreakingChangeStatus = SdkBreakingChangeStatus.Classified,
                 Message = "SDK breaking changes detected and classified.",
                 Language = languageService.Language,
                 PackageName = packageInfo?.PackageName,

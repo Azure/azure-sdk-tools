@@ -6,13 +6,10 @@ import { getInstallInstructionScriptOutput } from '../types/InstallInstructionSc
 import { PackageData } from '../types/PackageData';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import { CommentCaptureTransport, vsoLogError } from './logging';
-import { externalError, toolWarning } from '../utils/messageUtils';
-import { getLanguageByRepoName, setFailureType } from '../utils/workflowUtils';
-import { FailureType, WorkflowContext } from '../types/Workflow';
-import { getSdkChanges } from '../types/SdkChanges';
-import { getSdkBreakingChangeItems, getSdkChangesCommandLine, mergeSdkChangelogs } from '../utils/sdkChanges';
-import { getSuppressionLines } from '../utils/handleSuppressionLines';
+import { CommentCaptureTransport } from './logging';
+import { toolWarning } from '../utils/messageUtils';
+import { getLanguageByRepoName } from '../utils/workflowUtils';
+import { WorkflowContext } from '../types/Workflow';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
@@ -27,7 +24,6 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
 
   await workflowPkgCallBuildScript(context, pkg);
   await workflowPkgCallChangelogScript(context, pkg);
-  await workflowPkgCallGetSdkChangesScript(context, pkg);
   await workflowPkgDetectArtifacts(context, pkg);
   await workflowPkgSaveSDKArtifact(context, pkg);
   await workflowPkgSaveApiViewArtifact(context, pkg);
@@ -95,85 +91,6 @@ export const workflowPkgCallChangelogScript = async (context: WorkflowContext, p
       }
     }
     context.logger.log('endsection', 'Call ChangelogScript');
-  }
-};
-
-export const workflowPkgCallGetSdkChangesScript = async (context: WorkflowContext, pkg: PackageData) => {
-  const runOptions = context.swaggerToSdkConfig.packageOptions.getSdkChangesScript;
-  if (runOptions === undefined) {
-    return;
-  }
-
-  context.logger.log('section', 'Call GetSdkChangesScript');
-  delete pkg.sdkChanges;
-  delete pkg.sdkChangesArtifactPath;
-  if (pkg.hasBreakingChange === false) {
-    delete pkg.hasBreakingChange;
-  }
-  try {
-    if (!pkg.relativeFolderPath.trim()) {
-      throw new Error('getSdkChangesScript requires a package folder from generation output.');
-    }
-    const sdkRepoPath = path.resolve(context.config.localSdkRepoPath);
-    const packagePath = path.resolve(sdkRepoPath, pkg.relativeFolderPath);
-    const stagedArtifactsFolder = path.resolve(context.config.workingFolder, 'out', 'stagedArtifacts');
-    const changesFolder = path.join(stagedArtifactsFolder, 'sdk-changes');
-    fs.mkdirSync(changesFolder, { recursive: true });
-    context.stagedArtifactsFolder = stagedArtifactsFolder;
-    // Each attempt gets a new directory, including retries and packages with the same name.
-    const outputJsonFile = path.join(fs.mkdtempSync(path.join(changesFolder, 'package-')), 'sdk-changes.json');
-    const commandLine = getSdkChangesCommandLine(runOptions, sdkRepoPath, packagePath, outputJsonFile);
-    const result = await runSdkAutoCustomScript(context, {
-      ...runOptions,
-      exitCode: { result: 'error', showInComment: true },
-    }, {
-      cwd: packagePath,
-      fallbackName: 'GetSdkChanges',
-      commandLine,
-      statusContext: pkg,
-      continueOnFailed: true,
-    });
-    setSdkAutoStatus(pkg, result);
-    if (fs.existsSync(outputJsonFile)) {
-      pkg.sdkChangesArtifactPath = outputJsonFile;
-    }
-    if (result === 'failed') {
-      return;
-    }
-
-    const sdkChanges = getSdkChanges(JSON.parse(fs.readFileSync(outputJsonFile, 'utf8').replace(/^\uFEFF/, '')));
-    const hadPreviousBreakingChange = Boolean(pkg.hasBreakingChange);
-    pkg.sdkChanges = sdkChanges;
-    pkg.hasBreakingChange = hadPreviousBreakingChange || sdkChanges.hasBreakingChange;
-    const previousBreakingItems = [...new Set([
-      ...(pkg.breakingChangeItems ?? []),
-      ...(hadPreviousBreakingChange ? getSdkBreakingChangeItems(pkg.changelogs.join('\n')) : []),
-    ])];
-    const hasUnlistedPreviousBreaks = hadPreviousBreakingChange && previousBreakingItems.length === 0;
-    pkg.changelogs = mergeSdkChangelogs(pkg.changelogs, sdkChanges.changes);
-
-    if (sdkChanges.hasBreakingChange) {
-      const detectedItems = getSdkBreakingChangeItems(sdkChanges.changes);
-      pkg.breakingChangeItems = [...new Set([...previousBreakingItems, ...detectedItems])];
-      if (!pkg.isBetaMgmtSdk) {
-        const suppressions = getSuppressionLines(pkg.sdkSuppressions ?? null, pkg.name, pkg.breakingChangeItems, context);
-        pkg.presentSuppressionLines = suppressions.presentSuppressionLines;
-        pkg.absentSuppressionLines = suppressions.absentSuppressionLines;
-        if (hasUnlistedPreviousBreaks || detectedItems.length === 0) {
-          const message = 'SDK breaking changes were reported without individual Breaking Changes details; they cannot be suppressed.';
-          pkg.absentSuppressionLines.push(`+\t${message}`);
-          context.logger.warn(message, { showInComment: true });
-        }
-      }
-    }
-  } catch (error) {
-    const message = externalError(`getSdkChangesScript failed for ${pkg.name}: ${error instanceof Error ? error.message : String(error)}`);
-    setSdkAutoStatus(pkg, 'failed');
-    setFailureType(context, FailureType.CodegenFailed);
-    context.logger.error(message, { showInComment: true });
-    vsoLogError(context, message, 'GetSdkChanges');
-  } finally {
-    context.logger.log('endsection', 'Call GetSdkChangesScript');
   }
 };
 

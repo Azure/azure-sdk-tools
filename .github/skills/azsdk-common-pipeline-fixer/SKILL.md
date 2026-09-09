@@ -2,7 +2,7 @@
 name: azsdk-common-pipeline-fixer
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.0.0"
   distribution: shared
 description: 'Automatically fix Azure SDK CI/CD pipeline failures by applying code changes and verifying locally. USE FOR: "fix pipeline failure", "fix CI", "fix failing tests", "auto-fix and commit the fix", "fix build error", "fix mypy/pylint/type-check/lint errors", "auto-fix pipeline", "resolve pipeline failure". DO NOT USE FOR: pipeline analysis (instead use azsdk-common-pipeline-analysis), API design review, SDK publishing. INVOKES: azure-sdk-mcp:azsdk_package_build_code, azure-sdk-mcp:azsdk_package_run_check, azure-sdk-mcp:azsdk_package_run_tests, azure-sdk-mcp:azsdk_verify_setup.'
 compatibility: "azure-sdk-mcp server, local azure-sdk-for-{language} clone, language build tools"
@@ -19,7 +19,6 @@ This skill automatically fixes Azure SDK CI/CD pipeline failures. It analyzes th
 - Analyze first, then apply the minimal code change for the root cause.
 - Verify ONLY via the azsdk MCP package tools (build → check → tests); never raw shell build/test commands.
 - Never fix infrastructure failures (timeouts, crashes, throttling) — recommend retry. Iterate up to 3 times, then report.
-- Compatibility/ApiCompat failures use `azsdk-common-sdk-breaking-change` before editing. Its independent .NET detection, selected mitigation, scope, and two-round limits take precedence over the generic fix loop; never directly edit generated APIs or suppress breaks.
 
 ## MCP Tools
 
@@ -35,9 +34,9 @@ This skill automatically fixes Azure SDK CI/CD pipeline failures. It analyzes th
 ## Steps
 
 1. **Find analysis** - Reuse an existing analysis from the PR comments; if none, view the `azsdk-common-pipeline-analysis` skill.
-2. **Classify** - Fixable (test, type, lint, import, assertion errors) vs retry (infrastructure) vs compatibility (`azsdk-common-sdk-breaking-change`) vs escalate (credentials).
+2. **Classify** - Fixable (test, type, lint, import, assertion errors) vs retry (infrastructure) vs escalate (breaking API, credentials).
 3. **Locate** - Identify the affected package, its path, and the files/lines to change.
-4. **Fix** - For non-compatibility failures, read the failing code at the cited lines and apply the minimal fix. Delegate compatibility changes to `azsdk-common-sdk-breaking-change`; return unresolved/manual or `SpecChangeRequired` handoffs without widening scope or continuing the generic fix loop.
+4. **Fix** - Read the failing code at the cited lines and apply the minimal fix.
 5. **Verify** - Run `azsdk_package_build_code` → `azsdk_package_run_check` → `azsdk_package_run_tests` on the package; all must pass. If the environment isn't ready, run `azsdk_verify_setup`. Never substitute raw shell build/test commands.
 6. **Iterate & commit** - On failure, revise and re-verify (max 3 attempts). Once all pass, commit with a descriptive message.
 

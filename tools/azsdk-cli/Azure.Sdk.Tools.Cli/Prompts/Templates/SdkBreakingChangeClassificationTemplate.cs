@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
     public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
-        public override string Version => "1.1.0";
+        public override string Version => "1.2.0";
         public override string Description => "Classify SDK Breaking Changes";
 
         private readonly string _sdkBreakingPatternContent;
@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                 - A diagnostic ID alone does not establish a root cause or a safe fix. Explain the evidence for the category; use "unknown" when that evidence is absent.
                 - Include a "mitigation" field in every classified .NET breaking change: "generator", "client customization", or "manual".
                 - Use "generator" only for an explicitly documented deterministic generator mitigation whose preconditions are verified. Its resolution must invoke the SDK repository's existing mitigate-breaking-changes skill; do not invent a replacement generator fix.
-                - Use "client customization" only when a verified client-layer customization preserves the public API and wire semantics. Its resolution must use azsdk_customized_code_update with the appropriate TypeSpec project and edit scope.
+                - Use "client customization" only when a verified TypeSpec client customization or handwritten SDK custom code preserves the public API and wire semantics. Its resolution must use azsdk_customized_code_update with the appropriate TypeSpec project and edit scope, never generated code.
                 - Use "manual" for ambiguous mappings, unsupported patterns, behavior or wire-contract changes, and any case requiring user judgment. State what evidence or decision is missing.
                 - Classification is read-only. Never apply fixes, edit generated code, add suppressions, or infer user approval.
                 """ : string.Empty;
@@ -121,18 +121,21 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             var pairedChangeRule = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet
                 ? "For .NET, preserve paired removals and additions as candidate transformations. Merge a rename or signature change only after verifying the mapping using the TypeSpec source and the pattern catalog; otherwise preserve the original violations with category unknown and mitigation manual."
                 : "If one entry shows that `struct A` was removed and another shows that `struct B` was added, examine related entries together. For example, if another entry shows an operation parameter type changing from `A` to `B`, treat the combined evidence as a likely model rename from `A` to `B` rather than as unrelated changes and merged those as one classified breaking change.";
+            var mitigationProperty = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet
+                ? "\n            \"mitigation\": \"manual\","
+                : string.Empty;
             return $$"""
             **CRITICAL: Required Output Format**
 
             Return exactly one valid JSON object following this exact format:
             {
-                "hasBreakingChange": true, //if any breaking changes are detected, otherwise false
-                "breakingChanges": //classified SDK breaking changes
+                "hasBreakingChange": true,
+                "breakingChanges":
                 [
                     {
                         "breakingChange": "<one-line sdk breaking change>",
-                        "category": "<emitter change | conversion-by design | conversion-need resolve | spec change | unknown>",
-                        "resolution": "<one-line mitigation resolution for this sdk breaking change, optional>",
+                        "category": "unknown",{{mitigationProperty}}
+                        "resolution": "<one-line actionable resolution for this sdk breaking change, optional>",
                         "originBreaks": [
                             "<exact original breaking change #1 from sdk changes ### Breaking Changes>",
                             "<exact original breaking change #2 from sdk changes ### Breaking Changes>"
@@ -148,6 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 
             **Rules:**
             **General Requirements**
+            - Set hasBreakingChange to true if any breaking changes are detected, otherwise false. breakingChanges contains the classified entries.
             {{breakingReferenceInstruction}}
             - Every original breaking entry from sdk changes ### Breaking Changes must be processed.
             - No original breaking entry may be skipped.

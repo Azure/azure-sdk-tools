@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { StatusContainer, setSdkAutoStatus, isLineMatch, runSdkAutoCustomScript, listenOnStream } from '../../src/utils/runScript';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
-import { once } from 'node:events';
-import { PassThrough, Readable } from 'stream';
+import { Readable } from 'stream';
 import { WorkflowContext } from '../../src/types/Workflow';
 
 describe('runScript utils', () => {
@@ -119,91 +118,6 @@ describe('runScript utils', () => {
         stream.on('end', () => {
           expect(vsoLogErrors).toContain('error: critical failure');
           resolve();
-        });
-      });
-    });
-
-    describe.each(['cmdout', 'cmderr'] as const)('%s buffered chunks', logType => {
-      it.each([
-        {
-          name: 'an unterminated error line',
-          chunks: ['error: detector failed'],
-          lines: ['error: detector failed'],
-        },
-        {
-          name: 'an error prefix followed by a newline-terminated chunk',
-          chunks: ['error:', ' detector failed\n'],
-          lines: ['error: detector failed'],
-        },
-        {
-          name: 'an error pattern split across unterminated chunks',
-          chunks: ['err', 'or:', ' detector failed'],
-          lines: ['error: detector failed'],
-        },
-        {
-          name: 'a cached prefix after a complete line',
-          chunks: ['info\nerr', 'or:', ' detector failed\n'],
-          lines: ['info', 'error: detector failed'],
-        },
-        {
-          name: 'a cached error and multiple unterminated continuation chunks',
-          chunks: ['info\nerror:', ' detector ', 'failed'],
-          lines: ['info', 'error: detector failed'],
-        },
-        {
-          name: 'the newline-terminated control',
-          chunks: ['error: detector failed\n'],
-          lines: ['error: detector failed'],
-        },
-        {
-          name: 'multiple errors, blank lines and an unterminated tail',
-          chunks: ['progress\nerr', 'or: first failure\n\n', 'info\nerror:', ' second failure'],
-          lines: ['progress', 'error: first failure', 'info', 'error: second failure'],
-        },
-      ])('preserves and classifies $name', async ({ chunks, lines }) => {
-        mockContext.config.runEnv = 'azureDevOps';
-        const stream = new PassThrough();
-        const receivedChunks: string[] = [];
-        stream.on('data', data => receivedChunks.push(data.toString()));
-        listenOnStream(mockContext, result, '[test]', vsoLogErrors, stream, { scriptError: /error:/ }, logType);
-        const ended = once(stream, 'end');
-
-        for (const chunk of chunks) {
-          stream.write(chunk);
-        }
-        if (chunks.every(chunk => !chunk.includes('\n'))) {
-          expect(mockContext.logger.log).not.toHaveBeenCalled();
-          expect(result.status).toBe('succeeded');
-        }
-        stream.end();
-        await ended;
-
-        expect(receivedChunks).toEqual(chunks);
-        expect(result.status).toBe('failed');
-        expect(vsoLogErrors).toEqual(lines.filter(line => line.includes('error:')));
-        expect(mockContext.logger.log).toHaveBeenCalledTimes(lines.length);
-        lines.forEach((line, index) => {
-          const isError = line.includes('error:');
-          expect(mockContext.logger.log).toHaveBeenNthCalledWith(index + 1, logType, `[test] ${line}`, {
-            showInComment: isError,
-            lineResult: isError ? 'failed' : 'succeeded',
-          });
-        });
-      });
-
-      it('flushes buffered text without inferring an unconfigured error policy', async () => {
-        const stream = new PassThrough();
-        listenOnStream(mockContext, result, '[test]', vsoLogErrors, stream, undefined, logType);
-        const ended = once(stream, 'end');
-        stream.write('error:');
-        stream.end(' just a logged message');
-        await ended;
-
-        expect(result.status).toBe('succeeded');
-        expect(vsoLogErrors).toEqual([]);
-        expect(mockContext.logger.log).toHaveBeenCalledExactlyOnceWith(logType, '[test] error: just a logged message', {
-          showInComment: false,
-          lineResult: 'succeeded',
         });
       });
     });

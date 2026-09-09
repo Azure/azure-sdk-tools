@@ -12,10 +12,9 @@ public static class SdkChangeHelper
     {
         await using var stream = File.OpenRead(path);
         var change = await JsonSerializer.DeserializeAsync<SdkChange>(stream, cancellationToken: ct);
-        if (change == null || change.SdkChangeMD == null ||
-            (change.HasBreakingChange && string.IsNullOrWhiteSpace(change.SdkChangeMD)))
+        if (change == null || string.IsNullOrWhiteSpace(change.SdkChangeMD))
         {
-            throw new JsonException($"SDK change file '{path}' must contain changes and hasBreakingChange, with nonempty details for breaking changes.");
+            throw new JsonException($"SDK change file '{path}' must contain nonempty changes (Markdown) and a Boolean hasBreakingChange.");
         }
         return change;
     }

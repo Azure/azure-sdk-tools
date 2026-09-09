@@ -1,15 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 
 /// <summary>
-/// An API change and the compatibility diagnostic, if any, that identifies it.
+/// Native .NET API evidence and the ApiCompat diagnostic, if any, that identifies it.
 /// Additions are supplementary evidence and are not inherently compatible or breaking.
 /// </summary>
-public class SdkApiChange
+public class DotnetSdkApiChange
 {
     [JsonPropertyName("kind")]
     public string Kind { get; set; } = string.Empty;
@@ -30,4 +31,8 @@ public class SdkApiChange
     [JsonPropertyName("targetFramework")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? TargetFramework { get; set; }
+
+    /// <summary>Additional native evidence supplied by newer detector versions.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }

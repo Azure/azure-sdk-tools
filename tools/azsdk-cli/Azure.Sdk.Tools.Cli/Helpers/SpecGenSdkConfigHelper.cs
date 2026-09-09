@@ -68,7 +68,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private const string UpdateVersionScriptPathJsonPath = "packageOptions/updateVersionScript/path";
         private const string UpdateMetadataCommandJsonPath = "packageOptions/updateMetadataScript/command";
         private const string UpdateMetadataScriptPathJsonPath = "packageOptions/updateMetadataScript/path";
-        private const string SdkBreakingChangePatternFilePath = "packageOptions/sdkBreakingChangePatternFile";
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
 
         private readonly ILogger<SpecGenSdkConfigHelper> _logger;
@@ -124,6 +123,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Get configuration for a specific type (either command or script path)
         public async Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType, CancellationToken ct)
         {
+            if (configType == SpecGenSdkConfigType.GetSdkChanges)
+            {
+                using var config = await ReadConfigurationAsync(repositoryRoot, ct);
+                var options = GetOptionalObject(config.RootElement, "packageOptions");
+                var script = options is { } value ? GetOptionalObject(value, "getSdkChangesScript") : null;
+                if (script == null)
+                {
+                    return (SpecGenSdkConfigContentType.Unknown, string.Empty);
+                }
+
+                var command = GetOptionalNonemptyString(script.Value, "command", allowBlank: true);
+                if (command != null)
+                {
+                    return (SpecGenSdkConfigContentType.Command, command);
+                }
+                var path = GetOptionalNonemptyString(script.Value, "path", allowBlank: true);
+                if (path != null)
+                {
+                    return (SpecGenSdkConfigContentType.ScriptPath, path);
+                }
+                throw new JsonException("getSdkChangesScript must contain a nonempty command or path.");
+            }
+
             var (commandPath, scriptPath) = GetConfigPaths(configType);
             
             // Try command first
@@ -164,20 +186,49 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public async Task<string> GetSdkBreakingChangePatternFileConfigurationAsync(string repositoryRoot, CancellationToken ct)
         {
-            try
-            {
-                return await GetConfigValueFromRepoAsync<string>(repositoryRoot, SdkBreakingChangePatternFilePath, ct);
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogDebug("No {configOption} configuration found. Error: {errorMessage}", SdkBreakingChangePatternFilePath, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while retrieving SDK breaking change pattern file path.");
-            }
+            using var config = await ReadConfigurationAsync(repositoryRoot, ct);
+            var options = GetOptionalObject(config.RootElement, "packageOptions");
+            return options is { } value
+                ? GetOptionalNonemptyString(value, "sdkBreakingChangePatternFile") ?? string.Empty
+                : string.Empty;
+        }
 
-            return string.Empty;
+        private static async Task<JsonDocument> ReadConfigurationAsync(string repositoryRoot, CancellationToken ct)
+        {
+            var path = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
+            var content = await File.ReadAllTextAsync(path, ct);
+            return JsonDocument.Parse(content);
+        }
+
+        private static JsonElement? GetOptionalObject(JsonElement parent, string propertyName)
+        {
+            if (parent.ValueKind != JsonValueKind.Object)
+            {
+                throw new JsonException($"The configuration containing '{propertyName}' must be an object.");
+            }
+            if (!parent.TryGetProperty(propertyName, out var value))
+            {
+                return null;
+            }
+            if (value.ValueKind != JsonValueKind.Object)
+            {
+                throw new JsonException($"Configuration property '{propertyName}' must be an object.");
+            }
+            return value;
+        }
+
+        private static string? GetOptionalNonemptyString(JsonElement parent, string propertyName, bool allowBlank = false)
+        {
+            if (!parent.TryGetProperty(propertyName, out var value))
+            {
+                return null;
+            }
+            if (value.ValueKind != JsonValueKind.String ||
+                (!allowBlank && string.IsNullOrWhiteSpace(value.GetString())))
+            {
+                throw new JsonException($"Configuration property '{propertyName}' must be a nonempty string.");
+            }
+            return string.IsNullOrWhiteSpace(value.GetString()) ? null : value.GetString();
         }
         // Substitute template variables in command strings
         public string SubstituteCommandVariables(string command, Dictionary<string, string> variables)

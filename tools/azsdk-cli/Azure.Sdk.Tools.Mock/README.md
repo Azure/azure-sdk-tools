@@ -141,19 +141,26 @@ an LLM classifier.
 | `azure-resourcemanager-contoso` | Java management, legacy classification without mitigation enum |
 
 Default responses retain package metadata, removal and addition Markdown,
-classified breaks, and raw `details`. `changesOnly: true` returns the same raw
-evidence without classification. These are synthetic fixtures, not comparisons
-against files at the supplied path.
+classified breaks, and .NET-native `details` for .NET packages. Java does not
+fabricate .NET-native details or mitigation routes. `changesOnly: true` returns
+the same raw evidence without classification. These are synthetic fixtures,
+not comparisons against files at the supplied path.
 
 Place one directory segment below before the package directory to select a
 scenario, for example `C:\mock-catalog-error\Azure.Contoso.Widget`:
 
-| Segment | Response |
-| --- | --- |
-| `mock-no-breaks` | Successful additive-only comparison |
-| `mock-no-baseline` | Compatibility not evaluated, with an explicit no-GA limitation |
-| `mock-missing-artifacts` / `mock-stale-artifacts` | Explicit failure, not a clean comparison |
-| `mock-classifier-error` / `mock-catalog-error` | Classification failure retaining raw changes/details; bypassed by `changesOnly: true` |
+| Segment | `breaking_change_status` | Response |
+| --- | --- | --- |
+| None | `classified` | Classified breaks; `detected` when `changesOnly: true` |
+| `mock-no-breaks` | `clean` | Successful additive-only comparison |
+| `mock-no-baseline` | `inconclusive` | Compatibility not evaluated, with an explicit no-GA limitation |
+| `mock-missing-config` | `blocked` | Required detector configuration is absent |
+| `mock-missing-artifacts` / `mock-stale-artifacts` | `failed` | Explicit failure, not a clean comparison |
+| `mock-classifier-error` / `mock-catalog-error` | `failed` | Classification failure retaining raw changes/details; `detected` when `changesOnly: true` |
+
+The additive `breaking_change_status` is independent of `operation_status`.
+Inconclusive results preserve a successful operation status but must not be
+treated as compatibility passes. Blocked/failed results contain errors.
 
 Unknown packages and invalid/conflicting inputs fail explicitly. Classified
 `localSdkChangeJsonFilePath` replay reports that this mock capability is not
@@ -182,18 +189,9 @@ existing azsdk-cli CI test jobs run that solution, including these mock tests.
 
 `CopilotSkipCliDownload` is the SDK's supported build option for avoiding an
 unused native Copilot CLI download: this mock server does not execute the real
-CLI's agent. Vally's separate Copilot executor still requires its own runtime and
-model credential.
+CLI's agent.
 
-After building the DLL above, the existing skill runner can target only the
-detector-backed cases from `.github\skills`:
-
-```powershell
-vally eval -e azsdk-common-sdk-breaking-change\evals\routing.eval.yaml `
-  --tag coverage=mock-detector --workers 1 --max-retries 0 --output jsonl `
-  --output-dir .\results\breaking-change-mock
-```
-
-Use the repository-pinned Vally setup and the `azsdk-mcp-mock` environment already
-declared by the eval. The existing CI runner uses `GITHUB_TOKEN` for model
-authentication; no live Azure SDK MCP or Azure authentication is needed.
+The shared breaking-change skill and its evals are deferred to
+[PR #16634](https://github.com/Azure/azure-sdk-tools/pull/16634). The fixtures
+above remain available to consumers of the common detector tool; the focused
+unit tests do not require a model credential or live Azure SDK environment.

@@ -52,11 +52,9 @@ public class DotnetBreakingChangeClassificationTests
         Assert.That(JsonSerializer.Serialize(result), Does.Contain($"\"mitigation\":\"{route}\""));
     }
 
-    [TestCase("")]
-    [TestCase(", \"mitigation\": null")]
     [TestCase(", \"mitigation\": \"suppress\"")]
-    [TestCase(", \"mitigation\": \"999\"")]
-    public async Task Classify_RejectsMissingOrUnsupportedDotnetRoute(string mitigationProperty)
+    [TestCase(", \"mitigation\": 999")]
+    public async Task Classify_RejectsUnparseableRoute(string mitigationProperty)
     {
         ConfigureResponse($$"""
             {
@@ -73,6 +71,25 @@ public class DotnetBreakingChangeClassificationTests
             "### Breaking Changes\n- Widget removed", "Patterns", "DotNet", null, CancellationToken.None);
 
         Assert.That(result, Is.Null, "Invalid routing must not authorize an automatic mitigation.");
+    }
+
+    [TestCase("")]
+    [TestCase(", \"mitigation\": null")]
+    [TestCase(", \"mitigation\": \"999\"")]
+    public async Task Classify_LeavesLanguageSpecificValidationToLanguageService(string mitigationProperty)
+    {
+        ConfigureResponse($$"""
+            {"hasBreakingChange":true,"breakingChanges":[
+                {"breakingChange":"Widget removed","category":"unknown"{{mitigationProperty}}}
+            ]}
+            """);
+
+        var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, CancellationToken.None);
+
+        Assert.That(result, Is.Not.Null);
+        var language = Languages.DotnetLanguageServiceBreakingChangeTests.CreateService(
+            Mock.Of<Azure.Sdk.Tools.Cli.Helpers.ISpecGenSdkConfigHelper>());
+        Assert.That(language.ValidateBreakingChangeClassification(result!), Is.Not.Null);
     }
 
     [TestCase("Go")]
@@ -132,6 +149,31 @@ public class DotnetBreakingChangeClassificationTests
         Assert.That(prompt, Does.Not.Contain(".NET compatibility and mitigation"));
         Assert.That(prompt, Does.Not.Contain("mitigate-breaking-changes skill"));
         Assert.That(prompt, Does.Contain("treat the combined evidence as a likely model rename"));
+    }
+
+    [TestCase(".NET", true)]
+    [TestCase("DotNet", true)]
+    [TestCase("csharp", true)]
+    [TestCase("c#", true)]
+    [TestCase("Go", false)]
+    [TestCase("Java", false)]
+    [TestCase("Python", false)]
+    [TestCase("JavaScript", false)]
+    public void Prompt_ExactOutputExampleIsValidJsonAndMatchesLanguageValidation(string language, bool requiresRoute)
+    {
+        var prompt = new SdkBreakingChangeClassificationTemplate("Patterns", "Changes", language, null).BuildPrompt();
+        var start = prompt.IndexOf('{', prompt.IndexOf("following this exact format:", StringComparison.Ordinal));
+        var end = prompt.IndexOf("Output must be raw JSON only.", start, StringComparison.Ordinal);
+        var example = prompt[start..end].Trim();
+
+        using var document = JsonDocument.Parse(example);
+        Assert.That(document.RootElement.GetProperty("breakingChanges")[0].TryGetProperty("mitigation", out _),
+            Is.EqualTo(requiresRoute));
+        var classification = JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(example)!;
+        var validator = requiresRoute
+            ? Languages.DotnetLanguageServiceBreakingChangeTests.CreateService(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.ISpecGenSdkConfigHelper>())
+            : (Azure.Sdk.Tools.Cli.Services.Languages.LanguageService)new Mock<Azure.Sdk.Tools.Cli.Services.Languages.LanguageService> { CallBase = true }.Object;
+        Assert.That(validator.ValidateBreakingChangeClassification(classification), Is.Null);
     }
 
     [Test]

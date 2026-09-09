@@ -17,24 +17,6 @@ Determine the correct path to the TypeSpec configuration file based on the worki
 - Identify the path to `tsp-location.yaml`.
 - Example: `/home/usr/azure-sdk-for-net/sdk/contoso/Azure.ResourceManager.Contoso/tsp-location.yaml`
 
-## Compatibility Checkpoint
-
-Use `azsdk-common-sdk-breaking-change` when the user requests compatibility review
-or generation/CI reports breaking changes. The same workflow applies to spec PRs
-and SDK PRs: generate when needed, detect against the normal latest-GA baseline,
-show all changes and diagnostics, and obtain selected mitigations.
-
-For .NET, detection on current artifacts is separate from compilation/analyzer
-success. Missing or stale artifacts block a conclusion; a failed build must not
-discard valid compatibility evidence. After mitigation, refresh affected
-artifacts, rerun detection, then perform ordinary build/check/tests.
-
-Spec-owned `client.tsp` changes require the authorized spec workspace. SDK-only
-customization must preserve spec inputs and the `tsp-location.yaml` commit;
-`SpecChangeRequired` returns to the spec owner rather than widening edit scope.
-Return the evidence to the user without automatically posting PR comments or
-approvals.
-
 ## Commit Checkpoints
 
 There are two commit checkpoints in the workflow. At each one:

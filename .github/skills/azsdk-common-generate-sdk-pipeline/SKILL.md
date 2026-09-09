@@ -2,7 +2,7 @@
 name: azsdk-common-generate-sdk-pipeline
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.0.0"
   distribution: shared
 description: 'Run the Azure SDK generation pipeline for a release plan and create the generated SDK pull requests, for one language or for all languages. **UTILITY SKILL**. USE FOR: "run SDK generation for all languages", "generate SDK for release plan <id>", "generate SDK for release <id>", "pipeline SDK generation", "generate SDK without a local clone", "create SDK pull requests". DO NOT USE FOR: generating a single SDK locally from a local clone (use azsdk-common-generate-sdk-locally), releasing/publishing an already-generated package (use azsdk-common-sdk-release), API design review. INVOKES: azure-sdk-mcp:azsdk_get_release_plan, azure-sdk-mcp:azsdk_run_generate_sdk, azure-sdk-mcp:azsdk_get_sdk_pull_request_link.'
 compatibility: "azure-sdk-mcp server, existing release plan work item. Supports .NET, Java, JavaScript, Python, Go"
@@ -25,7 +25,6 @@ DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-c
 - A **release plan work item ID (or release plan ID)** is required. `azsdk_run_generate_sdk` **also** requires the **TypeSpec project path** and the **SDK release type** (`beta` or `stable`) as explicit inputs, and it validates them — it does **not** read them from the release plan. First call `azure-sdk-mcp:azsdk_get_release_plan` to obtain the TypeSpec project path, SDK release type, and target languages, then pass those into each generation call along with the work item ID.
 - Requires the `azure-sdk-mcp` server; there is no CLI fallback for the pipeline generation workflow.
 - Private Preview release plans cannot generate SDKs via the pipeline — only the API spec PR needs to merge. If needed for validation, direct the user to generate locally via `azsdk-common-generate-sdk-locally`.
-- If a generated spec/SDK PR reports compatibility breaks, or the user requests compatibility review, route to `azsdk-common-sdk-breaking-change` with matching package/revision evidence. Obtain current local artifacts when required; a successful pipeline or PR link is not proof of compatibility. Do not automatically mitigate, post comments, or approve breaks.
 
 ## MCP Tools
 
@@ -40,7 +39,7 @@ DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-c
 1. **Collect release plan** — Get the release plan work item ID (or release plan ID) from the user, then call `azure-sdk-mcp:azsdk_get_release_plan` to fetch it.
 2. **Determine languages** — If the user asked for "all languages", determine the languages the release plan targets (e.g. via `azure-sdk-mcp:azsdk_get_release_plan`). Otherwise use the single language requested.
 3. **Generate per language** — For each target language, run `azure-sdk-mcp:azsdk_run_generate_sdk` passing the **TypeSpec project path**, the **SDK release type** (`beta` or `stable`), and the **language** taken from the release plan, plus the release plan **work item ID**. These inputs are required and validated — an invalid TypeSpec project path, or a release type other than `beta`/`stable`, fails the run.
-4. **Report pull requests** — After each run completes, retrieve and show the generated SDK pull request link with `azure-sdk-mcp:azsdk_get_sdk_pull_request_link`. For reported/requested compatibility work, use `azsdk-common-sdk-breaking-change`; if evidence or a local checkout is unavailable, report that handoff without claiming clean results.
+4. **Report pull requests** — After each run completes, retrieve and show the generated SDK pull request link with `azure-sdk-mcp:azsdk_get_sdk_pull_request_link`.
 
 ## Examples
 

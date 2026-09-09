@@ -63,24 +63,15 @@ stimuli:
             - name: azure-sdk-mcp-azsdk_customized_code_update
 
   - name: sdk-local-breaking-changes-001
-    environment:
-      skills:
-        - ..
-        - ../../azsdk-common-sdk-breaking-change
-    prompt: "After regenerating the Java SDK at C:\\sdk\\azure-sdk-for-java\\sdk\\contoso\\azure-resourcemanager-contoso, the build is failing because the service team renamed 'displayName' to 'name' in TypeSpec. Our customization class still references getField('displayName'). Investigate this reported breaking change before proposing a fix. The caller verified the package, latest GA baseline and current generated output. I have not selected a mitigation."
+    prompt: "After regenerating the Java SDK, the build is failing because the service team renamed 'displayName' to 'name' in the TypeSpec. Our customization class still references getField('displayName'). Use the SDK customization tools to fix this breaking change."
     graders:
       - type: output-not-contains
         config:
           substring: "cannot help"
-      - type: skill-invocation
-        config:
-          required: [azsdk-common-sdk-breaking-change]
       - type: tool-calls
         config:
           required:
-            - name: "^azure-sdk-mcp-azsdk_package_detect_breaking_change$"
-          disallowed:
-            - name: "^azure-sdk-mcp-azsdk_customized_code_update$"
+            - name: azure-sdk-mcp-azsdk_customized_code_update
 
   - name: sdk-local-customization-001
     prompt: "The Java SDK build is failing after regeneration. The error says 'variable operationId is already defined in class AnalyzeOperationDetails'. The service team added operationId to the TypeSpec, but our customization already injects that field. Use the SDK customization tools to resolve this duplicate."

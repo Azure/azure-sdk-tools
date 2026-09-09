@@ -19,11 +19,19 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         "mock-stale-artifacts",
         "mock-classifier-error",
         "mock-catalog-error",
+        "mock-missing-config",
     };
 
     public string ToolName => "azsdk_package_detect_breaking_change";
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    {
+        var response = HandleCore(arguments);
+        response.BreakingChangeStatus ??= SdkBreakingChangeStatus.Failed;
+        return response;
+    }
+
+    private static PackageOperationResponse HandleCore(Dictionary<string, object?>? arguments)
     {
         var packagePath = GetString(arguments?.GetValueOrDefault("packagePath"));
         if (string.IsNullOrWhiteSpace(packagePath))
@@ -65,6 +73,13 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             return PackageOperationResponse.CreateFailure("Select only one mock scenario path segment.", packageInfo);
         }
         var scenario = scenarios.SingleOrDefault()?.ToLowerInvariant();
+        if (scenario == "mock-missing-config")
+        {
+            var blocked = PackageOperationResponse.CreateFailure(
+                "Required packageOptions.getSdkChangesScript configuration is absent (mock fixture).", packageInfo);
+            blocked.BreakingChangeStatus = SdkBreakingChangeStatus.Blocked;
+            return blocked;
+        }
         if (scenario is "mock-missing-artifacts" or "mock-stale-artifacts")
         {
             return PackageOperationResponse.CreateFailure(
@@ -83,6 +98,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         {
             const string limitation = "Compatibility not evaluated: no GA baseline is available (mock fixture).";
             response.Message = limitation;
+            response.BreakingChangeStatus = SdkBreakingChangeStatus.Inconclusive;
             response.Result = new SdkBreakingChangeDetectionResult
             {
                 SdkChangeMD = limitation,
@@ -95,10 +111,12 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         response.Result = result;
         if (!result.HasBreakingChange)
         {
+            response.BreakingChangeStatus = SdkBreakingChangeStatus.Clean;
             response.Message = "No breaking changes detected; one API addition remains visible (mock fixture).";
         }
         else if (changesOnly)
         {
+            response.BreakingChangeStatus = SdkBreakingChangeStatus.Detected;
             response.Message = "SDK changes detected without classification (mock fixture).";
         }
         else if (scenario is "mock-classifier-error" or "mock-catalog-error")
@@ -110,20 +128,28 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         }
         else
         {
+            response.BreakingChangeStatus = SdkBreakingChangeStatus.Classified;
             result.BreakingChanges =
             [
                 new SdkBreakingChange
                 {
-                    BreakingChange = $"Public API '{result.Details!.ApiChanges[0].Symbol}' was removed.",
+                    BreakingChange = $"Public API '{RemovedSymbol(packageInfo)}' was removed.",
                     Category = SdkBreakingChangeCategory.Unknown,
                     Resolution = "The removal and addition are not a proven rename. Root-cause confidence is low; request owner judgment before mitigation.",
                     Mitigation = packageInfo.Language == SdkLanguage.DotNet ? SdkBreakingChangeMitigation.Manual : null,
-                    OriginBreaks = [.. result.Details.Diagnostics],
+                    OriginBreaks = [RemovalDiagnostic(packageInfo)],
                 },
             ];
         }
         return response;
     }
+
+    private static string RemovedSymbol(PackageInfo packageInfo) => packageInfo.Language == SdkLanguage.DotNet
+        ? $"{packageInfo.PackageName}.Widget.Name"
+        : "com.azure.resourcemanager.contoso.models.Widget.name()";
+
+    private static string RemovalDiagnostic(PackageInfo packageInfo) =>
+        $"{(packageInfo.Language == SdkLanguage.DotNet ? "CP0002" : "MOCK001")}: Public API '{RemovedSymbol(packageInfo)}' was removed.";
 
     private static PackageInfo? GetPackageInfo(string? packageName, string packagePath)
     {
@@ -147,20 +173,18 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
     private static SdkBreakingChangeDetectionResult CreateChanges(PackageInfo packageInfo, bool additionsOnly)
     {
         var isDotnet = packageInfo.Language == SdkLanguage.DotNet;
-        var removedSymbol = isDotnet
-            ? $"{packageInfo.PackageName}.Widget.Name"
-            : "com.azure.resourcemanager.contoso.models.Widget.name()";
+        var removedSymbol = RemovedSymbol(packageInfo);
         var addedSymbol = isDotnet
             ? $"{packageInfo.PackageName}.Widget.DisplayName"
             : "com.azure.resourcemanager.contoso.models.Widget.displayName()";
         var diagnosticId = isDotnet ? "CP0002" : "MOCK001";
-        var diagnostic = $"{diagnosticId}: Public API '{removedSymbol}' was removed.";
+        var diagnostic = RemovalDiagnostic(packageInfo);
         var addition = $"Public API '{addedSymbol}' was added.";
         var details = new SdkChangeDetails { BaselineVersion = "1.0.0" };
         if (!additionsOnly)
         {
             details.Diagnostics.Add(diagnostic);
-            details.ApiChanges.Add(new SdkApiChange
+            details.ApiChanges.Add(new DotnetSdkApiChange
             {
                 Kind = "removed",
                 Symbol = removedSymbol,
@@ -170,7 +194,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
                 TargetFramework = isDotnet ? "net8.0" : null,
             });
         }
-        details.ApiChanges.Add(new SdkApiChange
+        details.ApiChanges.Add(new DotnetSdkApiChange
         {
             Kind = "added",
             Symbol = addedSymbol,
@@ -183,7 +207,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             HasBreakingChange = !additionsOnly,
             SdkChangeMD = (additionsOnly ? "" : $"### Breaking Changes\n\n- {diagnostic}\n\n")
                 + $"### Features Added\n\n- {addition}",
-            Details = details,
+            Details = isDotnet ? details : null,
         };
     }
 

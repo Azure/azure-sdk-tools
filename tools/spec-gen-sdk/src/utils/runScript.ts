@@ -36,16 +36,14 @@ export const runSdkAutoCustomScript = async (
     fallbackName?: string;
     argTmpFileList?: string[];
     argList?: string[];
-    commandLine?: string[];
     statusContext: StatusContainer;
     continueOnFailed?: boolean;
   }
 ): Promise<SDKAutomationState> => {
-  const scriptSplit = options.commandLine ?? runOptions.path?.split(' ');
-  if (!scriptSplit?.[0]) {
+  if (!runOptions.path) {
     throw new Error('Script path is not provided in run options.');
   }
-  const scriptPath = options.commandLine ? options.commandLine.join(' ') : runOptions.path!;
+  const scriptPath = runOptions.path;
   const cwdAbsolutePath = path.resolve(options.cwd);
   const vsoLogErrorsArray: string[] = [];
   const vsoLogWarningsArray: string[] = [];
@@ -78,7 +76,8 @@ export const runSdkAutoCustomScript = async (
       env[extraEnv] = process.env[extraEnv];
     }
   }
-  args.unshift(...scriptSplit.slice(1));
+  const scriptSplit = scriptPath.split(' ');
+  args.unshift(...scriptSplit.splice(1));
 
   // eslint-disable-next-line no-undef
   let cmdRet: { code: number | null; signal: NodeJS.Signals | null } = {
@@ -98,9 +97,8 @@ export const runSdkAutoCustomScript = async (
     listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stdout, runOptions.stdout, 'cmdout');
     listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stderr, runOptions.stderr, 'cmderr');
 
-    cmdRet = await new Promise((resolve, reject) => {
-      child.once('error', reject);
-      child.once('close', (code, signal) => {
+    cmdRet = await new Promise((resolve) => {
+      child.on('exit', (code, signal) => {
         resolve({ code, signal });
       });
     });
@@ -184,7 +182,6 @@ export const listenOnStream = (
     const newData = cacheLine + data.toString();
     const lastIdx = newData.lastIndexOf('\n');
     if (lastIdx === -1) {
-      cacheLine = newData;
       return;
     }
     const lines = newData.slice(0, lastIdx).split('\n');
@@ -210,3 +207,4 @@ export const isLineMatch = (line: string, filter: RunLogFilterOptions | undefine
   }
   return filter.exec(line) !== null;
 };
+

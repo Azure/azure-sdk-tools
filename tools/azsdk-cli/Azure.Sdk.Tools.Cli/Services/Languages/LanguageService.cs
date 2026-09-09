@@ -478,12 +478,18 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Retrieves SDK changes when the repository has no configured change detection script.
-        /// Returning null indicates that the language has no built-in detector.
+        /// Validates classification of known breaking changes before returning actionable results.
+        /// Languages can add requirements without coupling the classifier to individual languages.
         /// </summary>
-        public virtual Task<SdkChange?> GetSdkChangesAsync(string packagePath, CancellationToken ct)
+        /// <returns>An error message, or null when the classification is valid.</returns>
+        public virtual string? ValidateBreakingChangeClassification(SdkBreakingChangeDetectionResult classification)
         {
-            return Task.FromResult<SdkChange?>(null);
+            if (!classification.HasBreakingChange || classification.BreakingChanges is not { Count: > 0 } ||
+                classification.BreakingChanges.Any(change => change == null))
+            {
+                return "No valid SDK breaking changes were classified from the detected SDK changes.";
+            }
+            return null;
         }
 
         public virtual Task<PackageOperationResponse> DetectSdkBreakingChangeAsync(string packagePath, CancellationToken ct)

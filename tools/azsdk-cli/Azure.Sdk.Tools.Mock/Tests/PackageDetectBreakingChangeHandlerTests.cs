@@ -31,6 +31,7 @@ public class PackageDetectBreakingChangeHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Classified));
             Assert.That(response.PackageName, Is.EqualTo(packageName));
             Assert.That(response.Language, Is.EqualTo(language));
             Assert.That(response.PackageType, Is.EqualTo(sdkType));
@@ -38,17 +39,24 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(response.SdkRepoName, Is.EqualTo(SdkLanguageHelpers.GetRepoName(language)));
             Assert.That(result.HasBreakingChange, Is.True);
             Assert.That(result.SdkChangeMD, Does.Contain("### Breaking Changes").And.Contain("### Features Added"));
+            Assert.That(result.BreakingChanges, Has.Count.EqualTo(1));
+        });
+        if (language == SdkLanguage.DotNet)
+        {
             Assert.That(result.Details!.BaselineVersion, Is.EqualTo("1.0.0"));
             Assert.That(result.Details.ApiChanges.Select(change => change.Kind), Is.EqualTo(new[] { "removed", "added" }));
             Assert.That(result.Details.ApiChanges.Select(change => change.IsBreaking), Is.EqualTo(new[] { true, false }));
-            Assert.That(result.BreakingChanges, Has.Count.EqualTo(1));
-        });
+        }
+        else
+        {
+            Assert.That(result.Details, Is.Null, "The Java fixture must not fabricate native .NET evidence.");
+        }
         var breakingChange = result.BreakingChanges.Single();
         Assert.Multiple(() =>
         {
             Assert.That(breakingChange.Category, Is.EqualTo(SdkBreakingChangeCategory.Unknown));
             Assert.That(breakingChange.Resolution, Does.Contain("not a proven rename"));
-            Assert.That(breakingChange.OriginBreaks, Is.EqualTo(result.Details!.Diagnostics));
+            Assert.That(result.SdkChangeMD, Does.Contain(breakingChange.OriginBreaks!.Single()));
             Assert.That(breakingChange.Mitigation, Is.EqualTo(language == SdkLanguage.DotNet ? SdkBreakingChangeMitigation.Manual : null));
         });
     }
@@ -64,10 +72,14 @@ public class PackageDetectBreakingChangeHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Clean));
             Assert.That(result.HasBreakingChange, Is.False);
             Assert.That(result.BreakingChanges, Is.Empty);
             Assert.That(result.SdkChangeMD, Does.Contain("### Features Added").And.Not.Contain("### Breaking Changes"));
-            Assert.That(result.Details!.ApiChanges.Single().Kind, Is.EqualTo("added"));
+            if (response.Language == SdkLanguage.DotNet)
+            {
+                Assert.That(result.Details!.ApiChanges.Single().Kind, Is.EqualTo("added"));
+            }
         });
     }
 
@@ -83,6 +95,7 @@ public class PackageDetectBreakingChangeHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Detected));
             Assert.That(result.HasBreakingChange, Is.True);
             Assert.That(result.BreakingChanges, Is.Empty);
             Assert.That(result.Details!.ApiChanges, Has.Count.EqualTo(2));
@@ -112,6 +125,7 @@ public class PackageDetectBreakingChangeHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.Message, Does.Contain("Compatibility not evaluated"));
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Inconclusive));
             Assert.That(result.Details!.BaselineVersion, Is.Null);
             Assert.That(result.Details.Limitations.Single(), Does.Contain("no GA baseline"));
             Assert.That(result.BreakingChanges, Is.Empty);
@@ -128,6 +142,7 @@ public class PackageDetectBreakingChangeHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.ExitCode, Is.Not.Zero);
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
             Assert.That(response.ResponseErrors, Is.Not.Empty);
             Assert.That(result.HasBreakingChange, Is.True);
             Assert.That(result.SdkChangeMD, Does.Contain("CP0002").And.Contain("DisplayName"));
@@ -162,6 +177,7 @@ public class PackageDetectBreakingChangeHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.ExitCode, Is.Not.Zero);
+            Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
             Assert.That(response.ResponseErrors.Single(), Does.Contain("artifacts"));
             Assert.That(response.Result, Is.EqualTo("failed"));
         });
@@ -285,14 +301,30 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(json.GetProperty("package_name").GetString(), Is.EqualTo(packageName));
             Assert.That(result.GetProperty("changes").ValueKind, Is.EqualTo(JsonValueKind.String));
             Assert.That(result.GetProperty("hasBreakingChange").GetBoolean(), Is.True);
-            Assert.That(result.GetProperty("details").GetProperty("baselineVersion").GetString(), Is.EqualTo("1.0.0"));
-            Assert.That(result.GetProperty("details").GetProperty("apiChanges").GetArrayLength(), Is.EqualTo(2));
+            Assert.That(json.GetProperty("breaking_change_status").GetString(), Is.EqualTo("classified"));
             Assert.That(result.GetProperty("breakingChanges")[0].TryGetProperty("mitigation", out _), Is.EqualTo(hasMitigation));
         });
         if (hasMitigation)
         {
+            Assert.That(result.GetProperty("details").GetProperty("baselineVersion").GetString(), Is.EqualTo("1.0.0"));
+            Assert.That(result.GetProperty("details").GetProperty("apiChanges").GetArrayLength(), Is.EqualTo(2));
             Assert.That(result.GetProperty("breakingChanges")[0].GetProperty("mitigation").GetString(), Is.EqualTo("manual"));
         }
+        else
+        {
+            Assert.That(result.TryGetProperty("details", out _), Is.False);
+        }
+    }
+
+    [Test]
+    public void Handle_MissingConfigurationIsDistinctFromToolFailure()
+    {
+        var response = Invoke("Azure.Contoso.Widget", "mock-missing-config");
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Blocked));
+        Assert.That(response.ExitCode, Is.Not.Zero);
+        Assert.That(response.ResponseErrors.Single(), Does.Contain("getSdkChangesScript"));
+        Assert.That(response.Result, Is.EqualTo("failed"));
     }
 
     [Test]

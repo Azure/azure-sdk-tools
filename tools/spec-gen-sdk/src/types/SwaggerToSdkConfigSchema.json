@@ -149,35 +149,6 @@
             }
           }
         },
-        "getSdkChangesScript": {
-          // Optional SDK compatibility detector, independent of build/analyzer status.
-          // command: interpolate {SdkRepoPath}, {PackagePath}, {OutputJsonFile}.
-          // path: PowerShell script relative to the SDK repo, passed the same named arguments.
-          // All parameter paths and the package working directory are absolute.
-          // Successful scripts must write {"changes": "<markdown>", "hasBreakingChange": <boolean>}.
-          // Additional structured fields are preserved. Nonzero exits always fail detection.
-          "allOf": [
-            {
-              "$ref": "#/definitions/RunOptions"
-            },
-            {
-              "anyOf": [
-                {
-                  "required": ["command"],
-                  "properties": {
-                    "command": { "type": "string", "pattern": "\\S" }
-                  }
-                },
-                {
-                  "required": ["path"],
-                  "properties": {
-                    "path": { "type": "string", "pattern": "\\S" }
-                  }
-                }
-              ]
-            }
-          ]
-        },
         "updateChangelogContentScript": {
           // Update changelog content.
           "$ref": "#/definitions/RunOptions"

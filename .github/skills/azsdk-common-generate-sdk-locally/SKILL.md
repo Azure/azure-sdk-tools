@@ -2,9 +2,9 @@
 name: azsdk-common-generate-sdk-locally
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.1.0"
   distribution: shared
-description: 'Generate, build, and test Azure SDKs locally from TypeSpec with automatic customization. WHEN: "generate SDK locally", "build SDK", "run SDK tests", "run CI checks", "validate package", "run checks", "update changelog", "fix SDK build errors", "resolve SDK generation errors", "customize TypeSpec", "rename SDK client", "rename SDK model", "hide operation from SDK", "fix analyzer errors", "resolve customization drift", "create subclient", "update metadata", "update version". DO NOT USE FOR: publishing to package registries, CI pipeline configuration, API design review. INVOKES: azsdk_verify_setup, azsdk_package_generate_code, azsdk_package_build_code, azsdk_package_run_check, azsdk_package_run_tests, azsdk_customized_code_update, azsdk_package_update_changelog_content, azsdk_package_update_metadata, azsdk_package_update_version.'
+description: 'Generate, build, and test Azure SDKs locally from TypeSpec with automatic customization. WHEN: "generate SDK locally", "build SDK", "run SDK tests", "run CI checks", "validate package", "run checks", "update changelog", "fix SDK build errors", "fix breaking changes", "resolve SDK generation errors", "customize TypeSpec", "rename SDK client", "rename SDK model", "hide operation from SDK", "fix analyzer errors", "resolve customization drift", "create subclient", "update metadata", "update version". DO NOT USE FOR: publishing to package registries, CI pipeline configuration, API design review. INVOKES: azsdk_verify_setup, azsdk_package_generate_code, azsdk_package_build_code, azsdk_package_run_check, azsdk_package_run_tests, azsdk_customized_code_update, azsdk_package_update_changelog_content, azsdk_package_update_metadata, azsdk_package_update_version.'
 compatibility: "azure-sdk-mcp server, local azure-sdk-for-{language} clone, language build tools"
 ---
 
@@ -14,8 +14,8 @@ This skill generates, builds, and tests Azure SDKs locally from TypeSpec with au
 
 ## Triggers
 
-USE FOR: generate, build, and test Azure SDKs locally from TypeSpec with automatic customization; update changelog; fix SDK build errors; resolve SDK generation errors; customize TypeSpec; rename SDK client or model; hide operation from SDK; fix analyzer errors; resolve customization drift; create subclient; update metadata; update version
-WHEN: "generate SDK locally", "build SDK", "run SDK tests", "update changelog", "fix SDK build errors", "resolve SDK generation errors", "customize TypeSpec", "rename SDK client", "rename SDK model", "hide operation from SDK", "fix analyzer errors", "resolve customization drift", "create subclient", "update metadata", "update version"
+USE FOR: generate, build, and test Azure SDKs locally from TypeSpec with automatic customization; update changelog; fix SDK build errors; fix breaking changes; resolve SDK generation errors; customize TypeSpec; rename SDK client or model; hide operation from SDK; fix analyzer errors; resolve customization drift; create subclient; update metadata; update version
+WHEN: "generate SDK locally", "build SDK", "run SDK tests", "update changelog", "fix SDK build errors", "fix breaking changes", "resolve SDK generation errors", "customize TypeSpec", "rename SDK client", "rename SDK model", "hide operation from SDK", "fix analyzer errors", "resolve customization drift", "create subclient", "update metadata", "update version"
 DO NOT USE FOR: publishing to package registries, CI pipeline configuration, API design review
 
 ## Rules
@@ -24,8 +24,6 @@ DO NOT USE FOR: publishing to package registries, CI pipeline configuration, API
 - Never use `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` or `azure-sdk-mcp:azsdk_get_pull_request` to _generate_ an SDK; those only retrieve links for SDKs that were already generated.
 - Requires the `azure-sdk-mcp` server for the MCP workflow; without MCP, use `npm exec --prefix eng/common/tsp-client -- tsp-client` CLI.
 - Verify the target language repo and the correct TypeSpec configuration file before generation.
-- For requested or reported SDK compatibility/breaking changes, use `azsdk-common-sdk-breaking-change` before applying fixes. In .NET, detect on current artifacts independently of compilation/analyzer success; never hide breaks behind a failed build. Normal generation and build-only customization keep the steps below.
-- If compatibility remains unresolved/inconclusive or returns `SpecChangeRequired`, report the handoff rather than continuing to finalization as though validation passed.
 - After generation or customization, run the check and test steps before updating metadata or finalizing changes.
 
 ## MCP Tools
@@ -52,9 +50,9 @@ Prerequisites: azure-sdk-mcp server must be running. Without MCP, use `npx tsp-c
    - From `azure-rest-api-specs` repo: use path to `tspconfig.yaml`.
    - From an SDK language repo: use path to `tsp-location.yaml`.
 4. **Verify setup** — Run `azure-sdk-mcp:azsdk_verify_setup` to confirm environment.
-5. **Generate** — Run `azure-sdk-mcp:azsdk_package_generate_code` with the config file path. If compatibility review is requested or breaks are reported, hand off to `azsdk-common-sdk-breaking-change` for detection and user-selected mitigation before resuming the ordinary validation steps.
+5. **Generate** — Run `azure-sdk-mcp:azsdk_package_generate_code` with the config file path.
 6. **Build** — Run `azure-sdk-mcp:azsdk_package_build_code`. If build succeeds, proceed to step 8.
-7. **Customize** — For non-compatibility build failures or ordinary SDK modifications, run `azure-sdk-mcp:azsdk_customized_code_update` with the build errors or user request. The tool classifies the issue, applies authorized TypeSpec decorators and/or code patches, regenerates the SDK, and builds. Compatibility changes instead follow `azsdk-common-sdk-breaking-change`. See [customization workflow](references/customization-workflow.md).
+7. **Customize** — If build fails, or if user requests SDK modifications, run `azure-sdk-mcp:azsdk_customized_code_update` with the build errors or user request. The tool handles the full workflow internally: it classifies the issue, applies TypeSpec decorators and/or code patches, regenerates the SDK, and builds — all in one call. See [customization workflow](references/customization-workflow.md).
 8. **Commit checkpoint** — Prompt the user to commit generated changes before proceeding. See [commit checkpoint details](references/detailed-workflow.md).
 9. **Validate** — Run `azure-sdk-mcp:azsdk_package_run_check` and `azure-sdk-mcp:azsdk_package_run_tests`.
 10. **Metadata** — Run `azure-sdk-mcp:azsdk_package_update_changelog_content`, `azure-sdk-mcp:azsdk_package_update_metadata`, and `azure-sdk-mcp:azsdk_package_update_version`. _(Note: For .NET data plane, skip this step — metadata, changelog, and version updates are per-commit tasks, not part of the generate/build/test workflow.)_
@@ -64,9 +62,9 @@ Prerequisites: azure-sdk-mcp server must be running. Without MCP, use `npx tsp-c
 
 ## Guardrails
 
-- **NEVER modify generated SDK code files directly for customizations.** Use `azure-sdk-mcp:azsdk_customized_code_update` for ordinary TypeSpec/custom-code requests; use `azsdk-common-sdk-breaking-change` to select the supported mitigation route for compatibility changes.
+- **NEVER modify generated SDK code files directly for customizations.** Always use `azure-sdk-mcp:azsdk_customized_code_update`. It handles classification, TypeSpec decorators, code patches, regeneration, and build as a single atomic workflow.
 - If `azure-sdk-mcp:azsdk_customized_code_update` fails or times out, **report the error to the user** and suggest retrying. Do not attempt to replicate its behavior by editing files manually.
-- For ordinary customizations, the tool maintains the TypeSpec/custom-code layering and regeneration consistency.
+- Only the customization tool understands the correct layering of TypeSpec decorators vs code patches and ensures regenerated code stays consistent.
 
 ## Examples
 
@@ -89,7 +87,7 @@ Prerequisites: azure-sdk-mcp server must be running. Without MCP, use `npx tsp-c
 
 - For "generate SDK for all languages", pipeline-based generation, or when no local SDK clone exists, call `azure-sdk-mcp:azsdk_run_generate_sdk` instead of the local generate flow, and never substitute `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` / `azure-sdk-mcp:azsdk_get_pull_request` for generation.
 - Run `azure-sdk-mcp:azsdk_verify_setup` to confirm MCP and tools.
-- For breaking changes or ApiCompat diagnostics, use `azsdk-common-sdk-breaking-change`; do not automatically send every break to customization. For ordinary type conflicts, analyzer errors, or customization drift, use `azure-sdk-mcp:azsdk_customized_code_update`.
+- If build fails with type conflicts, breaking changes, analyzer errors, or customization drift, use `azure-sdk-mcp:azsdk_customized_code_update` to apply customizations.
 - The customization tool uses a two-phase approach: TypeSpec decorators first (Phase A), then code repairs if needed (Phase B).
 - If `azure-sdk-mcp:azsdk_customized_code_update` fails or times out, report the error and retry. Do not manually edit generated SDK code — manual edits will be overwritten on the next regeneration.
 - Without MCP, use `npx tsp-client` CLI.

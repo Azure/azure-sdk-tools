@@ -18,23 +18,11 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 | Skill                                                                                         | Triggers                                               | Description                                                 |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
 | [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"   | Generate, build, and test Azure SDKs locally from TypeSpec  |
-| [azsdk-common-generate-sdk-pipeline](azsdk-common-generate-sdk-pipeline/SKILL.md)             | "generate SDK for release plan", "create SDK PRs"      | Generate SDKs through release-plan pipelines                |
-| [azsdk-common-sdk-breaking-change](azsdk-common-sdk-breaking-change/SKILL.md)               | "detect SDK breaking changes", "ApiCompat failure"    | Detect, explain, and route user-selected compatibility mitigations |
 | [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"           | Create and manage release plan work items                   |
 | [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"      | Retrieve and resolve APIView review feedback                |
 | [azsdk-common-pipeline-analysis](azsdk-common-pipeline-analysis/SKILL.md)                     | "pipeline failed", "build failure", "CI check failing" | Analyze SDK CI failures and prescribe fixes without editing |
 | [azsdk-common-pipeline-fixer](azsdk-common-pipeline-fixer/SKILL.md)                           | "fix pipeline", "fix CI", "fix failing tests"          | Apply and verify fixes from pipeline analysis               |
 | [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"              | Check release readiness and trigger SDK releases            |
-
-Compatibility requests and reported breaks from local generation, spec PRs, SDK PRs,
-pipeline failures, and release readiness share `azsdk-common-sdk-breaking-change`.
-It preserves detection evidence separately from build/analyzer gates and requires
-user-selected, scope-safe mitigations. The existing .NET `mitigate-breaking-changes`
-skill is management-focused and must be verified in the target SDK checkout; it is
-not bundled or assumed available. Data-plane mitigations require separately
-verified applicable guidance, not ARM-specific patterns from that skill. The
-canonical .NET SDK catalog is the configured CLI catalog or the SDK checkout's
-`doc/dev/SDKBreakingChanges.md`; shared skills do not embed a replacement catalog.
 
 ### Development & Meta Skills
 

@@ -26,9 +26,9 @@
 | Pattern                        | Likely Cause                         | Fix                                                |
 | ------------------------------ | ------------------------------------ | -------------------------------------------------- |
 | Changelog validation error     | Missing or malformed changelog entry | Update CHANGELOG.md content                        |
-| Breaking change detected       | API surface changed incompatibly     | Preserve evidence; use `azsdk-common-sdk-breaking-change` for user-selected mitigation |
+| Breaking change detected       | API surface changed incompatibly     | Revert the breaking change or add suppression      |
 | Lint/format violation          | Code doesn't match style rules       | Run the formatter (black, prettier, dotnet format) |
-| API compatibility check failed | Public API signature changed         | Diagnose separately from build/analyzer failures using `azsdk-common-sdk-breaking-change` |
+| API compatibility check failed | Public API signature changed         | Update API review or revert                        |
 
 ## Infrastructure Failures (Recommend Retry)
 
@@ -57,11 +57,4 @@ When many tests fail simultaneously, look for:
 | -------------------------------- | ----------------------------------- | ------------------------------------- |
 | Missing client.tsp changes       | TypeSpec customization needed       | Use `azsdk_customized_code_update`    |
 | tspconfig.yaml emitter error     | Incorrect emitter configuration     | Fix tspconfig.yaml                    |
-| Breaking change in generated API | Generated surface differs from baseline; root cause needs evidence | Use `azsdk-common-sdk-breaking-change`; paired removals/additions do not prove a rename |
-
-Compatibility diagnosis remains read-only. Report all changes, original
-diagnostics, and root-cause confidence. A successful build/API review does not
-establish compatibility, and a failed build must not hide valid current .NET
-artifact evidence. Missing/stale artifacts or detection/classification errors
-block a conclusion; never recommend suppressions or generated-source edits as
-automatic fixes.
+| Breaking change in generated API | TypeSpec change affects SDK surface | Add `@clientName` decorator or revert |

@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.46 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Agent responses now provide Azure SDK Partners access guidance when Azure DevOps returns `TF215106: Access denied`.
+
+### Other Changes
+
 ## 0.6.45 (2026-09-08)
 
 ### Bugs Fixed

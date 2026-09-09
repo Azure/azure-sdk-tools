@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
         public string ConfiguredPackageVersion { get; set; } = "1.0.0";
         public SdkType ConfiguredPackageType { get; set; } = SdkType.Unknown;
+        public string ConfiguredPackageNameStatus { get; set; } = "Approved";
+        public List<SDKReleaseInfo>? ConfiguredPlannedReleases { get; set; }
 
         // Captures the release plan passed to CreateReleasePlanWorkItemAsync so that a subsequent
         // GetReleasePlanForWorkItemAsync (used to refresh the plan) returns the same details.
@@ -63,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     WorkItemId = 0,
                     changeLogStatus = "Approved",
                     APIViewStatus = ConfiguredAPIViewStatus,
-                    PackageNameStatus = "Approved",
+                    PackageNameStatus = ConfiguredPackageNameStatus,
                     PackageRepoPath = "template",
                     LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",
                     LatestPipelineStatus = "Succeeded",
@@ -73,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     DisplayName = packageName,
                     Version = version,
                     PackageType = ConfiguredPackageType,
-                    PlannedReleases = new List<SDKReleaseInfo>
+                    PlannedReleases = ConfiguredPlannedReleases ?? new List<SDKReleaseInfo>
                     {
                         new() {
                             Version = version,

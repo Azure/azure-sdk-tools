@@ -1,4 +1,5 @@
 using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
@@ -158,6 +159,86 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             {
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Package 'azure-template' is ready for release."));
                 Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API view is not approved"));
+            });
+        }
+
+        [TestCase("Python", "1.0.0.post1", false)]
+        [TestCase("Python", "1.0.0.post1+linux-x64", false)]
+        [TestCase("Python", "1.0.0+build-beta.1", false)]
+        [TestCase("Python", "1.0.0-post1", false)]
+        [TestCase("Python", "1.0.0post1", false)]
+        [TestCase("Python", "1.0.0.POST.1", false)]
+        [TestCase("Python", "1.0.0-1", false)]
+        [TestCase("Python", "1.0.0-r1", false)]
+        [TestCase("Python", "1.0.0a1", true)]
+        [TestCase("Python", "1.0.0b1", true)]
+        [TestCase("Python", "1.0.0rc1", true)]
+        [TestCase("Python", "1.0.0.dev1", true)]
+        [TestCase("Python", "1.0.0.post1.dev1", true)]
+        [TestCase("Python", "1.0.0b1.post1", true)]
+        [TestCase("Python", "1.0.0-beta.1+linux-x64", true)]
+        [TestCase("Python", "1.0.0.dev", true)]
+        [TestCase("Python", "1.0.0.post.dev1", true)]
+        [TestCase("Python", "1!1.0.0rc1", true)]
+        [TestCase(".NET", "1.2.1+build-beta.1", false)]
+        [TestCase("Java", "1.2.1+build-beta.1", false)]
+        [TestCase("JavaScript", "1.2.1+build-beta.1", false)]
+        [TestCase("Go", "1.2.1+build-beta.1", false)]
+        [TestCase(".NET", "1.2.1-beta.1+build-123", true)]
+        [TestCase("Java", "1.2.1-beta.1+build-123", true)]
+        [TestCase("JavaScript", "1.2.1-beta.1+build-123", true)]
+        [TestCase("Go", "1.2.1-beta.1+build-123", true)]
+        [TestCase("JavaScript", "1.0.0-1", true)]
+        [TestCase("JavaScript", "1.0.0-post.1", true)]
+        public async Task TestCheckReadyUsesVersionForApprovalGates(string language, string version, bool isPreview)
+        {
+            var packageName = "azure-template";
+            devOpsService.ConfiguredPackageVersion = version;
+            devOpsService.ConfiguredPackageType = SdkType.Dataplane;
+            devOpsService.ConfiguredPackageNameStatus = "Pending";
+
+            var nameCheck = await sdkReleaseTool.ReleasePackageAsync(packageName, language, checkReady: true);
+
+            devOpsService.ConfiguredPackageNameStatus = "Approved";
+            devOpsService.ConfiguredAPIViewStatus = "Pending";
+
+            var apiCheck = await sdkReleaseTool.ReleasePackageAsync(packageName, language, checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(nameCheck.ResponseError, Is.Null);
+                Assert.That(apiCheck.ResponseError, Is.Null);
+                Assert.That(nameCheck.ReleaseStatusDetails.Contains("not approved for preview release"), Is.EqualTo(isPreview));
+                Assert.That(apiCheck.ReleaseStatusDetails.Contains("API view is not approved for GA release"), Is.EqualTo(!isPreview));
+                Assert.That(nameCheck.ReleaseStatusDetails.Contains("is ready for release."), Is.EqualTo(!isPreview));
+                Assert.That(apiCheck.ReleaseStatusDetails.Contains("is ready for release."), Is.EqualTo(isPreview));
+                Assert.That(nameCheck.PipelineBuildId, Is.Zero);
+                Assert.That(apiCheck.PipelineBuildId, Is.Zero);
+                Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyRejectsPlannedReleaseTableWithoutDataRows()
+        {
+            // Match the hidden Markdown table emitted by GetMDVersionValue, with no releases.
+            var workItem = new WorkItem
+            {
+                Fields = new Dictionary<string, object>
+                {
+                    ["Custom.PlannedPackages"] = "<div style='display:none' id=__md>| Type | Version | Date |\n| - | - | - |\n</div>"
+                }
+            };
+            devOpsService.ConfiguredPlannedReleases = DevOpsService.MapPackageWorkItemToModel(workItem).PlannedReleases;
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", "Python", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("No planned release date found"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
+                Assert.That(result.PipelineBuildId, Is.Zero);
+                Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
             });
         }
 

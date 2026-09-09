@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
 {
     /// <summary>
     /// Represents an intention of a query analyzed by the Azure Knowledge Service.

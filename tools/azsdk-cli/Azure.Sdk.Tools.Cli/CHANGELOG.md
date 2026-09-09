@@ -1,14 +1,16 @@
 # Release History
 
-## 0.6.44 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.45 (2026-09-08)
 
 ### Bugs Fixed
 
-### Other Changes
+- C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
+
+## 0.6.44 (2026-09-08)
+
+### Breaking Changes
+
+- Product onboarding: removed the `--needs-sdk` option, renamed `N/A` to `I don't know` for `--data-plane` and `--management-plane` options.
 
 ## 0.6.43 (2026-09-03)
 

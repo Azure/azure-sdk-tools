@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 

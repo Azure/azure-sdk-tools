@@ -412,6 +412,11 @@
     return rpt.includes("private");
   }
 
+  function isStatusInProgress(status) {
+    const normalized = (status || "").toLowerCase().replace(/[\s_-]+/g, "");
+    return normalized.includes("inprogress") || normalized.includes("running");
+  }
+
   /**
    * Computes the current workflow step and who action is required from.
    * Steps progress: API Spec → SDK Generation → SDK Review → Merge → Release.
@@ -484,6 +489,16 @@
 
     // Check if any SDK PRs exist
     const langsWithPr = activeLangs.filter((k) => langs[k].sdkPrUrl);
+    const langsAwaitingGeneration = activeLangs.filter(
+      (k) =>
+        !langs[k].sdkPrUrl && !isStatusInProgress(langs[k].generationStatus),
+    );
+    if (!langsWithPr.length && !langsAwaitingGeneration.length)
+      return {
+        status: "SDK Generation In Progress",
+        action: "",
+        statusClass: "step-inprogress",
+      };
     if (!langsWithPr.length)
       return {
         status: "SDK To Be Generated",
@@ -509,11 +524,21 @@
       (langs[k].releaseStatus || "").toLowerCase(),
     );
     const allReleased = releaseStatuses.every(
-      (s) => s.includes("completed") || s.includes("released"),
+      (s) => s === "completed" || s === "released",
     );
+    const allReleasedOrInProgress = releaseStatuses.every(
+      (s) => s === "completed" || s === "released" || isStatusInProgress(s),
+    );
+    const anyReleaseInProgress = releaseStatuses.some(isStatusInProgress);
 
     if (allMerged && allReleased)
       return { status: "Released", action: "", statusClass: "step-released" };
+    if (allMerged && allReleasedOrInProgress && anyReleaseInProgress)
+      return {
+        status: "SDK Release In Progress",
+        action: "",
+        statusClass: "step-inprogress",
+      };
     if (allMerged)
       return {
         status: "SDK Ready To Release",
@@ -593,7 +618,11 @@
       const isMergedOrCompleted = st === "merged" || st === "completed";
       const isReleasedOrCompleted = rel === "released" || rel === "completed";
 
-      return isMergedOrCompleted && !isReleasedOrCompleted;
+      return (
+        isMergedOrCompleted &&
+        !isReleasedOrCompleted &&
+        !isStatusInProgress(rel)
+      );
     });
   }
 
@@ -1386,7 +1415,8 @@
           (st.includes("merged") || st.includes("completed")) &&
           rel !== "completed" &&
           rel !== "released" &&
-          rel !== "approval pending"
+          rel !== "approval pending" &&
+          !isStatusInProgress(rel)
         );
       });
       const langList = toRelease.length
@@ -1986,8 +2016,12 @@
                 // Release is queued and waiting for the service team to approve
                 // the release stage in the release pipeline. Link directly to it.
                 actionCell = `<a class="lang-action-btn action-btn-approve" href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release in the release pipeline">Approve Release</a>`;
+              } else if (isStatusInProgress(relSt)) {
+                actionCell = "";
               } else if (!hasPr) {
-                actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
+                if (!isStatusInProgress(l.generationStatus)) {
+                  actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
+                }
               } else if (isClosed && !isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.LINK_PR, lang, p, l);
               } else if (isDraft) {

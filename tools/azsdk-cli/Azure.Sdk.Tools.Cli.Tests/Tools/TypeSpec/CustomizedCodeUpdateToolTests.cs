@@ -32,6 +32,7 @@ public class CustomizedCodeUpdateToolAutoTests
     /// </summary>
     private static (CustomizedCodeUpdateTool tool, ToolMocks mocks) CreateTool(
         LanguageService? languageService = null,
+        Mock<IGitHelper>? gitHelper = null,
         Action<Mock<IGitHelper>>? configureGit = null,
         Action<Mock<IFeedbackClassifierService>>? configureClassifier = null,
         Action<Mock<ITypeSpecCustomizationService>>? configureTspCustomization = null,
@@ -39,9 +40,12 @@ public class CustomizedCodeUpdateToolAutoTests
         ITspClientHelper? tspHelper = null,
         INpxHelper? npxHelper = null)
     {
-        var gitHelper = new Mock<IGitHelper>();
-        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
-        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        if (gitHelper is null)
+        {
+            gitHelper = new Mock<IGitHelper>();
+            gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+            gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        }
         configureGit?.Invoke(gitHelper);
 
         var feedbackService = new Mock<IAPIViewFeedbackService>();
@@ -1821,6 +1825,7 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.SpecChangeRequired, Is.Null, "SpecInputs scope edits spec inputs, so spec items are not out of scope.");
         Assert.That(result.AppliedPatches, Is.Null.Or.Empty, "SpecInputs scope must not patch custom code.");
         Assert.That(patchCalls, Is.EqualTo(0), "SpecInputs scope must never invoke ApplyPatchesAsync.");
+        Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Count.EqualTo(1));
 
         mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
             It.IsAny<string>(),
@@ -2043,7 +2048,7 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task SpecInputsScope_InvalidPackageProjectPath_NotReturnInvalidInput()
     {
         // SpecInputs scope, package path is optional. The tool should not fail fast with InvalidInput if the package path is invalid.
-        var (tool, _) = CreateTool();
+        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
         var pkg = "invalid-path";
         var tspDir = CreateTempDir();
 
@@ -2062,7 +2067,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // CustomCode scope edits local custom code, which requires a package path to locate the customization files.
         // Invalid package path must fail fast with InvalidInput.
-        var (tool, _) = CreateTool();
+        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
         var pkg = "invalid-path";
 
         var result = await tool.UpdateAsync(
@@ -2081,7 +2086,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // All scope edits both spec inputs and local custom code, which requires a package path to locate the customization files.
         // Invalid package path must fail fast with InvalidInput.
-        var (tool, _) = CreateTool();
+        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
         var pkg = "invalid-path";
 
         var result = await tool.UpdateAsync(
@@ -2100,7 +2105,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // SpecInputs scope edits local spec inputs, package path is optional.
         // invalid package path will not cause failure. and the typespec customization will resolve the request.
-        var (tool, _) = CreateTool();
+        var (tool, _) = CreateTool(gitHelper: new Mock<IGitHelper>());
         var pkg = "invalid-path";
         var tspDir = CreateTempDir();
         var result = await tool.UpdateAsync(

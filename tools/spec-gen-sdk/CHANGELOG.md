@@ -1,5 +1,9 @@
 # Release
 
+## 2026-09-04 - 0.9.8
+
+- Added 'packageRootPath' to each package in the execution report
+
 ## 2026-04-07 - 0.9.7
 
 - Made 'sdk-release-type' parameter optional, same as 'api-version'

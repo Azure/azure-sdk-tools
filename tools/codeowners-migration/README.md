@@ -256,8 +256,9 @@ directories would leave exactly the highest-risk entries untested while reportin
 
 Therefore:
 
-1. `--repo-root` enumerates **tracked files**, via `git ls-files`, including files at the repository
-   root. Directories are additionally included so that directory-shaped expressions are exercised.
+1. `--repo-root` enumerates the working tree's **directories** as targets. Adding `--include-files`
+   also enumerates tracked files, via `git ls-files`, including files at the repository root — which
+   is what exercises the file-shaped expressions above. See the size warning below before using it.
 2. `--paths-from <file>` supplies an explicit newline-delimited target list, used for unit tests and
    for verifying a repo that is not checked out.
 3. `verify` asserts **expression coverage**: every path expression appearing in either file must

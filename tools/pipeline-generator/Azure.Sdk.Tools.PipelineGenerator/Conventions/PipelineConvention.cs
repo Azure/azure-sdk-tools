@@ -397,6 +397,8 @@ namespace PipelineGenerator.Conventions
 
                 newTrigger.RequireCommentsForNonTeamMembersOnly = false;
                 newTrigger.IsCommentRequiredForPullRequest = securePipeline;
+                // Repository-internal PRs require a comment only for secure pipelines (off for CI).
+                newTrigger.IsCommentRequiredForInternalRepoPRs = securePipeline;
 
                 definition.Triggers.Add(newTrigger);
                 hasChanges = true;
@@ -436,13 +438,15 @@ namespace PipelineGenerator.Conventions
                     if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
                        trigger.Forks.AllowSecrets != securePipeline ||
                        trigger.Forks.Enabled != true ||
-                       trigger.IsCommentRequiredForPullRequest != securePipeline
+                       trigger.IsCommentRequiredForPullRequest != securePipeline ||
+                       trigger.IsCommentRequiredForInternalRepoPRs != securePipeline
                        )
                     {
                         trigger.Forks.AllowSecrets = securePipeline;
                         trigger.Forks.Enabled = true;
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
                         trigger.IsCommentRequiredForPullRequest = securePipeline;
+                        trigger.IsCommentRequiredForInternalRepoPRs = securePipeline;
 
                         hasChanges = true;
                     }

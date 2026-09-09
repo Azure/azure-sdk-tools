@@ -22,7 +22,11 @@ namespace PipelineGenerator.Conventions
         {
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            if (EnsureDefaultPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
+            if (EnsureDefaultPullRequestTrigger(
+                definition,
+                overrideYaml: true,
+                securePipeline: true,
+                internalRepoCommentOption: CommentTriggerOption.NonTeamMembersNonContributor))
             {
                 hasChanges = true;
             }

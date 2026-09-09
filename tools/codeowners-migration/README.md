@@ -110,6 +110,9 @@ an ordinal comparison twice over: it shifts the position of every entry after it
 block is dropped from both files the run passes while having checked nothing about it. Parser output
 is captured and treated as a load failure (exit `2`), not as a difference.
 
+For the same reason, a file that parses to zero entries is rejected rather than compared: two empty
+files match, and reporting success on that would prove nothing.
+
 ## Output
 
 A failing run names the entry position, the field, and the value on each side, with line numbers into

@@ -64,6 +64,15 @@ namespace Azure.Sdk.Tools.CodeownersMigration
             Console.WriteLine($"base:    {basePath} ({baseEntries.Count} entries)");
             Console.WriteLine($"compare: {comparePath} ({compareEntries.Count} entries)");
 
+            // Two empty files compare equal, which would report success while having verified nothing. A
+            // CODEOWNERS file with no entries is never a legitimate input to a migration check.
+            if (baseEntries.Count == 0 || compareEntries.Count == 0)
+            {
+                Console.Error.WriteLine();
+                Console.Error.WriteLine("Refusing to compare: at least one file parsed to zero entries, so a match would prove nothing.");
+                return ExitError;
+            }
+
             List<EntryDifference> differences = new EntryComparer().Compare(baseEntries, compareEntries);
 
             if (differences.Count == 0)

@@ -1,3 +1,5 @@
+<!-- cspell:words postdeploy postprovision preprovision WIKIBLOB WIKIINDEX -->
+
 # Deployment Architecture
 
 This document explains the current executable deployment. The source of truth
@@ -7,15 +9,20 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
 
 ## System Components
 
-| Component | Hosting and responsibility |
-| --- | --- |
-| `frontend` | Teams bot on App Service. Uses a user-assigned managed identity for Azure Bot authentication. |
-| `agent-server` | Python API on App Service. Deploys directly to its production site and is protected by Easy Auth. |
-| `function-app` | Containerized Azure Functions workload used by the Logic App integration. |
-| `agent` | Microsoft Foundry hosted chat agent built remotely in ACR. |
-| `logic-app` | Teams, Blob Storage, Cosmos DB, and Function App workflow. Bicep creates a shell; the Function App postdeploy hook installs the final definition. |
-| Evolution agent | Production-only Foundry hosted agent with scoped access to production and candidate-dev resources. |
-| Data jobs | Scheduled knowledge sync, generated-wiki build, and feedback/evolution pipelines. They are not long-running `azd` services. |
+- **`frontend`:** Teams bot on App Service. A user-assigned managed identity
+  provides Azure Bot authentication.
+- **`agent-server`:** Python API on App Service protected by Easy Auth. It
+  resolves and caches channel configuration for the Logic App.
+- **`function-app`:** Containerized Azure Functions workload used by the Logic
+  App integration.
+- **`agent`:** Microsoft Foundry hosted chat agent built remotely in ACR.
+- **`logic-app`:** Teams, agent-server, Cosmos DB, and Function App workflow.
+  Bicep creates the workflow shell, and the Function App postdeploy hook
+  installs its definition.
+- **Evolution agent:** Production-only Foundry hosted agent with scoped access
+  to production and candidate-dev resources.
+- **Data jobs:** Scheduled knowledge sync, generated-wiki build, and
+  feedback/evolution pipelines operating independently of the azd services.
 
 Shared infrastructure includes ACR, Storage, Cosmos DB, Key Vault, App
 Configuration, Azure AI Search, AI Services, Log Analytics, Application
@@ -87,6 +94,12 @@ dependencies, then deploys only that component. Selecting `shared-resources` or
 `logic-app` provisions that infrastructure scope without an application deploy.
 Component CI remains separate from provisioning and deployment.
 
+The Logic App calls the authenticated agent-server `/config/channel` endpoint
+to resolve each channel's tenant. The backend reads
+`bot-configs/channel.yaml` with the shared managed identity and caches the
+parsed configuration. The shared managed identity authenticates the Logic App's
+backend request and the backend's Blob read.
+
 ## Reconciled State
 
 Some required state is not safely representable in Bicep and is reconciled by
@@ -149,4 +162,4 @@ flowchart LR
 - Automated rollback is not implemented. The supported code rollback is to run
   the matching orchestrator from a known-good source revision.
 
-Continue with the [manual setup guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md).
+Continue with the [manual setup guide](manual-setup.md).

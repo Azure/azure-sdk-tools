@@ -100,3 +100,33 @@ test("runs Search indexers after both data producers", () => {
   assert.match(knowledge, /searchService\.runIndexer\(\)/);
   assert.match(wiki, /run-search-indexer\.sh" AI_SEARCH_WIKI_INDEXER/);
 });
+
+test("loads Logic App channel configuration through the authenticated backend", () => {
+  const workflowText = read("infra/layers/logic-app/workflowDefinition.json");
+  const workflow = JSON.parse(workflowText);
+  const bicep = read("infra/layers/logic-app/main.bicep");
+  const parameters = read("infra/layers/logic-app/main.bicepparam");
+  const patchWorkflow = read("hooks/lib/patch-workflow.ts");
+  const server = read("../azure-sdk-qa-bot-agent/server.py");
+  const threadActions =
+    workflow.actions.For_each.actions.Thread_Message_From_User.actions;
+  const channelLookup = threadActions.Get_Channel_Config;
+
+  assert.equal(channelLookup.type, "Http");
+  assert.equal(channelLookup.inputs.authentication.type, "ManagedServiceIdentity");
+  assert.equal(channelLookup.inputs.authentication.audience, "@parameters('serverApplicationIdUri')");
+  assert.match(channelLookup.inputs.uri, /\/config\/channel\?channel_id=/);
+  assert.equal(
+    threadActions.Build_Conversation_Save_Request_Body.inputs.tenant_id,
+    "@body('Get_Channel_Config')?['tenant_id']",
+  );
+  assert.equal(threadActions.Load_Channel_Config, undefined);
+  assert.equal(threadActions.Decode_Channel_Config, undefined);
+  assert.equal(threadActions.Get_Tenant_ID, undefined);
+  assert.doesNotMatch(workflowText, /azureblob|blobStorageAccountName/);
+  assert.doesNotMatch(bicep, /blobConnection|azureBlobConnection/);
+  assert.doesNotMatch(parameters, /AZURE_BLOB_CONNECTION_NAME|blobStorageAccountName/);
+  assert.doesNotMatch(patchWorkflow, /AZURE_BLOB_CONNECTION_NAME|blobConn/);
+  assert.match(server, /@app\.get\("\/config\/channel"/);
+  assert.match(server, /_bot_config_service\.get_channel_config\(channel_id\)/);
+});

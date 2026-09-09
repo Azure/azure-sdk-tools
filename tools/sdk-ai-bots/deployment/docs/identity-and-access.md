@@ -97,7 +97,8 @@ identity and exports its client, object, and resource IDs. It is used by:
 
 - the agent-server App Service through `AZURE_CLIENT_ID`;
 - the Function App through `AZURE_CLIENT_ID`;
-- the Logic App Blob and Cosmos DB managed API connections.
+- the Logic App's authenticated agent-server calls and Cosmos DB managed API
+  connection.
 
 It is attached to the agent-server together with the frontend identity, but the
 agent-server explicitly selects the shared identity for Azure SDK credentials.
@@ -333,8 +334,10 @@ scope and calls the server with that token.
 ### Runtime access
 
 The agent-server and Function App explicitly select `qabot-identity` through
-`AZURE_CLIENT_ID`. The Logic App uses the same identity for Blob and Cosmos
-managed API connections and also attaches the frontend identity for bot calls.
+`AZURE_CLIENT_ID`. The agent-server uses it to read channel configuration from
+Blob Storage. The Logic App uses it for authenticated agent-server calls and
+the Cosmos managed API connection, and attaches the frontend identity for bot
+calls.
 
 The Teams managed connector is different: it uses delegated OAuth. The
 repository creates the connection shell and preserves a connected token, but

@@ -193,7 +193,6 @@ environments:
             FUNCTION_LOG_WORKSPACE_NAME: 'azuresdkqabot-function-log'
             INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
             TEAMS_CONNECTION_NAME: 'teams'
-            AZURE_BLOB_CONNECTION_NAME: 'azureblob'
             DOCUMENT_DB_CONNECTION_NAME: 'documentdb'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'

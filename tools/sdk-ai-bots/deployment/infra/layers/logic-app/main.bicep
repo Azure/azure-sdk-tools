@@ -21,10 +21,7 @@ param botBaseUrl string
 @description('Client ID (audience) for authenticating to the bot.')
 param botAudience string
 
-@description('Storage account name holding the channel config blob.')
-param blobStorageAccountName string
-
-@description('Name of the agent server / blob managed identity.')
+@description('Name of the shared identity used for agent-server calls and the Cosmos DB connection.')
 param managedIdentityName string
 
 @description('Name of the bot managed identity.')
@@ -49,9 +46,6 @@ param integrationAccountNameOverride string = ''
 @description('Name of the Teams managed API connection.')
 param teamsConnectionNameOverride string = ''
 
-@description('Name of the Azure Blob managed API connection.')
-param azureBlobConnectionNameOverride string = ''
-
 @description('Name of the Cosmos DB (documentdb) managed API connection.')
 param documentDbConnectionNameOverride string = ''
 
@@ -67,7 +61,6 @@ param actionGroupName string = 'qabot-alert-${substring(uniqueString(resourceGro
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var integrationAccountName = !empty(integrationAccountNameOverride) ? integrationAccountNameOverride : 'azuresdkqabot-ia-${suffix}'
 var teamsConnectionName = !empty(teamsConnectionNameOverride) ? teamsConnectionNameOverride : 'teams-${suffix}'
-var azureBlobConnectionName = !empty(azureBlobConnectionNameOverride) ? azureBlobConnectionNameOverride : 'azureblob-${suffix}'
 var documentDbConnectionName = !empty(documentDbConnectionNameOverride) ? documentDbConnectionNameOverride : 'documentdb-${suffix}'
 var logicAppWorkflowName = !empty(logicAppWorkflowNameOverride) ? logicAppWorkflowNameOverride : 'azuresdkqabot-logicapp-${suffix}'
 var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOverride : 'azuresdkqabot-logicapp-alert-${suffix}'
@@ -77,7 +70,6 @@ var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOve
 // from names so the layer resolves correctly in any subscription / RG.
 var serverIdentityResourceId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', managedIdentityName)
 var botIdentityResourceId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', botIdentityName)
-var blobIdentityResourceId = serverIdentityResourceId
 var functionAppResourceId = resourceId('Microsoft.Web/sites', functionAppName)
 
 // Computed ID for the Teams managed API connection. Used instead of
@@ -114,17 +106,6 @@ var emptyWorkflowDefinition = {
 var workflowParameters = {
   '$connections': {
     value: {
-      azureblob: {
-        connectionId: blobConnection.id
-        connectionName: blobConnection.name
-        connectionProperties: {
-          authentication: {
-            identity: blobIdentityResourceId
-            type: 'ManagedServiceIdentity'
-          }
-        }
-        id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/azureblob'
-      }
       documentdb: {
         connectionId: documentDbConnection.id
         connectionName: documentDbConnection.name
@@ -171,9 +152,6 @@ var workflowParameters = {
   functionAppResourceId: {
     value: functionAppResourceId
   }
-  blobStorageAccountName: {
-    value: blobStorageAccountName
-  }
 }
 
 resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {
@@ -202,22 +180,6 @@ resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = if (createTeam
       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/teams'
     }
     parameterValues: {}
-  }
-}
-
-resource blobConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: azureBlobConnectionName
-  location: location
-  properties: {
-    displayName: 'azureblob'
-    api: {
-      id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/azureblob'
-    }
-    #disable-next-line BCP089
-    parameterValueSet: {
-      name: 'managedIdentityAuth'
-      values: {}
-    }
   }
 }
 
@@ -308,7 +270,6 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 
 output INTEGRATION_ACCOUNT_NAME string = integrationAccountName
 output TEAMS_CONNECTION_NAME string = teamsConnectionName
-output AZURE_BLOB_CONNECTION_NAME string = azureBlobConnectionName
 output DOCUMENT_DB_CONNECTION_NAME string = documentDbConnectionName
 output LOGIC_APP_WORKFLOW_NAME string = logicAppWorkflowName
 output LOGIC_APP_ALERT_NAME string = logicAppAlertName

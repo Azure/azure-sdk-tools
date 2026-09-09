@@ -249,6 +249,10 @@ The registered deploy hooks are:
    Function App is running, waits for host readiness, and installs the complete
    Logic App workflow. The workflow calls the Function App, so applying it in
    Bicep before the container is live would create an unusable definition.
+- **Channel configuration:** the Logic App calls the agent-server's
+   `/config/channel` endpoint with the shared managed identity. The backend owns
+   Blob access, YAML parsing, and the five-minute cache. The workflow consumes
+   the endpoint's `tenant_id` response when saving a conversation.
 - **Agent postdeploy: `agent-postdeploy.ts`.** Grants the newly created hosted
    agent identity its data-plane roles, ensures the latest Foundry agent version
    contains `AZURE_APPCONFIG_ENDPOINT`, and probes `/ping`. The hosted identity

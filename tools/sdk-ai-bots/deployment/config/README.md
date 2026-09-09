@@ -1,12 +1,18 @@
+<!-- cspell:words postprovision -->
+
 # Bot Configuration Source
 
 Per-env YAML/JSON files uploaded to the shared storage account's `bot-configs`
 blob container by `hooks/postprovision.ts` (via
-[`hooks/lib/upload-bot-configs.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/upload-bot-configs.ts)).
+[`hooks/lib/upload-bot-configs.ts`](../hooks/lib/upload-bot-configs.ts)).
+
+The agent-server reads `channel.yaml`, caches it for five minutes by default,
+and exposes the authenticated `/config/channel` endpoint. The Logic App uses
+that endpoint to resolve the tenant for each Teams channel.
 
 ## Layout
 
-```
+```text
 config/
 ├── dev/
 │   ├── channel.yaml

@@ -186,7 +186,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   // Resource / identity names emitted by main.bicep outputs.
   const workflowName = requireEnv("LOGIC_APP_WORKFLOW_NAME");
   const teamsConnName = requireEnv("TEAMS_CONNECTION_NAME");
-  const blobConnName = requireEnv("AZURE_BLOB_CONNECTION_NAME");
   const docDbConnName = requireEnv("DOCUMENT_DB_CONNECTION_NAME");
 
   const serverIdentityName = requireEnv("MANAGED_IDENTITY_NAME");
@@ -226,14 +225,12 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   const serverApplicationIdUri = requireEnv("SERVER_APPLICATION_ID_URI");
   const botBaseUrl = requireEnv("BOT_BASE_URL");
   const botAudience = requireEnv("BOT_AUDIENCE");
-  const blobStorageAccountName = requireEnv("STORAGE_ACCOUNT_NAME");
 
   // Derived resource IDs.
   const serverIdentityResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.ManagedIdentity", "userAssignedIdentities", serverIdentityName);
   const botIdentityResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.ManagedIdentity", "userAssignedIdentities", botIdentityName);
   const functionAppResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "sites", functionAppName);
   const teamsConnResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "connections", teamsConnName);
-  const blobConnResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "connections", blobConnName);
   const docDbConnResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.Web", "connections", docDbConnName);
 
   // Load and templatize the workflow definition. `function.id` is resolved at
@@ -249,22 +246,11 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
 
   const parameters = {
     $connections: {
-      // Keyed by the connector token (teams / azureblob / documentdb) — the
+      // Keyed by the connector token (teams / documentdb) — the
       // static, designer-friendly form the portal Logic App designer expects.
       // The connectionId / id still point at the real connection resources, so
       // runtime behavior is identical to keying by resource name.
       value: {
-        azureblob: {
-          connectionId: blobConnResourceId,
-          connectionName: blobConnName,
-          connectionProperties: {
-            authentication: {
-              identity: serverIdentityResourceId,
-              type: "ManagedServiceIdentity",
-            },
-          },
-          id: managedApiId(subscriptionId, location, "azureblob"),
-        },
         documentdb: {
           connectionId: docDbConnResourceId,
           connectionName: docDbConnName,
@@ -293,7 +279,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     botAudience: { value: botAudience },
     botIdentityResourceId: { value: botIdentityResourceId },
     functionAppResourceId: { value: functionAppResourceId },
-    blobStorageAccountName: { value: blobStorageAccountName },
   };
 
   const workflowUrl =

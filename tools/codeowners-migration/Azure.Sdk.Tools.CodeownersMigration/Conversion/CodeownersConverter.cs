@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
                         result.Warnings.Add(
                             $"Path '{entry.Path}' in section '{section.Name}' is also defined statically in an " +
                             "earlier section. Left as a static entry; resolve the duplicate by hand before enabling the fragment.");
-                        AddPathEntry(model.Paths, model.LabelOwners, entry, entry.Path);
+                        AddPathEntry(model.Paths, model.LabelOwners, entry, entry.DeclaredPath);
                         continue;
                     }
 
@@ -106,60 +106,29 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
                             result.Warnings.Add(
                                 $"Path '{entry.Path}' in section '{section.Name}' does not fit '{_options.FragmentGlob}'. Left as a static entry.");
                         }
-                        AddPathEntry(model.Paths, model.LabelOwners, entry, entry.Path);
+                        AddPathEntry(model.Paths, model.LabelOwners, entry, entry.DeclaredPath);
                         continue;
                     }
 
                     FragmentModel fragment = GetOrCreateFragment(fragmentModels, fragmentRoot, section.Name);
-                    AddPathEntry(fragment.Paths, fragment.LabelOwners, entry, fragmentPrefix.RelativePath(fragmentRoot, entry.Path));
+                    AddPathEntry(fragment.Paths, fragment.LabelOwners, entry,
+                                 fragmentPrefix.RelativePath(fragmentRoot, entry.DeclaredPath), SectionOverride(section.Name));
                 }
 
-                // Pathless blocks carry service label ownership only. Attribute them to whichever fragments
-                // already claim one of the labels as a PR label; otherwise they stay static.
+                // Pathless blocks carry service label ownership only. They belong to no directory, so they
+                // stay in the owners config with their section rather than being copied into fragments.
                 foreach (EntryFacts entry in sectionFacts.Where(f => !f.HasPath))
                 {
-                    List<string> targets = isFragmentSection
-                        ? FindFragmentsClaimingLabels(fragmentModels, entry.ServiceLabels)
-                        : new List<string>();
-
-                    if (targets.Count == 0)
-                    {
-                        AddLabelOwners(model.LabelOwners, entry.ServiceLabels, entry.ServiceOwners, entry.AzureSdkOwners);
-                        continue;
-                    }
-
-                    // Assigning the same owners to several fragments is safe: the renderer unions label-owner
-                    // blocks by label set, so the merged result is identical to the single source block.
-                    foreach (string root in targets)
-                    {
-                        FragmentModel fragment = GetOrCreateFragment(fragmentModels, root, section.Name);
-                        AddLabelOwners(fragment.LabelOwners, entry.ServiceLabels, entry.ServiceOwners, entry.AzureSdkOwners);
-                    }
+                    AddLabelOwners(model.LabelOwners, entry.ServiceLabels, entry.ServiceOwners, entry.AzureSdkOwners);
                 }
             }
 
             result.ConfigYaml = RenderConfig(sectionModels);
             foreach (KeyValuePair<string, FragmentModel> pair in fragmentModels.OrderBy(p => p.Key, StringComparer.Ordinal))
             {
-                // Order fragment paths the way the renderer will emit them so the file reads in the same order
-                // it takes effect: the fragment's own directory first, then ordinal by path.
-                pair.Value.Paths.Sort((left, right) =>
-                {
-                    if (left.Path == right.Path)
-                    {
-                        return 0;
-                    }
-                    if (left.Path == ".")
-                    {
-                        return -1;
-                    }
-                    if (right.Path == ".")
-                    {
-                        return 1;
-                    }
-                    return string.CompareOrdinal(left.Path, right.Path);
-                });
-
+                // Paths keep the order they were declared in. CODEOWNERS is last-match-wins and the
+                // renderer emits a fragment's paths in file order, so reordering here would silently
+                // reassign ownership.
                 string fragmentPath = pair.Key + "/" + fragmentPrefix.FileName;
                 result.Fragments[fragmentPath] = RenderFragment(pair.Value);
             }
@@ -193,25 +162,35 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
         /// schema expresses service ownership only through label-owners, so a legacy block carrying both a
         /// path and a ServiceLabel becomes two declarations.
         /// </summary>
-        private void AddPathEntry(List<PathModel> paths, List<LabelOwnerModel> labelOwners, EntryFacts entry, string path)
+        /// <summary>The section to record on a fragment entry, or null when the default already routes it there.</summary>
+        private string SectionOverride(string sectionName) =>
+            string.IsNullOrEmpty(_options.DefaultSection) ||
+            string.Equals(_options.DefaultSection, sectionName, StringComparison.OrdinalIgnoreCase)
+                ? null
+                : sectionName;
+
+        private void AddPathEntry(List<PathModel> paths, List<LabelOwnerModel> labelOwners, EntryFacts entry, string path,
+                                  string section = null)
         {
             paths.Add(new PathModel
             {
                 Path = path,
                 Owners = entry.SourceOwners,
-                PRLabels = entry.PRLabels
+                PRLabels = entry.PRLabels,
+                Section = section
             });
 
             if (entry.ServiceLabels.Count > 0)
             {
-                AddLabelOwners(labelOwners, entry.ServiceLabels, entry.ServiceOwners, entry.AzureSdkOwners);
+                AddLabelOwners(labelOwners, entry.ServiceLabels, entry.ServiceOwners, entry.AzureSdkOwners, section);
             }
         }
 
         private static void AddLabelOwners(List<LabelOwnerModel> labelOwners,
                                            List<string> labels,
                                            List<string> serviceOwners,
-                                           List<string> azureSdkOwners)
+                                           List<string> azureSdkOwners,
+                                           string section = null)
         {
             if (labels == null || labels.Count == 0)
             {
@@ -222,7 +201,7 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
             LabelOwnerModel existing = labelOwners.FirstOrDefault(l => l.Key == key);
             if (existing == null)
             {
-                existing = new LabelOwnerModel { Key = key, Labels = new List<string>(labels) };
+                existing = new LabelOwnerModel { Key = key, Labels = new List<string>(labels), Section = section };
                 labelOwners.Add(existing);
             }
 
@@ -239,21 +218,6 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
                     target.Add(owner);
                 }
             }
-        }
-
-        private static List<string> FindFragmentsClaimingLabels(Dictionary<string, FragmentModel> fragments, List<string> labels)
-        {
-            SortedSet<string> wanted = EntryFacts.LabelSet(labels);
-            if (wanted.Count == 0)
-            {
-                return new List<string>();
-            }
-
-            return fragments
-                .Where(pair => pair.Value.Paths.Any(p => EntryFacts.LabelSet(p.PRLabels).Overlaps(wanted)))
-                .Select(pair => pair.Key)
-                .OrderBy(root => root, StringComparer.Ordinal)
-                .ToList();
         }
 
         private static FragmentModel GetOrCreateFragment(Dictionary<string, FragmentModel> fragments, string root, string sectionName)
@@ -321,17 +285,13 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
         private string RenderFragment(FragmentModel fragment)
         {
             var yaml = new YamlWriter();
-            yaml.Comment($"Generated by codeowners-migration convert from section '{fragment.Section}'.")
+            yaml.Comment("Generated by codeowners-migration convert.")
                 .Comment("Paths are relative to this directory and may not escape it.")
                 .Blank()
                 .Scalar("version", 1);
 
-            if (!string.IsNullOrEmpty(_options.DefaultSection) &&
-                !string.Equals(_options.DefaultSection, fragment.Section, StringComparison.OrdinalIgnoreCase))
-            {
-                yaml.Blank().Scalar("section", fragment.Section);
-            }
-
+            // A fragment has no file-level section: routing is declared per entry. A single fragment can hold
+            // entries from more than one section, so each entry carries its own.
             WritePaths(yaml, fragment.Paths, leadingBlank: true);
             WriteLabelOwners(yaml, fragment.LabelOwners, leadingBlank: true);
 
@@ -356,6 +316,10 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
                 yaml.Indent();
                 yaml.FlowSequence("owners", path.Owners);
                 yaml.FlowSequence("pr-labels", path.PRLabels);
+                if (path.Section != null)
+                {
+                    yaml.Scalar("section", path.Section);
+                }
                 yaml.Outdent();
             }
             yaml.Outdent();
@@ -379,6 +343,10 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
                 yaml.Indent();
                 yaml.FlowSequence("service-owners", labelOwner.ServiceOwners);
                 yaml.FlowSequence("azure-sdk-owners", labelOwner.AzureSdkOwners);
+                if (labelOwner.Section != null)
+                {
+                    yaml.Scalar("section", labelOwner.Section);
+                }
                 yaml.Outdent();
             }
             yaml.Outdent();
@@ -406,6 +374,10 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
             public string Path { get; set; }
             public List<string> Owners { get; set; } = new List<string>();
             public List<string> PRLabels { get; set; } = new List<string>();
+
+            /// <summary>Section this entry was declared under. Null in the owners config, where the
+            /// section already provides the context.</summary>
+            public string Section { get; set; }
         }
 
         private class LabelOwnerModel
@@ -414,6 +386,7 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Conversion
             public List<string> Labels { get; set; } = new List<string>();
             public List<string> ServiceOwners { get; } = new List<string>();
             public List<string> AzureSdkOwners { get; } = new List<string>();
+            public string Section { get; set; }
         }
     }
 }

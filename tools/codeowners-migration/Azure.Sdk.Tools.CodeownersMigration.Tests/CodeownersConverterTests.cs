@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.CodeownersMigration.Conversion;
 using NUnit.Framework;
 
@@ -87,16 +88,60 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Tests
         }
 
         [Test]
-        public void AttributesPathlessLabelOwnersToClaimingFragment()
+        public void RoutesNonDefaultSectionEntriesWithAPerEntryKey()
+        {
+            string[] file =
+            {
+                "####################",
+                "# Client Libraries",
+                "####################",
+                "# PRLabel: %Communication",
+                "/sdk/communication/Azure.Communication.Chat/    @carol",
+                "",
+                "####################",
+                "# Management Libraries",
+                "####################",
+                "# PRLabel: %Mgmt",
+                "/sdk/communication/Azure.ResourceManager.Communication/    @erin",
+                "# PRLabel: %Mgmt",
+                "/sdk/compute/Azure.ResourceManager.Compute/    @frank"
+            };
+
+            ConversionResult result = Convert(file, o =>
+            {
+                o.FragmentSections.Add("Management Libraries");
+            });
+
+            // A fragment carries no file-level section key; the fragment schema has no such property, so
+            // emitting one makes the whole file fail to load. Routing is declared on the entry.
+            string mgmt = result.Fragments["sdk/compute/owners.yaml"];
+            Assert.That(mgmt, Does.Not.Match(@"(?m)^section:"));
+            Assert.That(mgmt, Does.Contain("section: Management Libraries"));
+
+            // One fragment can hold entries from two sections. Tagging the file rather than the entry sent
+            // the management entry into Client Libraries, where a broad glob later in the file outranked it.
+            string mixed = result.Fragments["sdk/communication/owners.yaml"];
+            Assert.That(mixed, Does.Not.Match(@"(?m)^section:"));
+            Assert.That(Regex.Matches(mixed, "section: Management Libraries").Count, Is.EqualTo(1));
+
+            string chatBlock = mixed.Substring(mixed.IndexOf("Azure.Communication.Chat/"),
+                                               mixed.IndexOf("Azure.ResourceManager.Communication/") - mixed.IndexOf("Azure.Communication.Chat/"));
+            Assert.That(chatBlock, Does.Not.Contain("section:"));
+        }
+
+        [Test]
+        public void KeepsPathlessLabelOwnersInTheConfig()
         {
             ConversionResult result = Convert(TwoSectionFile);
 
-            string fragment = result.Fragments["sdk/ai/owners.yaml"];
-            Assert.That(fragment, Does.Contain("- labels: [AI Projects]"));
-            Assert.That(fragment, Does.Contain("service-owners: [carol, dave]"));
+            // A pathless block owns a label, not a directory, so it has no fragment to belong to.
+            // Copying it into every fragment that happens to use the label as a PR label produces
+            // one duplicate per fragment and no additional information.
+            Assert.That(result.ConfigYaml, Does.Contain("- labels: [AI Projects]"));
+            Assert.That(result.ConfigYaml, Does.Contain("service-owners: [carol, dave]"));
 
-            // Having moved into the fragment, it must not also remain in the config.
-            Assert.That(result.ConfigYaml, Does.Not.Contain("AI Projects"));
+            string fragment = result.Fragments["sdk/ai/owners.yaml"];
+            Assert.That(fragment, Does.Not.Contain("label-owners:"));
         }
 
         [Test]

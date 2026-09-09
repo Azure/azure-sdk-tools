@@ -20,6 +20,13 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
         /// <summary>Normalized path expression, or null for a pathless (service label only) block.</summary>
         public string Path { get; set; }
 
+        /// <summary>
+        /// The path exactly as it was declared, with only a leading slash guaranteed. <see cref="Path"/> is
+        /// normalized for <em>comparison</em>, which guesses a trailing slash from the final segment; that
+        /// guess is wrong often enough that it must never reach authored YAML. Conversion uses this instead.
+        /// </summary>
+        public string DeclaredPath { get; set; }
+
         public List<string> SourceOwners { get; set; } = new List<string>();
         public List<string> PRLabels { get; set; } = new List<string>();
         public List<string> ServiceLabels { get; set; } = new List<string>();
@@ -36,6 +43,7 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
             var facts = new EntryFacts
             {
                 Path = string.IsNullOrWhiteSpace(entry.PathExpression) ? null : NormalizePath(entry.PathExpression),
+                DeclaredPath = string.IsNullOrWhiteSpace(entry.PathExpression) ? null : EnsureLeadingSlash(entry.PathExpression),
                 SourceOwners = Clean(entry.OriginalSourceOwners),
                 PRLabels = CleanLabels(entry.PRLabels),
                 ServiceLabels = CleanLabels(entry.ServiceLabels),
@@ -59,6 +67,13 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
             return facts;
         }
 
+        /// <summary>Trims the expression and guarantees a leading slash, changing nothing else.</summary>
+        private static string EnsureLeadingSlash(string path)
+        {
+            string trimmed = path.Trim();
+            return trimmed.Length == 0 || trimmed.StartsWith("/") ? trimmed : "/" + trimmed;
+        }
+
         /// <summary>
         /// Normalizes a path expression so that equivalent expressions written differently compare equal.
         /// A leading slash is added, and a trailing slash is added unless the final segment names a file or
@@ -66,15 +81,10 @@ namespace Azure.Sdk.Tools.CodeownersMigration.Verification
         /// </summary>
         public static string NormalizePath(string path)
         {
-            string normalized = path.Trim();
+            string normalized = EnsureLeadingSlash(path);
             if (normalized.Length == 0)
             {
                 return normalized;
-            }
-
-            if (!normalized.StartsWith("/"))
-            {
-                normalized = "/" + normalized;
             }
 
             if (!normalized.EndsWith("/"))

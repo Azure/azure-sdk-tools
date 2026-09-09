@@ -72,7 +72,6 @@
         plane: "",
         month: "",
         prLang: "",
-        prStatus: "",
         tag: "",
         language: "",
       },
@@ -413,6 +412,11 @@
     return rpt.includes("private");
   }
 
+  function isStatusInProgress(status) {
+    const normalized = (status || "").toLowerCase().replace(/[\s_-]+/g, "");
+    return normalized.includes("inprogress") || normalized.includes("running");
+  }
+
   /**
    * Computes the current workflow step and who action is required from.
    * Steps progress: API Spec → SDK Generation → SDK Review → Merge → Release.
@@ -485,6 +489,16 @@
 
     // Check if any SDK PRs exist
     const langsWithPr = activeLangs.filter((k) => langs[k].sdkPrUrl);
+    const langsAwaitingGeneration = activeLangs.filter(
+      (k) =>
+        !langs[k].sdkPrUrl && !isStatusInProgress(langs[k].generationStatus),
+    );
+    if (!langsWithPr.length && !langsAwaitingGeneration.length)
+      return {
+        status: "SDK Generation In Progress",
+        action: "",
+        statusClass: "step-inprogress",
+      };
     if (!langsWithPr.length)
       return {
         status: "SDK To Be Generated",
@@ -510,11 +524,21 @@
       (langs[k].releaseStatus || "").toLowerCase(),
     );
     const allReleased = releaseStatuses.every(
-      (s) => s.includes("completed") || s.includes("released"),
+      (s) => s === "completed" || s === "released",
     );
+    const allReleasedOrInProgress = releaseStatuses.every(
+      (s) => s === "completed" || s === "released" || isStatusInProgress(s),
+    );
+    const anyReleaseInProgress = releaseStatuses.some(isStatusInProgress);
 
     if (allMerged && allReleased)
       return { status: "Released", action: "", statusClass: "step-released" };
+    if (allMerged && allReleasedOrInProgress && anyReleaseInProgress)
+      return {
+        status: "SDK Release In Progress",
+        action: "",
+        statusClass: "step-inprogress",
+      };
     if (allMerged)
       return {
         status: "SDK Ready To Release",
@@ -594,7 +618,11 @@
       const isMergedOrCompleted = st === "merged" || st === "completed";
       const isReleasedOrCompleted = rel === "released" || rel === "completed";
 
-      return isMergedOrCompleted && !isReleasedOrCompleted;
+      return (
+        isMergedOrCompleted &&
+        !isReleasedOrCompleted &&
+        !isStatusInProgress(rel)
+      );
     });
   }
 
@@ -780,7 +808,6 @@
     month: { key: "month", default: "" },
     sort: { key: "sort", default: "month" },
     prLang: { key: "prLang", default: "" },
-    prStatus: { key: "prStatus", default: "" },
     tag: { key: "tag", default: "" },
     language: { key: "language", default: "" },
   };
@@ -1388,7 +1415,8 @@
           (st.includes("merged") || st.includes("completed")) &&
           rel !== "completed" &&
           rel !== "released" &&
-          rel !== "approval pending"
+          rel !== "approval pending" &&
+          !isStatusInProgress(rel)
         );
       });
       const langList = toRelease.length
@@ -1813,6 +1841,9 @@
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
     }
+    if (p.apiSpec && p.apiSpec.apiVersion) {
+      html += `<div class="detail-row detail-sdk-api-version"><strong>SDK Generated From API Version:</strong> ${esc(p.apiSpec.apiVersion)}</div>`;
+    }
     if (
       p.typeSpecPath &&
       p.specProjectPath &&
@@ -1985,8 +2016,12 @@
                 // Release is queued and waiting for the service team to approve
                 // the release stage in the release pipeline. Link directly to it.
                 actionCell = `<a class="lang-action-btn action-btn-approve" href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release in the release pipeline">Approve Release</a>`;
+              } else if (isStatusInProgress(relSt)) {
+                actionCell = "";
               } else if (!hasPr) {
-                actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
+                if (!isStatusInProgress(l.generationStatus)) {
+                  actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
+                }
               } else if (isClosed && !isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.LINK_PR, lang, p, l);
               } else if (isDraft) {
@@ -2588,7 +2623,6 @@
         store().filters.month,
         store().filters.sort,
         store().filters.prLang,
-        store().filters.prStatus,
         store().filters.tag,
         store().filters.language,
         store().activeTab,
@@ -3014,6 +3048,15 @@
     return "";
   }
 
+  function hasMergedSpecPr(plan) {
+    const specStatus = (plan.apiReadiness || "").toLowerCase();
+    return specStatus === "completed" || specStatus === "merged";
+  }
+
+  function isReviewRequiredSdkPrStatus(status) {
+    return (status || "").toLowerCase() === "open";
+  }
+
   // Extract candidate PRs without filtering by GitHub status (status fetched progressively).
   function extractCandidatePRs(plans) {
     const seen = new Set();
@@ -3022,6 +3065,7 @@
       if (!p.languages) continue;
       if (p.state === "Finished") continue;
       if (isPrivatePreviewPlan(p)) continue;
+      if (!hasMergedSpecPr(p)) continue;
       for (const [lang, l] of Object.entries(p.languages)) {
         if (isLangExcluded(l.exclusionStatus)) continue;
         if (!l.sdkPrUrl) continue;
@@ -3084,8 +3128,7 @@
   // (server-side enrichment), without making any GitHub requests.
   function buildPRListFromEmbeddedStatuses(candidates) {
     for (const c of candidates) {
-      const stLower = (c.prStatus || "").toLowerCase();
-      if (stLower === "open" || stLower === "draft") {
+      if (isReviewRequiredSdkPrStatus(c.prStatus)) {
         c._statusLoaded = true;
         getPrs().push(c);
       }
@@ -3160,8 +3203,7 @@
         if (!st) continue;
         c._statusLoaded = true;
         c.prStatus = st;
-        const stLower = st.toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(st)) {
           getPrs().push(c);
           needsRender = true;
         }
@@ -3178,8 +3220,7 @@
     // Final pass: add any candidates whose URL wasn't fetched (network error) if they look open
     for (const c of candidates) {
       if (!c._statusLoaded) {
-        const stLower = (c.prStatus || "").toLowerCase();
-        if (stLower === "open" || stLower === "draft") {
+        if (isReviewRequiredSdkPrStatus(c.prStatus)) {
           getPrs().push(c);
         }
       }
@@ -3192,17 +3233,12 @@
 
   function filterPRs(prs) {
     const langFilter = store().filters.prLang || "";
-    const statusFilter = store().filters.prStatus || "";
     const textFilter = store().filters.search.toLowerCase();
     const planeFilter = getGlobalPlaneFilter();
 
     return prs.filter((pr) => {
       if (planeFilter && pr.plane !== planeFilter) return false;
       if (langFilter && pr.language !== langFilter) return false;
-      if (statusFilter) {
-        const st = (pr.prStatus || "").toLowerCase();
-        if (st !== statusFilter) return false;
-      }
       if (textFilter) {
         const searchable =
           `${pr.language} ${pr.repo} ${pr.prNumber} ${pr.packageName} ${pr.planTitle} ${pr.releasePlanId} ${pr.prStatus}`.toLowerCase();

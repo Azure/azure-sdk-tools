@@ -166,7 +166,7 @@ The edit scope is a hard permission boundary. If the requested fix requires a so
        - ✅ **In**: Remove duplicates, update references, add imports, rename keywords, update type annotations
        - ❌ **Out**: Convenience methods, architecture changes, visibility (use `@access`), error handling, complex logic
 
-   - **Workflow**: Analyze errors → Assess feasibility → Apply patches (if deterministic) OR return manual guidance → Validate → Iterate (max 2 attempts)
+   - **Workflow**: Analyze errors → Assess feasibility → Apply patches (if deterministic) OR return manual guidance → Regenerate the SDK for C# and Java → Validate → Iterate (max 2 attempts). Other languages validate immediately after patching.
 
 4. **Summary Response:**
    - Present summary of changes made to local repository files (TypeSpec and SDK code)
@@ -307,7 +307,7 @@ The tool modifies files across two repositories but **does not commit changes** 
 
 **Modified Files by Phase**:
 - **Phase A**: Updates `client.tsp` in azure-rest-api-specs repo, regenerates SDK code in azure-sdk-for-* repo
-- **Phase B**: Updates customization files (e.g., `*Customization.java`, `*_patch.py`, partial classes) in azure-sdk-for-* repo
+- **Phase B**: Updates customization files (e.g., `*Customization.java`, `*_patch.py`, partial classes) in azure-sdk-for-* repo. C# and Java SDKs are regenerated after these patches because their customizations affect generation output.
 
 
 **User Workflow After Tool Completion**:

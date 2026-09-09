@@ -164,10 +164,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
-        public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
+        public Task<string> GetBranchHeadShaAsync(string repoOwner, string repoName, string branchName, CancellationToken ct);
         public Task<IReadOnlyList<PullRequest>> GetMergedPullRequestsByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct);
-        public Task<IReadOnlyList<PullRequest>> GetPullRequestsByHeadPrefixAsync(string repoOwner, string repoName, string headBranchPrefix, DateTimeOffset since, CancellationToken ct);
         public Task<IReadOnlyList<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct);
     }
 
@@ -1050,73 +1049,6 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             }
         }
 
-        public async Task<IReadOnlyList<PullRequest>> GetPullRequestsByHeadPrefixAsync(string repoOwner, string repoName, string headBranchPrefix, DateTimeOffset since, CancellationToken ct)
-        {
-            try
-            {
-                logger.LogInformation(
-                    "Searching for pull requests with head branch prefix '{Prefix}' updated since {Since} in {RepoOwner}/{RepoName}",
-                    headBranchPrefix, since, repoOwner, repoName);
-
-                // Filter head refs client-side from the listing to avoid a PullRequest.Get per search hit.
-                var request = new PullRequestRequest
-                {
-                    State = ItemStateFilter.All,
-                    SortProperty = PullRequestSort.Updated,
-                    SortDirection = SortDirection.Descending,
-                };
-
-                var pullRequests = new List<PullRequest>();
-                for (var page = 1; ; page++)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    var options = new ApiOptions
-                    {
-                        PageSize = 100, // Maximum allowed by GitHub API.
-                        PageCount = 1,
-                        StartPage = page,
-                    };
-
-                    var pageResults = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName, request, options);
-                    if (pageResults.Count == 0)
-                    {
-                        break;
-                    }
-
-                    var reachedWindowStart = false;
-                    foreach (var pullRequest in pageResults)
-                    {
-                        if (pullRequest.UpdatedAt < since)
-                        {
-                            // Sorted by UpdatedAt desc: nothing after this can be in the window.
-                            reachedWindowStart = true;
-                            break;
-                        }
-
-                        if (pullRequest.Head?.Ref?.StartsWith(headBranchPrefix, StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            pullRequests.Add(pullRequest);
-                        }
-                    }
-
-                    if (reachedWindowStart || pageResults.Count < options.PageSize)
-                    {
-                        break;
-                    }
-                }
-
-                logger.LogInformation(
-                    "Found {PullRequestCount} pull request(s) with head branch prefix '{Prefix}' in {RepoOwner}/{RepoName}",
-                    pullRequests.Count, headBranchPrefix, repoOwner, repoName);
-                return pullRequests;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error searching pull requests by head prefix in {RepoOwner}/{RepoName}", repoOwner, repoName);
-                throw;
-            }
-        }
-
         public async Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
@@ -1131,17 +1063,18 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             return await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber);
         }
 
-        public async Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-            return await gitHubClient.PullRequest.Files(repoOwner, repoName, pullRequestNumber);
-        }
-
         public async Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
             var commit = await gitHubClient.Repository.Commit.Get(repoOwner, repoName, sha);
             return commit.Files ?? [];
+        }
+
+        public async Task<string> GetBranchHeadShaAsync(string repoOwner, string repoName, string branchName, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            var branch = await gitHubClient.Repository.Branch.Get(repoOwner, repoName, branchName);
+            return branch.Commit.Sha;
         }
 
         private const string CommitCheckRunsGraphQLQuery = @"

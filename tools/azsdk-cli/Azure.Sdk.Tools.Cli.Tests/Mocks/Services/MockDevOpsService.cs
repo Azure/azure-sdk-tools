@@ -19,6 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForSpecPrUrl { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPath { get; set; }
         public string? ConfiguredReleasePlanForTypeSpecPathKey { get; set; }
+        public List<ReleasePlanWorkItem> ConfiguredActiveReleasePlansForTypeSpecPath { get; set; } = [];
+        public ReleasePlanWorkItem? ConfiguredReleasePlanForTypeSpecPathAndApiVersion { get; set; }
+        public string? ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey { get; set; }
+        public string? ConfiguredApiVersionForTypeSpecPathAndApiVersion { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
@@ -362,6 +366,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     ReleasePlanType = "GA",
                     Title = "Contoso Management Release Plan",
                 });
+            }
+
+            return Task.FromResult<ReleasePlanWorkItem?>(null);
+        }
+
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(string typeSpecProjectPath, ApiReleaseType apiReleaseType, CancellationToken ct)
+        {
+            return Task.FromResult(ConfiguredActiveReleasePlansForTypeSpecPath);
+        }
+
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct)
+        {
+            if (ConfiguredReleasePlanForTypeSpecPathAndApiVersion != null 
+                && typeSpecProjectPath == ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey
+                && apiVersion == ConfiguredApiVersionForTypeSpecPathAndApiVersion)
+            {
+                return Task.FromResult<ReleasePlanWorkItem?>(ConfiguredReleasePlanForTypeSpecPathAndApiVersion);
             }
 
             return Task.FromResult<ReleasePlanWorkItem?>(null);

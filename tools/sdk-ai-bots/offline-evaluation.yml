@@ -42,6 +42,8 @@ extends:
                   scenario: apispec
                 authoring:
                   scenario: authoring
+                sdkagent:
+                  scenario: sdkagent
             steps:
               - task: UsePythonVersion@0
                 displayName: "Use Python 3.12"

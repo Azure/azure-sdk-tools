@@ -557,7 +557,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (hasPastDuePlan)
                 {
-                    (response.NextSteps ??= []).Add("For each past-due release plan, either postpone it using azsdk_update_release_plan_target with a future target month, or abandon it after confirming it is no longer needed and provide the abandonment reason in the release plan dashboard.");
+                    (response.NextSteps ??= []).Add("For each past-due release plan, either postpone it using azsdk agent and azsdk_update_release_plan_target tool with a future target month, or abandon it after confirming it is no longer needed.");
                 }
                 if (hasDueSoonPlan)
                 {

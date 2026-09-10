@@ -114,7 +114,7 @@ foreach ($issue_number in $issues) {
     $sync_success = $false
     $work_item_id = ""
     try {
-      $outputs = & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
+      $stdout = & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
         -ProductID        "$product_id" `
         -ProductName      "$product_name" `
         -ProductType      "$product_type" `
@@ -124,15 +124,13 @@ foreach ($issue_number in $issues) {
         -DataPlane        "$data_plane" `
         -MgmtPlane        "$mgmt_plane" `
         -Submitter        "$submitter" `
-        -IsTest            $IsTest `
-        2>&1
+        -IsTest            $IsTest
 
       $sync_success = $true
 
-      $outputs
-
-      $stdout = $outputs | Where-Object { $_.GetType().FullName -eq "System.String" }
       $stdout = $stdout -join "`n"
+      Write-Host "`n$stdout"
+
       if ($stdout -match "Work Item ID:\s(?<WorkItemID>[\d]+)") {
         $work_item_id = $matches["WorkItemID"]
       }
@@ -151,7 +149,7 @@ foreach ($issue_number in $issues) {
 
     if ($sync_success) {
       $details = ""
-      if ($work_item_id -ne "") {
+      if ($work_item_id -ne "" -and $null -ne $work_item_id) {
         $details = "`n<details><summary>Details</summary><tt>[Status: $work_item_id]</tt></details>"
       }
 

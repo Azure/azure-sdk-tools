@@ -95,7 +95,7 @@ Describe "Install-Standalone-Tool" -Tag "UnitTest", "AzSdkTool-Helpers" {
 
     It "does not supply headers for release discovery when no token is available" {
         $global:AzSdkToolRestCall = $null
-        $env:GITHUB_TOKEN = $null
+        Remove-Item -Path Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
         Mock isNewVersion { $false }
         Mock Invoke-RestMethod {
             param($Uri, $Headers)
@@ -132,7 +132,7 @@ Describe "Install-Standalone-Tool" -Tag "UnitTest", "AzSdkTool-Helpers" {
 
     It "does not supply headers for downloads when no token is available" {
         $global:AzSdkToolWebCall = $null
-        $env:GITHUB_TOKEN = $null
+        Remove-Item -Path Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
         Mock isNewVersion { $true }
         Mock Invoke-WebRequest {
             param($Uri, $OutFile, $Headers)

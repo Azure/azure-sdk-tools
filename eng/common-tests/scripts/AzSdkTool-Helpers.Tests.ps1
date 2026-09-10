@@ -65,7 +65,6 @@ Describe "Install-Standalone-Tool" -Tag "UnitTest", "AzSdkTool-Helpers" {
                 executable = "tool"
             }
         }
-        Mock Remove-Item {}
         Mock tar {}
     }
 

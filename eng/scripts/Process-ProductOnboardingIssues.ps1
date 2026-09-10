@@ -98,7 +98,6 @@ foreach ($issue_number in $issues) {
     $submitter = $submitter.Trim()
   }
 
-  $work_item_id = ""
   if (
          ($product_id        -ne "") `
     -and ($product_name      -ne "") `
@@ -113,6 +112,7 @@ foreach ($issue_number in $issues) {
     Write-Host "Processing issue #$issue_number."
 
     $sync_success = $false
+    $work_item_id = ""
     try {
       $outputs = & (Join-Path $PSScriptRoot "Sync-ProductOnboardingStatus.ps1") `
         -ProductID        "$product_id" `

@@ -124,7 +124,8 @@ foreach ($issue_number in $issues) {
         -DataPlane        "$data_plane" `
         -MgmtPlane        "$mgmt_plane" `
         -Submitter        "$submitter" `
-        -IsTest            $IsTest 2>&1
+        -IsTest            $IsTest `
+        2>&1
 
       $sync_success = $true
 

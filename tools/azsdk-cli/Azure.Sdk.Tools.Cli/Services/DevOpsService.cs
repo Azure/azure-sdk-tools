@@ -902,6 +902,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return [];
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 throw new Exception($"Failed to get work item. Error: {ex.Message}", ex);

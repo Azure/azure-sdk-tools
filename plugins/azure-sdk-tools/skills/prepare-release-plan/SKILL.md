@@ -55,7 +55,7 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
    - If a release plan exists with the **same API release type** the user requested: inform the user that a release plan already exists, show the Release Plan ID, status, and API release type. Suggest the user use the existing release plan. Do NOT create a new one.
    - If a release plan exists but for a **different API release type**: inform the user about the existing plan and its API release type, then proceed to create a new release plan using `forceCreateReleasePlan: true` for the user's requested API release type. Do NOT attempt to update the existing release plan's API release type.
    - If no release plan exists, proceed to step 3.
-3. **Gather Info** — Collect required details from the user. See [details](references/release-plan-details.md):
+3. **Gather Info** — Collect required details from the user. See [details](https://github.com/Azure/azure-sdk-tools/blob/main/plugins/azure-sdk-tools/skills/prepare-release-plan/references/release-plan-details.md):
    - Target release month/year (format: "Month YYYY", e.g. "June 2026"). Do NOT use formats like "2026-06" or "06/2026" — these are invalid.
    - API release type: Value must be one of the following: "Private Preview", "Public Preview", or "GA"
    - SDK release type: Value must be "beta" or "stable" — always ask the user explicitly
